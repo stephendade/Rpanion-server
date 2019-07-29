@@ -1,0 +1,57 @@
+[editor]
+line_wrapping=false
+line_break_column=72
+auto_continue_multiline=true
+
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=false
+strip_trailing_spaces=false
+replace_tabs=false
+
+[indentation]
+indent_width=4
+indent_type=1
+indent_hard_tab_width=8
+detect_indent=false
+detect_indent_width=false
+indent_mode=2
+
+[project]
+name=React Express Starter
+base_path=E:\\Documents\\Git\\react-express-starter
+description=
+file_patterns=
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=72
+
+[files]
+current_page=2
+FILE_NAME_0=0;JSON;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Cnodemon.json;0;4
+FILE_NAME_1=201;Javascript;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Csrc%5Cabout.js;0;4
+FILE_NAME_2=329;JSON;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Cpackage.json;0;4
+FILE_NAME_3=451;Markdown;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5CREADME.md;0;4
+FILE_NAME_4=303;Javascript;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Csrc%5Cindex.js;0;4
+
+[build-menu]
+EX_00_LB=_Execute
+EX_00_CM=./%e
+EX_00_WD=
+JavascriptFT_00_LB=Run
+JavascriptFT_00_CM=
+JavascriptFT_00_WD=
+filetypes=Javascript;
+EX_01_LB=Run
+EX_01_CM=npm run dev
+EX_01_WD=
+NF_03_LB=
+NF_03_CM=
+NF_03_WD=
+JavascriptFT_01_LB=Lint Src
+JavascriptFT_01_CM=cd "%d"; .\\node_modules\\.bin\\eslint .\\src
+JavascriptFT_01_WD=
+JavascriptFT_02_LB=_Lint
+JavascriptFT_02_CM=cd "%d"; .\\node_modules\\.bin\\eslint "%f"
+JavascriptFT_02_WD=
