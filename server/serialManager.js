@@ -1,11 +1,9 @@
-//require('use-strict')
 const fs = require('fs');
 var path = require('path');
 const os = require('os');
 const SerialPort = require('serialport');
 const TCPLink = require('./TCPLink');
 const UDPLink = require('./UDPLink');
-//var deasync = require('deasync');
 //Class for manager serial port <-> IP streaming
 
 class serialManager {
