@@ -39,8 +39,8 @@ class serialManager {
             
             //check the loaded settings against the current config
             // ie valid ports and IP's
-            this.ports = this.SyncScanSerial(this.ports, this.iface);
-            console.log("There are " + this.ports.length + " valid ports");
+            this.refreshPorts();
+            
             for (var i = 0; i < this.ports.length; i++) {
                 if (this.ports[i].status == 'Started') {
 					console.log("Starting saved link " + this.ports[i].name);
@@ -50,6 +50,12 @@ class serialManager {
         });
         
     }
+    
+    refreshPorts() {
+		//Scan for all serial ports
+		this.ports = this.SyncScanSerial(this.ports, this.iface);
+		console.log("There are " + this.ports.length + " valid ports");		
+	}
     
     updateLinkSettings(newPortInfo) {
         //update the settings for 1 port

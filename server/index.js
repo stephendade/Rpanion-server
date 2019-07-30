@@ -16,6 +16,7 @@ app.use(compression());
 app.use(bodyParser.json());
 
 app.get('/api/portstatus', (req, res) => {
+	sManager.refreshPorts();
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify({ portStatus: sManager.ports, ifaces: sManager.iface}));
 });
