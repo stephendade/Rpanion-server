@@ -15,14 +15,14 @@ class SerialPorts extends Component {
       ifaces: []
     };
     
-    this.baudRates = [{value: '9600', label: '9600'},
-					  {value: '19200', label: '19200'},
-					  {value: '38400', label: '38400'},
-					  {value: '57600', label: '57600'},
-					  {value: '115200', label: '115200'},
-					  {value: '230400', label: '230400'},
-					  {value: '460800', label: '460800'},
-					  {value: '921600', label: '921600'}];
+    this.baudRates = [{value: 9600, label: '9600'},
+					  {value: 19200, label: '19200'},
+					  {value: 38400, label: '38400'},
+					  {value: 57600, label: '57600'},
+					  {value: 115200, label: '115200'},
+					  {value: 230400, label: '230400'},
+					  {value: 460800, label: '460800'},
+					  {value: 921600, label: '921600'}];
     this.remoteCon = [{value: 'TCP', label: 'TCP'}, {value: 'UDP', label: 'UDP'}];
     this.portStatus = [{value: 'Started', label: 'Started'}, {value: 'Stopped', label: 'Stopped'}];
 	

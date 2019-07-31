@@ -105,11 +105,11 @@ class serialManager {
             return;
         }
         if (type == 'TCP') {
-            this.activeLinks[port] = new TCPLink(port, baud, ip, ipport);
+            this.activeLinks[port] = new TCPLink(port, parseInt(baud), ip, ipport);
             console.log('Started TCP link for ' + port);
         }
         else if (type == 'UDP') {
-            this.activeLinks[port] = new UDPLink(port, baud, ip, ipport);
+            this.activeLinks[port] = new UDPLink(port, parseInt(baud), ip, ipport);
             console.log('Started UDP link for ' + port);
         }
         
@@ -137,15 +137,18 @@ class serialManager {
             var ret = [];
             var retForm = []
             for (const portID in ports) {
-                console.log("Found port " + ports[portID].comName);
-                ret.push(ports[portID].comName)
+                if (ports[portID].pnpId !== undefined) {
+                        console.log("Found port " + ports[portID].comName);
+                        console.log(ports[portID])
+                        ret.push(ports[portID].comName)
+                }
             }
             for (var i = 0; i < ret.length; i++) {
                 //add in ports, with metadata if found in inPorts
                 var added = false;
                 for (var j = 0; j < inPorts.length; j++) {
-                    if (inPorts[j].name == ret[j]) {
-                        retForm.push(inPorts[i]);
+                    if (inPorts[j].name == ret[i]) {
+                        retForm.push(inPorts[j]);
                         console.log("Adding existing port " + ret[i]);
                         added = true;
                     }
