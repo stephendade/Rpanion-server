@@ -14,11 +14,11 @@ class UDPLink {
             }
         });
         this.stream = udp({
-            address     : IP         //address to bind to
-            , broadcast : '255.255.255.255' //broadcast ip address to send to
+            address     : '0.0.0.0'         //address to bind to
+            , broadcast : IP //broadcast ip address to send to
             , port      : IPport              //udp port to send to
             , bindingPort : IPport            //udp port to listen on. Default: port
-            , reuseAddr : false              //boolean: allow multiple processes to bind to the
+            , reuseAddr : true              //boolean: allow multiple processes to bind to the
                                             //         same address and port. Default: true
             }, function (err) {
                 if (err) {
@@ -35,7 +35,7 @@ class UDPLink {
         });
         this.stream.on('close', (err) => {
 			if (this.port.isOpen) {
-				console.log('Closing UDP LinkSS');
+				console.log('Closing UDP Link');
 				this.port.close();
 			}
         });
