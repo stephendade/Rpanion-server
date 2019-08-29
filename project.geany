@@ -5,21 +5,21 @@ auto_continue_multiline=true
 
 [file_prefs]
 final_new_line=true
-ensure_convert_new_lines=false
-strip_trailing_spaces=false
-replace_tabs=false
+ensure_convert_new_lines=true
+strip_trailing_spaces=true
+replace_tabs=true
 
 [indentation]
 indent_width=4
-indent_type=1
+indent_type=0
 indent_hard_tab_width=8
 detect_indent=false
 detect_indent_width=false
 indent_mode=2
 
 [project]
-name=React Express Starter
-base_path=E:\\Documents\\Git\\react-express-starter
+name=Rpanion-server
+base_path=/home/stephen/Documents/UAV_code/Rpanion-server
 description=
 file_patterns=
 
@@ -28,12 +28,13 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=2
-FILE_NAME_0=0;JSON;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Cnodemon.json;0;4
-FILE_NAME_1=201;Javascript;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Csrc%5Cabout.js;0;4
-FILE_NAME_2=329;JSON;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Cpackage.json;0;4
-FILE_NAME_3=451;Markdown;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5CREADME.md;0;4
-FILE_NAME_4=303;Javascript;0;EUTF-8;1;1;0;E%3A%5CDocuments%5CGit%5CRpanion-server%5Csrc%5Cindex.js;0;4
+current_page=4
+FILE_NAME_0=371;Javascript;0;EUTF-8;1;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Findex.js;0;4
+FILE_NAME_1=1020;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;4
+FILE_NAME_2=4474;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FserialManager.js;0;4
+FILE_NAME_3=1721;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FnetworkManager.js;0;4
+FILE_NAME_4=7776;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fnetworkconfig.js;0;4
+FILE_NAME_5=1029;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fserialports.js;0;4
 
 [build-menu]
 EX_00_LB=_Execute
@@ -50,8 +51,11 @@ NF_03_LB=
 NF_03_CM=
 NF_03_WD=
 JavascriptFT_01_LB=Lint Src
-JavascriptFT_01_CM=cd "%d"; .\\node_modules\\.bin\\eslint .\\src
+JavascriptFT_01_CM=cd "%d"; eslint .\\src
 JavascriptFT_01_WD=
 JavascriptFT_02_LB=_Lint
-JavascriptFT_02_CM=cd "%d"; .\\node_modules\\.bin\\eslint "%f"
+JavascriptFT_02_CM=cd "%d"; eslint "%f"
 JavascriptFT_02_WD=
+
+[VTE]
+last_dir=/home/stephen
