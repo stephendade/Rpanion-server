@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const pino = require('express-pino-logger')();
 const serialManager = require('./serialManager');
 const networkManager = require('./networkManager');
+const analogManager = require('./analogPi');
 
 
 const app = express();
@@ -21,6 +22,13 @@ app.get('/api/portstatus', (req, res) => {
     sManager.refreshPorts();
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify({ portStatus: sManager.ports, ifaces: sManager.iface}));
+});
+
+app.get('/api/analogports', (req, res) => {
+    analogManager.getAnalogReading((err, readings) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify({portStatus: readings}));
+    });
 });
 
 app.get('/api/networkadapters', (req, res) => {

@@ -6,32 +6,36 @@ import Home from './home.js';
 import SerialPorts from './serialports.js';
 import NetworkConfig from './networkconfig.js';
 import OldApp from './old.js';
+import Analog from './analog.js';
+
 
 function AppRouter() {
   return (
     <Router>
-			<div id="sidebar-wrapper" className="bg-light border-right">
-				<div id="sidebarheading" className="sidebar-heading">SiteName</div>
-				<div id="sidebar-items" className="list-group list-group-flush">
-					<a className='list-group-item list-group-item-action bg-light' href="/">Home</a>
-					<a className='list-group-item list-group-item-action bg-light' href="/old">Old App</a>
-					<a className='list-group-item list-group-item-action bg-light' href="/serial">Serial Port Routing</a>
-					<a className='list-group-item list-group-item-action bg-light' href="/network">Network Config</a>
-					<a className='list-group-item list-group-item-action bg-light' href="/about">About</a>
-				</div>
+            <div id="sidebar-wrapper" className="bg-light border-right">
+                <div id="sidebarheading" className="sidebar-heading">SiteName</div>
+                <div id="sidebar-items" className="list-group list-group-flush">
+                    <a className='list-group-item list-group-item-action bg-light' href="/">Home</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/old">Old App</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/serial">Serial Port Routing</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/network">Network Config</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/analog">Analog Ports</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/about">About</a>
+                </div>
             </div>
 
         <div className="page-content-wrapper">
           <div className="container-fluid">
-			<Switch>
-				<Route exact path="/old" component={OldApp} />
-				<Route exact path="/" component={Home} />
-				<Route exact path="/serial" component={SerialPorts} />
-				<Route exact path="/network" component={NetworkConfig} />
-				<Route exact path="/about" component={About} />
-				<Route component={NoMatch} />
-			</Switch>
-		  </div>
+            <Switch>
+                <Route exact path="/old" component={OldApp} />
+                <Route exact path="/" component={Home} />
+                <Route exact path="/serial" component={SerialPorts} />
+                <Route exact path="/network" component={NetworkConfig} />
+                <Route exact path="/about" component={About} />
+                <Route exact path="/analog" component={Analog} />
+                <Route component={NoMatch} />
+            </Switch>
+          </div>
         </div>
     </Router>
   );
