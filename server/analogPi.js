@@ -1,27 +1,29 @@
 const {exec} = require('child_process');
 
-//Class for getting Ras Pi serial port data
-
-function randomInt(low, high) {
-  return Math.floor(Math.random() * (high - low) + low)
-}
-
 function getAnalogReading(callback) {
+    //read all the analog ports on the MCP3008 via commandline
     var ret = []
     //[{ port: "A0", mv: 2.56, number: 677}, { port: "A1", mv: 2.45, number: 567}]
-    for (var i = 0; i < 4; i++) {
-        exec('cat /sys/bus/iio/devices/iio\:device0/in_voltage'+i.toString()+'_raw', (error, stdout, stderr) => {
+    for (var i = 0; i < 8; i++) {
+        exec('echo '+i.toString()+'; cat /sys/bus/iio/devices/iio\\:device0/in_voltage'+i.toString()+'_raw', (error, stdout, stderr) => {
             if (stderr) {
-                //console.error(`exec error: ${error}`);
-                //return callback(null, []);
+                console.log(`exec error: ${stderr}`);
+                return callback(null, []);
             }
             else {
-                var reading = parseInt(stdout);
-                ret.push({ port: "A"+i.toString(), mv: reading*(3300/1023), number: reading});
+                // add a new analog reading to the return object
+                var reading = parseInt(stdout.split('\n')[1]);
+                var port = stdout.split('\n')[0];
+                var tmp = { port: "A"+port, mv: Math.round(reading*(3300/1023)), number: reading}
+                ret.push(tmp);
+            }
+            if (ret.length == 8) {
+                // we've got all the readings, can return now
+                return callback(null, ret);
             }
         });
     }
-    return callback(null, ret);
+    //return callback(null, ret);
 }
 
 module.exports = {getAnalogReading}

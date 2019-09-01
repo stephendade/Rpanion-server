@@ -137,11 +137,16 @@ class serialManager {
             var ret = [];
             var retForm = []
             for (const portID in ports) {
-                if (ports[portID].pnpId !== undefined) {
+                if (ports[portID].pnpId !== undefined ||
+                    ports[portID].comName === "/dev/ttySC0" ||
+                    ports[portID].comName === "/dev/ttySC1") {
                         console.log("Found port " + ports[portID].comName);
                         console.log(ports[portID])
                         ret.push(ports[portID].comName)
                 }
+            }
+            if (fs.existsSync('/dev/serial0')) {
+                ret.push('/dev/serial0');
             }
             for (var i = 0; i < ret.length; i++) {
                 //add in ports, with metadata if found in inPorts

@@ -32,7 +32,7 @@ function getConnections(callback) {
     else {
         stdout.split("\n").forEach(function (item) {
                 var connection = item.split(':');
-                if (connection[3] == "") {
+                if (connection[3] == "" || connection[3] == "--") {
                     conStatusList.push({value: connection[1], label: connection[0], type: connection[2], state: ""});
                 }
                 else if (connection.length == 4) {
