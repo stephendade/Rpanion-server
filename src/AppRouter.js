@@ -13,7 +13,7 @@ function AppRouter() {
   return (
     <Router>
             <div id="sidebar-wrapper" className="bg-light border-right">
-                <div id="sidebarheading" className="sidebar-heading">SiteName</div>
+                <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
                 <div id="sidebar-items" className="list-group list-group-flush">
                     <a className='list-group-item list-group-item-action bg-light' href="/">Home</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/old">Old App</a>
