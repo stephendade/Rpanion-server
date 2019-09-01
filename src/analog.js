@@ -16,6 +16,7 @@ class analog extends Component {
 
         this.columns = [{
             dataField: 'port',
+            sort: true,
             text: 'Analog Port'
         }, {
             dataField: 'mv',
@@ -27,8 +28,13 @@ class analog extends Component {
     }
 
     componentDidMount() {
-        this.handleStart();
+        //this.handleStart();
+        setInterval(() => this.handleStart(), 1000)
      }
+
+    componentWillUnmount() {
+        clearInterval(this.interval);
+    }
 
     handleStart() {
         fetch(`/api/analogports`)
@@ -43,7 +49,7 @@ class analog extends Component {
                   <title>The Analog Page</title>
                 </Helmet>
               <h1>Analog Port Monitoring</h1>
-              <BootstrapTable condensed keyField='port' data={ this.state.portStatus } columns={ this.columns }/>
+              <BootstrapTable condensed keyField='port' defaultSorted={[{datafield: 'port'}]} data={ this.state.portStatus } columns={ this.columns }/>
             </div>
         );
     }
