@@ -8,7 +8,8 @@ function getAnalogReading(callback) {
         exec('echo '+i.toString()+'; cat /sys/bus/iio/devices/iio\\:device0/in_voltage'+i.toString()+'_raw', (error, stdout, stderr) => {
             if (stderr) {
                 console.log(`exec error: ${stderr}`);
-                return callback(null, []);
+                // fastforward to end
+                i = 8;
             }
             else {
                 // add a new analog reading to the return object

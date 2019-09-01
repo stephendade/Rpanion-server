@@ -12,13 +12,13 @@ class serialManager {
         //this.portB = {name: "COM10", baud: 9600, contype: "UDP", conIP: "192.168.0.1", conPort: 15000, status: "Started"};
         this.iface = [];
         this.ports = [];
-        
+
         this.activeLinks = [];
-        
+
         this.filesavepath = path.join(".", 'serialSettings.json')
-        
+
         this.scanInterfaces();
-        
+
         //load the serial.json, if it exists
         fs.readFile(this.filesavepath, (err, data) => {
             if (err) {
@@ -32,29 +32,29 @@ class serialManager {
                     console.log("Cannot read" + this.filesavepath);
                     this.ports = [];
                 }
-                
+
             }
-            
+
             //check the loaded settings against the current config
             // ie valid ports and IP's
             this.refreshPorts();
-            
+
             for (var i = 0; i < this.ports.length; i++) {
                 if (this.ports[i].status == 'Started') {
-					console.log("Starting saved link " + this.ports[i].name);
+                    console.log("Starting saved link " + this.ports[i].name);
                     this.startLink(this.ports[i].name, this.ports[i].baud, this.ports[i].contype, this.ports[i].conIP, this.ports[i].conPort);
                 }
             }
         });
-        
+
     }
-    
+
     refreshPorts() {
-		//Scan for all serial ports
-		this.ports = this.SyncScanSerial(this.ports, this.iface);
-		console.log("There are " + this.ports.length + " valid ports");		
-	}
-    
+        //Scan for all serial ports
+        this.ports = this.SyncScanSerial(this.ports, this.iface);
+        console.log("There are " + this.ports.length + " valid ports");
+    }
+
     updateLinkSettings(newPortInfo) {
         //update the settings for 1 port
         //start/stop as required
@@ -78,13 +78,13 @@ class serialManager {
               if (this.ports[i].status == "Stopped" && this.ports[i].name in this.activeLinks) {
                   this.stopLink(this.ports[i].name);
               }
-          }        
+          }
         }
     }
-    
+
     stopLink(port) {
         //close down a particular link
-        
+
         //first check if we've already got an active link
         if(!(port in this.activeLinks)) {
             console.log('Link not active');
@@ -92,13 +92,13 @@ class serialManager {
         }
         console.log('Stopped link for ' + port);
         this.activeLinks[port].closeLink();
-        delete this.activeLinks[port];     
-        
+        delete this.activeLinks[port];
+
     }
-    
+
     startLink(port, baud, type, ip, ipport) {
         //Start a serial <-> IP link
-        
+
         //first check if we've already got an active link
         if(port in this.activeLinks) {
             console.log('Link already in Manager');
@@ -112,22 +112,22 @@ class serialManager {
             this.activeLinks[port] = new UDPLink(port, parseInt(baud), ip, ipport);
             console.log('Started UDP link for ' + port);
         }
-        
+
     }
 
     SyncScanSerial(inPorts, ifaces){
         //synchonous version of scanSerial()
         var ret;
-      this.scanSerial(inPorts, ifaces).then( function(ports, err){
-          ret = ports;
-      });
-      while(ret === undefined) {
-        require('deasync').sleep(100);
-      }
-      // returns hello with sleep; undefined without
-      return ret;    
+        this.scanSerial(inPorts, ifaces).then( function(ports, err){
+            ret = ports;
+        });
+        while(ret === undefined) {
+            require('deasync').sleep(100);
+        }
+        // returns hello with sleep; undefined without
+        return ret;
     }
-    
+
     scanSerial(inPorts, ifaces, errcallback) {
         //Get the serial ports and add to this.ports
         //assumes the serialSettings.json is already read in
@@ -165,15 +165,15 @@ class serialManager {
                 }
             }
             //reset any ifaces that are not valid
-            for (var i = 0; i < retForm.length; i++) {
+            for (i = 0; i < retForm.length; i++) {
                 var goodIP = false;
-                for (var j = 0; j < ifaces.length; j++) {
+                for (j = 0; j < ifaces.length; j++) {
                     if (ifaces[j].value == retForm[i].conIP) {
                         goodIP = true;
                     }
                 }
                 if (!goodIP) {
-                    //iface no longer exists, reset it        
+                    //iface no longer exists, reset it
                     console.log("Resetting IP for port " + retForm[i].name);
                     retForm[i].conIP = ifaces[0].value;
                     retForm[i].status = "Stopped";
@@ -186,11 +186,11 @@ class serialManager {
 
 
     }
-    
+
     scanInterfaces() {
         //scan for available IP (v4 only) interfaces
         var ifaces = os.networkInterfaces();
-        
+
         for (const ifacename in ifaces) {
             var alias = 0;
             for (var j = 0; j < ifaces[ifacename].length; j++) {
@@ -207,11 +207,11 @@ class serialManager {
             }
         }
     }
-    
+
     saveSerialSettings() {
         //Save the current settings to file
         let data = JSON.stringify(this.ports);
-        
+
         fs.writeFile(this.filesavepath, data, (err) => {
             if (err) throw err;
             console.log(this.filesavepath + ' written');
