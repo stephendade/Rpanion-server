@@ -28,13 +28,16 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=4
-FILE_NAME_0=371;Javascript;0;EUTF-8;1;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Findex.js;0;4
-FILE_NAME_1=1020;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;4
-FILE_NAME_2=4474;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FserialManager.js;0;4
-FILE_NAME_3=1721;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FnetworkManager.js;0;4
-FILE_NAME_4=7776;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fnetworkconfig.js;0;4
-FILE_NAME_5=1029;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fserialports.js;0;4
+current_page=7
+FILE_NAME_0=163;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2FAppRouter.js;0;4
+FILE_NAME_1=197;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fnetworkconfig.js;0;4
+FILE_NAME_2=3047;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fserialports.js;0;4
+FILE_NAME_3=810;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fanalog.js;0;4
+FILE_NAME_4=896;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;4
+FILE_NAME_5=565;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FanalogPi.js;0;4
+FILE_NAME_6=41;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FnetworkManager.js;0;4
+FILE_NAME_7=2548;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FserialManager.js;0;4
+FILE_NAME_8=1057;JSON;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fpackage.json;0;4
 
 [build-menu]
 EX_00_LB=_Execute
@@ -50,12 +53,9 @@ EX_01_WD=
 NF_03_LB=
 NF_03_CM=
 NF_03_WD=
-JavascriptFT_01_LB=Lint Src
-JavascriptFT_01_CM=cd "%d"; eslint .\\src
-JavascriptFT_01_WD=
-JavascriptFT_02_LB=_Lint
-JavascriptFT_02_CM=cd "%d"; eslint "%f"
-JavascriptFT_02_WD=
+JavascriptFT_02_LB=_Lint File
+JavascriptFT_02_CM=./node_modules/.bin/eslint "%d/%f"
+JavascriptFT_02_WD=%p
 
 [VTE]
 last_dir=/home/stephen
