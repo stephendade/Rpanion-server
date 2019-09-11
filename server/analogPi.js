@@ -7,7 +7,7 @@ function getAnalogReading(callback) {
     var haveReturned = false;
     //[{ port: "A0", mv: 2.56, number: 677}, { port: "A1", mv: 2.45, number: 567}]
     // first check if the ports exist
-    if (!fs.existsSync('/sys/bus/iio/devices/iio\\:device0/')) {
+    if (!fs.existsSync('/sys/bus/iio/devices/iio\:device0/')) {
         return callback(new Error("No MCP3008 Detected"), []);
     }
     for (var i = 0; i < 8; i++) {
