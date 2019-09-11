@@ -7,9 +7,15 @@ const networkManager = require('./networkManager');
 const analogManager = require('./analogPi');
 
 
+
 const app = express();
+const http = require("http").Server(app)
+
+var io = require('socket.io')(http);
 
 const sManager = new serialManager();
+
+var analogLoop = null;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(pino);
@@ -24,11 +30,22 @@ app.get('/api/portstatus', (req, res) => {
     res.send(JSON.stringify({ portStatus: sManager.ports, ifaces: sManager.iface}));
 });
 
-app.get('/api/analogports', (req, res) => {
-    analogManager.getAnalogReading((err, readings) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify({portStatus: readings}));
-    });
+io.on('connection', function(socket) {
+    //only set interval if not already set
+    if (analogLoop !== null) {
+        return;
+    }
+    // send the analog readings out every 1 second
+    analogLoop = setInterval(function() {
+        analogManager.getAnalogReading((err, readings) => {
+            if (err) {
+                io.sockets.emit('analogstatus', { errormessage: err.toString() });
+            }
+            else {
+                io.sockets.emit('analogstatus', { portStatus: readings, errormessage: "" });
+            }
+        });
+    }, 1000);
 });
 
 app.get('/api/networkadapters', (req, res) => {
@@ -62,6 +79,6 @@ app.post('/api/networkIP', (req, res) => {
     });
 });
 
-app.listen(3001, () =>
+http.listen(3001, () =>
     console.log('Express server is running on localhost:3001')
 );

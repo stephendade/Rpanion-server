@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Helmet } from 'react-helmet';
 import BootstrapTable from 'react-bootstrap-table-next';
-
+import io from 'socket.io-client';
 
 /*
  * Display all the MCP3008 analog ports
@@ -12,7 +12,10 @@ class analog extends Component {
         super(props);
         this.state = {
             portStatus: [],
+            errormessage: ""
         }
+
+        var socket = io();
 
         this.columns = [{
             dataField: 'port',
@@ -25,22 +28,18 @@ class analog extends Component {
             dataField: 'number',
             text: 'Value (10-bit)',
         }];
+
+        // Socket.io client for reading in analog update values
+        socket.on('analogstatus', function(msg){
+            this.setState(msg);
+        }.bind(this));
     }
 
     componentDidMount() {
-        //this.handleStart();
-        setInterval(() => this.handleStart(), 1000)
-     }
-
-    componentWillUnmount() {
-        clearInterval(this.interval);
     }
 
-    handleStart() {
-        fetch(`/api/analogports`)
-          .then(response => response.json())
-          .then(state => this.setState(state));
-      }
+    componentWillUnmount() {
+    }
 
     render() {
         return (
@@ -49,7 +48,8 @@ class analog extends Component {
                   <title>The Analog Page</title>
                 </Helmet>
               <h1>Analog Port Monitoring</h1>
-              <BootstrapTable condensed keyField='port' defaultSorted={[{datafield: 'port'}]} data={ this.state.portStatus } columns={ this.columns }/>
+              <BootstrapTable condensed keyField='port' data={ this.state.portStatus } columns={ this.columns }/>
+              <p>{this.state.errormessage}</p>
             </div>
         );
     }

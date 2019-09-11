@@ -23,6 +23,7 @@
     "react-text-mask": "^5.4.3",
     "request": "^2.88.0",
     "serialport": "^7.1.5",
+    "socket.io": "^2.2.0",
     "startbootstrap-simple-sidebar": "^5.1.1"
   },
   "scripts": {
