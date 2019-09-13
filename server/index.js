@@ -6,8 +6,6 @@ const serialManager = require('./serialManager');
 const networkManager = require('./networkManager');
 const analogManager = require('./analogPi');
 
-
-
 const app = express();
 const http = require("http").Server(app)
 
@@ -51,7 +49,7 @@ io.on('connection', function(socket) {
 app.get('/api/networkadapters', (req, res) => {
     networkManager.getAdapters((err, netDeviceList) => {
         res.setHeader('Content-Type', 'application/json');
-        ret = {netDevice: netDeviceList};
+        var ret = {netDevice: netDeviceList};
         res.send(JSON.stringify(ret));
     });
 });
@@ -59,7 +57,7 @@ app.get('/api/networkadapters', (req, res) => {
 app.get('/api/networkconnections', (req, res) => {
     networkManager.getConnections((err, netConnectionList) => {
         res.setHeader('Content-Type', 'application/json');
-        ret = {netConnection: netConnectionList};
+        var ret = {netConnection: netConnectionList};
         res.send(JSON.stringify(ret));
     });
 });
@@ -73,7 +71,7 @@ app.post('/api/portmodify', function (req, res) {
 app.post('/api/networkIP', (req, res) => {
     networkManager.getConnectionDetails(req.body.conName, (err, conDetails) => {
         res.setHeader('Content-Type', 'application/json');
-        ret = {netConnectionDetails: conDetails};
+        var ret = {netConnectionDetails: conDetails};
         //console.log(ret);
         res.send(JSON.stringify(ret));
     });
