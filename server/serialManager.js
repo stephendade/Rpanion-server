@@ -39,6 +39,7 @@ class serialManager {
             // ie valid ports and IP's
             this.refreshPorts();
 
+            // start any saved links
             for (var i = 0; i < this.ports.length; i++) {
                 if (this.ports[i].status == 'Started') {
                     console.log("Starting saved link " + this.ports[i].name);
@@ -67,14 +68,14 @@ class serialManager {
               //and save to file
               this.saveSerialSettings();
               if (this.ports[i].status == "Started") {
-                  //stop-then-start link
+                //stop--modify-then-start link
                 if(this.ports[i].name in this.activeLinks) {
                     this.stopLink(this.ports[i].name);
                 }
                 require('deasync').sleep(200);
                 this.startLink(this.ports[i].name, this.ports[i].baud, this.ports[i].contype, this.ports[i].conIP, this.ports[i].conPort);
               }
-              //stop link if active
+              //stop link if requested
               if (this.ports[i].status == "Stopped" && this.ports[i].name in this.activeLinks) {
                   this.stopLink(this.ports[i].name);
               }
@@ -92,7 +93,7 @@ class serialManager {
         }
         console.log('Stopped link for ' + port);
         this.activeLinks[port].closeLink();
-        delete this.activeLinks[port];
+        //delete this.activeLinks[port];
 
     }
 
@@ -106,10 +107,18 @@ class serialManager {
         }
         if (type == 'TCP') {
             this.activeLinks[port] = new TCPLink(port, parseInt(baud), ip, ipport);
+            this.activeLinks[port].on('closed', (port) => {
+                console.log("Closing down link: " + port);
+                delete this.activeLinks[port];
+            });
             console.log('Started TCP link for ' + port);
         }
         else if (type == 'UDP') {
             this.activeLinks[port] = new UDPLink(port, parseInt(baud), ip, ipport);
+            this.activeLinks[port].on('closed', (port) => {
+                console.log("Closing down link: " + port);
+                delete this.activeLinks[port];
+            });
             console.log('Started UDP link for ' + port);
         }
 
@@ -124,7 +133,6 @@ class serialManager {
         while(ret === undefined) {
             require('deasync').sleep(100);
         }
-        // returns hello with sleep; undefined without
         return ret;
     }
 
@@ -149,7 +157,7 @@ class serialManager {
                 ret.push('/dev/serial0');
             }
             for (var i = 0; i < ret.length; i++) {
-                //add in ports, with metadata if found in inPorts
+                //add in ports, with saved settings if found in inPorts
                 var added = false;
                 for (var j = 0; j < inPorts.length; j++) {
                     if (inPorts[j].name == ret[i]) {
