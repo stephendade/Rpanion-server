@@ -176,7 +176,7 @@ class serialManager {
             for (i = 0; i < retForm.length; i++) {
                 var goodIP = false;
                 for (j = 0; j < ifaces.length; j++) {
-                    if (ifaces[j].value == retForm[i].conIP) {
+                    if (ifaces[j].value === retForm[i].conIP) {
                         goodIP = true;
                     }
                 }
