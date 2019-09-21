@@ -4,6 +4,7 @@ const os = require('os');
 const SerialPort = require('serialport');
 const TCPLink = require('./TCPLink');
 const UDPLink = require('./UDPLink');
+const net = require('net')
 //Class for manager serial port <-> IP streaming
 
 class serialManager {
@@ -60,26 +61,49 @@ class serialManager {
         //update the settings for 1 port
         //start/stop as required
         //if started and settings changed, stop, change start
-        //save to file
-        for (var i = 0; i < this.ports.length; i++) {
-          if (this.ports[i].name == newPortInfo.name) {
-              this.ports[i][newPortInfo.field] = newPortInfo.newValue;
-              console.log("Changing settings for " + this.ports[i].name + "." + newPortInfo.field);
-              //and save to file
-              this.saveSerialSettings();
-              if (this.ports[i].status == "Started") {
-                //stop--modify-then-start link
-                if(this.ports[i].name in this.activeLinks) {
-                    this.stopLink(this.ports[i].name);
+        //check the input is OK
+        if (newPortInfo.field === "baud" && !(!Number.isNaN(newPortInfo.newValue) && newPortInfo.newValue > 0)) {
+            console.log("Bad setting for " + newPortInfo.field + " => " + newPortInfo.newValue);
+            return;
+        }
+        else if (newPortInfo.field === "contype" && !(newPortInfo.newValue === "UDP" || newPortInfo.newValue === "TCP")) {
+            console.log("Bad setting for " + newPortInfo.field + " => " + newPortInfo.newValue);
+            return;
+        }
+        else if (newPortInfo.field === "conIP" && !net.isIP(newPortInfo.newValue) === 4) {
+            console.log("Bad setting for " + newPortInfo.field + " => " + newPortInfo.newValue);
+            return;
+        }
+        else if (newPortInfo.field === "conPort" && !(!Number.isNaN(newPortInfo.newValue) && newPortInfo.newValue > 1000)) {
+            console.log("Bad setting for " + newPortInfo.field + " => " + newPortInfo.newValue);
+            return;
+        }
+        else if (newPortInfo.field === "status" && !(newPortInfo.newValue === "Started" || newPortInfo.newValue === "Stopped")) {
+            console.log("Bad setting for " + newPortInfo.field + " => " + newPortInfo.newValue);
+            return;
+        }
+        else {
+            //save to file
+            for (var i = 0; i < this.ports.length; i++) {
+                if (this.ports[i].name == newPortInfo.name) {
+                    this.ports[i][newPortInfo.field] = newPortInfo.newValue;
+                    console.log("Changing settings for " + this.ports[i].name + "." + newPortInfo.field);
+                    //and save to file
+                    this.saveSerialSettings();
+                    if (this.ports[i].status == "Started") {
+                        //stop--modify-then-start link
+                        if(this.ports[i].name in this.activeLinks) {
+                            this.stopLink(this.ports[i].name);
+                        }
+                        require('deasync').sleep(200);
+                        this.startLink(this.ports[i].name, this.ports[i].baud, this.ports[i].contype, this.ports[i].conIP, this.ports[i].conPort);
+                    }
+                    //stop link if requested
+                    if (this.ports[i].status == "Stopped" && this.ports[i].name in this.activeLinks) {
+                        this.stopLink(this.ports[i].name);
+                    }
                 }
-                require('deasync').sleep(200);
-                this.startLink(this.ports[i].name, this.ports[i].baud, this.ports[i].contype, this.ports[i].conIP, this.ports[i].conPort);
-              }
-              //stop link if requested
-              if (this.ports[i].status == "Stopped" && this.ports[i].name in this.activeLinks) {
-                  this.stopLink(this.ports[i].name);
-              }
-          }
+            }
         }
     }
 
