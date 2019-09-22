@@ -13,6 +13,8 @@ class serialManager {
         //this.portB = {name: "COM10", baud: 9600, contype: "UDP", conIP: "192.168.0.1", conPort: 15000, status: "Started"};
         this.iface = [];
         this.ports = [];
+        //initial read from json
+        this.portsSaved = [];
 
         this.activeLinks = [];
 
@@ -27,11 +29,11 @@ class serialManager {
             }
             else {
                 try {
-                    this.ports = JSON.parse(data);
+                    this.portsSaved = JSON.parse(data);
                     console.log(this.filesavepath + ' read');
                 } catch(err) {
                     console.log("Cannot read" + this.filesavepath);
-                    this.ports = [];
+                    this.portsSaved = [];
                 }
 
             }
@@ -53,8 +55,8 @@ class serialManager {
 
     refreshPorts() {
         //Scan for all serial ports
-        this.ports = this.SyncScanSerial(this.ports, this.iface);
-        console.log("There are " + this.ports.length + " valid ports");
+        this.ports = this.SyncScanSerial(this.portsSaved, this.iface);
+        //console.log("There are " + this.ports.length + " valid ports");
     }
 
     updateLinkSettings(newPortInfo) {
@@ -172,8 +174,8 @@ class serialManager {
                 if (ports[portID].pnpId !== undefined ||
                     ports[portID].comName === "/dev/ttySC0" ||
                     ports[portID].comName === "/dev/ttySC1") {
-                        console.log("Found port " + ports[portID].comName);
-                        console.log(ports[portID])
+                        //console.log("Found port " + ports[portID].comName);
+                        //console.log(ports[portID])
                         ret.push(ports[portID].comName)
                 }
             }
@@ -186,14 +188,14 @@ class serialManager {
                 for (var j = 0; j < inPorts.length; j++) {
                     if (inPorts[j].name == ret[i]) {
                         retForm.push(inPorts[j]);
-                        console.log("Adding existing port " + ret[i]);
+                        //console.log("Adding existing port " + ret[i]);
                         added = true;
                     }
                 }
                 //if not in this.ports, add it in as a new port
                 if (!added) {
                     retForm.push({name: ret[i], baud: 115200, contype: "UDP", conIP: ifaces[0].value, conPort: 15000, status: "Stopped"});
-                    console.log("Adding new port " + ret[i]);
+                    //console.log("Adding new port " + ret[i]);
                 }
             }
             //reset any ifaces that are not valid

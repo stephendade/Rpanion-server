@@ -4,6 +4,7 @@ import BootstrapTable from 'react-bootstrap-table-next';
 import cellEditFactory from 'react-bootstrap-table2-editor';
 import { Type } from 'react-bootstrap-table2-editor';
 import PropTypes from 'prop-types';
+import io from 'socket.io-client';
 
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
@@ -64,7 +65,12 @@ class SerialPorts extends Component {
       }
     }];
 
+    var socket = io();
 
+    // Socket.io client for reading in serial update values
+    socket.on('serialstatus', function(msg){
+        this.setState(msg);
+    }.bind(this));
   }
 
     componentDidMount() {

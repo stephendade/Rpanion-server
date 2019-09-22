@@ -43,6 +43,8 @@ io.on('connection', function(socket) {
                 io.sockets.emit('analogstatus', { portStatus: readings, errormessage: "" });
             }
         });
+        sManager.refreshPorts();
+        io.sockets.emit('serialstatus', { portStatus: sManager.ports, ifaces: sManager.iface});
     }, 1000);
 });
 
