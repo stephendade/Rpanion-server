@@ -7,13 +7,15 @@ import PropTypes from 'prop-types';
 import io from 'socket.io-client';
 
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
+import SocketIOFooter from './footerSocketIO';
 
 class SerialPorts extends Component {
   constructor(props) {
     super(props);
     this.state = {
       portStatus: [],
-      ifaces: []
+      ifaces: [],
+      socketioStatus: false
     };
 
     this.baudRates = [{value: 9600, label: '9600'},
@@ -71,6 +73,12 @@ class SerialPorts extends Component {
     socket.on('serialstatus', function(msg){
         this.setState(msg);
     }.bind(this));
+    socket.on('disconnect', function(){
+        this.setState({socketioStatus: false});
+    }.bind(this));
+    socket.on('connect', function(){
+        this.setState({socketioStatus: true});
+    }.bind(this));
   }
 
     componentDidMount() {
@@ -114,6 +122,7 @@ class SerialPorts extends Component {
         <h1>Serial Ports</h1>
         <p>Connected Ports are:</p>
         <BootstrapTable condensed keyField='name' data={ this.state.portStatus } columns={ this.columns } cellEdit={ cellEditFactory({ blurToSave: true, mode: 'click', afterSaveCell: this.afterSave }) }/>
+        <SocketIOFooter socketioStatus={this.state.socketioStatus}/>
     </div>
     );
   }

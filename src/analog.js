@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
 import { Helmet } from 'react-helmet';
+import ReactDOM from 'react-dom';
 import BootstrapTable from 'react-bootstrap-table-next';
 import io from 'socket.io-client';
+import SocketIOFooter from './footerSocketIO';
 
 /*
  * Display all the MCP3008 analog ports
@@ -12,7 +14,8 @@ class analog extends Component {
         super(props);
         this.state = {
             portStatus: [],
-            errormessage: ""
+            errormessage: "",
+            socketioStatus: false
         }
 
         var socket = io();
@@ -33,6 +36,12 @@ class analog extends Component {
         socket.on('analogstatus', function(msg){
             this.setState(msg);
         }.bind(this));
+        socket.on('disconnect', function(){
+            this.setState({socketioStatus: false});
+        }.bind(this));
+        socket.on('connect', function(){
+            this.setState({socketioStatus: true});
+        }.bind(this));
     }
 
     componentDidMount() {
@@ -50,6 +59,7 @@ class analog extends Component {
               <h1>Analog Port Monitoring</h1>
               <BootstrapTable condensed keyField='port' data={ this.state.portStatus } columns={ this.columns }/>
               <p>{this.state.errormessage}</p>
+              <SocketIOFooter socketioStatus={this.state.socketioStatus}/>
             </div>
         );
     }
