@@ -13,7 +13,7 @@ class NetworkConfig extends Component {
       netConnectionFilteredSelected: null,
       netConnectionDetails: {},
       showIP: false,
-      wpaTypes: [{value: 'wpa-none', text: 'wpa-none'}, {value: 'wpa-psk', text: 'wpa-psk'}],
+      wpaTypes: [{value: 'wpa-none', text: 'None'}, {value: 'wpa-psk', text: 'WPA (PSK)'}],
       bandTypes: [{value: 'a', text: '5 GHz'}, {value: 'bg', text: '2.4 GHz'}],
       availChannels: [],
       curSettings: {
@@ -36,6 +36,9 @@ class NetworkConfig extends Component {
                 value: ''
             },
             band: {
+                value: ''
+            },
+            mode: {
                 value: ''
             }
         }
@@ -146,7 +149,8 @@ class NetworkConfig extends Component {
                 wpaType: {value: this.state.netConnectionDetails.wpaType},
                 password: {value: this.state.netConnectionDetails.password},
                 ssid: {value: this.state.netConnectionDetails.ssid},
-                band: {value: this.state.netConnectionDetails.band}
+                band: {value: this.state.netConnectionDetails.band},
+                mode: {value: this.state.netConnectionDetails.mode}
             }}));
         }
     };
@@ -175,14 +179,16 @@ class NetworkConfig extends Component {
 
     deleteConnection = (event) =>{
         //delete network button clicked
-        if (window.confirm('Confirm you wish to delete this network'))
+        if (window.confirm('Confirm you wish to delete this network')) {
             //if it's a new connection, go back to old connection
             if (this.state.netConnectionFilteredSelected.value === "new") {
-                this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
+                //this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
+                this.handleAdapterChange(this.state.netDeviceSelected, {action: "select-option"})
             }
             else {
                 this.sendNetworkEdit(this.state.netConnectionFilteredSelected.value, "delete", null);
             }
+        }
         event.preventDefault();
     };
 
@@ -191,9 +197,29 @@ class NetworkConfig extends Component {
         const enteredName = prompt('Please enter new connection name');
         if (enteredName !== '' && enteredName !== null) {
             this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-            //this.setState();
         }
-        //this.sendNetworkEdit(this.state.netConnectionFilteredSelected.label, "addnew", this.state.curSettings);
+        //if a Wifi connection, is this an AP or client?
+        if (this.state.netDeviceSelected.type === "wifi") {
+            if(window.confirm('Is this an access point?')) {
+                this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
+                //this.setState({curSettings : {mode: {value: 'adhoc'}}});
+                this.changeHandler({target: {name: "mode", value: "adhoc"}});
+            }
+            else {
+                this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
+                //this.setState({curSettings : {mode: {value: 'infrastructure'}}});
+                this.changeHandler({target: {name: "mode", value: "infrastructure"}});
+            }
+        }
+        event.preventDefault();
+    };
+
+    activateConnection = (event) =>{
+        //add activate network button clicked
+        //if it's a new connection, don't activate
+        if (this.state.netConnectionFilteredSelected.value !== "new") {
+            this.sendNetworkEdit(this.state.netConnectionFilteredSelected.value, "activate", null);
+        }
         event.preventDefault();
     };
 
@@ -226,7 +252,8 @@ class NetworkConfig extends Component {
             wpaType: {value: this.state.netConnectionDetails.wpaType},
             password: {value: this.state.netConnectionDetails.password},
             ssid: {value: this.state.netConnectionDetails.ssid},
-            band: {value: this.state.netConnectionDetails.band}
+            band: {value: this.state.netConnectionDetails.band},
+            mode: {value: this.state.netConnectionDetails.mode}
         }});
     }
 
@@ -239,10 +266,11 @@ class NetworkConfig extends Component {
             <h1>Network Configuration</h1>
             Adapters: <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected}/>
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
-            <button onClick={this.deleteConnection} nameclass="deleteConnection">Delete</button>
-            <button onClick={this.addConnection} nameclass="addConnection">Add new</button>
+            <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>
+            <button onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</button>
+            <button onClick={this.activateConnection} nameclass="activateConnection">Activate</button>
             <form onSubmit={this.handleNetworkSubmit}>
-                <div nameclass="ipconfig" style={{ display: (this.state.showIP && this.state.netConnectionDetails.mode !== "adhoc" && this.state.netConnectionDetails.mode !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
+                <div nameclass="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
                     <label><input type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "auto"}/>DHCP</label>
                     <label><input type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "manual"}/>Static IP</label>
                     <br />
@@ -250,7 +278,7 @@ class NetworkConfig extends Component {
                     <br />
                     <label><input type="text" name="subnet" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.subnet.value}/>Subnet Mask</label>
                 </div>
-                <div nameclass="wificlientconfig" style={{ display: this.state.netConnectionDetails.mode === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
+                <div nameclass="wificlientconfig" style={{ display: this.state.curSettings.mode.value === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
                     <label>
                         <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
                             {this.state.wpaTypes.map((option, index) => (
@@ -259,9 +287,9 @@ class NetworkConfig extends Component {
                         </select>
                     Security</label>
                     <br />
-                    <label><input name="password" type="text" value={this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
+                    <label><input name="password" type="text" disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
                 </div>
-                <div nameclass="wifiapconfig" style={{ display: (this.state.netConnectionDetails.mode === "ap" ||  this.state.netConnectionDetails.mode === "adhoc")? "block" : "none" }}><h3>Wifi Access Point</h3>
+                <div nameclass="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap" ||  this.state.curSettings.mode.value === "adhoc")? "block" : "none" }}><h3>Wifi Access Point</h3>
                     <label><input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text"/>SSID Name</label>
                     <br />
                     <label>
@@ -272,11 +300,19 @@ class NetworkConfig extends Component {
                         </select>
                     Band</label>
                     <br />
-                    <label><input name="password" onChange={this.changeHandler} value={this.state.curSettings.password.value} type="text"/>Password</label>
+                    <label>
+                        <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
+                            {this.state.wpaTypes.map((option, index) => (
+                                <option key={option.value} value={option.value}>{option.text}</option>
+                            ))}
+                        </select>
+                    Security</label>
+                    <br />
+                    <label><input name="password" type="text" disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
                     <br />
                     <label><input name="ipaddress" onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} type="text"/>Starting IP address</label>
                 </div>
-                <input type="submit" value="Save Changes" />
+                <input type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} value="Save Changes" />
                 <input type="button" value="Discard Changes" onClick={this.resetForm}/>
             </form>
         </div>
