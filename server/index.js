@@ -70,6 +70,7 @@ app.post('/api/portmodify', function (req, res) {
     sManager.updateLinkSettings(req.body.user);
 })
 
+//Get details of a network connection by name
 app.post('/api/networkIP', (req, res) => {
     networkManager.getConnectionDetails(req.body.conName, (err, conDetails) => {
         res.setHeader('Content-Type', 'application/json');
@@ -77,6 +78,14 @@ app.post('/api/networkIP', (req, res) => {
         //console.log(ret);
         res.send(JSON.stringify(ret));
     });
+});
+
+//User wants to add/edit/delete network
+app.post('/api/networkmodify', (req, res) => {
+    console.log('Editing network:');
+    console.log(req.body.conAction);
+    console.log(req.body.conName);
+    console.log(req.body.conSettings);
 });
 
 http.listen(3001, () =>
