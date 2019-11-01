@@ -155,25 +155,67 @@ class NetworkConfig extends Component {
         }
     };
 
-    sendNetworkEdit = (conName, action, settings) => {
-        fetch('/api/networkmodify', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                conName: conName,
-                conAction: action,
-                conSettings: settings
-            })
-        });
-
-    };
-
     handleNetworkSubmit = (event) =>{
-        //save network button clicked
-        this.sendNetworkEdit(this.state.netConnectionFilteredSelected.value, "edit", this.state.curSettings);
+        //save network button clicked - so edit or add
+        if (this.state.netConnectionFilteredSelected.value ==='new')
+        {
+            fetch('/api/networkadd', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conSettings: this.state.curSettings,
+                    conName: this.state.netConnectionFilteredSelected.label,
+                    conType: this.state.netDeviceSelected.type,
+                    conAdapter: this.state.netDeviceSelected.value
+                }, (key, value) => {
+                  if (value !== '') return value
+                })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.error == null) {
+                      window.alert("Network Added")
+                  }
+                  else {
+                      window.alert("Error adding network: " + data.error)
+                  }
+                  //and refresh connections list
+                  this.handleStart();
+              })
+              .catch(error => {
+                     window.alert("Error adding network: " + error)
+              });
+        }
+        else {
+            fetch('/api/networkedit', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conName: this.state.netConnectionFilteredSelected.value,
+                    conSettings: this.state.curSettings,
+                    }, (key, value) => {
+                      if (value !== '') return value
+                })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.error == null) {
+                      window.alert("Network Edited")
+                  }
+                  else {
+                      window.alert("Error editing network: " + data.error)
+                  }
+                  //and refresh connections list
+                  this.handleStart();
+              })
+              .catch(error => {
+                     window.alert("Error editing network: " + error)
+              });
+        }
         event.preventDefault();
     };
 
@@ -186,7 +228,29 @@ class NetworkConfig extends Component {
                 this.handleAdapterChange(this.state.netDeviceSelected, {action: "select-option"})
             }
             else {
-                this.sendNetworkEdit(this.state.netConnectionFilteredSelected.value, "delete", null);
+                fetch('/api/networkdelete', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conName: this.state.netConnectionFilteredSelected.value,
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.error == null) {
+                          window.alert("Network Deleted")
+                      }
+                      else {
+                          window.alert("Error deleting network: " + data.error)
+                      }
+                      //and refresh connections list
+                      this.handleStart();
+                  })
+                  .catch(error => {
+                         window.alert("Error deleting network: " + error)
+                  });
             }
         }
         event.preventDefault();
@@ -197,18 +261,18 @@ class NetworkConfig extends Component {
         const enteredName = prompt('Please enter new connection name');
         if (enteredName !== '' && enteredName !== null) {
             this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-        }
-        //if a Wifi connection, is this an AP or client?
-        if (this.state.netDeviceSelected.type === "wifi") {
-            if(window.confirm('Is this an access point?')) {
-                this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-                //this.setState({curSettings : {mode: {value: 'adhoc'}}});
-                this.changeHandler({target: {name: "mode", value: "adhoc"}});
-            }
-            else {
-                this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-                //this.setState({curSettings : {mode: {value: 'infrastructure'}}});
-                this.changeHandler({target: {name: "mode", value: "infrastructure"}});
+            //if a Wifi connection, is this an AP or client?
+            if (this.state.netDeviceSelected.type === "wifi") {
+                if(window.confirm('Is this an access point? (OK = Yes)')) {
+                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
+                    //this.setState({curSettings : {mode: {value: 'ap'}}});
+                    this.changeHandler({target: {name: "mode", value: "ap"}});
+                }
+                else {
+                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
+                    //this.setState({curSettings : {mode: {value: 'infrastructure'}}});
+                    this.changeHandler({target: {name: "mode", value: "infrastructure"}});
+                }
             }
         }
         event.preventDefault();
@@ -217,11 +281,35 @@ class NetworkConfig extends Component {
     activateConnection = (event) =>{
         //add activate network button clicked
         //if it's a new connection, don't activate
+        //and refresh network information when done
         if (this.state.netConnectionFilteredSelected.value !== "new") {
-            this.sendNetworkEdit(this.state.netConnectionFilteredSelected.value, "activate", null);
+            fetch('/api/networkactivate', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conName: this.state.netConnectionFilteredSelected.value,
+                })
+            }).then(response => response.json())
+                  .then(data => {
+                      if (data.error == null) {
+                          window.alert("Network Activated")
+                      }
+                      else {
+                          window.alert("Error activating network: " + data.error)
+                      }
+                      //and refresh connections list
+                      this.handleStart();
+                  })
+                  .catch(error => {
+                         window.alert("Error activating network: " + error)
+                  });
         }
         event.preventDefault();
     };
+
 
     changeHandler = event => {
         //form change handler
@@ -279,6 +367,8 @@ class NetworkConfig extends Component {
                     <label><input type="text" name="subnet" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.subnet.value}/>Subnet Mask</label>
                 </div>
                 <div nameclass="wificlientconfig" style={{ display: this.state.curSettings.mode.value === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
+                    <label><input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text"/>SSID Name</label>
+                    <br />
                     <label>
                         <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
                             {this.state.wpaTypes.map((option, index) => (

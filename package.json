@@ -6,6 +6,7 @@
   "dependencies": {
     "bootstrap": "^4.3.1",
     "deasync": "^0.1.15",
+    "express-validator": "^6.2.0",
     "install": "^0.13.0",
     "npm": "^6.10.1",
     "prop-types": "^15.7.2",
