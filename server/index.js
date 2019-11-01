@@ -5,6 +5,8 @@ const pino = require('express-pino-logger')();
 const serialManager = require('./serialManager');
 const networkManager = require('./networkManager');
 const analogManager = require('./analogPi');
+const aboutPage = require('./aboutInfo');
+
 
 const app = express();
 const http = require("http").Server(app)
@@ -27,6 +29,34 @@ app.get('/api/portstatus', (req, res) => {
     sManager.refreshPorts();
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify({ portStatus: sManager.ports, ifaces: sManager.iface}));
+});
+
+app.get('/api/softwareinfo', (req, res) => {
+    aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, err) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ OSVersion: OSV, Nodejsversion: NodeV, rpanionversion: RpanionV}));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ OSVersion: err, Nodejsversion: err, rpanionversion: err}));
+        }
+    });
+
+});
+
+app.get('/api/hardwareinfo', (req, res) => {
+    aboutPage.getHardwareInfo((RAM, CPU, err) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ CPUName: CPU, RAMName: RAM}));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ CPUName: err, RAMName: err}));
+        }
+    });
+
 });
 
 io.on('connection', function(socket) {
