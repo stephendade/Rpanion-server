@@ -7,7 +7,7 @@ import SerialPorts from './serialports.js';
 import NetworkConfig from './networkconfig.js';
 import OldApp from './old.js';
 import Analog from './analog.js';
-
+import Video from './video.js';
 
 function AppRouter() {
   return (
@@ -20,6 +20,7 @@ function AppRouter() {
                     <a className='list-group-item list-group-item-action bg-light' href="/serial">Serial Port Routing</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/network">Network Config</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/analog">Analog Ports</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/video">Video Streaming</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/about">About</a>
                 </div>
             </div>
@@ -32,6 +33,7 @@ function AppRouter() {
                 <Route exact path="/serial" component={SerialPorts} />
                 <Route exact path="/network" component={NetworkConfig} />
                 <Route exact path="/about" component={About} />
+                <Route exact path="/video" component={Video} />
                 <Route exact path="/analog" component={Analog} />
                 <Route component={NoMatch} />
             </Switch>

@@ -7,6 +7,8 @@ const networkManager = require('./networkManager');
 const analogManager = require('./analogPi');
 const aboutPage = require('./aboutInfo');
 
+const videoStream = require('./videostream');
+
 
 const app = express();
 const http = require("http").Server(app)
@@ -15,6 +17,8 @@ var io = require('socket.io')(http);
 const { check, validationResult } = require('express-validator');
 
 const sManager = new serialManager();
+
+const vManager = new videoStream();
 
 var analogLoop = null;
 
@@ -40,6 +44,28 @@ app.get('/api/softwareinfo', (req, res) => {
         else {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ OSVersion: err, Nodejsversion: err, rpanionversion: err}));
+        }
+    });
+
+});
+
+app.get('/api/videodevices', (req, res) => {
+    vManager.getVideoDevices((err, devices) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ dev: devices,
+                                      vidDeviceSelected: devices[0],
+                                      vidres: devices[0].caps,
+                                      vidResSelected: devices[0].caps[0],
+                                      selectFramerates: devices[0].caps[0].selectFramerates,
+                                      framerateSelected: devices[0].caps[0].selectFramerates[0],
+                                      streamingStatus: vManager.active,
+                                      streamAddress: vManager.deviceAddress,
+                                      errors: null}));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ errors: err}));
         }
     });
 
@@ -98,6 +124,25 @@ app.get('/api/networkconnections', (req, res) => {
 // Route that receives a POST request
 app.post('/api/portmodify', [], function (req, res) {
     sManager.updateLinkSettings(req.body.user);
+})
+
+app.post('/api/startstopvideo', [check('device'),
+                                 check('height').isInt({min: 1}),
+                                 check('width').isInt({min: 1}),
+                                 check('framerate').isInt({min: 1})], (req, res) => {
+    //user wants to start/stop video streaming
+    vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.framerate, (err, status, addresses) => {
+        if(!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {streamingStatus: status, streamAddresses: addresses};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {streamingStatus: false, streamAddresses: ["Error " + err]};
+            res.send(JSON.stringify(ret));
+        }
+    });
 })
 
 //Get details of a network connection by connection ID
