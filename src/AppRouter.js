@@ -8,6 +8,7 @@ import NetworkConfig from './networkconfig.js';
 import OldApp from './old.js';
 import Analog from './analog.js';
 import Video from './video.js';
+import FCConfig from './flightcontroller.js';
 
 function AppRouter() {
   return (
@@ -18,6 +19,7 @@ function AppRouter() {
                     <a className='list-group-item list-group-item-action bg-light' href="/">Home</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/old">Old App</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/serial">Serial Port Routing</a>
+                    <a className='list-group-item list-group-item-action bg-light' href="/controller">Flight Controller</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/network">Network Config</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/analog">Analog Ports</a>
                     <a className='list-group-item list-group-item-action bg-light' href="/video">Video Streaming</a>
@@ -31,6 +33,7 @@ function AppRouter() {
                 <Route exact path="/old" component={OldApp} />
                 <Route exact path="/" component={Home} />
                 <Route exact path="/serial" component={SerialPorts} />
+                <Route exact path="/controller" component={FCConfig} />
                 <Route exact path="/network" component={NetworkConfig} />
                 <Route exact path="/about" component={About} />
                 <Route exact path="/video" component={Video} />

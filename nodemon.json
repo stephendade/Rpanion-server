@@ -1,4 +1,4 @@
 {
   "verbose": false,
-  "ignore": ["serialSettings.json"]
+  "ignore": ["serialSettings.json", "FCSettings.json"]
 }

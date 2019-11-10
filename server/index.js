@@ -8,6 +8,7 @@ const analogManager = require('./analogPi');
 const aboutPage = require('./aboutInfo');
 
 const videoStream = require('./videostream');
+const fcManagerClass = require('./flightController');
 
 
 const app = express();
@@ -20,7 +21,10 @@ const sManager = new serialManager();
 
 const vManager = new videoStream();
 
+const fcManager = new fcManagerClass();
+
 var analogLoop = null;
+var FCStatusLoop = null;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(pino);
@@ -85,11 +89,61 @@ app.get('/api/hardwareinfo', (req, res) => {
 
 });
 
+app.get('/api/FCDetails', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active) => {
+        if (!err) {
+            console.log("Sending");
+            console.log(devices);
+            res.send(JSON.stringify({ telemetryStatus: active,
+                                      serialPorts: devices,
+                                      baudRates: bauds,
+                                      serialPortSelected: seldevice,
+                                      mavVersions: mavers,
+                                      mavVersionSelected: selmav,
+                                      baudRateSelected: selbaud }));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ serialPortSelected: err, baudRateSelected: err}));
+        }
+    });
+});
+
+app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON()], function (req, res) {
+    //User wants to start/stop FC telemetry
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+
+    fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), (err, isSuccess) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            //console.log(isSuccess);
+            res.send(JSON.stringify({telemetryStatus: isSuccess}));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ telemetryStatus: false}));
+
+        }
+    });
+});
+
+app.post('/api/FCReboot', function (req, res) {
+    fcManager.rebootFC();
+});
+
 io.on('connection', function(socket) {
     //only set interval if not already set
     if (analogLoop !== null) {
         return;
     }
+    if (FCStatusLoop !== null) {
+        return;
+    }
+
     // send the analog readings out every 1 second
     analogLoop = setInterval(function() {
         analogManager.getAnalogReading((err, readings) => {
@@ -102,6 +156,10 @@ io.on('connection', function(socket) {
         });
         sManager.refreshPorts();
         io.sockets.emit('serialstatus', { portStatus: sManager.ports, ifaces: sManager.iface});
+    }, 1000);
+
+    FCStatusLoop = setInterval(function() {
+        io.sockets.emit('FCStatus', fcManager.getSystemStatus());
     }, 1000);
 });
 
@@ -126,10 +184,14 @@ app.post('/api/portmodify', [], function (req, res) {
     sManager.updateLinkSettings(req.body.user);
 })
 
-app.post('/api/startstopvideo', [check('device'),
+app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
                                  check('height').isInt({min: 1}),
                                  check('width').isInt({min: 1}),
                                  check('framerate').isInt({min: 1})], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
     //user wants to start/stop video streaming
     vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.framerate, (err, status, addresses) => {
         if(!err) {
