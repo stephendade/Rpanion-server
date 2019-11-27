@@ -1,22 +1,28 @@
-var events = require('events');
 //Mavlink Manager
+var events = require('events');
+var udp = require('dgram');
 
 class mavManager {
-    constructor(version) {
-        this.mav = null
+    constructor(version, outputs) {
+        this.mav = null;
+        this.buf = 0;
         if (version == 1) {
-            var mavlink = require('./mavlink_common_v1');
-            this.mav = new MAVLink(null, 255, 0);
+            //{mavlink, MAVLinkProcessor}
+            var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v1');
+            this.mav = new MAVLinkProcessor(null, 255, 0);
         }
         else if (version == 2){
-            var mavlink = require('./mavlink_common_v2');
-            this.mav = new MAVLink(null, 255, 0);
+            var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v2');
+            this.mav = new MAVLinkProcessor(null, 255, 0);
         }
         else {
             console.log("Error - no valid MAVLink version");
         }
 
         this.eventEmitter = new events.EventEmitter();
+
+        //are we in a system reboot?
+        this.isRebooting = false;
 
         //System status
         this.statusNumRxPackets = 0;
@@ -29,8 +35,42 @@ class mavManager {
         this.targetSystem = null;
         this.targetComponent = null;
 
+        //outputs
+        this.outputs = outputs;
+        this.udpStream = udp.createSocket('udp4');
+        this.UDPMav = [];
+
+        //each udp output has a mavlink processor
+        //this ensures non-fragmented mavlink packets from the clients
+        for (var i = 0, len = this.outputs.length; i < len; i++) {
+            console.log("New UDP output to " + this.outputs[i].IP + ":" + this.outputs[i].port);
+            var newmav = new MAVLinkProcessor(null, 255, 0);
+            newmav.on('message', (msg) => {
+                this.eventEmitter.emit('sendData', msg.msgbuf);
+            });
+            this.UDPMav.push(newmav);
+        }
+
+        //event for recieving udp messages from clients (ie commands)
+        this.udpStream.on('message', (msg, info) => {
+            //check it's from a valid client
+            for (var i = 0, len = this.outputs.length; i < len; i++) {
+                if (this.UDPMav.length == this.outputs.length && info.address === this.outputs[i].IP && parseInt(info.port) === this.outputs[i].port) {
+                    //decode and send to FC
+                    this.UDPMav[i].parseBuffer(msg);
+                }
+            }
+        });
+
+        this.mav.on('error', function (e) {
+            //console.log(e);
+        });
+
         //what to do when we get a message
         this.mav.on('message', (msg) => {
+            if (this.statusNumRxPackets == 0) {
+                this.sendDSRequest();
+            }
             this.statusNumRxPackets += 1;
             this.timeofLastPacket = (Date.now().valueOf());
             if (msg.name === "HEARTBEAT") {
@@ -39,16 +79,31 @@ class mavManager {
                 this.statusVehType = msg.type;
 
                 //set the target system/comp ID if needed
-                if (this.targetSystem !== null) {
-                    this.targetSystem = srcSystem;
-                    this.targetComponent = srcComponent;
+                if (this.targetSystem === null) {
+                    console.log("Vehicle is S/C: " + msg.header.srcSystem + "/" + msg.header.srcComponent);
+                    this.targetSystem = msg.header.srcSystem;
+                    this.targetComponent = msg.header.srcComponent;
                 }
             }
-            else if (msg.type === "STATUSTEXT") {
-                console.log(msg.text);
-                this.statusText += msg.text;
+            else if (msg.name == "STATUSTEXT") {
+                //Remove whitespace
+                this.statusText += msg.text.trim().replace(/[^ -~]+/g, "") + "\n";
             }
-            //console.log(msg.name);
+            else if (msg.name == "POWER_STATUS") {
+                //console.log(msg);
+                //this.statusText += msg.text;
+            }
+            //and send on to UDP clients - very easy. No mavlink processor required
+            for (var i = 0, len = this.outputs.length; i < len; i++) {
+                this.udpStream.send(msg.msgbuf,this.outputs[i].port,this.outputs[i].IP,function(error){
+                    if(error) {
+                        //console.log('UDP Error');
+                    }
+                    else {
+                        //console.log('Data sent !!!');
+                    }
+                });
+            }
         });
     }
 
@@ -59,17 +114,35 @@ class mavManager {
 
     sendReboot() {
         //create a reboot packet
-        var msg = new mavlink.messages.command_long(1,0,mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
+        var msg = new mavlink.messages.command_long(this.targetSystem,this.targetComponent,mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
                                        1, 0, 0, 0, 0, 0, 0);
-        var buf = new Buffer(msg.pack(this.mav));
-        this.eventEmitter.emit('sendData', buf);
+        this.isRebooting = true;
+        this.eventEmitter.emit('sendData', msg.pack(this.mav));
     }
 
     sendDSRequest() {
-        //create a reboot packet
-        var msg = new mavlink.messages.request_data_stream(1, 1, mavlink.MAV_DATA_STREAM_ALL, 1, 1);
-        var buf = new Buffer(msg.pack(this.mav));
-        this.eventEmitter.emit('sendData', buf);
+        //create a datastream request packet
+        console.log("Sent DS");
+        var msg = new mavlink.messages.request_data_stream(this.targetSystem,this.targetComponent, mavlink.MAV_DATA_STREAM_ALL, 1, 1);
+        this.eventEmitter.emit('sendData', msg.pack(this.mav));
+    }
+
+    restartUDP(udpendpoints) {
+        //restart all UDP endpoints
+        this.outputs = udpendpoints;
+
+        this.UDPMav = [];
+
+        //each udp output has a mavlink processor
+        //this ensures non-fragmented mavlink packets from the clients
+        for (var i = 0, len = this.outputs.length; i < len; i++) {
+            console.log("Restarting UDP output to " + this.outputs[i].IP + ":" + this.outputs[i].port);
+            var newmav = new MAVLinkProcessor(null, 255, 0);
+            newmav.on('message', (msg) => {
+                this.eventEmitter.emit('sendData', msg.msgbuf);
+            });
+            this.UDPMav.push(newmav);
+        }
     }
 
     autopilotFromID() {
@@ -87,6 +160,7 @@ class mavManager {
             return "PX4";
             break;
           default:
+            console.log("Got FWID " + this.statusFWName);
             return "Unknown";
         }
     }
@@ -130,6 +204,7 @@ class mavManager {
             return "Tricopter";
             break;
           default:
+            console.log("Got VEHID " + this.statusVehType);
             return "Unknown";
         }
     }

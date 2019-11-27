@@ -89,6 +89,12 @@ app.get('/api/hardwareinfo', (req, res) => {
 
 });
 
+
+app.get('/api/FCOutputs', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({ UDPoutputs: fcManager.getUDPOutputs() }));
+});
+
 app.get('/api/FCDetails', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active) => {
@@ -133,6 +139,30 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
 
 app.post('/api/FCReboot', function (req, res) {
     fcManager.rebootFC();
+});
+
+app.post('/api/addudpoutput', [check('newoutputIP').isIP(), check('newoutputPort').isInt({min: 1})], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+
+    var newOutput = fcManager.addUDPOutput(req.body.newoutputIP, parseInt(req.body.newoutputPort));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({ UDPoutputs: newOutput }));
+});
+
+app.post('/api/removeudpoutput', [check('removeoutputIP').isIP(), check('removeoutputPort').isInt({min: 1})], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(422).json({ errors: errors.array() });
+    }
+
+    var newOutput = fcManager.removeUDPOutput(req.body.removeoutputIP, parseInt(req.body.removeoutputPort));
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({ UDPoutputs: newOutput }));
 });
 
 io.on('connection', function(socket) {

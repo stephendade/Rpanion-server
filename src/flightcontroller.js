@@ -3,6 +3,9 @@ import { Helmet } from 'react-helmet'
 import Select from 'react-select';
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
+import BootstrapTable from 'react-bootstrap-table-next';
+
+import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 
 class FCPage extends Component {
     constructor(props) {
@@ -17,7 +20,20 @@ class FCPage extends Component {
             mavVersionSelected: null,
             socketioStatus: false,
             FCStatus: {},
+            UDPoutputs: [],
+            addrow: ""
         }
+
+        this.columns = [{
+          dataField: 'IPPort',
+          text: 'Destination IP:Port'
+          },
+          {
+          dataField: 'action',
+          text: 'Action',
+          isDummyField: true,
+          formatter: this.udpbuttonFormatter
+          }];
 
         var socket = io();
 
@@ -35,6 +51,7 @@ class FCPage extends Component {
 
     componentDidMount() {
         fetch(`/api/FCDetails`).then(response => response.json()).then(state => {this.setState(state)});
+        fetch(`/api/FCOutputs`).then(response => response.json()).then(state => {this.setState(state)});
     }
 
     handleSerialPortChange = (value, action) => {
@@ -76,6 +93,45 @@ class FCPage extends Component {
         });
     }
 
+    addUdpOutput = (event) =>{
+        //add a new udp output
+        fetch('/api/addudpoutput', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                newoutputIP: this.state.addrow.split(":")[0],
+                newoutputPort: this.state.addrow.split(":")[1]
+            })
+        }).then(response => response.json()).then(state => {this.setState(state)})
+    }
+
+    udpbuttonFormatter = (cell, row, rowIndex, formatExtraData) => {
+        return <button id={row.id} onClick={() => this.removeUdpOutput(row)}>Delete</button>;
+    }
+
+    removeUdpOutput = (val) =>{
+        //remove a udp output
+        fetch('/api/removeudpoutput', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                removeoutputIP: val.IPPort.split(":")[0],
+                removeoutputPort: val.IPPort.split(":")[1]
+            })
+        }).then(response => response.json()).then(state => {this.setState(state)})
+    }
+
+    changeaddrow = event => {
+        const value = event.target.value;
+        this.setState({addrow: value});
+    }
+
     render() {
       return (
             <div>
@@ -87,14 +143,18 @@ class FCPage extends Component {
               Baud Rate: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected}/>
               MAVLink Version: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected}/>
               <button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</button>
-              <h2>Flight Controller Outputs</h2>
+              <h2>Flight Controller UDP Outputs</h2>
+                  <BootstrapTable condensed keyField='IPPort' data={ this.state.UDPoutputs } columns={ this.columns }/>
+                  <label>Add new output<input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><button onClick={this.addUdpOutput}>Add</button></label>
               <h2>Flight Controller Status</h2>
-              <p>Packets Recieved: {this.state.FCStatus.numpackets}</p>
-              <p>Connection Status: {this.state.FCStatus.conStatus}</p>
-              <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
-              <p>Vehicle Firmware: {this.state.FCStatus.FW}</p>
-              <textarea rows = "5" cols = "100" value={this.state.statusText} ></textarea>
-              <button disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</button>
+                  <p>Packets Recieved: {this.state.FCStatus.numpackets}</p>
+                  <p>Connection Status: {this.state.FCStatus.conStatus}</p>
+                  <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
+                  <p>Vehicle Firmware: {this.state.FCStatus.FW}</p>
+                  <label>Console Output:
+                    <textarea readOnly rows = "5" cols = "100" value={this.state.FCStatus.statusText}></textarea>
+                  </label>
+                  <button disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</button>
               <SocketIOFooter socketioStatus={this.state.socketioStatus}/>
             </div>
           );

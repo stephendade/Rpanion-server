@@ -2,7 +2,6 @@ const SerialPort = require('serialport');
 const fs = require('fs');
 const path = require('path');
 
-//var MAVLink = require('../mavlink//mavlink.js');
 const mavManager = require('../mavlink/mavManager.js');
 
 class FCDetails {
@@ -24,6 +23,14 @@ class FCDetails {
         this.port = null;
         this.m = null;
 
+        //Tracking time of last packet recived
+        this.lastDataTime = (Date.now().valueOf());
+        this.intervalObj = null;
+
+        //UDP Outputs
+        this.outputs = [{IP: '127.0.0.1', port: 1234},
+                      {IP: '172.56.1.4', port: 5678}];
+
         //find all serial devices
         this.getSerialDevicesSync();
 
@@ -34,7 +41,7 @@ class FCDetails {
             }
             else {
                 try {
-                    this.activeDevice = JSON.parse(data);
+                    [this.activeDevice, this.outputs] = JSON.parse(data);
                     if (this.activeDevice !== null) {
                         //restart link if saved serial device is found
                         this.getSerialDevices((err, devices, bauds, seldevice, selbaud, active) => {
@@ -66,6 +73,54 @@ class FCDetails {
         });
     }
 
+    getUDPOutputs() {
+        //get list of current UDP outputs
+        var ret = [];
+        for (var i = 0, len = this.outputs.length; i < len; i++) {
+            ret.push({IPPort: this.outputs[i].IP + ":" + this.outputs[i].port});
+        }
+        return ret;
+    }
+
+    addUDPOutput(newIP, newPort) {
+        //add a new udp output, if not already in
+        //check if this ip:port is already in the list
+        for (var i = 0, len = this.outputs.length; i < len; i++) {
+            if (this.outputs[i].IP == newIP && this.outputs[i].port == newPort) {
+                return this.getUDPOutputs();
+            }
+        }
+        //add it in
+        this.outputs.push({IP: newIP, port: newPort});
+        console.log("Added UDP Output " + newIP + ":" + newPort);
+
+        //restart udp outputs
+        this.m.restartUDP(this.outputs);
+
+        this.saveSerialSettings();
+        return this.getUDPOutputs();
+    }
+
+    removeUDPOutput(remIP, remPort) {
+        //remove new udp output
+        //check if this ip:port is already in the list
+        for (var i = 0, len = this.outputs.length; i < len; i++) {
+            if (this.outputs[i].IP == remIP && this.outputs[i].port == remPort) {
+                //and remove
+                this.outputs.splice(i, 1);
+                console.log("Removed UDP Output " + remIP + ":" + remPort);
+
+                //restart udp outputs
+                this.m.restartUDP(this.outputs);
+
+                this.saveSerialSettings();
+                return this.getUDPOutputs();
+            }
+        }
+
+        return this.getUDPOutputs();
+    }
+
     getSystemStatus() {
         //get the system status
         if (this.m !== null) {
@@ -92,6 +147,13 @@ class FCDetails {
         }
     }
 
+    checkConnected() {
+        //check if the FC is still connected, if not try reconnecting
+        if (this.port && !this.port.isOpen && this.active) {
+            this.startLink();
+        }
+    }
+
     startLink(callback) {
         //start the serial link
         console.log("Opening Link " + this.activeDevice.serial.value + " @ " + this.activeDevice.baud.value + ", MAV v" + this.activeDevice.mavversion.value);
@@ -105,8 +167,20 @@ class FCDetails {
                 return callback(err.message, false)
             }
             this.active = true;
-            this.m = new mavManager(this.activeDevice.mavversion.value);
+            this.m = new mavManager(this.activeDevice.mavversion.value, this.outputs);
 
+            //timeout func
+            this.lastDataTime = (Date.now().valueOf());
+            this.intervalObj = setInterval(() => {
+                //check for timeouts in serial link
+                if (this.m.isRebooting && this.active && (Date.now().valueOf()) - this.lastDataTime > 2000) {
+                    console.log('Trying to reconnect FC...');
+                    this.closeLink((err) => {
+                        this.startLink((err) => {
+                        });
+                    });
+                }
+            }, 1000);
             this.m.eventEmitter.on('sendData', (buffer) => {
                 if (this.port) {
                     this.port.write(buffer, function(err) {
@@ -121,6 +195,7 @@ class FCDetails {
         });
         // Switches the port into "flowing mode"
         this.port.on('data', (data) => {
+            this.lastDataTime = (Date.now().valueOf());
             var retArray = this.m.parseBuffer(data);
         });
     }
@@ -132,12 +207,14 @@ class FCDetails {
             this.active = false;
             console.log("Closed Serial");
             this.m = null;
+            clearInterval(this.intervalObj);
             return callback(null)
         }
         else if (this.port) {
             this.active = false;
             console.log("Already Closed Serial");
             this.m = null;
+            clearInterval(this.intervalObj);
             return callback(null)
         }
     }
@@ -246,7 +323,7 @@ class FCDetails {
 
     saveSerialSettings() {
         //Save the current settings to file
-        let data = JSON.stringify(this.activeDevice);
+        let data = JSON.stringify([this.activeDevice, this.outputs]);
 
         fs.writeFile(this.filesavepath, data, (err) => {
             if (err) throw err;
