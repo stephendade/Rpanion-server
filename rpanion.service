@@ -1,0 +1,12 @@
+[Unit]
+Description=Rpanion Server Service
+After=network.target
+
+[Service]
+WorkingDirectory=/home/rpanion-server
+ExecStart=/usr/bin/npm run dev
+Restart=on-failure
+User=pi
+
+[Install]
+WantedBy=multi-user.target
