@@ -2,9 +2,7 @@ const express = require('express');
 const compression = require('compression');
 const bodyParser = require('body-parser');
 const pino = require('express-pino-logger')();
-const serialManager = require('./serialManager');
 const networkManager = require('./networkManager');
-const analogManager = require('./analogPi');
 const aboutPage = require('./aboutInfo');
 
 const videoStream = require('./videostream');
@@ -17,13 +15,11 @@ const http = require("http").Server(app)
 var io = require('socket.io')(http);
 const { check, validationResult } = require('express-validator');
 
-const sManager = new serialManager();
 
 const vManager = new videoStream();
 
 const fcManager = new fcManagerClass();
 
-var analogLoop = null;
 var FCStatusLoop = null;
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -32,12 +28,6 @@ app.use(pino);
 // Simply pass `compression` as an Express middleware!
 app.use(compression());
 app.use(bodyParser.json());
-
-app.get('/api/portstatus', (req, res) => {
-    sManager.refreshPorts();
-    res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify({ portStatus: sManager.ports, ifaces: sManager.iface}));
-});
 
 app.get('/api/softwareinfo', (req, res) => {
     aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, err) => {
@@ -167,27 +157,11 @@ app.post('/api/removeudpoutput', [check('removeoutputIP').isIP(), check('removeo
 
 io.on('connection', function(socket) {
     //only set interval if not already set
-    if (analogLoop !== null) {
-        return;
-    }
     if (FCStatusLoop !== null) {
         return;
     }
 
-    // send the analog readings out every 1 second
-    analogLoop = setInterval(function() {
-        analogManager.getAnalogReading((err, readings) => {
-            if (err) {
-                io.sockets.emit('analogstatus', { errormessage: err.toString() });
-            }
-            else {
-                io.sockets.emit('analogstatus', { portStatus: readings, errormessage: "" });
-            }
-        });
-        sManager.refreshPorts();
-        io.sockets.emit('serialstatus', { portStatus: sManager.ports, ifaces: sManager.iface});
-    }, 1000);
-
+    // send Flight Controller status out 1 per second
     FCStatusLoop = setInterval(function() {
         io.sockets.emit('FCStatus', fcManager.getSystemStatus());
     }, 1000);
@@ -208,11 +182,6 @@ app.get('/api/networkconnections', (req, res) => {
         res.send(JSON.stringify(ret));
     });
 });
-
-// Route that receives a POST request
-app.post('/api/portmodify', [], function (req, res) {
-    sManager.updateLinkSettings(req.body.user);
-})
 
 app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
                                  check('height').isInt({min: 1}),
