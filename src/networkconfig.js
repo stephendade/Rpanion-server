@@ -128,6 +128,10 @@ class NetworkConfig extends Component {
     handleConnectionChange = (value, action) => {
         //on a device selection change, re-fill the connections dialog
         //and open up the applicable divs
+        if (value === null) {
+            this.setState({showIP: false});
+            return;
+        }
 
         if (action.action === 'select-option') {
             fetch('/api/networkIP', {
@@ -354,11 +358,11 @@ class NetworkConfig extends Component {
             <h1>Network Configuration</h1>
             Adapters: <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected}/>
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
-            <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>
+            <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>
             <button onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</button>
-            <button onClick={this.activateConnection} nameclass="activateConnection">Activate</button>
-            <form onSubmit={this.handleNetworkSubmit}>
-                <div nameclass="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
+            <button onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null} nameclass="activateConnection">Activate</button>
+            <form onSubmit={this.handleNetworkSubmit} style={{display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none"}}>
+                <div nameclass="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none"}}><h3>IP Address</h3>
                     <label><input type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "auto"}/>DHCP</label>
                     <label><input type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "manual"}/>Static IP</label>
                     <br />
