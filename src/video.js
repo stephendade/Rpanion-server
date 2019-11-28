@@ -11,8 +11,6 @@ class VideoPage extends Component {
             vidDeviceSelected: this.props.vidDeviceSelected,
             vidres: [],
             vidResSelected: this.props.vidResSelected,
-            selectFramerates: [],
-            framerateSelected: this.props.framerateSelected,
             streamingStatus: this.props.streamingStatus,
             streamAddresses: []
         }
@@ -32,15 +30,7 @@ class VideoPage extends Component {
 
     handleResChange = (value, action) => {
         //resolution box new selected value
-        this.setState({vidResSelected: value,
-                       selectFramerates: value.selectFramerates});
-        this.handleRateChange(value.selectFramerates[0], "");
-    }
-
-    handleRateChange = (value, action) => {
-        //new framerate selected
-        //this.setState({framerateSelected: event.target.value});
-        this.setState({framerateSelected: value});
+        this.setState({vidResSelected: value});
     }
 
     handleStreaming = (event) => {
@@ -55,7 +45,7 @@ class VideoPage extends Component {
                 device: this.state.vidDeviceSelected.value,
                 height: this.state.vidResSelected.height,
                 width: this.state.vidResSelected.width,
-                framerate: this.state.framerateSelected.value,
+                format: this.state.vidResSelected.format,
              })
         }).then(response => response.json()).then(state => {this.setState(state)});
     }
@@ -69,7 +59,6 @@ class VideoPage extends Component {
                 <h1>Video Streaming Configuration</h1>
                 Device: <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected}/>
                 Resolution: <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
-                Framerate: <Select isDisabled={this.state.streamingStatus} options={this.state.selectFramerates} onChange={this.handleRateChange} value={this.state.framerateSelected}/>
                 <button onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</button>
                 <div nameclass="streamdetails" style={{ display: (this.state.streamAddresses.length > 0) ? "block" : "none"}}>
                     <p>Streaming Addresses (for VLC, etc):</p>

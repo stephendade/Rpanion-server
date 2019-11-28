@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""
+Find device caps
+Requires gst
+"""
+
+import sys
+import json
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst, GLib
+
+Gst.init(sys.argv)
+
+device_provider = Gst.DeviceProviderFactory.get_by_name("v4l2deviceprovider")
+devices = device_provider.get_devices()
+
+retDevices = []
+
+for device in devices:
+    path = device.get_properties().get_string("device.path")
+    name = device.get_properties().get_string("v4l2.device.card")
+    caps = []
+
+    #Get better name for camera
+    if "UVC Camera (" in name:
+        vendorproduct = name.split("(")[1].split(")")[0]
+        import subprocess
+        process = subprocess.Popen(['lsusb', '-d', vendorproduct], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        if stderr == b'' and vendorproduct in stdout.decode("utf-8"):
+            name = stdout.decode("utf-8").split(vendorproduct)[1].strip()
+
+    capsGST = device.get_caps()
+    
+    # enumerate available resolutions
+    for i in range(capsGST.get_size()):
+        structure = capsGST.get_structure(i)
+        # Check if it's a Rpi Cam V2, if so manually add modes
+        if structure.to_string() == "video/x-h264, stream-format=(string)byte-stream, alignment=(string)au, width=(int)[ 32, 3280, 2 ], height=(int)[ 32, 2464, 2 ], framerate=(fraction)[ 1/1, 90/1 ];":
+            caps = []
+            caps.append({'height': 1080, 'width': 1920, 'format': 'video/x-h264'})
+            caps.append({'height': 922, 'width': 1640, 'format': 'video/x-h264'})
+            caps.append({'height': 720, 'width': 1280, 'format': 'video/x-h264'})
+            caps.append({'height': 480, 'width': 640, 'format': 'video/x-h264'})
+            name = "Raspberry Pi Camera (V2)"
+            break
+        if structure.get_name() in ['video/x-raw', 'video/x-h264'] :
+            width = structure.get_int('width').value
+            height = structure.get_int('height').value
+            caps.append({'value': i, 'label': "{0}x{1}".format(width, height), 'height': int(height), 'width': int(width), 'format': structure.get_name()})
+            
+    retDevices.append({'value': path, 'label': name, 'caps': caps})
+
+
+print(json.dumps(retDevices))
+
+

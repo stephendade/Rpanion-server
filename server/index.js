@@ -51,8 +51,6 @@ app.get('/api/videodevices', (req, res) => {
                                       vidDeviceSelected: devices[0],
                                       vidres: devices[0].caps,
                                       vidResSelected: devices[0].caps[0],
-                                      selectFramerates: devices[0].caps[0].selectFramerates,
-                                      framerateSelected: devices[0].caps[0].selectFramerates[0],
                                       streamingStatus: vManager.active,
                                       streamAddress: vManager.deviceAddress,
                                       errors: null}));
@@ -186,13 +184,13 @@ app.get('/api/networkconnections', (req, res) => {
 app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
                                  check('height').isInt({min: 1}),
                                  check('width').isInt({min: 1}),
-                                 check('framerate').isInt({min: 1})], (req, res) => {
+                                 check('format').isIn(['video/x-raw', 'video/x-h264'])], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(422).json({ errors: errors.array() });
     }
     //user wants to start/stop video streaming
-    vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.framerate, (err, status, addresses) => {
+    vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.format, (err, status, addresses) => {
         if(!err) {
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: status, streamAddresses: addresses};
