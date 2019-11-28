@@ -29,7 +29,9 @@ The React application will run on port 3000 and the server port 3001.
 
 Requirements:
 
-sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps
+sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip
+
+pip3 install netifaces --user
 
 Running as a service:
 sudo cp rpanion.service /etc/systemd/system
