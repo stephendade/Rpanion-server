@@ -253,7 +253,7 @@ class FCDetails {
             }
             //for the Ras Pi's inbuilt UART
             if (fs.existsSync('/dev/serial0')) {
-                ret.push('/dev/serial0');
+                this.serialDevices.push({value: '/dev/serial0', label: '/dev/serial0', pnp: ''});
             }
 
             //has the active device been disconnected?
