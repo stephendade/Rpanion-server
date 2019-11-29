@@ -49,10 +49,9 @@ class GstServer():
         self.server = GstRtspServer.RTSPServer()
         f = MyFactory(device, h, w, bitrate, format)
         f.set_shared(True)
-        f.props.latency = 50
         m = self.server.get_mount_points()
         m.add_factory("/video", f)
-        self.server.attach(None)
+        self.sourceID = self.server.attach(None)
 
         print("Server available on rtsp://<IP>:8554/video")
         print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/video latency=0 ! queue ! decodebin ! autovideosink")
@@ -69,6 +68,10 @@ if __name__ == '__main__':
 
     loop = GLib.MainLoop()
     Gst.init(None)
+
+    Gst.debug_set_active(True)
+    Gst.debug_set_default_threshold(3)
+
     s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format)
 
     try:
