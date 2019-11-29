@@ -268,14 +268,12 @@ class NetworkConfig extends Component {
             //if a Wifi connection, is this an AP or client?
             if (this.state.netDeviceSelected.type === "wifi") {
                 if(window.confirm('Is this an access point? (OK = Yes)')) {
-                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-                    //this.setState({curSettings : {mode: {value: 'ap'}}});
-                    this.changeHandler({target: {name: "mode", value: "ap"}});
+                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""},
+                        curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}}});
                 }
                 else {
-                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-                    //this.setState({curSettings : {mode: {value: 'infrastructure'}}});
-                    this.changeHandler({target: {name: "mode", value: "infrastructure"}});
+                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""},
+                        curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}}});
                 }
             }
         }
