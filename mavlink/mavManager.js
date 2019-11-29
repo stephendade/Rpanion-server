@@ -68,6 +68,10 @@ class mavManager {
 
         //what to do when we get a message
         this.mav.on('message', (msg) => {
+            if (msg.id == -1) {
+                //bad message
+                return;
+            }
             if (this.statusNumRxPackets == 0) {
                 this.sendDSRequest();
             }
