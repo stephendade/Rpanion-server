@@ -29,7 +29,9 @@ The React application will run on port 3000 and the server port 3001.
 
 Requirements:
 
-sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip
+sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq
+
+sudo apt -y purge openresolv dhcpcd5
 
 pip3 install netifaces --user
 
@@ -38,5 +40,7 @@ sudo cp rpanion.service /etc/systemd/system
 sudo systemctl enable rpanion.service
 
 In /etc/NetworkManager/NetworkManager.conf put auth-polkit=false in the main section.
-sudo systemctl disable dhcpcd
-sudo systemctl stop dhcpcd
+
+sudo systemctl disable dnsmasq
+sudo systemctl disable wpa_supplicant
+
