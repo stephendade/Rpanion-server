@@ -12,11 +12,7 @@ from netifaces import interfaces, ifaddresses, AF_INET
 gi.require_version("Gst", "1.0")
 gi.require_version("GstRtsp", "1.0")
 gi.require_version("GstRtspServer", "1.0")
-from gi.repository import Gst, GstRtspServer, GObject
-
-loop = GObject.MainLoop()
-GObject.threads_init()
-Gst.init(None)
+from gi.repository import Gst, GstRtspServer, GLib
 
 def ip4_addresses():
        ip_list = []
@@ -53,9 +49,14 @@ class GstServer():
         self.server = GstRtspServer.RTSPServer()
         f = MyFactory(device, h, w, bitrate, format)
         f.set_shared(True)
+        f.props.latency = 50
         m = self.server.get_mount_points()
         m.add_factory("/video", f)
         self.server.attach(None)
+
+        print("Server available on rtsp://<IP>:8554/video")
+        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/video latency=0 ! queue ! decodebin ! autovideosink")
+        print("Where IP is {0}".format(ip4_addresses()))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RTSP Server using Gstreamer")
@@ -66,11 +67,13 @@ if __name__ == '__main__':
     parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
     args = parser.parse_args()
 
-    print("Server available on rtsp://<IP>:8554/video")
-    print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/video latency=0 ! queue ! decodebin ! autovideosink")
-    print("Where IP is {0}".format(ip4_addresses()))
-
+    loop = GLib.MainLoop()
+    Gst.init(None)
     s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format)
-    loop.run()
 
+    try:
+        loop.run()
+    except:
+        print("Exiting RTSP Server")
+        loop.quit()
 
