@@ -9,5 +9,9 @@ pip3 install netifaces --user
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install -y nodejs npm
 
+#nmcli needs this disabled
+sudo systemctl disable dhcpcd
+sudo systemctl stop dhcpcd
+
 npm install
 

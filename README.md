@@ -37,3 +37,6 @@ Running as a service:
 sudo cp rpanion.service /etc/systemd/system
 sudo systemctl enable rpanion.service
 
+In /etc/NetworkManager/NetworkManager.conf put auth-polkit=false in the main section.
+sudo systemctl disable dhcpcd
+sudo systemctl stop dhcpcd
