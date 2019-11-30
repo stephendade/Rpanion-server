@@ -38,6 +38,8 @@ pip3 install netifaces --user
 For some systems (such as the Raspberry Pi), additional permissions may be requires to run ``nmcli`` from the
 default user. In ``/etc/NetworkManager/NetworkManager.conf`` add ``auth-polkit=false`` in the ``main`` section.
 
+Lastly the node.js packages need to be installed using ``npm install`` in the Rpanion-server folder.
+
 ## Building and Running
 
 Rpanion-server consists of a node.js server running on port 3001 and a React frontend application
@@ -59,5 +61,22 @@ Run both applications together with the command:
 
 ```bash
 npm run dev
+```
+
+Unit tests can be run with the command:
+
+```bash
+npm test
+```
+
+## Running as a Service
+
+To have Rpanion-server running on automatically on boot, there is an included systemd service file.
+
+This can be enabled via:
+
+```
+sudo cp rpanion.service /etc/systemd/system
+sudo systemctl enable rpanion.service
 ```
 
