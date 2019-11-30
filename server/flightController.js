@@ -28,8 +28,7 @@ class FCDetails {
         this.intervalObj = null;
 
         //UDP Outputs
-        this.outputs = [{IP: '127.0.0.1', port: 1234},
-                      {IP: '172.56.1.4', port: 5678}];
+        this.outputs = [];
 
         //find all serial devices
         this.getSerialDevicesSync();
