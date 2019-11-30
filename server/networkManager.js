@@ -43,7 +43,8 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
     if (conType === "wifi") {
         exec('nmcli connection add type ' + conType + " ifname " + conAdapter +
              " con-name " + conNameStr + " ssid " + conSettings.ssid.value + " 802-11-wireless.mode " +
-             conSettings.mode.value + " 802-11-wireless.band " + conSettings.band.value + " && " +
+             conSettings.mode.value + " 802-11-wireless.band " + conSettings.band.value +
+             " ipv4.method " + conSettings.ipaddresstype.value + " && " +
              "nmcli -g connection.uuid con show " + conNameStr, (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
