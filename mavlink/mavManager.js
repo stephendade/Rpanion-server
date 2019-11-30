@@ -36,31 +36,11 @@ class mavManager {
         this.targetComponent = null;
 
         //outputs
-        this.outputs = outputs;
-        this.udpStream = udp.createSocket('udp4');
+        this.outputs = [];
+        this.udpStream = null ;
         this.UDPMav = [];
 
-        //each udp output has a mavlink processor
-        //this ensures non-fragmented mavlink packets from the clients
-        for (var i = 0, len = this.outputs.length; i < len; i++) {
-            console.log("New UDP output to " + this.outputs[i].IP + ":" + this.outputs[i].port);
-            var newmav = new MAVLinkProcessor(null, 255, 0);
-            newmav.on('message', (msg) => {
-                this.eventEmitter.emit('sendData', msg.msgbuf);
-            });
-            this.UDPMav.push(newmav);
-        }
-
-        //event for recieving udp messages from clients (ie commands)
-        this.udpStream.on('message', (msg, info) => {
-            //check it's from a valid client
-            for (var i = 0, len = this.outputs.length; i < len; i++) {
-                if (this.UDPMav.length == this.outputs.length && info.address === this.outputs[i].IP && parseInt(info.port) === this.outputs[i].port) {
-                    //decode and send to FC
-                    this.UDPMav[i].parseBuffer(msg);
-                }
-            }
-        });
+        this.restartUDP(outputs);
 
         this.mav.on('error', function (e) {
             //console.log(e);
@@ -98,15 +78,17 @@ class mavManager {
                 //this.statusText += msg.text;
             }
             //and send on to UDP clients - very easy. No mavlink processor required
-            for (var i = 0, len = this.outputs.length; i < len; i++) {
-                this.udpStream.send(msg.msgbuf,this.outputs[i].port,this.outputs[i].IP,function(error){
-                    if(error) {
-                        //console.log('UDP Error');
-                    }
-                    else {
-                        //console.log('Data sent !!!');
-                    }
-                });
+            if (this.udpStream) {
+                for (var i = 0, len = this.outputs.length; i < len; i++) {
+                    this.udpStream.send(msg.msgbuf,this.outputs[i].port,this.outputs[i].IP,function(error){
+                        if(error) {
+                            //console.log('UDP Error');
+                        }
+                        else {
+                            //console.log('Data sent !!!');
+                        }
+                    });
+                }
             }
         });
     }
@@ -133,6 +115,7 @@ class mavManager {
 
     restartUDP(udpendpoints) {
         //restart all UDP endpoints
+        this.udpStream = null;
         this.outputs = udpendpoints;
 
         this.UDPMav = [];
@@ -147,6 +130,19 @@ class mavManager {
             });
             this.UDPMav.push(newmav);
         }
+
+        this.udpStream = udp.createSocket('udp4');
+
+        //event for recieving udp messages from clients (ie commands)
+        this.udpStream.on('message', (msg, info) => {
+            //check it's from a valid client
+            for (var i = 0, len = this.outputs.length; i < len; i++) {
+                if (this.UDPMav.length == this.outputs.length && info.address === this.outputs[i].IP && parseInt(info.port) === this.outputs[i].port) {
+                    //decode and send to FC
+                    this.UDPMav[i].parseBuffer(msg);
+                }
+            }
+        });
     }
 
     autopilotFromID() {
@@ -164,7 +160,6 @@ class mavManager {
             return "PX4";
             break;
           default:
-            console.log("Got FWID " + this.statusFWName);
             return "Unknown";
         }
     }
@@ -208,7 +203,6 @@ class mavManager {
             return "Tricopter";
             break;
           default:
-            console.log("Got VEHID " + this.statusVehType);
             return "Unknown";
         }
     }
