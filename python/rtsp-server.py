@@ -39,7 +39,7 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
                 s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(self.bitrate)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
         elif self.format == "video/x-h264" and self.device == "rpicam":
-                s_src = "rpicamsrc bitrate={0} ! video/x-h264,width={1},height={2} ".format(self.bitrate, self.width, self.height)
+                s_src = "rpicamsrc bitrate={0} ! video/x-h264,width={1},height={2} ".format(self.bitrate*1000, self.width, self.height)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
         elif self.format == "video/x-h264":
                 s_src = "v4l2src device={0} ! {3},width={1},height={2} ".format(self.device, self.width, self.height, self.format)
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     parser.add_argument("--videosource", help="Video Device", default="/dev/video0", type=str)
     parser.add_argument("--height", help="Height", default=480, type=int)
     parser.add_argument("--width", help="Width", default=640, type=int)
-    parser.add_argument("--bitrate", help="bitrate (bps)", default=2000000, type=int)
+    parser.add_argument("--bitrate", help="bitrate (kbps)", default=2000, type=int)
     parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
     args = parser.parse_args()
 
