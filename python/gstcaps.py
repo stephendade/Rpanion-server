@@ -37,12 +37,13 @@ for device in devices:
     for i in range(capsGST.get_size()):
         structure = capsGST.get_structure(i)
         # Check if it's a Rpi Cam V2, if so manually add modes
+        # Note we're not using the hardware x264 encoder, as it doesn't play nicely with gst
         if structure.to_string() == "video/x-h264, stream-format=(string)byte-stream, alignment=(string)au, width=(int)[ 32, 3280, 2 ], height=(int)[ 32, 2464, 2 ], framerate=(fraction)[ 1/1, 90/1 ];":
             caps = []
-            caps.append({'value': 0, 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264'})
-            caps.append({'value': 1, 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264'})
-            caps.append({'value': 2, 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264'})
-            caps.append({'value': 3, 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264'})
+            caps.append({'value': 0, 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw'})
+            caps.append({'value': 1, 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw'})
+            caps.append({'value': 2, 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw'})
+            caps.append({'value': 3, 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw'})
             name = "Raspberry Pi Camera (V2)"
             break
         if structure.get_name() in ['video/x-raw', 'video/x-h264'] :
