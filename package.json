@@ -4,6 +4,7 @@
   "private": true,
   "secure": false,
   "dependencies": {
+    "app-root-path": "^3.0.0",
     "bootstrap": "^4.3.1",
     "deasync": "^0.1.15",
     "express-validator": "^6.2.0",
@@ -26,7 +27,8 @@
     "serialport": "^7.1.5",
     "socket.io": "^2.2.0",
     "startbootstrap-simple-sidebar": "^5.1.1",
-    "systeminformation": "^4.14.17"
+    "systeminformation": "^4.14.17",
+    "winston": "^3.2.1"
   },
   "scripts": {
     "start": "react-scripts start",

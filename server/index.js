@@ -4,10 +4,10 @@ const bodyParser = require('body-parser');
 const pino = require('express-pino-logger')();
 const networkManager = require('./networkManager');
 const aboutPage = require('./aboutInfo');
-
 const videoStream = require('./videostream');
 const fcManagerClass = require('./flightController');
 
+var winston = require('./winstonconfig');
 
 const app = express();
 const http = require("http").Server(app)
@@ -34,10 +34,12 @@ app.get('/api/softwareinfo', (req, res) => {
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ OSVersion: OSV, Nodejsversion: NodeV, rpanionversion: RpanionV}));
+            winston.info('/api/softwareinfo OS:' + OSV + " Node:" + NodeV + " Rpanion:" + RpanionV);
         }
         else {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ OSVersion: err, Nodejsversion: err, rpanionversion: err}));
+            winston.error('Error in /api/softwareinfo ', { message: err });
         }
     });
 
@@ -58,6 +60,7 @@ app.get('/api/videodevices', (req, res) => {
         else {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ errors: err}));
+            winston.error('Error in /api/videodevices ', { message: err });
         }
     });
 
@@ -72,6 +75,7 @@ app.get('/api/hardwareinfo', (req, res) => {
         else {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ CPUName: err, RAMName: err}));
+            winston.error('Error in /api/hardwareinfo ', { message: err });
         }
     });
 
@@ -100,6 +104,7 @@ app.get('/api/FCDetails', (req, res) => {
         else {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ serialPortSelected: err, baudRateSelected: err}));
+            winston.error('Error in /api/FCDetails ', { message: err });
         }
     });
 });
@@ -108,6 +113,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
     //User wants to start/stop FC telemetry
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/FCModify', { message: errors.array() });
         return res.status(422).json({ errors: errors.array() });
     }
 
@@ -120,6 +126,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
         else {
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ telemetryStatus: false}));
+            winston.error('Error in /api/FCModify ', { message: err });
 
         }
     });
@@ -132,6 +139,7 @@ app.post('/api/FCReboot', function (req, res) {
 app.post('/api/addudpoutput', [check('newoutputIP').isIP(), check('newoutputPort').isInt({min: 1})], function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/addudpoutput ', { message: errors.array() });
         return res.status(422).json({ errors: errors.array() });
     }
 
@@ -144,6 +152,7 @@ app.post('/api/addudpoutput', [check('newoutputIP').isIP(), check('newoutputPort
 app.post('/api/removeudpoutput', [check('removeoutputIP').isIP(), check('removeoutputPort').isInt({min: 1})], function (req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/removeudpoutput ', { message: errors.array() });
         return res.status(422).json({ errors: errors.array() });
     }
 
@@ -167,17 +176,33 @@ io.on('connection', function(socket) {
 
 app.get('/api/networkadapters', (req, res) => {
     networkManager.getAdapters((err, netDeviceList) => {
-        res.setHeader('Content-Type', 'application/json');
-        var ret = {netDevice: netDeviceList};
-        res.send(JSON.stringify(ret));
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netDevice: netDeviceList};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netDevice: []};
+            res.send(JSON.stringify(ret));
+            winston.error('Error in /api/networkadapters ', { message: err });
+        }
     });
 });
 
 app.get('/api/networkconnections', (req, res) => {
     networkManager.getConnections((err, netConnectionList) => {
-        res.setHeader('Content-Type', 'application/json');
-        var ret = {netConnection: netConnectionList};
-        res.send(JSON.stringify(ret));
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netConnection: netConnectionList};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netConnection: []};
+            res.send(JSON.stringify(ret));
+            winston.error('Error in /api/networkconnections ', { message: err });
+        }
     });
 });
 
@@ -187,6 +212,7 @@ app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
                                  check('format').isIn(['video/x-raw', 'video/x-h264'])], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/startstopvideo ', { message: errors.array() });
         return res.status(422).json({ errors: errors.array() });
     }
     //user wants to start/stop video streaming
@@ -195,11 +221,13 @@ app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: status, streamAddresses: addresses};
             res.send(JSON.stringify(ret));
+            winston.error('Bad POST vars ', { message: errors.array() });
         }
         else {
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: false, streamAddresses: ["Error " + err]};
             res.send(JSON.stringify(ret));
+            winston.error('Error in /api/startstopvideo ', { message: err });
         }
     });
 })
@@ -209,13 +237,21 @@ app.post('/api/networkIP', [check('conName').isUUID()], (req, res) => {
     // Finds the validation errors in this request and wraps them in an object with handy functions
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/networkIP ', { message: errors.array() });
         return res.status(422).json({ errors: errors.array() });
     }
     networkManager.getConnectionDetails(req.body.conName, (err, conDetails) => {
-        res.setHeader('Content-Type', 'application/json');
-        var ret = {netConnectionDetails: conDetails};
-        //console.log(ret);
-        res.send(JSON.stringify(ret));
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netConnectionDetails: conDetails};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netConnectionDetails: {}};
+            res.send(JSON.stringify(ret));
+            winston.error('Error in /api/networkIP ', { message: err });
+        }
     });
 });
 
@@ -227,6 +263,7 @@ app.post('/api/networkactivate', [check('conName').isUUID()], (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         var ret = {error: "Bad input - " + errors.array()[0].param};
         res.send(JSON.stringify(ret));
+        winston.error('Bad POST vars in /api/networkactivate ', { message: errors.array() });
     }
     else {
         console.log('Activating network ' + req.body.conName);
@@ -235,6 +272,7 @@ app.post('/api/networkactivate', [check('conName').isUUID()], (req, res) => {
                 res.setHeader('Content-Type', 'application/json');
                 var ret = {error: err};
                 res.send(JSON.stringify(ret));
+                winston.error('Error in /api/networkactivate ', { message: err });
             }
             else {
                 res.setHeader('Content-Type', 'application/json');
@@ -253,6 +291,7 @@ app.post('/api/networkdelete', [check('conName').isUUID()], (req, res) => {
         res.setHeader('Content-Type', 'application/json');
         var ret = {error: "Bad input - " + errors.array()[0].param};
         res.send(JSON.stringify(ret));
+        winston.error('Bad POST vars in /api/networkdelete ', { message: errors.array() });
     }
     else {
         console.log('Deleting network ' + req.body.conName);
@@ -261,6 +300,7 @@ app.post('/api/networkdelete', [check('conName').isUUID()], (req, res) => {
                 res.setHeader('Content-Type', 'application/json');
                 var ret = {error: err};
                 res.send(JSON.stringify(ret));
+                winston.error('Error in /api/networkdelete ', { message: err });
             }
             else {
                 res.setHeader('Content-Type', 'application/json');
@@ -289,6 +329,7 @@ app.post('/api/networkedit', [check('conName').isUUID(),
         res.setHeader('Content-Type', 'application/json');
         var ret = {error: "Bad input - " + errors.array()[0].param};
         res.send(JSON.stringify(ret));
+        winston.error('Bad POST vars in /api/networkedit ', { message: errors.array() });
     }
     else {
         console.log('Editing network ' + req.body.conName);
@@ -297,6 +338,7 @@ app.post('/api/networkedit', [check('conName').isUUID(),
                 res.setHeader('Content-Type', 'application/json');
                 var ret = {error: err};
                 res.send(JSON.stringify(ret));
+                winston.error('Error in /api/networkedit ', { message: err });
             }
             else {
                 res.setHeader('Content-Type', 'application/json');
@@ -327,14 +369,16 @@ app.post('/api/networkadd', [check('conSettings.ipaddresstype.value').isIn(['aut
         res.setHeader('Content-Type', 'application/json');
         var ret = {error: "Bad input - " + errors.array()[0].param};
         res.send(JSON.stringify(ret));
+        winston.error('Bad POST vars in /api/networkadd ', { message: errors.array() });
     }
     else {
-        console.log('Adding network ' + req.body.conName);
+        console.log('Adding network ' + req.body);
         networkManager.addConnection(req.body.conName, req.body.conType, req.body.conAdapter, req.body.conSettings, (err) => {
             if (err) {
                 res.setHeader('Content-Type', 'application/json');
                 var ret = {error: err};
                 res.send(JSON.stringify(ret));
+                winston.error('Error in /api/networkadd ', { message: err });
             }
             else {
                 res.setHeader('Content-Type', 'application/json');
