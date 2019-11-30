@@ -42,6 +42,17 @@ Lastly the node.js packages need to be installed using ``npm install`` in the Rp
 
 ## Building and Running
 
+If the Raspberry Pi Camera is intended to be used, the specific Gstreamer element (credit to 
+https://github.com/thaytan/gst-rpicamsrc) must be installed:
+
+```
+git submodule init && git submodule update
+cd ./modules/gst-rpicamsrc
+./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
+make
+sudo make install
+```
+
 Rpanion-server consists of a node.js server running on port 3001 and a React frontend application
 running on port 3000.
 

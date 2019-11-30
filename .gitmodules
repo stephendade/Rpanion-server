@@ -1,0 +1,3 @@
+[submodule "modules/gst-rpicamsrc"]
+	path = modules/gst-rpicamsrc
+	url = https://github.com/thaytan/gst-rpicamsrc.git
