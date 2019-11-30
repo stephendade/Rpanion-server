@@ -16,6 +16,7 @@ sudo systemctl disable dhcpcd
 
 sudo systemctl disable dnsmasq
 sudo systemctl disable wpa_supplicant
+sudo systemctl mask wpa_supplicant.service
 
 #reboot after this
 

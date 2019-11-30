@@ -28,15 +28,16 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=4
-FILE_NAME_0=5074;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;4
-FILE_NAME_1=93;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FanalogPi.js;0;4
-FILE_NAME_2=191;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fabout.js;0;4
-FILE_NAME_3=338;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Findex.js;0;4
-FILE_NAME_4=788;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.js;0;4
-FILE_NAME_5=8448;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.js;0;4
-FILE_NAME_6=149;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fflightcontroller.js;0;4
-FILE_NAME_7=197;JSON;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fpackage.json;0;4
+current_page=8
+FILE_NAME_0=6944;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;4
+FILE_NAME_1=246;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.js;0;4
+FILE_NAME_2=273;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Findex.js;0;4
+FILE_NAME_3=1704;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Fvideostream.js;0;4
+FILE_NAME_4=1613;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fvideo.js;0;4
+FILE_NAME_5=14533;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fnetworkconfig.js;0;4
+FILE_NAME_6=397366;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2Fmavlink_common_v2.js;0;4
+FILE_NAME_7=6363;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.js;0;4
+FILE_NAME_8=183;Python;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fpython%2Fgstcaps.py;0;4
 
 [build-menu]
 EX_00_LB=_Execute

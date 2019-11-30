@@ -43,4 +43,5 @@ In /etc/NetworkManager/NetworkManager.conf put auth-polkit=false in the main sec
 
 sudo systemctl disable dnsmasq
 sudo systemctl disable wpa_supplicant
+sudo systemctl mask wpa_supplicant.service
 
