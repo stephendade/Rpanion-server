@@ -17,6 +17,12 @@ Rpanion-server allows the user to configure:
 
 ## Dependencies and First-time configuration
 
+### Automatic (Raspberry Pi)
+
+Run the ``./deploy/RasPi-deploy.sh`` on a fresh Raspian install to configure and install Rpanion-server.
+
+###Manual
+
 Rpanion-server requires Version 12 of node.js or later, It can be installed
 via package manager:
 
