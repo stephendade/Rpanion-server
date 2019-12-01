@@ -183,6 +183,11 @@ class FCDetails {
                         });
                     });
                 }
+                else if (this.m.statusNumRxPackets == 0) {
+                    //waiting for initial connection
+                    console.log("Sending DS");
+                    this.m.sendDSRequest();
+                }
             }, 1000);
             this.m.eventEmitter.on('sendData', (buffer) => {
                 if (this.port) {

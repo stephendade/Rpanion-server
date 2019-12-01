@@ -37,8 +37,21 @@ class mavManager {
 
         //outputs
         this.outputs = [];
-        this.udpStream = null ;
+        this.udpStream = udp.createSocket('udp4');
         this.UDPMav = [];
+
+        //event for recieving udp messages from clients (ie commands)
+        this.udpStream.on('message', (msg, info) => {
+            if (this.outputs.length > 0) {
+                //check it's from a valid client
+                for (var i = 0, len = this.outputs.length; i < len; i++) {
+                    if (this.UDPMav.length == this.outputs.length && info.address === this.outputs[i].IP && parseInt(info.port) === this.outputs[i].port) {
+                        //decode and send to FC
+                        this.UDPMav[i].parseBuffer(msg);
+                    }
+                }
+            }
+        });
 
         this.restartUDP(outputs);
 
@@ -48,12 +61,22 @@ class mavManager {
 
         //what to do when we get a message
         this.mav.on('message', (msg) => {
-            if (msg.id == -1) {
-                //bad message
-                return;
+            //send on to UDP clients - very easy. No mavlink processor required
+            if (this.outputs.length > 0) {
+                for (var i = 0, len = this.outputs.length; i < len; i++) {
+                    this.udpStream.send(msg.msgbuf,this.outputs[i].port,this.outputs[i].IP,function(error){
+                        if(error) {
+                            console.log('UDP Error: ' + error);
+                        }
+                        else {
+                            //console.log('Data sent !!!');
+                        }
+                    });
+                }
             }
-            if (this.statusNumRxPackets == 0) {
-                this.sendDSRequest();
+            if (msg.id == -1) {
+                //bad message - can't process here any further
+                return;
             }
             this.statusNumRxPackets += 1;
             this.timeofLastPacket = (Date.now().valueOf());
@@ -76,19 +99,6 @@ class mavManager {
             else if (msg.name == "POWER_STATUS") {
                 //console.log(msg);
                 //this.statusText += msg.text;
-            }
-            //and send on to UDP clients - very easy. No mavlink processor required
-            if (this.udpStream) {
-                for (var i = 0, len = this.outputs.length; i < len; i++) {
-                    this.udpStream.send(msg.msgbuf,this.outputs[i].port,this.outputs[i].IP,function(error){
-                        if(error) {
-                            //console.log('UDP Error');
-                        }
-                        else {
-                            //console.log('Data sent !!!');
-                        }
-                    });
-                }
             }
         });
     }
@@ -115,15 +125,13 @@ class mavManager {
 
     restartUDP(udpendpoints) {
         //restart all UDP endpoints
-        this.udpStream = null;
-        this.outputs = udpendpoints;
-
+        this.outputs = [];
         this.UDPMav = [];
 
         //each udp output has a mavlink processor
         //this ensures non-fragmented mavlink packets from the clients
-        for (var i = 0, len = this.outputs.length; i < len; i++) {
-            console.log("Restarting UDP output to " + this.outputs[i].IP + ":" + this.outputs[i].port);
+        for (var i = 0, len = udpendpoints.length; i < len; i++) {
+            console.log("Restarting UDP output to " + udpendpoints[i].IP + ":" + udpendpoints[i].port);
             var newmav = new MAVLinkProcessor(null, 255, 0);
             newmav.on('message', (msg) => {
                 this.eventEmitter.emit('sendData', msg.msgbuf);
@@ -131,18 +139,8 @@ class mavManager {
             this.UDPMav.push(newmav);
         }
 
-        this.udpStream = udp.createSocket('udp4');
+        this.outputs = udpendpoints;
 
-        //event for recieving udp messages from clients (ie commands)
-        this.udpStream.on('message', (msg, info) => {
-            //check it's from a valid client
-            for (var i = 0, len = this.outputs.length; i < len; i++) {
-                if (this.UDPMav.length == this.outputs.length && info.address === this.outputs[i].IP && parseInt(info.port) === this.outputs[i].port) {
-                    //decode and send to FC
-                    this.UDPMav[i].parseBuffer(msg);
-                }
-            }
-        });
     }
 
     autopilotFromID() {
