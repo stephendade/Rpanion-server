@@ -86,6 +86,8 @@ Run both applications together with the command:
 npm run dev
 ```
 
+At this point, the website will be active at http://<ip of device>:3000
+
 Unit tests can be run with the command:
 
 ```bash
