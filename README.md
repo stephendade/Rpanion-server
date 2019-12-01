@@ -27,7 +27,7 @@ This can be done directly by typing the following into a Raspiabn console:
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-deploy.sh | bash -
 ```
 
-###Manual
+### Manual
 
 Rpanion-server requires Version 12 of node.js or later, It can be installed
 via package manager:
