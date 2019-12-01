@@ -41,7 +41,7 @@ source ~/.profile
 pip3 install netifaces --user
 
 ## Configure nmcli to not need sudo
-sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
+sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
 
 ## Rpanion (+ gst-rpicamsrc)
 git clone https://github.com/stephendade/Rpanion-server.git
