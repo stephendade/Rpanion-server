@@ -93,8 +93,10 @@ class FCDetails {
         this.outputs.push({IP: newIP, port: newPort});
         console.log("Added UDP Output " + newIP + ":" + newPort);
 
-        //restart udp outputs
-        this.m.restartUDP(this.outputs);
+        //restart udp outputs, if link active
+        if (this.m) {
+            this.m.restartUDP(this.outputs);
+        }
 
         this.saveSerialSettings();
         return this.getUDPOutputs();
@@ -109,8 +111,10 @@ class FCDetails {
                 this.outputs.splice(i, 1);
                 console.log("Removed UDP Output " + remIP + ":" + remPort);
 
-                //restart udp outputs
-                this.m.restartUDP(this.outputs);
+                //restart udp outputs, if link active
+                if (this.m) {
+                    this.m.restartUDP(this.outputs);
+                }
 
                 this.saveSerialSettings();
                 return this.getUDPOutputs();
