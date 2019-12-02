@@ -22,15 +22,15 @@ Rpanion-server allows the user to configure:
 Run the ``./deploy/RasPi-deploy.sh`` on a fresh Raspian install to configure and install Rpanion-server. Note
 this does not configure an initial Wifi hotspot.
 
-For an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script. The hotspot has the SSID "rpanion"
-and password "rpanion123". The Pi's IP address will be 10.0.1.1, so the Rpanion-sever website will be available
-at http://10.0.1.1:3000
-
-This can be done directly by typing the following into a Raspiabn console:
+This can be done directly by typing the following into a Raspian console:
 
 ```
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-deploy.sh | bash -
 ```
+
+For an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script. The hotspot has the SSID "rpanion"
+and password "rpanion123". The Pi's IP address will be 10.0.1.1, so the Rpanion-sever website will be available
+at http://10.0.1.1:3000
 
 ### Manual
 
