@@ -31,6 +31,8 @@ sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtsp
 sudo apt purge -y openresolv dhcpcd5 modemmanager
 sudo apt remove -y modemmanager
 
+sudo systemctl disable dnsmasq
+
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt install -y nodejs
 
