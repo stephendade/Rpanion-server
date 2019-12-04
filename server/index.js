@@ -209,14 +209,15 @@ app.get('/api/networkconnections', (req, res) => {
 app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
                                  check('height').isInt({min: 1}),
                                  check('width').isInt({min: 1}),
-                                 check('format').isIn(['video/x-raw', 'video/x-h264'])], (req, res) => {
+                                 check('format').isIn(['video/x-raw', 'video/x-h264']),
+                                 check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         winston.error('Bad POST vars in /api/startstopvideo ', { message: errors.array() });
         return res.status(422).json({ errors: errors.array() });
     }
     //user wants to start/stop video streaming
-    vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.format, (err, status, addresses) => {
+    vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, (err, status, addresses) => {
         if(!err) {
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: status, streamAddresses: addresses};

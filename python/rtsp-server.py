@@ -25,7 +25,7 @@ def ip4_addresses():
        return ip_list
 
 class MyFactory(GstRtspServer.RTSPMediaFactory):
-    def __init__(self, device, h, w, bitrate, format):
+    def __init__(self, device, h, w, bitrate, format, rotation):
         GstRtspServer.RTSPMediaFactory.__init__(self)
         self.device = device
         self.height = h
@@ -33,24 +33,36 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.bitrate = bitrate
         self.format = format
 
+        #rotation
+        if self.device == "rpicam":
+            self.rotation = rotation
+        else:
+            self.rotation = "videoflip video-direction=identity"
+            if rotation == 90:
+                self.rotation = "videoflip video-direction=90r"
+            elif rotation == 180:
+                self.rotation = "videoflip video-direction=180"
+            elif rotation == 270:
+                self.rotation = "videoflip video-direction=90l"
+
     def do_create_element(self, url):
         if self.format == "video/x-raw":
-                s_src = "v4l2src device={0} ! {3},width={1},height={2} ! videoconvert ! video/x-raw,format=I420".format(self.device, self.width, self.height, self.format)
+                s_src = "v4l2src device={0} ! {3},width={1},height={2} ! {4} ! videoconvert ! video/x-raw,format=I420".format(self.device, self.width, self.height, self.format, self.rotation)
                 s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(self.bitrate)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
         elif self.format == "video/x-h264" and self.device == "rpicam":
-                s_src = "rpicamsrc bitrate={0} ! video/x-h264,width={1},height={2} ".format(self.bitrate*1000, self.width, self.height)
+                s_src = "rpicamsrc bitrate={0} ! video/x-h264,width={1},height={2},rotation={3}".format(self.bitrate*1000, self.width, self.height, self.rotation)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
         elif self.format == "video/x-h264":
-                s_src = "v4l2src device={0} ! {3},width={1},height={2} ".format(self.device, self.width, self.height, self.format)
+                s_src = "v4l2src device={0} ! {3},width={1},height={2}".format(self.device, self.width, self.height, self.format)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
         print(pipeline_str)
         return Gst.parse_launch(pipeline_str)
 
 class GstServer():
-    def __init__(self, device,h, w, bitrate, format):
+    def __init__(self, device,h, w, bitrate, format, rotation):
         self.server = GstRtspServer.RTSPServer()
-        f = MyFactory(device, h, w, bitrate, format)
+        f = MyFactory(device, h, w, bitrate, format, rotation)
         f.set_shared(True)
         m = self.server.get_mount_points()
         m.add_factory("/video", f)
@@ -67,6 +79,7 @@ if __name__ == '__main__':
     parser.add_argument("--width", help="Width", default=640, type=int)
     parser.add_argument("--bitrate", help="bitrate (kbps)", default=2000, type=int)
     parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
+    parser.add_argument("--rotation", help="rotation angle", default=0, type=int, choices=[0, 90, 180, 270])
     args = parser.parse_args()
 
     loop = GLib.MainLoop()
@@ -75,7 +88,7 @@ if __name__ == '__main__':
     Gst.debug_set_active(True)
     Gst.debug_set_default_threshold(3)
 
-    s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format)
+    s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation)
 
     try:
         loop.run()
