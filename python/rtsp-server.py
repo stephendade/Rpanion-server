@@ -46,13 +46,13 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
                 self.rotation = "videoflip video-direction=90l"
 
     def do_create_element(self, url):
-        if self.format == "video/x-raw":
+        if self.device == "rpicam":
+                s_src = "rpicamsrc bitrate={0} rotation={3} ! video/x-h264,width={1},height={2}".format(self.bitrate*1000, self.width, self.height, self.rotation)
+                pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
+        elif self.format == "video/x-raw":
                 s_src = "v4l2src device={0} ! {3},width={1},height={2} ! {4} ! videoconvert ! video/x-raw,format=I420".format(self.device, self.width, self.height, self.format, self.rotation)
                 s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(self.bitrate)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
-        elif self.format == "video/x-h264" and self.device == "rpicam":
-                s_src = "rpicamsrc bitrate={0} ! video/x-h264,width={1},height={2},rotation={3}".format(self.bitrate*1000, self.width, self.height, self.rotation)
-                pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
         elif self.format == "video/x-h264":
                 s_src = "v4l2src device={0} ! {3},width={1},height={2}".format(self.device, self.width, self.height, self.format)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
