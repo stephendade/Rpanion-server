@@ -205,7 +205,8 @@ function editConnectionAP(conName, conSettings, callback) {
             Object.keys(conSettings.ipaddress).length !== 0) {
             exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value +
             ' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + "/24" +
-            ' 802-11-wireless-security.group ccmp ' + '802-11-wireless-security.pairwise ccmp ', (error, stdout, stderr) => {
+            ' 802-11-wireless-security.group ccmp ' + '802-11-wireless-security.pairwise ccmp ' +
+            ' 802-11-wireless-security.wps-method 1 ' , (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
                 return callback(stderr);

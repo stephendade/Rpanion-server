@@ -29,8 +29,8 @@ curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-d
 ```
 
 For an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script. The hotspot has the SSID "rpanion"
-and password "rpanion123". The Pi's IP address will be 10.0.1.1, so the Rpanion-sever website will be available
-at http://10.0.1.1:3000
+and password "rpanion123". The Pi's IP address will be 10.0.2.100, so the Rpanion-sever website will be available
+at http://10.0.2.100:3000
 
 ### Manual
 
