@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Switch} from "react-router-dom";
+import { Link } from 'react-router-dom'
 
 import About from './about.js';
 import Home from './home.js';
@@ -13,11 +14,11 @@ function AppRouter() {
             <div id="sidebar-wrapper" className="bg-light border-right">
                 <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
                 <div id="sidebar-items" className="list-group list-group-flush">
-                    <a className='list-group-item list-group-item-action bg-light' href="/">Home</a>
-                    <a className='list-group-item list-group-item-action bg-light' href="/controller">Flight Controller</a>
-                    <a className='list-group-item list-group-item-action bg-light' href="/network">Network Config</a>
-                    <a className='list-group-item list-group-item-action bg-light' href="/video">Video Streaming</a>
-                    <a className='list-group-item list-group-item-action bg-light' href="/about">About</a>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
                 </div>
             </div>
 

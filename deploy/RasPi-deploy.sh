@@ -57,7 +57,7 @@ sudo make install
 cd ../../
 
 npm install
-#npm run build
+npm run build
 
 ## Install Rpanion as service
 sudo cp rpanion.service /etc/systemd/system

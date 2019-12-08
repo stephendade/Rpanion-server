@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 WorkingDirectory=/home/pi/Rpanion-server
-ExecStart=/usr/bin/npm run dev
+ExecStart=PORT=3000 /usr/bin/npm run server
 Restart=on-failure
 User=pi
 
