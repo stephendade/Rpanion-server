@@ -3,8 +3,9 @@ Description=Rpanion Server Service
 After=network.target
 
 [Service]
+Environment="PORT=3000"
 WorkingDirectory=/home/pi/Rpanion-server
-ExecStart=PORT=3000 /usr/bin/npm run server
+ExecStart=/usr/bin/npm run server
 Restart=on-failure
 User=pi
 
