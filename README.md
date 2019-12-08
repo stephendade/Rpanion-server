@@ -55,7 +55,10 @@ pip3 install netifaces --user
 For some systems (such as the Raspberry Pi), additional permissions may be requires to run ``nmcli`` from the
 default user. In ``/etc/NetworkManager/NetworkManager.conf`` add ``auth-polkit=false`` in the ``main`` section.
 
-Lastly the node.js packages need to be installed using ``npm install`` in the Rpanion-server folder.
+The node.js packages need to be installed using ``npm install`` in the Rpanion-server folder.
+
+If running in production (ie non-development) mode, run ``npm run build`` to build the React frontend. This gives
+performance increases over running in development mode.
 
 ## Building and Running
 
@@ -71,7 +74,11 @@ sudo make install
 ```
 
 Rpanion-server consists of a node.js server running on port 3001 and a React frontend application
-running on port 3000.
+running on port 3000 in development mode. 
+
+In production mode, the React application is rendered statically
+from the node.js server on port 3001. This can be overidden via setting the ``PORT`` environment
+variable (see ``rpanion.service`` for for example).
 
 You can start the server on its own with the command:
 
@@ -89,6 +96,13 @@ Run both applications together with the command:
 
 ```bash
 npm run dev
+```
+
+To build and run the application in production mode:
+```bash
+npm run build
+PORT=3000
+npm run server
 ```
 
 At this point, the website will be active at ``http://<ip of device>:3000``

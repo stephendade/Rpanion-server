@@ -11,6 +11,7 @@ var winston = require('./winstonconfig');
 
 const app = express();
 const http = require("http").Server(app)
+const path = require('path');
 
 var io = require('socket.io')(http);
 const { check, validationResult } = require('express-validator');
@@ -28,6 +29,9 @@ app.use(pino);
 // Simply pass `compression` as an Express middleware!
 app.use(compression());
 app.use(bodyParser.json());
+
+// Serve the static files from the React app
+app.use(express.static(path.join(__dirname, '..', '/build')));
 
 app.get('/api/softwareinfo', (req, res) => {
     aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, err) => {
@@ -391,6 +395,12 @@ app.post('/api/networkadd', [check('conSettings.ipaddresstype.value').isIn(['aut
     console.log(req.body);
 });
 
-http.listen(3001, () =>
-    console.log('Express server is running on localhost:3001')
+// Handles any requests that don't match the ones above (ie pass to react app)
+app.get('*', (req,res) =>{
+    res.sendFile(path.join(__dirname, '..', '/build/index.html'));
+});
+
+const port = process.env.PORT || 3001;
+http.listen(port, () =>
+    console.log('Express server is running on localhost:' + port)
 );
