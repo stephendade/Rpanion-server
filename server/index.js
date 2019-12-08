@@ -31,7 +31,7 @@ app.use(compression());
 app.use(bodyParser.json());
 
 // Serve the static files from the React app
-app.use(express.static(path.join([__dirname, '..', '/build'])));
+app.use(express.static(path.join(__dirname, '..', '/build')));
 
 app.get('/api/softwareinfo', (req, res) => {
     aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, err) => {
@@ -397,7 +397,7 @@ app.post('/api/networkadd', [check('conSettings.ipaddresstype.value').isIn(['aut
 
 // Handles any requests that don't match the ones above (ie pass to react app)
 app.get('*', (req,res) =>{
-    res.sendFile(path.join([__dirname, '..', '/build/index.html']));
+    res.sendFile(path.join(__dirname, '..', '/build/index.html'));
 });
 
 const port = process.env.PORT || 3001;
