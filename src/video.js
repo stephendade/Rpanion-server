@@ -17,6 +17,7 @@ class VideoPage extends basePage {
             streamAddresses: [],
             rotations: [{label:"0°", value:0}, {label:"90°", value:90}, {label:"180°", value:180}, {label:"270°", value:270}],
             rotSelected: {label:"0°", value:0},
+            bitrate: 1000,
             loading: true
         }
     }
@@ -41,6 +42,11 @@ class VideoPage extends basePage {
         this.setState({rotSelected: value});
     }
 
+    handleBitrateChange = (event) => {
+        //bitrate spinner new value
+        this.setState({bitrate: event.target.value});
+    }
+
     handleStreaming = (event) => {
         //user clicked start/stop streaming
         fetch('/api/startstopvideo', {
@@ -55,6 +61,7 @@ class VideoPage extends basePage {
                 width: this.state.vidResSelected.width,
                 format: this.state.vidResSelected.format,
                 rotation: this.state.rotSelected.value,
+                bitrate: this.state.bitrate
              })
         }).then(response => response.json()).then(state => {this.setState(state)});
     }
@@ -69,6 +76,7 @@ class VideoPage extends basePage {
             Device: <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected}/>
             Resolution: <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
             Rotation: <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
+            Average Bitrate: <input type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
             <button onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</button>
             <div nameclass="streamdetails" style={{ display: (this.state.streamAddresses.length > 0) ? "block" : "none"}}>
                 <p>Streaming Addresses (for VLC, etc):</p>

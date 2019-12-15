@@ -49,7 +49,7 @@ class videoStream {
         return iface;
     }
 
-    startStopStreaming(device, height, width, format, rotation, callback) {
+    startStopStreaming(device, height, width, format, rotation, bitrate, callback) {
         //user wants to start or stop streaming
         if (!this.active) {
             //check it's a valid video device
@@ -77,7 +77,7 @@ class videoStream {
                                                   "--height=" + height,
                                                   "--width=" + width,
                                                   "--format=" + format,
-                                                  "--bitrate=" + 1000,
+                                                  "--bitrate=" + bitrate,
                                                   "--rotation=" + rotation,
                                                   ]);
             this.deviceStream.stdout.on('data', (data) => {
