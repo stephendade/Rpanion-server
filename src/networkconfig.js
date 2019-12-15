@@ -1,11 +1,13 @@
-import React, { Component } from 'react';
-import { Helmet } from 'react-helmet';
+import React from 'react';
 import Select from 'react-select';
 
-class NetworkConfig extends Component {
+import basePage from './basePage.js';
+
+class NetworkConfig extends basePage {
   constructor(props) {
     super(props);
     this.state = {
+      loading: true,
       netDevice: [],
       netDeviceSelected: null,
       netConnection: [],
@@ -60,7 +62,7 @@ class NetworkConfig extends Component {
         Promise.all([
             fetch(`/api/networkconnections`).then(response => response.json()).then(state => this.setState(state)),
             fetch(`/api/networkadapters`).then(response => response.json()).then(state => {this.setState(state); this.setState({netDeviceSelected: state.netDevice[0]}); return state;})
-        ]).then(retState => this.handleAdapterChange(retState[1].netDevice[0], {action: "select-option"}));
+        ]).then(retState => {this.handleAdapterChange(retState[1].netDevice[0], {action: "select-option"}); this.loadDone()});
       }
 
     handleAdapterChange = (value, action) => {
@@ -347,13 +349,13 @@ class NetworkConfig extends Component {
         }});
     }
 
-    render() {
+    renderTitle() {
+        return "Network Configuration";
+    }
+
+    renderContent() {
       return (
         <div>
-            <Helmet>
-              <title>Network Configuration</title>
-            </Helmet>
-            <h1>Network Configuration</h1>
             Adapters: <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected}/>
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
             <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>

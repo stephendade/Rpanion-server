@@ -1,13 +1,13 @@
-import React, { Component } from 'react';
-import { Helmet } from 'react-helmet'
+import React from 'react';
 import Select from 'react-select';
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
 import BootstrapTable from 'react-bootstrap-table-next';
 
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
+import basePage from './basePage.js';
 
-class FCPage extends Component {
+class FCPage extends basePage {
     constructor(props) {
         super(props);
         this.state = {
@@ -21,7 +21,8 @@ class FCPage extends Component {
             socketioStatus: false,
             FCStatus: {},
             UDPoutputs: [],
-            addrow: ""
+            addrow: "",
+            loading: true
         }
 
         this.columns = [{
@@ -35,23 +36,27 @@ class FCPage extends Component {
           formatter: this.udpbuttonFormatter
           }];
 
-        var socket = io();
+        this.socket = io();
 
         // Socket.io client for reading in analog update values
-        socket.on('FCStatus', function(msg){
+        this.socket.on('FCStatus', function(msg){
             this.setState({FCStatus: msg});
         }.bind(this));
-        socket.on('disconnect', function(){
+        this.socket.on('disconnect', function(){
             this.setState({socketioStatus: false});
         }.bind(this));
-        socket.on('connect', function(){
+        this.socket.on('connect', function(){
             this.setState({socketioStatus: true});
         }.bind(this));
     }
 
     componentDidMount() {
         fetch(`/api/FCDetails`).then(response => response.json()).then(state => {this.setState(state)});
-        fetch(`/api/FCOutputs`).then(response => response.json()).then(state => {this.setState(state)});
+        fetch(`/api/FCOutputs`).then(response => response.json()).then(state => {this.setState(state); this.loadDone()});
+    }
+
+    componentWillUnmount() {
+        this.socket.disconnect();
     }
 
     handleSerialPortChange = (value, action) => {
@@ -132,21 +137,22 @@ class FCPage extends Component {
         this.setState({addrow: value});
     }
 
-    render() {
+    renderTitle() {
+        return "Flight Controller";
+    }
+
+    renderContent() {
       return (
             <div>
-                <Helmet>
-                  <title>The Flight Controller Page</title>
-                </Helmet>
-              <h2>Flight Controller Configuration</h2>
+              <h2>Serial Input</h2>
               Serial Device: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected}/>
               Baud Rate: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected}/>
               MAVLink Version: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected}/>
               <button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</button>
-              <h2>Flight Controller UDP Outputs</h2>
+              <h2>UDP Outputs</h2>
                   <BootstrapTable condensed keyField='IPPort' data={ this.state.UDPoutputs } columns={ this.columns }/>
                   <label>Add new output<input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><button onClick={this.addUdpOutput}>Add</button></label>
-              <h2>Flight Controller Status</h2>
+              <h2>Status</h2>
                   <p>Packets Recieved: {this.state.FCStatus.numpackets}</p>
                   <p>Connection Status: {this.state.FCStatus.conStatus}</p>
                   <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
