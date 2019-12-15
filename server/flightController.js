@@ -140,7 +140,7 @@ class FCDetails {
                     conStatus: "Not connected",
                     statusText: ""};
         }
-    };
+    }
 
     rebootFC() {
         //command the flight controller to reboot
@@ -204,7 +204,7 @@ class FCDetails {
         // Switches the port into "flowing mode"
         this.port.on('data', (data) => {
             this.lastDataTime = (Date.now().valueOf());
-            var retArray = this.m.parseBuffer(data);
+            this.m.parseBuffer(data);
         });
     }
 
@@ -296,13 +296,13 @@ class FCDetails {
                     break;
                 }
             }
-            for (var i = 0, len = this.baudRates.length; i < len; i++) {
+            for (i = 0, len = this.baudRates.length; i < len; i++) {
                 if (this.baudRates[i].value === baud.value) {
                     this.activeDevice.baud = this.baudRates[i];
                     break;
                 }
             }
-            for (var i = 0, len = this.mavlinkVersions.length; i < len; i++) {
+            for (i = 0, len = this.mavlinkVersions.length; i < len; i++) {
                 if (this.mavlinkVersions[i].value === mavversion.value) {
                     this.activeDevice.mavversion = this.mavlinkVersions[i];
                     break;

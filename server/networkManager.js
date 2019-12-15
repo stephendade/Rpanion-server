@@ -321,7 +321,7 @@ function CIDR2netmask(bitCountstr) {
 
 function netmask2CIDR(mask){
     var cidr = ''
-    for (m of mask.split('.')) {
+    for (var m of mask.split('.')) {
         if (parseInt(m)>255) {throw 'ERROR: Invalid Netmask'} // Check each group is 0-255
         if (parseInt(m)>0 && parseInt(m)<128) {throw 'ERROR: Invalid Netmask'}
 
