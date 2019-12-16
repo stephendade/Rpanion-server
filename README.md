@@ -32,6 +32,17 @@ For an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script. T
 and password "rpanion123". The Pi's IP address will be 10.0.2.100, so the Rpanion-sever website will be available
 at http://10.0.2.100:3000
 
+### Updating
+
+When updating Rpanion-server from Github, run the following commands to build:
+
+```
+npm install
+npm run build
+```
+
+If running Rpanion-server as a service, ensure to restart the service.
+
 ### Manual
 
 Rpanion-server requires Version 12 of node.js or later, It can be installed

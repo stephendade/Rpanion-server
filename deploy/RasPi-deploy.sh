@@ -56,11 +56,7 @@ make
 sudo make install
 cd ../../
 
-npm install
-npm run build
-
-## Install Rpanion as service
-sudo cp rpanion.service /etc/systemd/system
-sudo systemctl enable rpanion.service
+## and build & run Rpanion
+./deploy/build.sh
 
 sudo reboot
