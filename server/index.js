@@ -289,6 +289,35 @@ app.post('/api/networkactivate', [check('conName').isUUID()], (req, res) => {
     }
 });
 
+//user wants to deactivate network
+app.post('/api/networkdeactivate', [check('conName').isUUID()], (req, res) => {
+    // Finds the validation errors in this request and wraps them in an object with handy functions
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        res.setHeader('Content-Type', 'application/json');
+        var ret = {error: "Bad input - " + errors.array()[0].param};
+        res.send(JSON.stringify(ret));
+        winston.error('Bad POST vars in /api/networkdeactivate ', { message: errors.array() });
+    }
+    else {
+        console.log('Dectivating network ' + req.body.conName);
+        networkManager.deactivateConnection(req.body.conName, (err) => {
+            if (err) {
+                res.setHeader('Content-Type', 'application/json');
+                var ret = {error: err};
+                res.send(JSON.stringify(ret));
+                winston.error('Error in /api/networkdeactivate ', { message: err });
+            }
+            else {
+                res.setHeader('Content-Type', 'application/json');
+                var ret = {error: null, action: "NetworkDectivateOK"};
+                res.send(JSON.stringify(ret));
+            }
+        });
+    }
+});
+
+
 //user wants to delete network
 app.post('/api/networkdelete', [check('conName').isUUID()], (req, res) => {
     // Finds the validation errors in this request and wraps them in an object with handy functions

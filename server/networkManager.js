@@ -36,6 +36,21 @@ function activateConnection(conName, callback) {
     });
 }
 
+function deactivateConnection(conName, callback) {
+    //deactivate the connection (by id)
+    //assumed that conName is a valid UUID
+    exec('nmcli connection down ' + conName, (error, stdout, stderr) => {
+    if (stderr) {
+        console.error(`exec error: ${error}`);
+        return callback(stderr);
+    }
+    else {
+        console.log('Dectivated network: ' + conName);
+        return callback(null, "OK");
+    }
+    });
+}
+
 function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
     //add a new connection with name conNameStr and settings
     //conSettings
@@ -401,4 +416,5 @@ module.exports = {getAdapters,
                   activateConnection,
                   deleteConnection,
                   editConnection,
-                  addConnection};
+                  addConnection,
+                  deactivateConnection};

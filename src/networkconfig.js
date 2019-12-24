@@ -63,6 +63,7 @@ class NetworkConfig extends basePage {
 
     handleStart() {
         // Fetch the network information and send to controls
+        this.setState({loading: true});
         Promise.all([
             fetch(`/api/networkconnections`).then(response => response.json()).then(state => this.setState(state)),
             fetch(`/api/networkadapters`).then(response => response.json()).then(state => {this.setState(state); this.setState({netDeviceSelected: state.netDevice[0]}); return state;})
@@ -348,6 +349,37 @@ class NetworkConfig extends basePage {
         event.preventDefault();
     };
 
+    deactivateConnection = (event) =>{
+        //add deactivate network button clicked
+        //and refresh network information when done
+        //don't do anything if a new (unsaved) network
+        if (this.state.netConnectionFilteredSelected.value !== "new") {
+            fetch('/api/networkdeactivate', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    conName: this.state.netConnectionFilteredSelected.value,
+                })
+            }).then(response => response.json())
+                  .then(data => {
+                      if (data.error == null) {
+                          window.alert("Network Dectivated")
+                      }
+                      else {
+                          window.alert("Error deactivating network: " + data.error)
+                      }
+                      //and refresh connections list
+                      this.handleStart();
+                  })
+                  .catch(error => {
+                         window.alert("Error deactivating network: " + error)
+                  });
+        }
+        event.preventDefault();
+    };
 
     changeHandler = event => {
         //form change handler
@@ -396,6 +428,7 @@ class NetworkConfig extends basePage {
             <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>
             <button onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</button>
             <button onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} nameclass="activateConnection">Activate</button>
+            <button onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} nameclass="deactivateConnection">Deactivate</button>
             <form onSubmit={this.handleNetworkSubmit} style={{display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none"}}>
                 <div nameclass="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block"}}>
                     <br />
