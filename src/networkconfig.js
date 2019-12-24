@@ -14,6 +14,7 @@ class NetworkConfig extends basePage {
       netConnectionFiltered: [],
       netConnectionFilteredSelected: null,
       netConnectionDetails: {},
+      netConnectionSimilarIfaces: [],
       showIP: false,
       wpaTypes: [{value: 'wpa-none', text: 'None'}, {value: 'wpa-psk', text: 'WPA (PSK)'}],
       bandTypes: [{value: 'a', text: '5 GHz'}, {value: 'bg', text: '2.4 GHz'}],
@@ -41,6 +42,9 @@ class NetworkConfig extends basePage {
                 value: ''
             },
             mode: {
+                value: ''
+            },
+            attachedIface: {
                 value: ''
             }
         }
@@ -77,11 +81,15 @@ class NetworkConfig extends basePage {
                 });
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
-                    if (item.type === "802-3-ethernet") {
-                        netConnection.push(item)
-                    }
-                    if (item.state !== "" && item.type === "802-3-ethernet") {
-                        activeCon = item;
+                    if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === value.value)) {
+                        if (item.state === "") {
+                            netConnection.push(item);
+                        }
+                        else {
+                            //item.label = item.label + " (Active)";
+                            netConnection.push(item);
+                            activeCon = item;
+                        }
                     }
                 });
             }
@@ -91,11 +99,15 @@ class NetworkConfig extends basePage {
                 });
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
-                    if (item.type === "802-11-wireless") {
-                        netConnection.push(item)
-                    }
-                    if (item.state !== "" && item.type === "802-11-wireless") {
-                        activeCon = item;
+                    if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === value.value)) {
+                        if (item.state === "") {
+                            netConnection.push(item);
+                        }
+                        else {
+                            //item.label = item.label + " (Active)";
+                            netConnection.push(item);
+                            activeCon = item;
+                        }
                     }
                 });
             }
@@ -106,11 +118,15 @@ class NetworkConfig extends basePage {
                 });
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
-                    if (item.type === "tun") {
-                        netConnection.push(item)
-                    }
-                    if (item.state !== "" && item.type === "tun") {
-                        activeCon = item;
+                    if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === value.value)) {
+                        if (item.state === "") {
+                            netConnection.push(item);
+                        }
+                        else {
+                            //item.label = item.label + " (Active)";
+                            netConnection.push(item);
+                            activeCon = item;
+                        }
                     }
                 });
 
@@ -149,17 +165,32 @@ class NetworkConfig extends basePage {
           .then(state => this.setState(state))
           .then(state => this.setState({netConnectionFilteredSelected: value}))
           .then(state => this.setState({ curSettings: {
-                ipaddresstype: {value: this.state.netConnectionDetails.DHCP},
-                ipaddress: {value: this.state.netConnectionDetails.IP},
-                subnet: {value: this.state.netConnectionDetails.subnet},
-                wpaType: {value: this.state.netConnectionDetails.wpaType},
-                password: {value: this.state.netConnectionDetails.password},
-                ssid: {value: this.state.netConnectionDetails.ssid},
-                band: {value: this.state.netConnectionDetails.band},
-                mode: {value: this.state.netConnectionDetails.mode}
-            }}));
+                    ipaddresstype: {value: this.state.netConnectionDetails.DHCP},
+                    ipaddress: {value: this.state.netConnectionDetails.IP},
+                    subnet: {value: this.state.netConnectionDetails.subnet},
+                    wpaType: {value: this.state.netConnectionDetails.wpaType},
+                    password: {value: this.state.netConnectionDetails.password},
+                    ssid: {value: this.state.netConnectionDetails.ssid},
+                    band: {value: this.state.netConnectionDetails.band},
+                    mode: {value: this.state.netConnectionDetails.mode},
+                    attachedIface: {value: this.state.netConnectionDetails.attachedIface}
+                    },
+                netConnectionSimilarIfaces: this.getSameAdapter()
+                }));
         }
     };
+
+    getSameAdapter = () => {
+        //get all adapter names of the same device class as selected adapter
+        var ret = [{value: '""', text: '(None)'}];
+        var selType = this.state.netDeviceSelected.type;
+        this.state.netDevice.forEach(function (item) {
+            if (item.type === selType) {
+                ret.push({value: item.value, text: item.value});
+            }
+        });
+        return ret;
+    }
 
     handleNetworkSubmit = (event) =>{
         //save network button clicked - so edit or add
@@ -271,11 +302,11 @@ class NetworkConfig extends basePage {
             if (this.state.netDeviceSelected.type === "wifi") {
                 if(window.confirm('Is this an access point? (OK = Yes)')) {
                     this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""},
-                        curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}}});
+                        curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
                 }
                 else {
                     this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""},
-                        curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}}});
+                        curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
                 }
             }
         }
@@ -345,7 +376,8 @@ class NetworkConfig extends basePage {
             password: {value: this.state.netConnectionDetails.password},
             ssid: {value: this.state.netConnectionDetails.ssid},
             band: {value: this.state.netConnectionDetails.band},
-            mode: {value: this.state.netConnectionDetails.mode}
+            mode: {value: this.state.netConnectionDetails.mode},
+            attachedIface: {value: this.state.netConnectionDetails.attachedIface}
         }});
     }
 
@@ -362,6 +394,17 @@ class NetworkConfig extends basePage {
             <button onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</button>
             <button onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null} nameclass="activateConnection">Activate</button>
             <form onSubmit={this.handleNetworkSubmit} style={{display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none"}}>
+                <div nameclass="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block"}}>
+                    <br />
+                    <label>
+                        <select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface.value}>
+                            {this.state.netConnectionSimilarIfaces.map((option, index) => (
+                                <option key={option.value} value={option.value}>{option.text}</option>
+                            ))}
+                        </select>
+                    Attach to Specific Adapter</label>
+                    <br />
+                </div>
                 <div nameclass="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none"}}><h3>IP Address</h3>
                     <label><input type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "auto"}/>DHCP</label>
                     <label><input type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "manual"}/>Static IP</label>

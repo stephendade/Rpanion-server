@@ -94,31 +94,59 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
 function editConnection(conName, conSettings, callback) {
     //edit an existing connection
     //assumed that conName is a valid UUID
-    //there are 3 types of edits - LAN, Wifi client, Wifi AP
+    //there are 4 types of edits - AttachedInterface, IP, Wifi security, Wifi AP
     //small amount of callback hell here :(
-    editConnectionIP(conName, conSettings, (errIP) => {
-        console.log("IP")
-        if (!errIP) {
-            editConnectionPSK(conName, conSettings, (errPSK) => {
-                console.log("PSK")
-                if (!errPSK) {
-                    editConnectionAP(conName, conSettings, (errAP) => {
-                        console.log("AP")
-                        if (!errAP) {
-                            return callback(null, "EditOK");
+    console.log(conSettings);
+    editConnectionAttached(conName, conSettings, (errAttach) => {
+        console.log("Attach");
+        if (!errAttach) {
+            editConnectionIP(conName, conSettings, (errIP) => {
+                console.log("IP");
+                if (!errIP) {
+                    editConnectionPSK(conName, conSettings, (errPSK) => {
+                        console.log("PSK");
+                        if (!errPSK) {
+                            editConnectionAP(conName, conSettings, (errAP) => {
+                                console.log("AP");
+                                if (!errAP) {
+                                    return callback(null, "EditOK");
+                                }
+                                else {
+                                    return callback(errAP);
+                                }
+                            });
                         }
                         else {
-                            return callback(errAP);
+                            return callback(errPSK);
                         }
                     });
                 }
                 else {
-                    return callback(errPSK);
+                    return callback(errIP);
                 }
             });
         }
         else {
-            return callback(errIP);
+            return callback(errAttach);
+        }
+    });
+}
+
+
+function editConnectionAttached(conName, conSettings, callback) {
+    //edit the attached interface for a connection
+    if (conSettings.attachedIface.value === "&quot;&quot;") {
+        conSettings.attachedIface.value = "\"\"";
+    }
+
+    exec('nmcli connection mod ' + conName + " connection.interface-name " + conSettings.attachedIface.value, (error, stdout, stderr) => {
+        if (stderr) {
+            console.error(`exec error: ${error}`);
+            return callback(stderr);
+        }
+        else {
+            console.log('Edited network Attachment: ' + conName + " to " + conSettings.attachedIface.value);
+            return callback(null, "EditAttachOK");
         }
     });
 }
@@ -128,27 +156,27 @@ function editConnectionIP(conName, conSettings, callback) {
     if (Object.keys(conSettings.ssid).length === 0 || conSettings.mode.value === "infrastructure") {
         if (conSettings.ipaddresstype.value === "auto") {
             exec('nmcli connection mod ' + conName + ' ipv4.method auto ' + 'ipv4.addresses \'\'', (error, stdout, stderr) => {
-            if (stderr) {
-                console.error(`exec error: ${error}`);
-                return callback(stderr);
-            }
-            else {
-                console.log('Edited network IP Auto: ' + conName);
-                return callback(null, "EditOK");
-            }
+                if (stderr) {
+                    console.error(`exec error: ${error}`);
+                    return callback(stderr);
+                }
+                else {
+                    console.log('Edited network IP Auto: ' + conName);
+                    return callback(null, "EditOK");
+                }
             });
         }
         else if (Object.keys(conSettings.ipaddress).length !== 0 && Object.keys(conSettings.subnet).length !== 0) {
             exec('nmcli connection mod ' + conName + ' ipv4.addresses ' + conSettings.ipaddress.value + "/" +
                  netmask2CIDR(conSettings.subnet.value) + ' ipv4.method ' + conSettings.ipaddresstype.value, (error, stdout, stderr) => {
-            if (stderr) {
-                console.error(`exec error: ${error}`);
-                return callback(stderr);
-            }
-            else {
-                console.log('Edited network IP manual: ' + conName);
-                return callback(null, "EditOK");
-            }
+                if (stderr) {
+                    console.error(`exec error: ${error}`);
+                    return callback(stderr);
+                }
+                else {
+                    console.log('Edited network IP manual: ' + conName);
+                    return callback(null, "EditOK");
+                }
             });
         }
     }
@@ -247,23 +275,53 @@ function getConnections(callback) {
         return callback(stderr);
     }
     else {
-        stdout.split("\n").forEach(function (item) {
+        var allConns = stdout.split("\n");
+        //stdout.split("\n").forEach(function (item) {
+        for (var i = 0, len = allConns.length; i < len; i++) {
+                var item = allConns[i];
                 var connection = item.split(':');
+                var curConn = {};
                 if (connection[3] == "" || connection[3] == "--") {
-                    conStatusList.push({value: connection[1], label: connection[0], type: connection[2], state: ""});
+                    curConn = {value: connection[1], label: connection[0], type: connection[2], state: "", attachedIface: getConnectionIfaceSync(connection[1])};
+                    conStatusList.push(curConn);
                 }
+                //active connection
                 else if (connection.length == 4) {
-                    conStatusList.push({value: connection[1], label: connection[0] + " (active)", type: connection[2], state: connection[3]});
+                    curConn = {value: connection[1], label: connection[0] + " (Active)", type: connection[2], state: connection[3], attachedIface: getConnectionIfaceSync(connection[1])};
+                    conStatusList.push(curConn);
                 }
-            });
+
+            }
     }
     return callback(null, conStatusList);
     });
 
 }
 
+function getConnectionIfaceSync(conName){
+        //synchonous get if connection mapped to specific interface
+        var ret;
+        exec('nmcli -s -t -f connection.interface-name connection show ' + conName, (error, stdout, stderr) => {
+            if (stderr) {
+                //no connection with that name
+                console.error(`exec error: ${error}`);
+                ret = "";
+            }
+            else if (stdout.split(":")[0] === "connection.interface-name") {
+                ret = stdout.split(":")[1].trim();
+            }
+            else {
+                ret = "";
+            }
+        });
+        while(ret === undefined) {
+            require('deasync').sleep(100);
+        }
+        return ret;
+    }
+
 function getConnectionDetails(conName, callback) {
-    exec('nmcli -s -t -f ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk connection show ' + conName, (error, stdout, stderr) => {
+    exec('nmcli -s -t -f ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.interface-name connection show ' + conName, (error, stdout, stderr) => {
         if (stderr) {
             //no connection with that name
             console.error(`exec error: ${error}`);
@@ -299,6 +357,9 @@ function getConnectionDetails(conName, callback) {
                 }
                 else if (item.split(":")[0] === "802-11-wireless-security.psk") {
                     ret.password = item.split(":")[1];
+                }
+                else if (item.split(":")[0] === "connection.interface-name") {
+                    ret.attachedIface = item.split(":")[1];
                 }
             });
             return callback(null, ret);
