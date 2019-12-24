@@ -282,12 +282,12 @@ function getConnections(callback) {
                 var connection = item.split(':');
                 var curConn = {};
                 if (connection[3] == "" || connection[3] == "--") {
-                    curConn = {value: connection[1], label: connection[0], type: connection[2], state: "", attachedIface: getConnectionIfaceSync(connection[1])};
+                    curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: "", attachedIface: getConnectionIfaceSync(connection[1])};
                     conStatusList.push(curConn);
                 }
                 //active connection
                 else if (connection.length == 4) {
-                    curConn = {value: connection[1], label: connection[0] + " (Active)", type: connection[2], state: connection[3], attachedIface: getConnectionIfaceSync(connection[1])};
+                    curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: connection[3], attachedIface: getConnectionIfaceSync(connection[1])};
                     conStatusList.push(curConn);
                 }
 

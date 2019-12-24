@@ -82,13 +82,14 @@ class NetworkConfig extends basePage {
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
                     if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-                        if (item.state === "") {
-                            netConnection.push(item);
-                        }
-                        else {
-                            //item.label = item.label + " (Active)";
+                        if (item.state === value.value) {
+                            item.label = item.labelPre + " (Active)";
                             netConnection.push(item);
                             activeCon = item;
+                        }
+                        else {
+                            item.label = item.labelPre;
+                            netConnection.push(item);
                         }
                     }
                 });
@@ -100,13 +101,14 @@ class NetworkConfig extends basePage {
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
                     if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-                        if (item.state === "") {
-                            netConnection.push(item);
-                        }
-                        else {
-                            //item.label = item.label + " (Active)";
+                        if (item.state === value.value) {
+                            item.label = item.labelPre + " (Active)";
                             netConnection.push(item);
                             activeCon = item;
+                        }
+                        else {
+                            item.label = item.labelPre;
+                            netConnection.push(item);
                         }
                     }
                 });
@@ -119,13 +121,14 @@ class NetworkConfig extends basePage {
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
                     if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-                        if (item.state === "") {
-                            netConnection.push(item);
-                        }
-                        else {
-                            //item.label = item.label + " (Active)";
+                        if (item.state === value.value) {
+                            item.label = item.labelPre + " (Active)";
                             netConnection.push(item);
                             activeCon = item;
+                        }
+                        else {
+                            item.label = item.labelPre;
+                            netConnection.push(item);
                         }
                     }
                 });
@@ -392,7 +395,7 @@ class NetworkConfig extends basePage {
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
             <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>
             <button onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</button>
-            <button onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null} nameclass="activateConnection">Activate</button>
+            <button onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} nameclass="activateConnection">Activate</button>
             <form onSubmit={this.handleNetworkSubmit} style={{display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none"}}>
                 <div nameclass="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block"}}>
                     <br />
