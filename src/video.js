@@ -87,6 +87,10 @@ class VideoPage extends basePage {
                 {this.state.streamAddresses.map((item, index) => (
                     <ul>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</ul>
                 ))}
+                <p>Or use one of the following gstreamer strings in Mission Planner:</p>
+                {this.state.streamAddresses.map((item, index) => (
+                    <ul>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</ul>
+                ))}
             </div>
         </div>
         );
