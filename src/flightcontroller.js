@@ -1,15 +1,13 @@
 import React from 'react';
 import Select from 'react-select';
-import io from 'socket.io-client';
-import SocketIOFooter from './footerSocketIO';
 import BootstrapTable from 'react-bootstrap-table-next';
 
 import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import basePage from './basePage.js';
 
 class FCPage extends basePage {
-    constructor(props) {
-        super(props);
+    constructor(props, useSocketIO=true) {
+        super(props, useSocketIO);
         this.state = {
             telemetryStatus: this.props.telemetryStatus,
             serialPorts: [],
@@ -18,11 +16,12 @@ class FCPage extends basePage {
             serialPortSelected: null,
             baudRateSelected: null,
             mavVersionSelected: null,
-            socketioStatus: false,
             FCStatus: {},
             UDPoutputs: [],
             addrow: "",
-            loading: true
+            loading: true,
+            socketioStatus: false,
+            usedSocketIO: true
         }
 
         this.columns = [{
@@ -36,27 +35,15 @@ class FCPage extends basePage {
           formatter: this.udpbuttonFormatter
           }];
 
-        this.socket = io();
-
         // Socket.io client for reading in analog update values
         this.socket.on('FCStatus', function(msg){
             this.setState({FCStatus: msg});
-        }.bind(this));
-        this.socket.on('disconnect', function(){
-            this.setState({socketioStatus: false});
-        }.bind(this));
-        this.socket.on('connect', function(){
-            this.setState({socketioStatus: true});
         }.bind(this));
     }
 
     componentDidMount() {
         fetch(`/api/FCDetails`).then(response => response.json()).then(state => {this.setState(state)});
         fetch(`/api/FCOutputs`).then(response => response.json()).then(state => {this.setState(state); this.loadDone()});
-    }
-
-    componentWillUnmount() {
-        this.socket.disconnect();
     }
 
     handleSerialPortChange = (value, action) => {
@@ -161,7 +148,6 @@ class FCPage extends basePage {
                     <textarea readOnly rows = "5" cols = "100" value={this.state.FCStatus.statusText}></textarea>
                   </label>
                   <button disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</button>
-              <SocketIOFooter socketioStatus={this.state.socketioStatus}/>
             </div>
           );
     }
