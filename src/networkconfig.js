@@ -200,62 +200,72 @@ class NetworkConfig extends basePage {
         //save network button clicked - so edit or add
         if (this.state.netConnectionFilteredSelected.value ==='new')
         {
-            fetch('/api/networkadd', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conSettings: this.state.curSettings,
-                    conName: this.state.netConnectionFilteredSelected.label,
-                    conType: this.state.netDeviceSelected.type,
-                    conAdapter: this.state.netDeviceSelected.value
-                }, (key, value) => {
-                  if (value !== '') return value
-                })
-            }).then(response => response.json())
-              .then(data => {
-                  if (data.error == null) {
-                      window.alert("Network Added")
-                  }
-                  else {
-                      window.alert("Error adding network: " + data.error)
-                  }
-                  //and refresh connections list
-                  this.handleStart();
-              })
-              .catch(error => {
-                     window.alert("Error adding network: " + error)
-              });
-        }
-        else {
-            fetch('/api/networkedit', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conName: this.state.netConnectionFilteredSelected.value,
-                    conSettings: this.state.curSettings,
+            this.setState({ waiting: true }, () => {
+                fetch('/api/networkadd', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conSettings: this.state.curSettings,
+                        conName: this.state.netConnectionFilteredSelected.label,
+                        conType: this.state.netDeviceSelected.type,
+                        conAdapter: this.state.netDeviceSelected.value
                     }, (key, value) => {
                       if (value !== '') return value
-                })
-            }).then(response => response.json())
-              .then(data => {
-                  if (data.error == null) {
-                      window.alert("Network Edited")
-                  }
-                  else {
-                      window.alert("Error editing network: " + data.error)
-                  }
-                  //and refresh connections list
-                  this.handleStart();
-              })
-              .catch(error => {
-                     window.alert("Error editing network: " + error)
-              });
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.error == null) {
+                          this.setState({waiting: false});
+                          window.alert("Network Added")
+                      }
+                      else {
+                          this.setState({waiting: false});
+                          window.alert("Error adding network: " + data.error)
+                      }
+                      //and refresh connections list
+                      this.handleStart();
+                  })
+                  .catch(error => {
+                         window.alert("Error adding network: " + error);
+                         this.setState({waiting: false});
+                  });
+            });
+        }
+        else {
+            this.setState({ waiting: true }, () => {
+                fetch('/api/networkedit', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conName: this.state.netConnectionFilteredSelected.value,
+                        conSettings: this.state.curSettings,
+                        }, (key, value) => {
+                          if (value !== '') return value
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.error == null) {
+                          this.setState({waiting: false});
+                          window.alert("Network Edited")
+                      }
+                      else {
+                          this.setState({waiting: false});
+                          window.alert("Error editing network: " + data.error)
+                      }
+                      //and refresh connections list
+                      this.handleStart();
+                  })
+                  .catch(error => {
+                        this.setState({waiting: false});
+                        window.alert("Error editing network: " + error)
+                  });
+            });
         }
         event.preventDefault();
     };
@@ -269,28 +279,33 @@ class NetworkConfig extends basePage {
                 this.handleAdapterChange(this.state.netDeviceSelected, {action: "select-option"})
             }
             else {
-                fetch('/api/networkdelete', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        conName: this.state.netConnectionFilteredSelected.value,
-                    })
-                }).then(response => response.json())
-                  .then(data => {
-                      if (data.error == null) {
-                          window.alert("Network Deleted")
-                      }
-                      else {
-                          window.alert("Error deleting network: " + data.error)
-                      }
-                      //and refresh connections list
-                      this.handleStart();
-                  })
-                  .catch(error => {
-                         window.alert("Error deleting network: " + error)
+                this.setState({ waiting: true }, () => {
+                    fetch('/api/networkdelete', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            conName: this.state.netConnectionFilteredSelected.value,
+                        })
+                    }).then(response => response.json())
+                      .then(data => {
+                          if (data.error == null) {
+                              this.setState({waiting: false})
+                              window.alert("Network Deleted")
+                          }
+                          else {
+                              this.setState({waiting: false})
+                              window.alert("Error deleting network: " + data.error)
+                          }
+                          //and refresh connections list
+                          this.handleStart();
+                      })
+                      .catch(error => {
+                            this.setState({waiting: false})
+                            window.alert("Error deleting network: " + error)
+                      });
                   });
             }
         }
@@ -322,29 +337,34 @@ class NetworkConfig extends basePage {
         //if it's a new connection, don't activate
         //and refresh network information when done
         if (this.state.netConnectionFilteredSelected.value !== "new") {
-            fetch('/api/networkactivate', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conName: this.state.netConnectionFilteredSelected.value,
-                })
-            }).then(response => response.json())
-                  .then(data => {
-                      if (data.error == null) {
-                          window.alert("Network Activated")
-                      }
-                      else {
-                          window.alert("Error activating network: " + data.error)
-                      }
-                      //and refresh connections list
-                      this.handleStart();
-                  })
-                  .catch(error => {
-                         window.alert("Error activating network: " + error)
-                  });
+            this.setState({ waiting: true }, () => {
+                fetch('/api/networkactivate', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conName: this.state.netConnectionFilteredSelected.value,
+                    })
+                }).then(response => response.json())
+                      .then(data => {
+                          if (data.error == null) {
+                              this.setState({waiting: false})
+                              window.alert("Network Activated")
+                          }
+                          else {
+                              this.setState({waiting: false})
+                              window.alert("Error activating network: " + data.error)
+                          }
+                          //and refresh connections list
+                          this.handleStart();
+                      })
+                      .catch(error => {
+                             this.setState({waiting: false})
+                             window.alert("Error activating network: " + error)
+                      });
+            });
         }
         event.preventDefault();
     };
@@ -354,29 +374,34 @@ class NetworkConfig extends basePage {
         //and refresh network information when done
         //don't do anything if a new (unsaved) network
         if (this.state.netConnectionFilteredSelected.value !== "new") {
-            fetch('/api/networkdeactivate', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    conName: this.state.netConnectionFilteredSelected.value,
-                })
-            }).then(response => response.json())
-                  .then(data => {
-                      if (data.error == null) {
-                          window.alert("Network Dectivated")
-                      }
-                      else {
-                          window.alert("Error deactivating network: " + data.error)
-                      }
-                      //and refresh connections list
-                      this.handleStart();
-                  })
-                  .catch(error => {
-                         window.alert("Error deactivating network: " + error)
-                  });
+            this.setState({ waiting: true }, () => {
+                fetch('/api/networkdeactivate', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conName: this.state.netConnectionFilteredSelected.value,
+                    })
+                }).then(response => response.json())
+                      .then(data => {
+                          if (data.error == null) {
+                              this.setState({waiting: false})
+                              window.alert("Network Dectivated")
+                          }
+                          else {
+                              this.setState({waiting: false})
+                              window.alert("Error deactivating network: " + data.error)
+                          }
+                          //and refresh connections list
+                          this.handleStart();
+                      })
+                      .catch(error => {
+                          this.setState({waiting: false})
+                          window.alert("Error deactivating network: " + error)
+                      });
+            });
         }
         event.preventDefault();
     };
