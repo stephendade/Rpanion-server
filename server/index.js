@@ -7,7 +7,7 @@ const aboutPage = require('./aboutInfo');
 const videoStream = require('./videostream');
 const fcManagerClass = require('./flightController');
 
-var winston = require('./winstonconfig');
+var winston = require('./winstonconfig')(module);
 
 const app = express();
 const http = require("http").Server(app)
@@ -227,7 +227,6 @@ app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: status, streamAddresses: addresses};
             res.send(JSON.stringify(ret));
-            winston.error('Bad POST vars ', { message: errors.array() });
         }
         else {
             res.setHeader('Content-Type', 'application/json');

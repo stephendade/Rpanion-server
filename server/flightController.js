@@ -1,6 +1,8 @@
 const SerialPort = require('serialport');
 const fs = require('fs');
 const path = require('path');
+var events = require('events');
+var winston = require('./winstonconfig')(module);
 
 const mavManager = require('../mavlink/mavManager.js');
 
@@ -23,6 +25,9 @@ class FCDetails {
         this.port = null;
         this.m = null;
 
+        //For sending events outside of object
+        this.eventEmitter = new events.EventEmitter();
+
         //Tracking time of last packet recived
         this.lastDataTime = (Date.now().valueOf());
         this.intervalObj = null;
@@ -37,6 +42,7 @@ class FCDetails {
         fs.readFile(this.filesavepath, (err, data) => {
             if (err) {
                 console.log("No saved file " + this.filesavepath);
+                winston.error('Error in constructor() ', { message: err });
             }
             else {
                 try {
@@ -65,6 +71,7 @@ class FCDetails {
                     console.log(this.filesavepath + ' read');
                 } catch(err) {
                     console.log("Cannot read " + this.filesavepath);
+                    winston.error('Error in constructor() catch ', { message: err });
                     console.log(err);
                 }
 
@@ -163,7 +170,7 @@ class FCDetails {
         this.port = new SerialPort(this.activeDevice.serial.value, {baudRate: parseInt(this.activeDevice.baud.value)}, (err) => {
             if (err) {
                 this.closeLink((err) => {
-
+                    winston.error('Error in startLink() port ', { message: err });
                 });
                 console.log('Serial Error: ', err.message);
                 this.active = false;
@@ -179,6 +186,7 @@ class FCDetails {
                 if (this.m.isRebooting && this.active && (Date.now().valueOf()) - this.lastDataTime > 2000) {
                     console.log('Trying to reconnect FC...');
                     this.closeLink((err) => {
+                        winston.error('Error in startLink() timeout ', { message: err });
                         this.startLink((err) => {
                         });
                     });
@@ -193,11 +201,16 @@ class FCDetails {
                 if (this.port) {
                     this.port.write(buffer, function(err) {
                       if (err) {
+                          winston.error('Error in startLink() serial ', { message: err });
                         return console.log('FC Serial Error on write: ', err.message)
                       }
                     });
                 }
             });
+            //this.m.eventEmitter.on('gotData', (msg) => {
+            //    //got valid message - send on
+            //    this.eventEmitter.emit('gotData', msg);
+            //});
 
             return callback(null, true)
         });
@@ -334,8 +347,12 @@ class FCDetails {
         let data = JSON.stringify([this.activeDevice, this.outputs]);
 
         fs.writeFile(this.filesavepath, data, (err) => {
-            if (err) throw err;
-            console.log(this.filesavepath + ' written');
+            if (err) {
+                winston.error('Error in saveSerialSettings() ', { message: err });
+            }
+            else {
+                console.log(this.filesavepath + ' written');
+            }
         });
     }
 

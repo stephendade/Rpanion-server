@@ -1,4 +1,5 @@
 const {exec} = require('child_process');
+var winston = require('./winstonconfig')(module);
 
 function getAdapters(callback) {
     //Get all network adapter name, type and states
@@ -6,6 +7,7 @@ function getAdapters(callback) {
     var netStatusList = [];
         if (stderr) {
             console.error(`exec error: ${error}`);
+            winston.error('Error in getAdapters() ', { message: stderr });
             return callback(stderr);
         }
         else {
@@ -13,6 +15,7 @@ function getAdapters(callback) {
                     var device = item.split(':');
                     if (device.length == 3 && device[0] != "lo") {
                         console.log("Adding Network device " + device[0]);
+                        winston.info('getAdapters() adding ' + device);
                         netStatusList.push({value: device[0], label: device[0] + " (" + device[1] + ")", type: device[1], state: device[2]});
                     }
             });
@@ -27,10 +30,12 @@ function activateConnection(conName, callback) {
     exec('nmcli connection up ' + conName, (error, stdout, stderr) => {
     if (stderr) {
         console.error(`exec error: ${error}`);
+        winston.error('Error in getAdapters() ', { message: stderr });
         return callback(stderr);
     }
     else {
         console.log('Activated network: ' + conName);
+        winston.info('activateConnection()' + conName);
         return callback(null, "OK");
     }
     });
@@ -42,10 +47,12 @@ function deactivateConnection(conName, callback) {
     exec('nmcli connection down ' + conName, (error, stdout, stderr) => {
     if (stderr) {
         console.error(`exec error: ${error}`);
+        winston.error('Error in deactivateConnection() ', { message: stderr });
         return callback(stderr);
     }
     else {
         console.log('Dectivated network: ' + conName);
+        winston.info('deactivateConnection()' + conName);
         return callback(null, "OK");
     }
     });
@@ -63,17 +70,21 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
              "nmcli -g connection.uuid con show " + conNameStr, (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
+                winston.error('Error in addConnection() wifi ', { message: stderr });
                 return callback(stderr);
             }
             else {
                 //once the network is created, add in the settings
                 var conUUID = stdout.split('\n')[stdout.split('\n').length-2]
                 console.log('Added network Wifi: ' + conNameStr + " - " + conAdapter + " - " + conUUID);
+                winston.info('addConnection() wifi ' + conNameStr + " - " + conAdapter + " - " + conUUID);
                 this.editConnection(conUUID, conSettings, (err) => {
                     if (!err) {
+                        winston.info('addConnection() wifi OK');
                         return callback(null, "AddOK");
                     }
                     else {
+                        winston.error('Error in editConnection() addcon ', { message: err });
                         return callback(err);
                     }
                 });
@@ -86,17 +97,21 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
              "nmcli -g connection.uuid con show " + conNameStr, (error, stdout, stderr) => {
         if (stderr) {
             console.error(`exec error: ${error}`);
+            winston.error('Error in addConnection() nowifi ', { message: stderr });
             return callback(stderr);
         }
         else {
             //once the network is created, add in the settings
             var conUUID = stdout.split('\n')[stdout.split('\n').length-2]
             console.log('Added network Wired: ' + conNameStr + " - " + conAdapter + " - " + conUUID);
+            winston.info('addConnection() wired ' + conNameStr + " - " + conAdapter + " - " + conUUID);
             this.editConnection(conUUID, conSettings, (err) => {
                 if (!err) {
+                    winston.info('addConnection() Wired OK');
                     return callback(null, "AddOK");
                 }
                 else {
+                    winston.error('Error in editConnection() nowifi addcon ', { message: err });
                     return callback(err);
                 }
             });
@@ -132,16 +147,19 @@ function editConnection(conName, conSettings, callback) {
                             });
                         }
                         else {
+                            winston.error('Error in editConnection() errPSK ', { message: errPSK });
                             return callback(errPSK);
                         }
                     });
                 }
                 else {
+                    winston.error('Error in editConnection() errIP ', { message: errIP });
                     return callback(errIP);
                 }
             });
         }
         else {
+            winston.error('Error in editConnection() errAttach ', { message: errAttach });
             return callback(errAttach);
         }
     });
@@ -161,6 +179,7 @@ function editConnectionAttached(conName, conSettings, callback) {
         }
         else {
             console.log('Edited network Attachment: ' + conName + " to " + conSettings.attachedIface.value);
+            winston.info('editConnectionAttached() ' + conName + " to " + conSettings.attachedIface.value);
             return callback(null, "EditAttachOK");
         }
     });
@@ -177,6 +196,7 @@ function editConnectionIP(conName, conSettings, callback) {
                 }
                 else {
                     console.log('Edited network IP Auto: ' + conName);
+                    winston.info('editConnectionIP() Auto: ' + conName);
                     return callback(null, "EditOK");
                 }
             });
@@ -190,12 +210,14 @@ function editConnectionIP(conName, conSettings, callback) {
                 }
                 else {
                     console.log('Edited network IP manual: ' + conName);
+                    winston.info('editConnectionIP() manual: ' + conName + ", " + conSettings.ipaddress.value + ", " + conSettings.ipaddresstype.value);
                     return callback(null, "EditOK");
                 }
             });
         }
     }
     else {
+        winston.info('editConnectionIP() not required');
         return callback(null, "EditNotRequired");
     }
 }
@@ -208,12 +230,13 @@ function editConnectionPSK(conName, conSettings, callback) {
             Object.keys(conSettings.ssid).length !== 0 &&
             Object.keys(conSettings.password).length !== 0) {
             exec('nmcli connection mod ' + conName + ' 802-11-wireless-security.key-mgmt ' + conSettings.wpaType.value + ' &&' +
-            'nmcli -s connection mod ' + conName + ' 802-11-wireless-security.psk ' + conSettings.password.value, (error, stdout, stderr) => {
+            'nmcli -s connection mod ' + conName + ' 802-11-wireless-security.pairwise ccmp 802-11-wireless-security.psk ' + conSettings.password.value, (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
                 return callback(stderr);
             }
             else {
+                winston.info('editConnectionPSK() edited psk ' + conName + ", " + conSettings.wpaType.value);
                 console.log('Edited Wifi psk: ' + conName);
                 return callback(null, "OK");
             }
@@ -229,6 +252,7 @@ function editConnectionPSK(conName, conSettings, callback) {
                 return callback(stderr);
             }
             else {
+                winston.info('editConnectionPSK() edited no-psk ' + conName + ", " + conSettings.wpaType.value);
                 console.log('Edited Wifi no-psk: ' + conName);
                 return callback(null, "OK");
             }
@@ -236,6 +260,7 @@ function editConnectionPSK(conName, conSettings, callback) {
         }
     }
     else {
+        winston.info('editConnectionPSK() not required');
         return callback(null, "EditNotRequired");
     }
 }
@@ -248,13 +273,15 @@ function editConnectionAP(conName, conSettings, callback) {
             Object.keys(conSettings.ipaddress).length !== 0) {
             exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value +
             ' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + "/24" +
-            ' 802-11-wireless-security.group ccmp ' + '802-11-wireless-security.pairwise ccmp ' +
+            ' 802-11-wireless-security.group ccmp ' +
             ' 802-11-wireless-security.wps-method 1 ' , (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
+                winston.error('Error in editConnectionAP() ', { message: stderr });
                 return callback(stderr);
             }
             else {
+                winston.info('editConnectionAP() edited ssid/band: ' + conName + ", " + conSettings.ssid.value + ", " + conSettings.ipaddress.value);
                 console.log('Edited Wifi ap ssid/band: ' + conName);
                 return callback(null, "OK");
             }
@@ -262,6 +289,7 @@ function editConnectionAP(conName, conSettings, callback) {
         }
     }
     else {
+        winston.info('editConnectionAP() not required');
         return callback(null, "EditNotRequired");
     }
 }
@@ -272,10 +300,12 @@ function deleteConnection(conName, callback) {
     exec('nmcli connection delete ' + conName, (error, stdout, stderr) => {
     if (stderr) {
         console.error(`exec error: ${error}`);
+        winston.error('Error in deleteConnection() ', { message: stderr });
         return callback(stderr);
     }
     else {
         console.log('Deleted network: ' + conName);
+        winston.info('deleteConnection() del: ' + conName);
         return callback(null, "OK");
     }
     });
@@ -287,26 +317,27 @@ function getConnections(callback) {
     var conStatusList = [];
     if (stderr) {
         console.error(`exec error: ${error}`);
+        winston.error('Error in getConnections() ', { message: stderr });
         return callback(stderr);
     }
     else {
         var allConns = stdout.split("\n");
         //stdout.split("\n").forEach(function (item) {
         for (var i = 0, len = allConns.length; i < len; i++) {
-                var item = allConns[i];
-                var connection = item.split(':');
-                var curConn = {};
-                if (connection[3] == "" || connection[3] == "--") {
-                    curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: "", attachedIface: getConnectionIfaceSync(connection[1])};
-                    conStatusList.push(curConn);
-                }
-                //active connection
-                else if (connection.length == 4) {
-                    curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: connection[3], attachedIface: getConnectionIfaceSync(connection[1])};
-                    conStatusList.push(curConn);
-                }
-
+            var item = allConns[i];
+            var connection = item.split(':');
+            var curConn = {};
+            if (connection[3] == "" || connection[3] == "--") {
+                curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: "", attachedIface: getConnectionIfaceSync(connection[1])};
+                conStatusList.push(curConn);
             }
+            //active connection
+            else if (connection.length == 4) {
+                curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: connection[3], attachedIface: getConnectionIfaceSync(connection[1])};
+                conStatusList.push(curConn);
+            }
+        }
+        winston.info('getConnections() got: ' + allConns.length);
     }
     return callback(null, conStatusList);
     });
@@ -320,6 +351,7 @@ function getConnectionIfaceSync(conName){
             if (stderr) {
                 //no connection with that name
                 console.error(`exec error: ${error}`);
+                winston.error('Error in getConnectionIfaceSync() ', { message: stderr });
                 ret = "";
             }
             else if (stdout.split(":")[0] === "connection.interface-name") {
@@ -340,6 +372,7 @@ function getConnectionDetails(conName, callback) {
         if (stderr) {
             //no connection with that name
             console.error(`exec error: ${error}`);
+            winston.error('Error in getConnectionDetails() ', { message: stderr });
             return callback(stderr);
         }
         else {
@@ -405,6 +438,7 @@ function netmask2CIDR(mask){
     }
     // Condition to check for validity of the netmask
     if (cidr.substring(cidr.search('0'),32).search('1') !== -1) {
+        winston.error('Error in netmask2CIDR() ', { message: mask });
         throw 'ERROR: Invalid Netmask ' + mask
     }
     return cidr.split('1').length-1

@@ -1,6 +1,7 @@
 const process = require('process');
 const {exec, spawn} = require('child_process');
 const os = require('os');
+var winston = require('./winstonconfig')(module);
 
 class videoStream {
     constructor() {
@@ -16,6 +17,7 @@ class videoStream {
         exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
+                winston.error('Error in getVideoDevices() ', { message: stderr });
                 return callback(stderr);
             }
             else {
@@ -81,15 +83,18 @@ class videoStream {
                                                   "--rotation=" + rotation,
                                                   ]);
             this.deviceStream.stdout.on('data', (data) => {
+                winston.info('startStopStreaming() data ' + data);
               console.log(`GST stdout: ${data}`);
             });
 
             this.deviceStream.stderr.on('data', (data) => {
+                winston.error('startStopStreaming() err ', { message: data });
               console.error(`GST stderr: ${data}`);
             });
 
             this.deviceStream.on('close', (code) => {
               console.log(`GST process exited with code ${code}`);
+              winston.info('startStopStreaming() close ' + code);
                 this.deviceStream.stdin.pause();
                 this.deviceStream.kill();
                 this.deviceStream
