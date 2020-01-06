@@ -62,11 +62,12 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
     //add a new connection with name conNameStr and settings
     //conSettings
     //nmcli connection add type wifi ifname $IFNAME con-name $APNAME ssid $SSID
+    //due to the multiple edits, we need to set autoconnect to "no"
     if (conType === "wifi") {
         exec('nmcli connection add type ' + conType + " ifname " + conAdapter +
              " con-name " + conNameStr + " ssid " + conSettings.ssid.value + " 802-11-wireless.mode " +
              conSettings.mode.value + " 802-11-wireless.band " + conSettings.band.value +
-             " ipv4.method " + conSettings.ipaddresstype.value + " && " +
+             " ipv4.method " + conSettings.ipaddresstype.value + " connection.autoconnect no " + " && " +
              "nmcli -g connection.uuid con show " + conNameStr, (error, stdout, stderr) => {
             if (stderr) {
                 console.error(`exec error: ${error}`);
@@ -79,21 +80,25 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
                 console.log('Added network Wifi: ' + conNameStr + " - " + conAdapter + " - " + conUUID);
                 winston.info('addConnection() wifi ' + conNameStr + " - " + conAdapter + " - " + conUUID);
                 this.editConnection(conUUID, conSettings, (err) => {
-                    if (!err) {
-                        winston.info('addConnection() wifi OK');
-                        return callback(null, "AddOK");
-                    }
-                    else {
-                        winston.error('Error in editConnection() addcon ', { message: err });
-                        return callback(err);
-                    }
+                    //set autoconnect back to "yes"
+                    exec('nmcli connection mod ' + conUUID + " connection.autoconnect yes", (error, stdout, stderr) => {
+                        if (!err && !stderr) {
+                            winston.info('addConnection() wifi OK');
+                            return callback(null, "AddOK");
+                        }
+                        else {
+                            winston.error('Error in editConnection() wifi addcon ', { message: err });
+                            winston.error('Error in editConnection() wifi addcon ', { message: stderr });
+                            return callback(err);
+                        }
+                    });
                 });
             }
         });
     }
     else {
         exec('nmcli connection add type ' + conType + " ifname " + conAdapter +
-             " con-name " + conNameStr + "&&" +
+             " con-name " + conNameStr + " connection.autoconnect no " + "&&" +
              "nmcli -g connection.uuid con show " + conNameStr, (error, stdout, stderr) => {
         if (stderr) {
             console.error(`exec error: ${error}`);
@@ -106,14 +111,18 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
             console.log('Added network Wired: ' + conNameStr + " - " + conAdapter + " - " + conUUID);
             winston.info('addConnection() wired ' + conNameStr + " - " + conAdapter + " - " + conUUID);
             this.editConnection(conUUID, conSettings, (err) => {
-                if (!err) {
-                    winston.info('addConnection() Wired OK');
-                    return callback(null, "AddOK");
-                }
-                else {
-                    winston.error('Error in editConnection() nowifi addcon ', { message: err });
-                    return callback(err);
-                }
+                //set autoconnect back to "yes"
+                exec('nmcli connection mod ' + conUUID + " connection.autoconnect yes", (error, stdout, stderr) => {
+                    if (!err && !stderr) {
+                        winston.info('addConnection() wired OK');
+                        return callback(null, "AddOK");
+                    }
+                    else {
+                        winston.error('Error in editConnection() wired addcon ', { message: err });
+                        winston.error('Error in editConnection() wired addcon ', { message: stderr });
+                        return callback(err);
+                    }
+                });
             });
         }
         });
