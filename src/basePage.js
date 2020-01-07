@@ -56,7 +56,7 @@ class basePage extends Component {
                         loading={loading}
                     />
                 </div>
-                <div className='sweet-waiting' style={{display: (waiting) ? "block" : "none", "textAlign": "center", "position": "fixed", "width": "100%", "height": "100%", "top": "0", "left": "0", "right": "0", "bottom": "0", "z-index": "9", "background-color": "rgba(65,117,5,0.5)"}}>
+                <div className='sweet-waiting' style={{display: (waiting) ? "block" : "none", "textAlign": "center", "position": "fixed", "width": "100%", "height": "100%", "top": "0", "left": "0", "right": "0", "bottom": "0", "zIndex": "9", "backgroundColor": "rgba(65,117,5,0.5)"}}>
                     <ClipLoader
                         sizeUnit={"px"}
                         css={css`position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);`}
@@ -64,7 +64,7 @@ class basePage extends Component {
                         color={'#417505'}
                         loading={waiting}
                     />
-                    <h2 style={{"position": "absolute", "top": "65%", "left": "40%", "-ms-transform": "translateY(-50%)", "transform": "translateY(-50%)"}}>Submitting Changes</h2>
+                    <h2 style={{"position": "absolute", "top": "65%", "left": "40%", "msTransform": "translateY(-50%)", "transform": "translateY(-50%)"}}>Submitting Changes</h2>
                 </div>
                 <div className='pagedetails' style={{ display: (loading) ? "none" : "block"}}>
                     {this.renderContent()}
