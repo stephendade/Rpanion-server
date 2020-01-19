@@ -6,6 +6,8 @@ import Home from './home.js';
 import NetworkConfig from './networkconfig.js';
 import Video from './video.js';
 import FCConfig from './flightcontroller.js';
+import LogBrowser from './logBrowser.js'
+
 
 it('homepage renders without crashing', () => {
   const div = document.createElement('div');
@@ -34,5 +36,11 @@ it('video page renders without crashing', () => {
 it('flightcontroller page renders without crashing', () => {
   const div = document.createElement('div');
   ReactDOM.render(<FCConfig />, div);
+  ReactDOM.unmountComponentAtNode(div);
+});
+
+it('logging page renders without crashing', () => {
+  const div = document.createElement('div');
+  ReactDOM.render(<LogBrowser />, div);
   ReactDOM.unmountComponentAtNode(div);
 });

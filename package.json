@@ -7,9 +7,11 @@
     "app-root-path": "^3.0.0",
     "bootstrap": "^4.3.1",
     "deasync": "^0.1.15",
-    "express-validator": "^6.2.0",
+    "express-validator": "^6.3.1",
     "install": "^0.13.0",
     "jspack": "0.0.4",
+    "microtime": "^3.0.0",
+    "moment": "^2.24.0",
     "npm": "^6.13.2",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
@@ -28,7 +30,7 @@
     "serialport": "^7.1.5",
     "socket.io": "^2.2.0",
     "startbootstrap-simple-sidebar": "^5.1.1",
-    "systeminformation": "^4.14.17",
+    "systeminformation": "^4.16.1",
     "winston": "^3.2.1"
   },
   "scripts": {
@@ -49,7 +51,7 @@
   "devDependencies": {
     "body-parser": "^1.19.0",
     "eslint": "^6.1.0",
-    "eslint-plugin-react": "^7.14.3",
+    "eslint-plugin-react": "^7.17.0",
     "express": "^4.17.1",
     "express-pino-logger": "^4.0.0",
     "node-env-run": "^3.0.2",

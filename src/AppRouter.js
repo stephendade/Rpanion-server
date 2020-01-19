@@ -7,6 +7,7 @@ import Home from './home.js';
 import NetworkConfig from './networkconfig.js';
 import Video from './video.js';
 import FCConfig from './flightcontroller.js';
+import LogBrowser from './logBrowser.js'
 
 function AppRouter() {
   return (
@@ -15,6 +16,7 @@ function AppRouter() {
                 <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
                 <div id="sidebar-items" className="list-group list-group-flush">
                     <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
@@ -22,7 +24,7 @@ function AppRouter() {
                 </div>
             </div>
 
-        <div className="page-content-wrapper">
+        <div className="page-content-wrapper" style={{ "width": "100%" }}>
           <div className="container-fluid">
             <Switch>
                 <Route exact path="/" component={Home} />
@@ -30,6 +32,7 @@ function AppRouter() {
                 <Route exact path="/network" component={NetworkConfig} />
                 <Route exact path="/about" component={About} />
                 <Route exact path="/video" component={Video} />
+                <Route exact path="/flightlogs" component={LogBrowser} />
                 <Route component={NoMatch} />
             </Switch>
           </div>

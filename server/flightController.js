@@ -197,27 +197,32 @@ class FCDetails {
                     this.m.sendDSRequest();
                 }
             }, 1000);
+
+            this.eventEmitter.emit('newLink');
+
             this.m.eventEmitter.on('sendData', (buffer) => {
                 if (this.port) {
                     this.port.write(buffer, function(err) {
                       if (err) {
                           winston.error('Error in startLink() serial ', { message: err });
-                        return console.log('FC Serial Error on write: ', err.message)
+                          console.log('FC Serial Error on write: ', err.message);
+                          return callback(null, false)
                       }
                     });
                 }
             });
-            //this.m.eventEmitter.on('gotData', (msg) => {
-            //    //got valid message - send on
-            //    this.eventEmitter.emit('gotData', msg);
-            //});
+            this.m.eventEmitter.on('gotMessage', (msg) => {
+                //got valid message - send on to attached classes
+                this.eventEmitter.emit('gotMessage', msg);
+            });
 
-            return callback(null, true)
+            return callback(null, true);
         });
         // Switches the port into "flowing mode"
         this.port.on('data', (data) => {
             this.lastDataTime = (Date.now().valueOf());
             this.m.parseBuffer(data);
+            //this.eventEmitter.emit('newBytes', data);
         });
     }
 
@@ -229,6 +234,7 @@ class FCDetails {
             console.log("Closed Serial");
             this.m = null;
             clearInterval(this.intervalObj);
+            this.eventEmitter.emit('stopLink');
             return callback(null)
         }
         else if (this.port) {
@@ -236,6 +242,7 @@ class FCDetails {
             console.log("Already Closed Serial");
             this.m = null;
             clearInterval(this.intervalObj);
+            this.eventEmitter.emit('stopLink');
             return callback(null)
         }
     }

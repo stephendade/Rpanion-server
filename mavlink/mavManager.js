@@ -61,6 +61,9 @@ class mavManager {
 
         //what to do when we get a message
         this.mav.on('message', (msg) => {
+            //raise event for external objects
+            this.eventEmitter.emit('gotMessage', msg);
+
             //send on to UDP clients - very easy. No mavlink processor required
             if (this.outputs.length > 0) {
                 for (var i = 0, len = this.outputs.length; i < len; i++) {

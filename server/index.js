@@ -6,6 +6,7 @@ const networkManager = require('./networkManager');
 const aboutPage = require('./aboutInfo');
 const videoStream = require('./videostream');
 const fcManagerClass = require('./flightController');
+const flightLogger = require('./flightLogger.js');
 
 var winston = require('./winstonconfig')(module);
 
@@ -21,6 +22,37 @@ const vManager = new videoStream();
 
 const fcManager = new fcManagerClass();
 
+const logManager = new flightLogger();
+
+//Connecting the flight controller datastream to the logger
+fcManager.eventEmitter.on('gotMessage', (msg) => {
+    //logManager.writetlog(msg.buf);
+    try {
+        logManager.writetlog(msg);
+    }
+    catch (err) {
+        console.log(err);
+    }
+});
+
+fcManager.eventEmitter.on('newLink', () => {
+    try {
+        logManager.newtlog();
+    }
+    catch (err) {
+        //console.log("Can't write log");
+    }
+});
+
+fcManager.eventEmitter.on('stopLink', () => {
+    try {
+        logManager.stoptlog();
+    }
+    catch (err) {
+        //console.log("Can't write log");
+    }
+});
+
 var FCStatusLoop = null;
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -32,6 +64,44 @@ app.use(bodyParser.json());
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, '..', '/build')));
+
+// Serve the logfiles
+app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')));
+
+app.get('/api/logfiles', (req, res) => {
+    logManager.getLogs((err, tlogs, activeLogging) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, url: req.protocol+"://"+req.headers.host, logStatus: logManager.getStatus() }));
+    });
+
+});
+
+app.get('/api/deletelogfiles', (req, res) => {
+    logManager.cleartlogs();
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({}));
+
+});
+
+app.get('/api/newlogfile', (req, res) => {
+    logManager.newtlog();
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({}));
+
+});
+
+app.post('/api/logenable', [check('enable').isBoolean()], function (req, res) {
+    //User wants to enable/disable logging
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/logenable', { message: errors.array() });
+        return res.status(422).json({ errors: errors.array() });
+    }
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({ enablelogging: logManager.setLogging(req.body.enable)}));
+
+});
 
 app.get('/api/softwareinfo', (req, res) => {
     aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, err) => {
