@@ -7,9 +7,10 @@ var winston = require('./winstonconfig')(module);
 const mavManager = require('../mavlink/mavManager.js');
 
 class FCDetails {
-    constructor() {
+    constructor(settings) {
         this.active = false;
         this.serialDevices = [];
+        this.settings = settings;
         this.baudRates = [{value: 9600, label: '9600'},
                           {value: 19200, label: '19200'},
                           {value: 38400, label: '38400'},
@@ -20,7 +21,6 @@ class FCDetails {
                           {value: 921600, label: '921600'}];
         this.mavlinkVersions = [{value: 1, label: '1.0'},
                                 {value: 2, label: '2.0'}];
-        this.filesavepath = path.join(".", 'FCSettings.json');
         this.activeDevice = null;
         this.port = null;
         this.m = null;
@@ -38,45 +38,33 @@ class FCDetails {
         //find all serial devices
         this.getSerialDevicesSync();
 
-        //load the FCSettings.json, if it exists
-        fs.readFile(this.filesavepath, (err, data) => {
-            if (err) {
-                console.log("No saved file " + this.filesavepath);
-                winston.error('Error in constructor() ', { message: err });
-            }
-            else {
-                try {
-                    [this.activeDevice, this.outputs] = JSON.parse(data);
-                    if (this.activeDevice !== null) {
-                        //restart link if saved serial device is found
-                        this.getSerialDevices((err, devices, bauds, seldevice, selbaud, active) => {
-                            for (var i = 0, len = devices.length; i < len; i++) {
-                                if (this.activeDevice.serial.value === devices[i].value) {
-                                    this.startLink((err) => {
-                                        if (!this.active) {
-                                            console.log("Can't open found FC " + this.activeDevice.serial.value + ", resetting link");
-                                            this.activeDevice = null;
-                                        }
-                                    });
-                                    break;
-                                }
-                            }
-                            if (this.port === null) {
-                                console.log("Can't find saved FC, resetting");
+        //load settings
+        this.settings = settings;
+        this.activeDevice = this.settings.value("flightcontroller.activeDevice", null);
+        this.outputs = this.settings.value("flightcontroller.outputs", []);
+        console.log(this.outputs);
+
+        if (this.activeDevice !== null) {
+            //restart link if saved serial device is found
+            this.getSerialDevices((err, devices, bauds, seldevice, selbaud, active) => {
+                for (var i = 0, len = devices.length; i < len; i++) {
+                    if (this.activeDevice.serial.value === devices[i].value) {
+                        this.startLink((err) => {
+                            if (!this.active) {
+                                console.log("Can't open found FC " + this.activeDevice.serial.value + ", resetting link");
                                 this.activeDevice = null;
                             }
                         });
-
+                        break;
                     }
-                    console.log(this.filesavepath + ' read');
-                } catch(err) {
-                    console.log("Cannot read " + this.filesavepath);
-                    winston.error('Error in constructor() catch ', { message: err });
-                    console.log(err);
                 }
+                if (this.port === null) {
+                    console.log("Can't find saved FC, resetting");
+                    this.activeDevice = null;
+                }
+            });
 
-            }
-        });
+        }
     }
 
     getUDPOutputs() {
@@ -351,16 +339,9 @@ class FCDetails {
 
     saveSerialSettings() {
         //Save the current settings to file
-        let data = JSON.stringify([this.activeDevice, this.outputs]);
-
-        fs.writeFile(this.filesavepath, data, (err) => {
-            if (err) {
-                winston.error('Error in saveSerialSettings() ', { message: err });
-            }
-            else {
-                console.log(this.filesavepath + ' written');
-            }
-        });
+        this.settings.setValue("flightcontroller.activeDevice", this.activeDevice);
+        this.settings.setValue("flightcontroller.outputs", this.outputs);
+        console.log("Saved FC settings");
     }
 
 }

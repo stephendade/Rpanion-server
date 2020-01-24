@@ -10,6 +10,9 @@ const flightLogger = require('./flightLogger.js');
 
 var winston = require('./winstonconfig')(module);
 
+var appRoot = require('app-root-path');
+const settings = require("settings-store");
+
 const app = express();
 const http = require("http").Server(app)
 const path = require('path');
@@ -17,12 +20,20 @@ const path = require('path');
 var io = require('socket.io')(http);
 const { check, validationResult } = require('express-validator');
 
+//Init settings before running the other classes
+settings.init({
+    appName:       "Rpanion-server", //required,
+    reverseDNS:    "com.server.rpanion", //required for macOS
+    filename: path.join(appRoot.toString(), "settings.json")
+});
 
 const vManager = new videoStream();
 
-const fcManager = new fcManagerClass();
+const fcManager = new fcManagerClass(settings);
 
 const logManager = new flightLogger();
+
+
 
 //Connecting the flight controller datastream to the logger
 fcManager.eventEmitter.on('gotMessage', (msg) => {
