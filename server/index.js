@@ -131,6 +131,7 @@ app.get('/api/softwareinfo', (req, res) => {
 });
 
 app.get('/api/videodevices', (req, res) => {
+    vManager.populateAddresses();
     vManager.getVideoDevices((err, devices) => {
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
@@ -139,7 +140,7 @@ app.get('/api/videodevices', (req, res) => {
                                       vidres: devices[0].caps,
                                       vidResSelected: devices[0].caps[0],
                                       streamingStatus: vManager.active,
-                                      streamAddress: vManager.deviceAddress,
+                                      streamAddresses: vManager.deviceAddresses,
                                       errors: null}));
         }
         else {

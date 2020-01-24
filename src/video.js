@@ -1,8 +1,10 @@
 import React from 'react';
 import Select from 'react-select';
+import Collapsible from 'react-collapsible';
 
 import basePage from './basePage.js';
 
+import './css/styles.css';
 
 class VideoPage extends basePage {
     constructor(props) {
@@ -49,21 +51,23 @@ class VideoPage extends basePage {
 
     handleStreaming = (event) => {
         //user clicked start/stop streaming
-        fetch('/api/startstopvideo', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                device: this.state.vidDeviceSelected.value,
-                height: this.state.vidResSelected.height,
-                width: this.state.vidResSelected.width,
-                format: this.state.vidResSelected.format,
-                rotation: this.state.rotSelected.value,
-                bitrate: this.state.bitrate
-             })
-        }).then(response => response.json()).then(state => {this.setState(state)});
+        this.setState({ waiting: true }, () => {
+            fetch('/api/startstopvideo', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    device: this.state.vidDeviceSelected.value,
+                    height: this.state.vidResSelected.height,
+                    width: this.state.vidResSelected.width,
+                    format: this.state.vidResSelected.format,
+                    rotation: this.state.rotSelected.value,
+                    bitrate: this.state.bitrate
+                 })
+            }).then(response => response.json()).then(state => {this.setState(state); this.setState({waiting: false})});
+        });
     }
 
     renderTitle() {
@@ -78,19 +82,23 @@ class VideoPage extends basePage {
             Rotation: <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
             Average Bitrate: <input type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
             <button onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</button>
-            <div nameclass="streamdetails" style={{ display: (this.state.streamAddresses.length > 0) ? "block" : "none"}}>
-                <p>Streaming Addresses (for VLC, etc):</p>
-                {this.state.streamAddresses.map((item, index) => (
-                    <ul>{item}</ul>
-                ))}
-                <p>Or use one the following gstreamer commands to connect:</p>
-                {this.state.streamAddresses.map((item, index) => (
-                    <ul>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</ul>
-                ))}
-                <p>Or use one of the following gstreamer strings in Mission Planner:</p>
-                {this.state.streamAddresses.map((item, index) => (
-                    <ul>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</ul>
-                ))}
+            <div nameclass="streamdetails" style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>
+                <br/><h4>Connection strings for video stream</h4>
+                <Collapsible transitionTime="200" trigger="RTSP Streaming Addresses (for VLC, etc)">
+                    {this.state.streamAddresses.map((item, index) => (
+                        <p style={{fontFamily: "monospace"}}>{item}</p>
+                    ))}
+                </Collapsible>
+                <Collapsible transitionTime="200" trigger="GStreamer Connection Strings">
+                    {this.state.streamAddresses.map((item, index) => (
+                        <p style={{fontFamily: "monospace"}}>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</p>
+                    ))}
+                </Collapsible>
+                <Collapsible transitionTime="200" trigger="Mission Planner Connection Strings">
+                    {this.state.streamAddresses.map((item, index) => (
+                        <p style={{fontFamily: "monospace"}}>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
+                    ))}
+                </Collapsible>
             </div>
         </div>
         );

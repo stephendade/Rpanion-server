@@ -18,6 +18,7 @@
     "react-bootstrap": "^1.0.0-beta.9",
     "react-bootstrap-table-next": "^3.1.5",
     "react-bootstrap-table2-editor": "^1.2.4",
+    "react-collapsible": "^2.6.2",
     "react-dom": "^16.8.6",
     "react-helmet": "^5.2.1",
     "react-input-mask": "^2.0.4",

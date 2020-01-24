@@ -13,3 +13,34 @@ td, th {
 tr:nth-child(even) {
   background-color: #dddddd;
 }
+
+.Collapsible {
+  background-color: #dddddd;
+}
+
+.Collapsible__contentInner {
+  padding: 10px;
+  border: 1px solid lightGrey;
+  border-top: 0;
+}
+
+.Collapsible__trigger {
+  display: block;
+  font-weight: 400;
+  text-decoration: none;
+  color: grey;
+  position: relative;
+  border: 1px solid white;
+  padding: 10px;
+  color: black;
+  font-weight: bold;
+}
+
+.Collapsible__trigger::before {
+    content: '+ ';
+
+}
+
+.Collapsible__trigger.is-open::before {
+      content: '- ';
+}

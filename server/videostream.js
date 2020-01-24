@@ -11,6 +11,16 @@ class videoStream {
         this.devices = null;
     }
 
+    //Format and store all the possible rtsp addresses
+    populateAddresses() {
+        //set up the avail addresses
+        this.ifaces = this.scanInterfaces();
+        this.deviceAddresses = [];
+        for (var j = 0; j < this.ifaces.length; j++) {
+            this.deviceAddresses.push("rtsp://" + this.ifaces[j] + ":8554/video");
+        }
+    }
+
     //video streaming
     getVideoDevices(callback) {
         //get all video device details
@@ -66,13 +76,10 @@ class videoStream {
             }
 
             this.active = true;
-            this.ifaces = this.scanInterfaces();
-            this.deviceAddresses = [];
-            for (var j = 0; j < this.ifaces.length; j++) {
-                this.deviceAddresses.push("rtsp://" + this.ifaces[j] + ":8554/video");
-            }
 
             console.log(format);
+
+            this.populateAddresses();
 
             this.deviceStream = spawn("python3", ["./python/rtsp-server.py",
                                                   "--video=" + device,
@@ -99,7 +106,6 @@ class videoStream {
                 this.deviceStream.kill();
                 this.deviceStream
                 this.active = false;
-                this.deviceAddress = "N/A";
             });
 
             return callback(null, this.active, this.deviceAddresses);
@@ -109,7 +115,6 @@ class videoStream {
             this.deviceStream.kill();
             this.deviceStream
             this.active = false;
-            this.deviceAddresses = [];
         }
         return callback(null, this.active, this.deviceAddresses);
     }
