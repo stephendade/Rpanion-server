@@ -11,11 +11,15 @@ var jspack = require("jspack").jspack;
 var winston = require('./winstonconfig')(module);
 
 class flightLogger {
-    constructor() {
+    constructor(settings) {
         this.topfolder = path.join(appRoot.toString(), 'flightlogs');
         this.tlogfolder = path.join(this.topfolder, 'tlogs');
         this.activeFileTlog = null;
         this.activeLogging = true;
+        this.settings = settings;
+
+        //get settings
+        this.activeLogging = this.settings.value("flightLogger.activeLogging", true);
 
         //mkdir the log folders (both of them)
         //this.closeLink((err) => {
@@ -98,8 +102,11 @@ class flightLogger {
     setLogging(logstat) {
         this.activeLogging = logstat;
 
-        console.log("Logging: " + this.activeLogging);
-        winston.info("Logging: " + this.activeLogging);
+        //and save
+        this.settings.setValue("flightLogger.activeLogging", this.activeLogging);
+
+        console.log("Saved Logging settings: " + this.activeLogging);
+        winston.info("Saved Logging settings: " + this.activeLogging);
 
         return this.activeLogging;
     }

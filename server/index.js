@@ -31,7 +31,7 @@ const vManager = new videoStream();
 
 const fcManager = new fcManagerClass(settings);
 
-const logManager = new flightLogger();
+const logManager = new flightLogger(settings);
 
 
 
