@@ -59,6 +59,7 @@ class VideoPage extends basePage {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
+                    active: !this.state.streamingStatus,
                     device: this.state.vidDeviceSelected.value,
                     height: this.state.vidResSelected.height,
                     width: this.state.vidResSelected.width,

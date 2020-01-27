@@ -27,7 +27,7 @@ settings.init({
     filename: path.join(appRoot.toString(), "settings.json")
 });
 
-const vManager = new videoStream();
+const vManager = new videoStream(settings);
 
 const fcManager = new fcManagerClass(settings);
 
@@ -132,16 +132,29 @@ app.get('/api/softwareinfo', (req, res) => {
 
 app.get('/api/videodevices', (req, res) => {
     vManager.populateAddresses();
-    vManager.getVideoDevices((err, devices) => {
+    vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate) => {
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify({ dev: devices,
-                                      vidDeviceSelected: devices[0],
-                                      vidres: devices[0].caps,
-                                      vidResSelected: devices[0].caps[0],
-                                      streamingStatus: vManager.active,
-                                      streamAddresses: vManager.deviceAddresses,
-                                      errors: null}));
+            if (!active) {
+                res.send(JSON.stringify({ dev: devices,
+                                          vidDeviceSelected: devices[0],
+                                          vidres: devices[0].caps,
+                                          vidResSelected: devices[0].caps[0],
+                                          streamingStatus: active,
+                                          streamAddresses: vManager.deviceAddresses,
+                                          errors: null}));
+            }
+            else {
+                res.send(JSON.stringify({ dev: devices,
+                                          vidDeviceSelected: seldevice,
+                                          vidres: seldevice.caps,
+                                          vidResSelected: selRes,
+                                          streamingStatus: active,
+                                          streamAddresses: vManager.deviceAddresses,
+                                          rotSelected: selRot,
+                                          bitrate: selbitrate,
+                                          errors: null}));
+            }
         }
         else {
             res.setHeader('Content-Type', 'application/json');
@@ -292,7 +305,8 @@ app.get('/api/networkconnections', (req, res) => {
     });
 });
 
-app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
+app.post('/api/startstopvideo', [check('active').isBoolean(),
+                                 check('device').isLength({min: 2}),
                                  check('height').isInt({min: 1}),
                                  check('width').isInt({min: 1}),
                                  check('bitrate').isInt({min: 100, max: 10000}),
@@ -304,7 +318,7 @@ app.post('/api/startstopvideo', [check('device').isLength({min: 2}),
         return res.status(422).json({ errors: errors.array() });
     }
     //user wants to start/stop video streaming
-    vManager.startStopStreaming(req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, (err, status, addresses) => {
+    vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, (err, status, addresses) => {
         if(!err) {
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: status, streamAddresses: addresses};
