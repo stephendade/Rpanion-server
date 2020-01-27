@@ -264,12 +264,12 @@ class FCDetails {
                         var name = ports[i].manufacturer + " (" + ports[i].comName + ")";
                     }
                     //console.log("Port: ", ports[i].pnpID);
-                    this.serialDevices.push({value: ports[i].comName, label: name, pnp: ports[i].pnpId});
+                    this.serialDevices.push({value: ports[i].comName, label: name, pnpId: ports[i].pnpId});
                 }
             }
             //for the Ras Pi's inbuilt UART
             if (fs.existsSync('/dev/serial0')) {
-                this.serialDevices.push({value: '/dev/serial0', label: '/dev/serial0', pnp: ''});
+                this.serialDevices.push({value: '/dev/serial0', label: '/dev/serial0', pnpId: ''});
             }
 
             //has the active device been disconnected?
