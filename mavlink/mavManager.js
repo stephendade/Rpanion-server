@@ -1,6 +1,7 @@
 //Mavlink Manager
 var events = require('events');
 var udp = require('dgram');
+var winston = require('../server/winstonconfig')(module);
 
 class mavManager {
     constructor(version, outputs) {
@@ -17,6 +18,7 @@ class mavManager {
         }
         else {
             console.log("Error - no valid MAVLink version");
+            winston.error("Error - no valid MAVLink version: ", { message: version });
         }
 
         this.eventEmitter = new events.EventEmitter();
@@ -70,6 +72,7 @@ class mavManager {
                     this.udpStream.send(msg.msgbuf,this.outputs[i].port,this.outputs[i].IP,function(error){
                         if(error) {
                             console.log('UDP Error: ' + error);
+                            winston.error("UDP Error: ", { message: error });
                         }
                         else {
                             //console.log('Data sent !!!');
@@ -91,6 +94,7 @@ class mavManager {
                 //set the target system/comp ID if needed
                 if (this.targetSystem === null) {
                     console.log("Vehicle is S/C: " + msg.header.srcSystem + "/" + msg.header.srcComponent);
+                    winston.info("Vehicle is S/C: " + msg.header.srcSystem + "/" + msg.header.srcComponent);
                     this.targetSystem = msg.header.srcSystem;
                     this.targetComponent = msg.header.srcComponent;
                 }
@@ -121,7 +125,7 @@ class mavManager {
 
     sendDSRequest() {
         //create a datastream request packet
-        console.log("Sent DS");
+        //console.log("Sent DS");
         var msg = new mavlink.messages.request_data_stream(this.targetSystem,this.targetComponent, mavlink.MAV_DATA_STREAM_ALL, 1, 1);
         this.eventEmitter.emit('sendData', msg.pack(this.mav));
     }
@@ -135,6 +139,7 @@ class mavManager {
         //this ensures non-fragmented mavlink packets from the clients
         for (var i = 0, len = udpendpoints.length; i < len; i++) {
             console.log("Restarting UDP output to " + udpendpoints[i].IP + ":" + udpendpoints[i].port);
+            winston.info("Restarting UDP output to " + udpendpoints[i].IP + ":" + udpendpoints[i].port);
             var newmav = new MAVLinkProcessor(null, 255, 0);
             newmav.on('message', (msg) => {
                 this.eventEmitter.emit('sendData', msg.msgbuf);
