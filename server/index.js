@@ -528,6 +528,7 @@ app.get('*', (req,res) =>{
 });
 
 const port = process.env.PORT || 3001;
-http.listen(port, () =>
-    console.log('Express server is running on localhost:' + port)
-);
+http.listen(port, () => {
+    console.log('Express server is running on localhost:' + port);
+    winston.info('Express server is running on localhost:' + port);
+});

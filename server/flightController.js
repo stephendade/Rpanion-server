@@ -42,7 +42,7 @@ class FCDetails {
         this.settings = settings;
         this.activeDevice = this.settings.value("flightcontroller.activeDevice", null);
         this.outputs = this.settings.value("flightcontroller.outputs", []);
-        console.log(this.outputs);
+        //console.log(this.outputs);
 
         if (this.activeDevice !== null) {
             //restart link if saved serial device is found
@@ -52,6 +52,7 @@ class FCDetails {
                         this.startLink((err) => {
                             if (!this.active) {
                                 console.log("Can't open found FC " + this.activeDevice.serial.value + ", resetting link");
+                                winston.info("Can't open found FC " + this.activeDevice.serial.value + ", resetting link");
                                 this.activeDevice = null;
                             }
                         });
@@ -60,6 +61,7 @@ class FCDetails {
                 }
                 if (this.port === null) {
                     console.log("Can't find saved FC, resetting");
+                    winston.info("Can't find saved FC, resetting");
                     this.activeDevice = null;
                 }
             });
@@ -87,6 +89,7 @@ class FCDetails {
         //add it in
         this.outputs.push({IP: newIP, port: newPort});
         console.log("Added UDP Output " + newIP + ":" + newPort);
+        winston.info("Added UDP Output " + newIP + ":" + newPort);
 
         //restart udp outputs, if link active
         if (this.m) {
@@ -105,6 +108,7 @@ class FCDetails {
                 //and remove
                 this.outputs.splice(i, 1);
                 console.log("Removed UDP Output " + remIP + ":" + remPort);
+                winston.info("Removed UDP Output " + remIP + ":" + remPort);
 
                 //restart udp outputs, if link active
                 if (this.m) {
@@ -141,6 +145,7 @@ class FCDetails {
         //command the flight controller to reboot
         if (this.m !== null) {
             console.log("Rebooting FC");
+            winston.info("Rebooting FC");
             this.m.sendReboot();
         }
     }
@@ -155,12 +160,14 @@ class FCDetails {
     startLink(callback) {
         //start the serial link
         console.log("Opening Link " + this.activeDevice.serial.value + " @ " + this.activeDevice.baud.value + ", MAV v" + this.activeDevice.mavversion.value);
+        winston.info("Opening Link " + this.activeDevice.serial.value + " @ " + this.activeDevice.baud.value + ", MAV v" + this.activeDevice.mavversion.value);
         this.port = new SerialPort(this.activeDevice.serial.value, {baudRate: parseInt(this.activeDevice.baud.value)}, (err) => {
             if (err) {
                 this.closeLink((err) => {
                     winston.error('Error in startLink() port ', { message: err });
                 });
                 console.log('Serial Error: ', err.message);
+                winston.error('Serial Error: ', { message: err })
                 this.active = false;
                 return callback(err.message, false)
             }
@@ -173,6 +180,7 @@ class FCDetails {
                 //check for timeouts in serial link
                 if (this.m.isRebooting && this.active && (Date.now().valueOf()) - this.lastDataTime > 2000) {
                     console.log('Trying to reconnect FC...');
+                    winston.info('Trying to reconnect FC...');
                     this.closeLink((err) => {
                         winston.error('Error in startLink() timeout ', { message: err });
                         this.startLink((err) => {
@@ -181,7 +189,6 @@ class FCDetails {
                 }
                 else if (this.m.statusNumRxPackets == 0) {
                     //waiting for initial connection
-                    console.log("Sending DS");
                     this.m.sendDSRequest();
                 }
             }, 1000);
@@ -220,6 +227,7 @@ class FCDetails {
             this.port.close();
             this.active = false;
             console.log("Closed Serial");
+            winston.info("Closed Serial");
             this.m = null;
             clearInterval(this.intervalObj);
             this.eventEmitter.emit('stopLink');
@@ -228,6 +236,7 @@ class FCDetails {
         else if (this.port) {
             this.active = false;
             console.log("Already Closed Serial");
+            winston.info("Already Closed Serial");
             this.m = null;
             clearInterval(this.intervalObj);
             this.eventEmitter.emit('stopLink');
@@ -275,6 +284,7 @@ class FCDetails {
             //has the active device been disconnected?
             if (this.port && !this.port.isOpen) {
                 console.log("Lost active device");
+                winston.info("Lost active device");
                 this.active = false;
                 this.m = null;
             }
@@ -342,6 +352,7 @@ class FCDetails {
         this.settings.setValue("flightcontroller.activeDevice", this.activeDevice);
         this.settings.setValue("flightcontroller.outputs", this.outputs);
         console.log("Saved FC settings");
+        winston.info("Saved FC settings");
     }
 
 }
