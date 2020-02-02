@@ -12,7 +12,7 @@ function getSoftwareInfo(callback) {
 function getHardwareInfo(callback) {
     //get the CPU, RAM info
     si.cpu(function(CPUdata) {
-        console.log(CPUdata);
+        //console.log(CPUdata);
         si.mem(function(MEMdata) {
             var CPUString = CPUdata.manufacturer + " " + CPUdata.brand +
                             " (" + CPUdata.speed  + "GHz x " + CPUdata.cores + ")"
