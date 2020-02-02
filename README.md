@@ -125,10 +125,21 @@ If running Rpanion-server as a service, ensure to restart the service.
 
 ## Tests
 
+Unit tests are split into seperate commands for the frontend (ReactJS) and backend.
+
 Unit tests can be run with the command:
 
 ```bash
-npm test
+npm run testback
+npm run testfront
+```
+
+Code coverage statistics are automatically calculated for the backend tests.
+
+Linting (via eslint) is available via:
+
+```bash
+npm run lint
 ```
 
 ## Running as a Service

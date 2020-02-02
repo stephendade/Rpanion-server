@@ -40,6 +40,7 @@
     "build": "react-scripts build",
     "testfront": "react-scripts test",
     "testback": " nyc mocha ./server/*.test.js &&  nyc report --reporter=text-lcov | coveralls",
+    "lint": "eslint .",
     "eject": "react-scripts eject",
     "server": "node-env-run server --exec nodemon | pino-colada",
     "dev": "run-p server start"
@@ -54,8 +55,13 @@
   "devDependencies": {
     "body-parser": "^1.19.0",
     "coveralls": "^3.0.9",
-    "eslint": "^6.1.0",
-    "eslint-plugin-react": "^7.17.0",
+    "eslint": "^6.8.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-react": "^7.18.1",
+    "eslint-plugin-standard": "^4.0.1",
     "express": "^4.17.1",
     "express-pino-logger": "^4.0.0",
     "mocha": "^7.0.1",
