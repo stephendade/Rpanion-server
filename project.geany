@@ -28,16 +28,11 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=8
-FILE_NAME_0=6944;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;4
-FILE_NAME_1=246;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.js;0;4
-FILE_NAME_2=273;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Findex.js;0;4
-FILE_NAME_3=1704;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Fvideostream.js;0;4
-FILE_NAME_4=1613;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fvideo.js;0;4
-FILE_NAME_5=14533;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fnetworkconfig.js;0;4
-FILE_NAME_6=397366;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2Fmavlink_common_v2.js;0;4
-FILE_NAME_7=6363;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.js;0;4
-FILE_NAME_8=183;Python;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fpython%2Fgstcaps.py;0;4
+current_page=3
+FILE_NAME_0=197;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fabout.js;0;4
+FILE_NAME_1=217;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FaboutInfo.js;0;4
+FILE_NAME_2=4883;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FnetworkManager.js;0;4
+FILE_NAME_3=529;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FaboutInfo.test.js;0;4
 
 [build-menu]
 EX_00_LB=_Execute
@@ -56,6 +51,9 @@ NF_03_WD=
 JavascriptFT_02_LB=_Lint File
 JavascriptFT_02_CM=./node_modules/.bin/eslint "%d/%f"
 JavascriptFT_02_WD=%p
+JavascriptFT_01_LB=Lint Fix
+JavascriptFT_01_CM=./node_modules/.bin/eslint --fix "%d/%f"
+JavascriptFT_01_WD=%p
 
 [VTE]
 last_dir=/home/stephen
