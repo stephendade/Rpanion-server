@@ -142,6 +142,10 @@ Linting (via eslint) is available via:
 npm run lint
 ```
 
+## Releasing
+
+Use ``npm version minor`` to create a new release. This will also update ``CHANGELOG.md``.
+
 ## Running as a Service
 
 To have Rpanion-server running on automatically on boot, there is an included systemd service file.

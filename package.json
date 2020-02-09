@@ -43,7 +43,8 @@
     "lint": "eslint .",
     "eject": "react-scripts eject",
     "server": "node-env-run server --exec nodemon | pino-colada",
-    "dev": "run-p server start"
+    "dev": "run-p server start",
+    "version": "auto-changelog -p --commit-limit false && git add CHANGELOG.md"
   },
   "proxy": "http://localhost:3001",
   "browserslist": [
@@ -53,6 +54,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "auto-changelog": "^1.16.2",
     "body-parser": "^1.19.0",
     "coveralls": "^3.0.9",
     "eslint": "^6.8.0",
