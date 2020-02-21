@@ -5,9 +5,10 @@ After=network.target
 [Service]
 Environment="PORT=3000"
 WorkingDirectory=/home/pi/Rpanion-server
-ExecStart=/usr/bin/npm run server
+ExecStart=npm run server
 Restart=on-failure
 User=pi
 
 [Install]
 WantedBy=multi-user.target
+

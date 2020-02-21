@@ -19,8 +19,8 @@ Rpanion-server allows the user to configure:
 
 ### Automatic (Raspberry Pi)
 
-Run the ``./deploy/RasPi-deploy.sh`` on a fresh Raspian install to configure and install Rpanion-server. Note
-this does not configure an initial Wifi hotspot.
+For the Raspberry Pi 3 or 4, run the ``./deploy/RasPi3-4-deploy.sh`` on a fresh Raspian install
+to configure and install Rpanion-server. Note this does not configure an initial Wifi hotspot.
 
 This can be done directly by typing the following into a Raspian console:
 
@@ -28,18 +28,38 @@ This can be done directly by typing the following into a Raspian console:
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-deploy.sh | bash -
 ```
 
-For an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script. The hotspot has the SSID "rpanion"
-and password "rpanion123". The Pi's IP address will be 10.0.2.100, so the Rpanion-sever website will be available
-at http://10.0.2.100:3000
+For the Raspberry Pi Zero W, run the ``./deploy/RasPiZero-deploy.sh`` on a fresh Raspian install
+to configure and install Rpanion-server. Note this does configure an initial Wifi hotspot.
+
+This can be done directly by typing the following into a Raspian console:
+
+```
+curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPiZero-deploy.sh | bash -
+```
+
+If not already configured, for an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script.
+The hotspot has the SSID "rpanion" and password "rpanion123". The Pi's IP address will be 10.0.2.100,
+so the Rpanion-sever website will be available at http://10.0.2.100:3000.
 
 ### Manual
 
-Rpanion-server requires Version 12 of node.js or later, It can be installed
+Rpanion-server requires a recent version of node.js. It can be installed
 via package manager:
 
 ```
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
 sudo apt-get install -y nodejs npm
+```
+
+Note that the Raspberry Pi Zero is not compatible with version 12 (or later) of node.js. Version 11 
+can instead be installed via:
+
+```
+wget https://nodejs.org/download/release/v11.15.0/node-v11.15.0-linux-armv6l.tar.xz
+sudo mkdir -p /usr/local/lib/nodejs
+sudo tar -xJvf node-v11.15.0-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
+sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/node /usr/local/bin
+sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/npm /usr/local/bin
 ```
 
 The required prerequisite packages can be installed via:
