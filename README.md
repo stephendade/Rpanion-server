@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/stephendade/Rpanion-server.svg?branch=master)](https://travis-ci.org/stephendade/Rpanion-server)
 
+User Documentation is at https://www.docs.rpanion.com/software/rpanion-server
+
 # Rpanion-server
 
 This is a node.js based server for companion computers used in Mavlink-based vehicles (ie Ardupilot, PX4).
