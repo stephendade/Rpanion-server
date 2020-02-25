@@ -26,7 +26,8 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps 
+sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad
+sudo apt install -y gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps 
 sudo apt install -y python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git
 
 ## node.js for the RPi Zero needs the "armv61" build
@@ -53,10 +54,15 @@ make
 sudo make install
 cd ../../
 
-## and build & run Rpanion
+## and build & install Rpanion
+set NODE_OPTIONS=--max-old-space-size=256
 ./deploy/build.sh
 
 ## Setup networking (needs to be last, as it disconnects from Wifi)
+### Configuring network...
+### This will disconnect the Pi Zero from the current network and create a hotspot
+### Please wait 5min for the configuration to finish, then reboot the Pi
+
 sudo apt install -y network-manager
 sudo apt purge -y openresolv dhcpcd5 modemmanager
 sudo apt remove -y modemmanager
