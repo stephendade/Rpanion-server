@@ -75,7 +75,7 @@ class flightLogger {
     //needs to be synchonous to ensure logfile isn't opened in parallel
     writetlog(msg) {
         if (!this.activeLogging) {
-            return;
+            return false;
         }
         if (!this.activeFileTlog) {
             this.newtlog();
@@ -91,9 +91,11 @@ class flightLogger {
 
             var toWrite = Buffer.concat([timebits, msg.msgbuf]);
             fs.appendFileSync(this.activeFileTlog, toWrite, "binary");
+            return true;
         }
         catch (err) {
             console.log(err);
+            return false;
         }
     }
 

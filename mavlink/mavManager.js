@@ -226,10 +226,6 @@ class mavManager {
         }
     }
 
-    modeFromID(ID) {
-
-    }
-
 }
 
 
