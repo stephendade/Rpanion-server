@@ -22,20 +22,7 @@ class flightLogger {
         this.activeLogging = this.settings.value("flightLogger.activeLogging", true);
 
         //mkdir the log folders (both of them)
-        //this.closeLink((err) => {
-        //this.getSerialDevices((err, devices, bauds, seldevice, selbaud, active) => {
-        fs.mkdir(this.tlogfolder, { recursive: true }, (err) => {
-            if (err) {
-                if (err.code == 'EEXIST') {
-                    console.log("TLog folder already there");
-                }
-                else {
-                    console.log(err);
-                    winston.error('Error in flightLogger() Tlog ', { message: err });
-                }
-            }
-            console.log("FLight log folders created");
-        });
+        fs.mkdirSync(this.tlogfolder, { recursive: true });
     }
 
     // Start a new tlog
