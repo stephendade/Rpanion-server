@@ -33,7 +33,7 @@ describe('Logging Functions', function () {
     assert.ok(fs.existsSync(Lgr.tlogfolder))
 
     // check initail status
-    if (process.versions < 12) {
+    if (parseInt(process.versions.node) < 12) {
         assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
     }
     else {
@@ -45,7 +45,7 @@ describe('Logging Functions', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
 
-    if (process.versions < 12) {
+    if (parseInt(process.versions.node) >= 12) {
         // log a byte
         assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
         assert.ok(fs.existsSync(Lgr.activeFileTlog))
@@ -56,7 +56,7 @@ describe('Logging Functions', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
 
-    if (process.versions > 12) {
+    if (parseInt(process.versions.node) > 12) {
         // log a byte
         assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
     }
@@ -74,7 +74,7 @@ describe('Logging Functions', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
 
-    if (process.versions < 12) {
+    if (parseInt(process.versions.node) < 12) {
         assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
         Lgr.getLogs(function (err, tlogs, activeLogging) {
           assert.equal(tlogs.length, 0)
@@ -97,7 +97,7 @@ describe('Logging Functions', function () {
   it('#getstatus()', function () {
     var Lgr = new Logger(settings)
 
-    if (process.versions < 12) {
+    if (parseInt(process.versions.node) < 12) {
         assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
     }
     else {
@@ -111,7 +111,7 @@ describe('Logging Functions', function () {
     } catch (e) {
     }
 
-    if (process.versions < 12) {
+    if (parseInt(process.versions.node) < 12) {
         assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
     }
     else {

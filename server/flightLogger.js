@@ -22,13 +22,18 @@ class flightLogger {
         //get settings
         this.activeLogging = this.settings.value("flightLogger.activeLogging", true);
 
+        //Disable logging on nodejs < 12
+        if (parseInt(process.versions.node) < 12) {
+            this.activeLogging = false;
+        }
+
         //mkdir the log folders (both of them)
         fs.mkdirSync(this.tlogfolder, { recursive: true });
     }
 
     // Start a new tlog
     newtlog() {
-        if (process.versions < 12) {
+        if (parseInt(process.versions.node) < 12) {
             console.log("Cannot do logging on nodejs version <12");
             winston.info("Cannot do logging on nodejs version <12");
             return;
@@ -97,7 +102,12 @@ class flightLogger {
 
     //enable or disable logging by sending true or false
     setLogging(logstat) {
-        this.activeLogging = logstat;
+        if (parseInt(process.versions.node) < 12) {
+            this.activeLogging = false;
+        }
+        else {
+            this.activeLogging = logstat;
+        }
 
         //and save
         this.settings.setValue("flightLogger.activeLogging", this.activeLogging);
@@ -110,7 +120,7 @@ class flightLogger {
 
     //get system status
     getStatus() {
-        if (process.versions < 12) {
+        if (parseInt(process.versions.node) < 12) {
             return "Cannot do logging on nodejs version <12";
         }
         if (this.activeFileTlog && this.activeLogging) {
