@@ -2,19 +2,26 @@
 var events = require('events');
 var udp = require('dgram');
 var winston = require('../server/winstonconfig')(module);
+var {mavlink10, MAVLink10Processor} = require('./mavlink_common_v1');
+var {mavlink20, MAVLink20Processor} = require('./mavlink_common_v2');
 
 class mavManager {
     constructor(version, outputs) {
         this.mav = null;
+        this.mavmsg = null;
         this.buf = 0;
+        this.version = version;
+
         if (version == 1) {
             //{mavlink, MAVLinkProcessor}
-            var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v1');
-            this.mav = new MAVLinkProcessor(null, 255, 0);
+            //var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v1');
+            this.mav = new MAVLink10Processor(null, 255, 0);
+            this.mavmsg = mavlink10;
         }
         else if (version == 2){
-            var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v2');
-            this.mav = new MAVLinkProcessor(null, 255, 0);
+            //var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v2');
+            this.mav = new MAVLink20Processor(null, 255, 0);
+            this.mavmsg = mavlink20;
         }
         else {
             console.log("Error - no valid MAVLink version");
@@ -117,7 +124,7 @@ class mavManager {
 
     sendReboot() {
         //create a reboot packet
-        var msg = new mavlink.messages.command_long(this.targetSystem,this.targetComponent,mavlink.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
+        var msg = new this.mavmsg.messages.command_long(this.targetSystem,this.targetComponent,this.mavmsg.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
                                        1, 0, 0, 0, 0, 0, 0);
         this.isRebooting = true;
         this.eventEmitter.emit('sendData', msg.pack(this.mav));
@@ -126,7 +133,7 @@ class mavManager {
     sendDSRequest() {
         //create a datastream request packet
         //console.log("Sent DS");
-        var msg = new mavlink.messages.request_data_stream(this.targetSystem,this.targetComponent, mavlink.MAV_DATA_STREAM_ALL, 1, 1);
+        var msg = new this.mavmsg.messages.request_data_stream(this.targetSystem,this.targetComponent, this.mavmsg.MAV_DATA_STREAM_ALL, 1, 1);
         this.eventEmitter.emit('sendData', msg.pack(this.mav));
     }
 
@@ -140,7 +147,12 @@ class mavManager {
         for (var i = 0, len = udpendpoints.length; i < len; i++) {
             console.log("Restarting UDP output to " + udpendpoints[i].IP + ":" + udpendpoints[i].port);
             winston.info("Restarting UDP output to " + udpendpoints[i].IP + ":" + udpendpoints[i].port);
-            var newmav = new MAVLinkProcessor(null, 255, 0);
+            if (this.version == 1) {
+                var newmav = new MAVLink10Processor(null, 255, 0);
+            }
+            else if (this.version == 2){
+                var newmav = new MAVLink20Processor(null, 255, 0);
+            }
             newmav.on('message', (msg) => {
                 this.eventEmitter.emit('sendData', msg.msgbuf);
             });
