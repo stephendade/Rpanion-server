@@ -32,25 +32,34 @@ describe('Logging Functions', function () {
     assert.ok(fs.existsSync(Lgr.topfolder))
     assert.ok(fs.existsSync(Lgr.tlogfolder))
 
-    // check initial status
-    assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
+    // check initail status
+    if (process.versions < 12) {
+        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+    }
+    else {
+        assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
+    }
   })
 
   it('#newlogfile()', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
 
-    // log a byte
-    assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
-    assert.ok(fs.existsSync(Lgr.activeFileTlog))
+    if (process.versions < 12) {
+        // log a byte
+        assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+        assert.ok(fs.existsSync(Lgr.activeFileTlog))
+    }
   })
 
   it('#clearlogfiles()', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
 
-    // log a byte
-    assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+    if (process.versions > 12) {
+        // log a byte
+        assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+    }
 
     Lgr.stoptlog()
 
@@ -65,20 +74,35 @@ describe('Logging Functions', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
 
-    // log a byte
-    assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+    if (process.versions < 12) {
+        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+        Lgr.getLogs(function (err, tlogs, activeLogging) {
+          assert.equal(tlogs.length, 0)
+          assert.equal(activeLogging, false)
+          done()
+        })
+    }
+    else {
+        // log a byte
+        assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
 
-    Lgr.getLogs(function (err, tlogs, activeLogging) {
-      assert.equal(tlogs.length, 1)
-      assert.equal(activeLogging, true)
-      done()
-    })
+        Lgr.getLogs(function (err, tlogs, activeLogging) {
+          assert.equal(tlogs.length, 1)
+          assert.equal(activeLogging, true)
+          done()
+        })
+    }
   })
 
   it('#getstatus()', function () {
     var Lgr = new Logger(settings)
 
-    assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
+    if (process.versions < 12) {
+        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+    }
+    else {
+        assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
+    }
 
     // the settings-store module will throw an error because we've
     // not init'd a settings file
@@ -87,6 +111,11 @@ describe('Logging Functions', function () {
     } catch (e) {
     }
 
-    assert.equal(Lgr.getStatus(), 'Not Logging')
+    if (process.versions < 12) {
+        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+    }
+    else {
+        assert.equal(Lgr.getStatus(), 'Not Logging')
+    }
   })
 })

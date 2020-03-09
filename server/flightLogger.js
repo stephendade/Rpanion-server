@@ -9,6 +9,7 @@ var moment = require('moment');
 var microtime = require('microtime');
 var jspack = require("jspack").jspack;
 var winston = require('./winstonconfig')(module);
+const process = require('process')
 
 class flightLogger {
     constructor(settings) {
@@ -27,6 +28,11 @@ class flightLogger {
 
     // Start a new tlog
     newtlog() {
+        if (process.versions < 12) {
+            console.log("Cannot do logging on nodejs version <12");
+            winston.info("Cannot do logging on nodejs version <12");
+            return;
+        }
         var filename = moment().format("YYYYMMDD-HHmmss"); //new Date().toISOString();
         this.activeFileTlog = path.join(this.tlogfolder, filename + ".tlog");
         console.log("New Tlog: " + this.activeFileTlog);
@@ -68,6 +74,8 @@ class flightLogger {
             this.newtlog();
         }
         try {
+            //note this section does not work on nodejs < 12
+
             //Note we're using BigInt here, as a standard 32-bit Int
             //is too small to hold a microsecond timestamp
             const microSeconds = BigInt(microtime.now());
@@ -102,6 +110,9 @@ class flightLogger {
 
     //get system status
     getStatus() {
+        if (process.versions < 12) {
+            return "Cannot do logging on nodejs version <12";
+        }
         if (this.activeFileTlog && this.activeLogging) {
             return "Logging to " + path.basename(this.activeFileTlog);
         }
