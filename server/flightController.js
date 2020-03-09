@@ -260,45 +260,47 @@ class FCDetails {
         //get all serial devices
         this.serialDevices = [];
 
-        SerialPort.list((err, ports) => {
-            for (var i = 0, len = ports.length; i < len; i++) {
-                if (ports[i].pnpId !== undefined) {
+        SerialPort.list().then(
+          ports => {for (var i = 0, len = ports.length; i < len; i++) {
+                        if (ports[i].pnpId !== undefined) {
 
-                    //usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
-                    //console.log("Port: ", ports[i].pnpID);
-                    if (ports[i].pnpId.split("_").length > 2) {
-                        var name = ports[i].pnpId.split("_")[1] + " (" + ports[i].comName + ")";
+                            //usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
+                            //console.log("Port: ", ports[i].pnpID);
+                            if (ports[i].pnpId.split("_").length > 2) {
+                                var name = ports[i].pnpId.split("_")[1] + " (" + ports[i].path + ")";
+                            }
+                            else {
+                                var name = ports[i].manufacturer + " (" + ports[i].path + ")";
+                            }
+                            //console.log("Port: ", ports[i].pnpID);
+                            this.serialDevices.push({value: ports[i].path, label: name, pnpId: ports[i].pnpId});
+                        }
+                    }
+                   //for the Ras Pi's inbuilt UART
+                    if (fs.existsSync('/dev/serial0')) {
+                        this.serialDevices.push({value: '/dev/serial0', label: '/dev/serial0', pnpId: ''});
+                    }
+
+                    //has the active device been disconnected?
+                    if (this.port && !this.port.isOpen) {
+                        console.log("Lost active device");
+                        winston.info("Lost active device");
+                        this.active = false;
+                        this.m = null;
+                    }
+                    //set the active device as selected
+                    if (this.active) {
+                        return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true);
+                    }
+                    else if (this.serialDevices.length > 0){
+                        return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false);
                     }
                     else {
-                        var name = ports[i].manufacturer + " (" + ports[i].comName + ")";
+                        return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false);
                     }
-                    //console.log("Port: ", ports[i].pnpID);
-                    this.serialDevices.push({value: ports[i].comName, label: name, pnpId: ports[i].pnpId});
-                }
-            }
-            //for the Ras Pi's inbuilt UART
-            if (fs.existsSync('/dev/serial0')) {
-                this.serialDevices.push({value: '/dev/serial0', label: '/dev/serial0', pnpId: ''});
-            }
-
-            //has the active device been disconnected?
-            if (this.port && !this.port.isOpen) {
-                console.log("Lost active device");
-                winston.info("Lost active device");
-                this.active = false;
-                this.m = null;
-            }
-            //set the active device as selected
-            if (this.active) {
-                return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true);
-            }
-            else if (this.serialDevices.length > 0){
-                return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false);
-            }
-            else {
-                return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false);
-            }
-        });
+                },
+          err => console.error(err)
+        );
     }
 
     startStopTelemetry(device, baud, mavversion, callback) {
