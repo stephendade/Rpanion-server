@@ -1,9 +1,9 @@
 import React from 'react';
 import Select from 'react-select';
-import BootstrapTable from 'react-bootstrap-table-next';
 
-import 'react-bootstrap-table-next/dist/react-bootstrap-table2.min.css';
 import basePage from './basePage.js';
+
+import './css/styles.css';
 
 class FCPage extends basePage {
     constructor(props, useSocketIO=true) {
@@ -23,17 +23,6 @@ class FCPage extends basePage {
             socketioStatus: false,
             usedSocketIO: true
         }
-
-        this.columns = [{
-          dataField: 'IPPort',
-          text: 'Destination IP:Port'
-          },
-          {
-          dataField: 'action',
-          text: 'Action',
-          isDummyField: true,
-          formatter: this.udpbuttonFormatter
-          }];
 
         // Socket.io client for reading in analog update values
         this.socket.on('FCStatus', function(msg){
@@ -100,10 +89,6 @@ class FCPage extends basePage {
         }).then(response => response.json()).then(state => {this.setState(state)})
     }
 
-    udpbuttonFormatter = (cell, row, rowIndex, formatExtraData) => {
-        return <button id={row.id} onClick={() => this.removeUdpOutput(row)}>Delete</button>;
-    }
-
     removeUdpOutput = (val) =>{
         //remove a udp output
         fetch('/api/removeudpoutput', {
@@ -128,6 +113,18 @@ class FCPage extends basePage {
         return "Flight Controller";
     }
 
+    //create a html table from a list of udpoutputs
+    renderUDPTableData(udplist) {
+        return udplist.map((output, index) => {
+            return (
+                <tr key={index}>
+                    <td>{output.IPPort}</td>
+                    <td><button id={index} onClick={() => this.removeUdpOutput(output)}>Delete</button></td>
+                </tr>
+            )
+        });
+    }
+
     renderContent() {
       return (
             <div>
@@ -137,7 +134,14 @@ class FCPage extends basePage {
               MAVLink Version: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected}/>
               <button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</button>
               <h2>UDP Outputs</h2>
-                  <BootstrapTable condensed keyField='IPPort' data={ this.state.UDPoutputs } columns={ this.columns }/>
+                <table id='UDPOut'>
+                    <thead>
+                        <tr><th>Destination IP:Port</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        {this.renderUDPTableData(this.state.UDPoutputs)}
+                    </tbody>
+                </table>
                   <label>Add new output<input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><button onClick={this.addUdpOutput}>Add</button></label>
               <h2>Status</h2>
                   <p>Packets Recieved: {this.state.FCStatus.numpackets}</p>
