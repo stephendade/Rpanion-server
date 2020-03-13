@@ -85,17 +85,17 @@ class VideoPage extends basePage {
             <button onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</button>
             <div nameclass="streamdetails" style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>
                 <br/><h4>Connection strings for video stream</h4>
-                <Collapsible transitionTime="200" trigger="RTSP Streaming Addresses (for VLC, etc)">
+                <Collapsible transitionTime={200} trigger="RTSP Streaming Addresses (for VLC, etc)">
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>{item}</p>
                     ))}
                 </Collapsible>
-                <Collapsible transitionTime="200" trigger="GStreamer Connection Strings">
+                <Collapsible transitionTime={200} trigger="GStreamer Connection Strings">
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</p>
                     ))}
                 </Collapsible>
-                <Collapsible transitionTime="200" trigger="Mission Planner Connection Strings">
+                <Collapsible transitionTime={200} trigger="Mission Planner Connection Strings">
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
                     ))}
