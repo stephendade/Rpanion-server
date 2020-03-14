@@ -137,9 +137,9 @@ app.get('/api/videodevices', (req, res) => {
             res.setHeader('Content-Type', 'application/json');
             if (!active) {
                 res.send(JSON.stringify({ dev: devices,
-                                          vidDeviceSelected: devices[0],
-                                          vidres: devices[0].caps,
-                                          vidResSelected: devices[0].caps[0],
+                                          vidDeviceSelected: ((devices.length > 0) ? devices[0] : []),
+                                          vidres: ((devices.length > 0) ? devices[0].caps : []),
+                                          vidResSelected: ((devices.length > 0) ? devices[0].caps[0] : []),
                                           streamingStatus: active,
                                           streamAddresses: vManager.deviceAddresses,
                                           errors: null}));
