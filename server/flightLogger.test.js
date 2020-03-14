@@ -34,10 +34,9 @@ describe('Logging Functions', function () {
 
     // check initail status
     if (parseInt(process.versions.node) < 12) {
-        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
-    }
-    else {
-        assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
+      assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+    } else {
+      assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
     }
   })
 
@@ -46,9 +45,9 @@ describe('Logging Functions', function () {
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) >= 12) {
-        // log a byte
-        assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
-        assert.ok(fs.existsSync(Lgr.activeFileTlog))
+      // log a byte
+      assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+      assert.ok(fs.existsSync(Lgr.activeFileTlog))
     }
   })
 
@@ -57,8 +56,8 @@ describe('Logging Functions', function () {
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) > 12) {
-        // log a byte
-        assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+      // log a byte
+      assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
     }
 
     Lgr.stoptlog()
@@ -75,22 +74,21 @@ describe('Logging Functions', function () {
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) < 12) {
-        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
-        Lgr.getLogs(function (err, tlogs, activeLogging) {
-          assert.equal(tlogs.length, 0)
-          assert.equal(activeLogging, false)
-          done()
-        })
-    }
-    else {
-        // log a byte
-        assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+      Lgr.getLogs(function (err, tlogs, activeLogging) {
+        assert.equal(tlogs.length, 0)
+        assert.equal(activeLogging, false)
+        done()
+      })
+    } else {
+      // log a byte
+      assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
 
-        Lgr.getLogs(function (err, tlogs, activeLogging) {
-          assert.equal(tlogs.length, 1)
-          assert.equal(activeLogging, true)
-          done()
-        })
+      Lgr.getLogs(function (err, tlogs, activeLogging) {
+        assert.equal(tlogs.length, 1)
+        assert.equal(activeLogging, true)
+        done()
+      })
     }
   })
 
@@ -98,10 +96,9 @@ describe('Logging Functions', function () {
     var Lgr = new Logger(settings)
 
     if (parseInt(process.versions.node) < 12) {
-        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
-    }
-    else {
-        assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
+      assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+    } else {
+      assert.equal(Lgr.getStatus(), 'Logging Enabled, no FC packets')
     }
 
     // the settings-store module will throw an error because we've
@@ -112,10 +109,9 @@ describe('Logging Functions', function () {
     }
 
     if (parseInt(process.versions.node) < 12) {
-        assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
-    }
-    else {
-        assert.equal(Lgr.getStatus(), 'Not Logging')
+      assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
+    } else {
+      assert.equal(Lgr.getStatus(), 'Not Logging')
     }
   })
 })
