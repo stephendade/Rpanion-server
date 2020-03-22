@@ -18,17 +18,17 @@ function getHardwareInfo (callback) {
                       ' (' + CPUdata.speed + 'GHz x ' + CPUdata.cores + ')'
       var hatData = { product: '', vendor: '', version: '' }
       // get Pi HAT data, if it exists
-      exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver && printf "\n"', (error, stdout, stderr) => {
-        if (!stderr && stdout.split('\n').length === 3) {
-          stdout.split('\n').forEach(function (item) {
-            hatData.product = item[0]
-            hatData.vendor = item[1]
-            hatData.version = item[2]
-          })
+      exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver', (error, stdout, stderr) => {
+        if (!error && stdout.split('\n').length === 3) {
+          var items = stdout.split('\n')
+          hatData.product = items[0]
+          hatData.vendor = items[1]
+          hatData.version = items[2]
         } else {
+          console.log(error)
         }
+        return callback((MEMdata.total / (1024 * 1024 * 1024)).toFixed(2), CPUString, hatData, null)
       })
-      return callback((MEMdata.total / (1024 * 1024 * 1024)).toFixed(2), CPUString, hatData, null)
     })
   })
 }
