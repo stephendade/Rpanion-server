@@ -27,7 +27,7 @@ to configure and install Rpanion-server. Note this does not configure an initial
 This can be done directly by typing the following into a Raspian console:
 
 ```
-curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-deploy.sh | bash -
+curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi3-4-deploy.sh | bash -
 ```
 
 For the Raspberry Pi Zero W, run the ``./deploy/RasPiZero-deploy.sh`` on a fresh Raspian install
