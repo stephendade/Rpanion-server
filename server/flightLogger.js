@@ -45,9 +45,11 @@ class flightLogger {
 
   // stop logging (Tlog)
   stoptlog () {
-    console.log('Closed Tlog: ' + this.activeFileTlog)
-    winston.info('Closed Tlog: ' + this.activeFileTlog)
-    this.activeFileTlog = null
+    if (this.activeFileTlog) {
+      console.log('Closed Tlog: ' + this.activeFileTlog)
+      winston.info('Closed Tlog: ' + this.activeFileTlog)
+      this.activeFileTlog = null
+    }
   }
 
   // Delete all tlogs

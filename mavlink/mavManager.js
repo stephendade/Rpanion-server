@@ -202,14 +202,25 @@ class mavManager {
     }
   }
 
-  conStatus () {
-    // connection station - connected, not connected, no packets for x sec
+  conStatusStr () {
+    // connection status - connected, not connected, no packets for x sec
     if ((Date.now().valueOf()) - this.timeofLastPacket < 2000) {
       return 'Connected'
     } else if (this.timeofLastPacket > 0) {
       return 'Connection lost for ' + (Date.now().valueOf() - this.timeofLastPacket) / 1000 + ' seconds'
     } else {
       return 'Not connected'
+    }
+  }
+
+  conStatusInt () {
+    // connection status - connected (1), not connected (0), no packets for x sec (-1)
+    if ((Date.now().valueOf()) - this.timeofLastPacket < 2000) {
+      return 1
+    } else if (this.timeofLastPacket > 0) {
+      return -1
+    } else {
+      return 0
     }
   }
 }
