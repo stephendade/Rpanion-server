@@ -18,12 +18,14 @@ describe('MAVLink Functions', function () {
       packets.push(msg)
     })
 
-    assert.equal(m.conStatus(), 'Not connected')
+    assert.equal(m.conStatusStr(), 'Not connected')
+    assert.equal(m.conStatusInt(), 0)
 
     var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
     m.parseBuffer(hb)
 
-    assert.equal(m.conStatus(), 'Connected')
+    assert.equal(m.conStatusStr(), 'Connected')
+    assert.equal(m.conStatusInt(), 1)
     assert.equal(m.autopilotFromID(), 'APM')
     assert.equal(m.vehicleFromID(), 'Antenna Tracker')
     assert.equal(packets.length, 1)

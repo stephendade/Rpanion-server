@@ -8,9 +8,11 @@ const mavManager = require('../mavlink/mavManager.js');
 
 class FCDetails {
     constructor(settings) {
-        this.active = false;
+        //if the device was successfully opend and got packets
+        this.previousConnection = false;
+
+        // all detected serial ports and baud rates
         this.serialDevices = [];
-        this.settings = settings;
         this.baudRates = [{value: 9600, label: '9600'},
                           {value: 19200, label: '19200'},
                           {value: 38400, label: '38400'},
@@ -21,15 +23,19 @@ class FCDetails {
                           {value: 921600, label: '921600'}];
         this.mavlinkVersions = [{value: 1, label: '1.0'},
                                 {value: 2, label: '2.0'}];
+        //JSON of active device (port and baud and mavversion). User selected
+        //null if user selected no link (or no serial port of that name)
         this.activeDevice = null;
+        //the serial device object
         this.port = null;
+        //the mavlink manager object
         this.m = null;
 
         //For sending events outside of object
         this.eventEmitter = new events.EventEmitter();
 
-        //Tracking time of last packet recived
-        this.lastDataTime = (Date.now().valueOf());
+        //Interval to check connection status and re-connect
+        //if required
         this.intervalObj = null;
 
         //UDP Outputs
@@ -42,15 +48,14 @@ class FCDetails {
         this.settings = settings;
         this.activeDevice = this.settings.value("flightcontroller.activeDevice", null);
         this.outputs = this.settings.value("flightcontroller.outputs", []);
-        //console.log(this.outputs);
 
         if (this.activeDevice !== null) {
             //restart link if saved serial device is found
             this.getSerialDevices((err, devices, bauds, seldevice, selbaud, active) => {
                 for (var i = 0, len = devices.length; i < len; i++) {
                     if (this.activeDevice.serial.value === devices[i].value) {
-                        this.startLink((err) => {
-                            if (!this.active) {
+                        this.startLink((err, active) => {
+                            if (err) {
                                 console.log("Can't open found FC " + this.activeDevice.serial.value + ", resetting link");
                                 winston.info("Can't open found FC " + this.activeDevice.serial.value + ", resetting link");
                                 this.activeDevice = null;
@@ -67,6 +72,34 @@ class FCDetails {
             });
 
         }
+
+        // start timeout function for auto-reconnect
+        this.intervalObj = setInterval(() => {
+            if (this.m.statusNumRxPackets == 0) {
+                //waiting for initial connection
+                console.log('Initial DS Request');
+                winston.info('Initial DS Request');
+                this.m.sendDSRequest();
+            }
+            //check for timeouts in serial link (ie disconnected cable or reboot)
+            //console.log('Status: ' + this.m.conStatusInt());
+            if (this.m.conStatusInt() === -1) {
+                console.log('Trying to reconnect FC...');
+                winston.info('Trying to reconnect FC...');
+                this.closeLink((err) => {
+                    this.startLink((err) => {
+                        if (err) {
+                        }
+                        else {
+                            //resend DS request to init link
+                            console.log('Continue DS Request');
+                            winston.info('Continue DS Request');
+                            this.m.sendDSRequest();
+                        }
+                    });
+                });
+            }
+            }, 1000);
     }
 
     getUDPOutputs() {
@@ -129,7 +162,7 @@ class FCDetails {
             return {numpackets: this.m.statusNumRxPackets,
                     FW: this.m.autopilotFromID(),
                     vehType: this.m.vehicleFromID(),
-                    conStatus: this.m.conStatus(),
+                    conStatus: this.m.conStatusStr(),
                     statusText: this.m.statusText};
         }
         else {
@@ -150,13 +183,6 @@ class FCDetails {
         }
     }
 
-    checkConnected() {
-        //check if the FC is still connected, if not try reconnecting
-        if (this.port && !this.port.isOpen && this.active) {
-            this.startLink();
-        }
-    }
-
     startLink(callback) {
         //start the serial link
         console.log("Opening Link " + this.activeDevice.serial.value + " @ " + this.activeDevice.baud.value + ", MAV v" + this.activeDevice.mavversion.value);
@@ -168,30 +194,14 @@ class FCDetails {
                 });
                 console.log('Serial Error: ', err.message);
                 winston.error('Serial Error: ', { message: err })
-                this.active = false;
                 return callback(err.message, false)
             }
-            this.active = true;
-            this.m = new mavManager(this.activeDevice.mavversion.value, this.outputs);
 
-            //timeout func
-            this.lastDataTime = (Date.now().valueOf());
-            this.intervalObj = setInterval(() => {
-                //check for timeouts in serial link
-                if (this.m.isRebooting && this.active && (Date.now().valueOf()) - this.lastDataTime > 2000) {
-                    console.log('Trying to reconnect FC...');
-                    winston.info('Trying to reconnect FC...');
-                    this.closeLink((err) => {
-                        winston.error('Error in startLink() timeout ', { message: err });
-                        this.startLink((err) => {
-                        });
-                    });
-                }
-                else if (this.m.statusNumRxPackets == 0) {
-                    //waiting for initial connection
-                    this.m.sendDSRequest();
-                }
-            }, 1000);
+            //only restart the mavlink processor if it's a new link,
+            //not a reconnect attempt
+            if (this.m === null) {
+                this.m = new mavManager(this.activeDevice.mavversion.value, this.outputs);
+            }
 
             this.eventEmitter.emit('newLink');
 
@@ -208,6 +218,7 @@ class FCDetails {
             });
             this.m.eventEmitter.on('gotMessage', (msg) => {
                 //got valid message - send on to attached classes
+                this.previousConnection = true;
                 this.eventEmitter.emit('gotMessage', msg);
             });
 
@@ -215,9 +226,9 @@ class FCDetails {
         });
         // Switches the port into "flowing mode"
         this.port.on('data', (data) => {
-            this.lastDataTime = (Date.now().valueOf());
-            this.m.parseBuffer(data);
-            //this.eventEmitter.emit('newBytes', data);
+            if (this.m !== null) {
+                this.m.parseBuffer(data);
+            }
         });
     }
 
@@ -225,20 +236,14 @@ class FCDetails {
         //stop the serial link
         if (this.port && this.port.isOpen) {
             this.port.close();
-            this.active = false;
             console.log("Closed Serial");
             winston.info("Closed Serial");
-            this.m = null;
-            clearInterval(this.intervalObj);
             this.eventEmitter.emit('stopLink');
             return callback(null)
         }
         else if (this.port) {
-            this.active = false;
             console.log("Already Closed Serial");
             winston.info("Already Closed Serial");
-            this.m = null;
-            clearInterval(this.intervalObj);
             this.eventEmitter.emit('stopLink');
             return callback(null)
         }
@@ -285,11 +290,11 @@ class FCDetails {
                     if (this.port && !this.port.isOpen) {
                         console.log("Lost active device");
                         winston.info("Lost active device");
-                        this.active = false;
+                        //this.active = false;
                         this.m = null;
                     }
                     //set the active device as selected
-                    if (this.active) {
+                    if (this.activeDevice) {
                         return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true);
                     }
                     else if (this.serialDevices.length > 0){
@@ -308,7 +313,7 @@ class FCDetails {
         //callback is (err, isSuccessful)
 
         //check port, mavversion and baud are valid (if starting telem)
-        if(!this.active) {
+        if(!this.activeDevice) {
             this.activeDevice = {serial: null, baud: null};
             for (var i = 0, len = this.serialDevices.length; i < len; i++) {
                 if (this.serialDevices[i].pnpId === device.pnpId) {
@@ -330,20 +335,22 @@ class FCDetails {
             }
 
             if (this.activeDevice.baud === null || this.activeDevice.serial === null || this.activeDevice.mavversion === null) {
-                return callback("Bad serial device or baud or mavlink version", this.active);
+                return callback("Bad serial device or baud or mavlink version", this.activeDevice !== null);
             }
 
             //this.activeDevice = {serial: device, baud: baud};
             this.startLink((err) => {
                 this.saveSerialSettings();
-                return callback(null, this.active);
+                return callback(null, this.activeDevice !== null);
             });
         }
         else {
             this.activeDevice = null;
             this.closeLink((err) => {
                 this.saveSerialSettings();
-                return callback(null, this.active);
+                this.previousConnection = false;
+                this.m = null
+                return callback(null, this.activeDevice !== null);
             });
         }
 
