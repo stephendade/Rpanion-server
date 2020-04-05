@@ -72,34 +72,6 @@ class FCDetails {
             });
 
         }
-
-        // start timeout function for auto-reconnect
-        this.intervalObj = setInterval(() => {
-            if (this.m.statusNumRxPackets == 0) {
-                //waiting for initial connection
-                console.log('Initial DS Request');
-                winston.info('Initial DS Request');
-                this.m.sendDSRequest();
-            }
-            //check for timeouts in serial link (ie disconnected cable or reboot)
-            //console.log('Status: ' + this.m.conStatusInt());
-            if (this.m.conStatusInt() === -1) {
-                console.log('Trying to reconnect FC...');
-                winston.info('Trying to reconnect FC...');
-                this.closeLink((err) => {
-                    this.startLink((err) => {
-                        if (err) {
-                        }
-                        else {
-                            //resend DS request to init link
-                            console.log('Continue DS Request');
-                            winston.info('Continue DS Request');
-                            this.m.sendDSRequest();
-                        }
-                    });
-                });
-            }
-            }, 1000);
     }
 
     getUDPOutputs() {
@@ -341,6 +313,33 @@ class FCDetails {
             //this.activeDevice = {serial: device, baud: baud};
             this.startLink((err) => {
                 this.saveSerialSettings();
+                // start timeout function for auto-reconnect
+                this.intervalObj = setInterval(() => {
+                    if (this.m && this.m.statusNumRxPackets == 0) {
+                        //waiting for initial connection
+                        console.log('Initial DS Request');
+                        winston.info('Initial DS Request');
+                        this.m.sendDSRequest();
+                    }
+                    //check for timeouts in serial link (ie disconnected cable or reboot)
+                    //console.log('Status: ' + this.m.conStatusInt());
+                    if (this.m && this.m.conStatusInt() === -1) {
+                        console.log('Trying to reconnect FC...');
+                        winston.info('Trying to reconnect FC...');
+                        this.closeLink((err) => {
+                            this.startLink((err) => {
+                                if (err) {
+                                }
+                                else {
+                                    //resend DS request to init link
+                                    console.log('Continue DS Request');
+                                    winston.info('Continue DS Request');
+                                    this.m.sendDSRequest();
+                                }
+                            });
+                        });
+                    }
+                }, 1000);
                 return callback(null, this.activeDevice !== null);
             });
         }
@@ -348,6 +347,7 @@ class FCDetails {
             this.activeDevice = null;
             this.closeLink((err) => {
                 this.saveSerialSettings();
+                clearInterval(this.intervalObj);
                 this.previousConnection = false;
                 this.m = null
                 return callback(null, this.activeDevice !== null);
