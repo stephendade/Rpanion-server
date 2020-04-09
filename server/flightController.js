@@ -40,9 +40,6 @@ class FCDetails {
     // UDP Outputs
     this.outputs = []
 
-    // find all serial devices
-    this.getSerialDevicesSync()
-
     // load settings
     this.settings = settings
     this.activeDevice = this.settings.value('flightcontroller.activeDevice', null)
@@ -100,7 +97,12 @@ class FCDetails {
       this.m.restartUDP(this.outputs)
     }
 
-    this.saveSerialSettings()
+    // try to save. Will be invalid if running under test runner
+    try {
+      this.saveSerialSettings()
+    } catch (e) {
+    }
+
     return this.getUDPOutputs()
   }
 
@@ -119,7 +121,12 @@ class FCDetails {
           this.m.restartUDP(this.outputs)
         }
 
-        this.saveSerialSettings()
+        // try to save. Will be invalid if running under test runner
+        try {
+          this.saveSerialSettings()
+        } catch (e) {
+        }
+
         return this.getUDPOutputs()
       }
     }
@@ -220,18 +227,6 @@ class FCDetails {
       this.eventEmitter.emit('stopLink')
       return callback(null)
     }
-  }
-
-  getSerialDevicesSync () {
-    // synchonous version of getSerialDevices()
-    var ret
-    this.getSerialDevices((err, devices, bauds, seldevice, selbaud, active) => {
-      ret = devices
-    })
-    while (ret === undefined) {
-      require('deasync').sleep(100)
-    }
-    // return ret;
   }
 
   getSerialDevices (callback) {
