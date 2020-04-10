@@ -1,5 +1,6 @@
 import React from 'react';
 import Select from 'react-select';
+import Modal from 'react-modal';
 
 import basePage from './basePage.js';
 
@@ -8,6 +9,8 @@ class NetworkConfig extends basePage {
     super(props);
     this.state = {
       loading: true,
+      showModal: false,
+      showModalResult: "",
       netDevice: [],
       netDeviceSelected: null,
       netConnection: [],
@@ -54,6 +57,8 @@ class NetworkConfig extends basePage {
     this.handleNetworkSubmit = this.handleNetworkSubmit.bind(this);
     this.deleteConnection = this.deleteConnection.bind(this);
     this.addConnection = this.addConnection.bind(this);
+    this.handleCloseModalAP = this.handleCloseModalAP.bind(this);
+    this.handleCloseModalClient = this.handleCloseModalClient.bind(this);
     //this.handleIPTypeChange = this.handleIPTypeChange.bind(this);
   }
 
@@ -317,17 +322,9 @@ class NetworkConfig extends basePage {
         const enteredName = prompt('Please enter new connection name');
         if (enteredName !== '' && enteredName !== null) {
             this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-            //if a Wifi connection, is this an AP or client?
-            if (this.state.netDeviceSelected.type === "wifi") {
-                if(window.confirm('Is this an access point? (OK = Yes)')) {
-                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""},
-                        curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
-                }
-                else {
-                    this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""},
-                        curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
-                }
-            }
+            // ask the user if this is a AP of client connection
+            // modal events take it from here
+            this.setState({ showModal: true });
         }
         event.preventDefault();
     };
@@ -445,6 +442,22 @@ class NetworkConfig extends basePage {
         return "Network Configuration";
     }
 
+    handleCloseModalAP () {
+      // user has selected AP new Wifi connection
+      this.setState({ showModal: false});
+      var nm = this.state.netConnectionFilteredSelected.label;
+      this.setState({netConnectionFilteredSelected: {value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: ""},
+          curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
+    }
+
+    handleCloseModalClient () {
+      // user has selected client new Wifi connection
+      this.setState({ showModal: false});
+      var nm = this.state.netConnectionFilteredSelected.label;
+      this.setState({netConnectionFilteredSelected: {value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: ""},
+          curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
+    }
+
     renderContent() {
       return (
         <div>
@@ -512,6 +525,14 @@ class NetworkConfig extends basePage {
                 </div>
                 <input type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} value="Save Changes" />
                 <input type="button" value="Discard Changes" onClick={this.resetForm}/>
+                <Modal isOpen={this.state.showModal} contentLabel="ModalDialog" className="Modal">
+                  <h3 class="ModalTitle">WiFi Network Type</h3>
+                  <div class="ModalContent">Please select the WiFi network type for this connection.</div>
+                  <div class="ModalActions">
+                    <button onClick={this.handleCloseModalAP}>Access Point</button>
+                    <button onClick={this.handleCloseModalClient}>Client</button>
+                  </div>
+                </Modal>
             </form>
         </div>
       );

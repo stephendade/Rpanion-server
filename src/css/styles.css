@@ -44,3 +44,28 @@ tr:nth-child(even) {
 .Collapsible__trigger.is-open::before {
       content: '- ';
 }
+
+.Modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #ccc;
+  background: white;
+}
+
+.ModalTitle {
+  border-bottom: 1px solid #ccc;
+  padding: 1rem;
+  margin: 0;
+}
+
+.ModalContent {
+  padding: 1rem;
+}
+
+.ModalActions {
+  border-top: 1px solid #ccc;
+  background: #eee;
+  padding: 0.5rem 1rem;
+}
