@@ -5,13 +5,13 @@ var udp = require('dgram')
 
 describe('MAVLink Functions', function () {
   it('#startup()', function () {
-    var m = new mavManager(1, [])
+    var m = new mavManager("common", 1, [])
 
     assert.notEqual(m.mav, null)
   })
 
   it('#receivepacket()', function () {
-    var m = new mavManager(2, [])
+    var m = new mavManager("common", 2, [])
     var packets = []
 
     m.eventEmitter.on('gotMessage', (msg) => {
@@ -32,7 +32,7 @@ describe('MAVLink Functions', function () {
   })
 
   it('#datastreamSend()', function (done) {
-    var m = new mavManager(2, [])
+    var m = new mavManager("common", 2, [])
 
     m.eventEmitter.on('sendData', (buffer) => {
       buffer.should.eql([0xfd, 0x06, 0x00, 0x00, 0x00, 0xff, 0x00, 0x42, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2c, 0x7e])
@@ -43,7 +43,7 @@ describe('MAVLink Functions', function () {
   })
 
   it('#rebootSend()', function (done) {
-    var m = new mavManager(2, [])
+    var m = new mavManager("common", 2, [])
 
     m.eventEmitter.on('sendData', (buffer) => {
       buffer.should.eql([253, 29, 0, 0, 0, 255, 0, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 51, 134])
@@ -54,7 +54,7 @@ describe('MAVLink Functions', function () {
   })
 
   it('#udpReceiveSend()', function (done) {
-    var m = new mavManager(2, [{ IP: '127.0.0.1', port: 14580 }])
+    var m = new mavManager("ardupilot", 2, [{ IP: '127.0.0.1', port: 14580 }])
     var udpStream = udp.createSocket('udp4')
     var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
 
@@ -79,7 +79,7 @@ describe('MAVLink Functions', function () {
 
   it('#perfTest()', function () {
     // how fast can we process packets and send out over udp?
-    var m = new mavManager(2, [{ IP: '127.0.0.1', port: 14580 }])
+    var m = new mavManager("common", 2, [{ IP: '127.0.0.1', port: 14580 }])
 
     // time how long 255 packets takes
     var starttime = Date.now().valueOf()

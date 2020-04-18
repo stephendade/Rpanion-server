@@ -2,28 +2,35 @@
 var events = require('events')
 var udp = require('dgram')
 var winston = require('../server/winstonconfig')(module)
-var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
-var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
 
 class mavManager {
-  constructor (version, outputs) {
+  constructor (dialect, version, outputs) {
     this.mav = null
     this.mavmsg = null
     this.buf = 0
     this.version = version
+    this.dialect = dialect
 
-    if (version === 1) {
-      // {mavlink, MAVLinkProcessor}
-      // var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v1');
+    // load the correct MAVLink definitions
+    if (version === 1 && dialect === "common") {
+      var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
       this.mav = new MAVLink10Processor(null, 255, 0)
       this.mavmsg = mavlink10
-    } else if (version === 2) {
-      // var {mavlink, MAVLinkProcessor} = require('./mavlink_common_v2');
+    } else if (version === 2 && dialect === "common") {
+      var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
+      this.mav = new MAVLink20Processor(null, 255, 0)
+      this.mavmsg = mavlink20
+    } else if (version === 1 && dialect === "ardupilot") {
+      var { mavlink10, MAVLink10Processor } = require('./mavlink_ardupilot_v1')
+      this.mav = new MAVLink10Processor(null, 255, 0)
+      this.mavmsg = mavlink10
+    } else if (version === 2 && dialect === "ardupilot") {
+      var { mavlink20, MAVLink20Processor } = require('./mavlink_ardupilot_v2')
       this.mav = new MAVLink20Processor(null, 255, 0)
       this.mavmsg = mavlink20
     } else {
-      console.log('Error - no valid MAVLink version')
-      winston.error('Error - no valid MAVLink version: ', { message: version })
+      console.log('Error - no valid MAVLink version or dialect')
+      winston.error('Error - no valid MAVLink version or dialect: ', { message: version })
     }
 
     this.eventEmitter = new events.EventEmitter()
@@ -142,11 +149,25 @@ class mavManager {
     for (var i = 0, len = udpendpoints.length; i < len; i++) {
       console.log('Restarting UDP output to ' + udpendpoints[i].IP + ':' + udpendpoints[i].port)
       winston.info('Restarting UDP output to ' + udpendpoints[i].IP + ':' + udpendpoints[i].port)
-      if (this.version === 1) {
+
+      // load the correct MAVLink definitions
+      if (this.version === 1 && this.dialect === "common") {
+        var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
         var newmav = new MAVLink10Processor(null, 255, 0)
-      } else if (this.version === 2) {
+      } else if (this.version === 2 && this.dialect === "common") {
+        var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
         var newmav = new MAVLink20Processor(null, 255, 0)
+      } else if (this.version === 1 && this.dialect === "ardupilot") {
+        var { mavlink10, MAVLink10Processor } = require('./mavlink_ardupilot_v1')
+        var newmav = new MAVLink10Processor(null, 255, 0)
+      } else if (this.version === 2 && this.dialect === "ardupilot") {
+        var { mavlink20, MAVLink20Processor } = require('./mavlink_ardupilot_v2')
+        var newmav = new MAVLink20Processor(null, 255, 0)
+      } else {
+        console.log('Error - no valid MAVLink version or dialect')
+        winston.error('Error - no valid MAVLink version or dialect: ', { message: version })
       }
+
       newmav.on('message', (msg) => {
         this.eventEmitter.emit('sendData', msg.msgbuf)
       })
