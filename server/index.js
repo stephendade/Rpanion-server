@@ -188,7 +188,7 @@ app.get('/api/FCOutputs', (req, res) => {
 
 app.get('/api/FCDetails', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active) => {
+    fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active) => {
         if (!err) {
             console.log("Sending");
             console.log(devices);
@@ -198,6 +198,8 @@ app.get('/api/FCDetails', (req, res) => {
                                       serialPortSelected: seldevice,
                                       mavVersions: mavers,
                                       mavVersionSelected: selmav,
+                                      mavDialects: mavdialects,
+                                      mavDialectSelected: seldialect,
                                       baudRateSelected: selbaud }));
         }
         else {
@@ -208,7 +210,7 @@ app.get('/api/FCDetails', (req, res) => {
     });
 });
 
-app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON()], function (req, res) {
+app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('mavdialect').isJSON()], function (req, res) {
     //User wants to start/stop FC telemetry
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -216,7 +218,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
         return res.status(422).json({ errors: errors.array() });
     }
 
-    fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), (err, isSuccess) => {
+    fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), JSON.parse(req.body.mavdialect), (err, isSuccess) => {
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
             //console.log(isSuccess);
