@@ -14,7 +14,7 @@ describe('Flight Controller Functions', function () {
   it('#fcGetSerialDevices()', function (done) {
     var FC = new FCManagerClass(settings)
 
-    FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active) => {
+    FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active) => {
       assert.equal(err, null)
       assert.equal(devices.length, 0)
       assert.equal(bauds.length, 8)
@@ -22,6 +22,8 @@ describe('Flight Controller Functions', function () {
       assert.equal(selbaud.value, 9600)
       assert.equal(mavers.length, 2)
       assert.equal(selmav.value, 1)
+      assert.equal(mavdialects.length, 2)
+      assert.equal(seldialect.value, 'ardupilot')
       assert.equal(active, false)
       done()
     })
