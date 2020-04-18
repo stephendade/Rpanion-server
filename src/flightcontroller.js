@@ -13,9 +13,11 @@ class FCPage extends basePage {
             serialPorts: [],
             baudRates: [],
             mavVersions: [],
+            mavDialects: [],
             serialPortSelected: null,
             baudRateSelected: null,
             mavVersionSelected: null,
+            mavDialectSelected: null,
             FCStatus: {},
             UDPoutputs: [],
             addrow: "",
@@ -47,6 +49,9 @@ class FCPage extends basePage {
         this.setState({mavVersionSelected: value});
     }
 
+    handleMavDialectChange = (value, action) => {
+        this.setState({mavDialectSelected: value});
+    }
     handleSubmit = (event) => {
         //user clicked start/stop telemetry
         fetch('/api/FCModify', {
@@ -58,7 +63,8 @@ class FCPage extends basePage {
             body: JSON.stringify({
                 device: JSON.stringify(this.state.serialPortSelected),
                 baud: JSON.stringify(this.state.baudRateSelected),
-                mavversion: JSON.stringify(this.state.mavVersionSelected)
+                mavversion: JSON.stringify(this.state.mavVersionSelected),
+                mavdialect: JSON.stringify(this.state.mavDialectSelected)
              })
         }).then(response => response.json()).then(state => {this.setState(state)});
     }
@@ -132,6 +138,7 @@ class FCPage extends basePage {
               Serial Device: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected}/>
               Baud Rate: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected}/>
               MAVLink Version: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected}/>
+              MAVLink Dialect: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavDialectChange} options={this.state.mavDialects} value={this.state.mavDialectSelected}/>
               <button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</button>
               <h2>UDP Outputs</h2>
                 <table id='UDPOut'>
