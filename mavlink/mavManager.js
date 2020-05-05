@@ -44,6 +44,7 @@ class mavManager {
     this.statusVehType = ''
     this.timeofLastPacket = 0
     this.statusText = ''
+    this.statusArmed = 0
 
     // the vehicle
     this.targetSystem = null
@@ -102,6 +103,18 @@ class mavManager {
         this.statusFWName = msg.autopilot
         this.statusVehType = msg.type
 
+        //arming status
+        if((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) !== 0 && this.statusArmed === 0) {
+          console.log('Vehicle ARMED')
+          winston.info('Vehicle ARMED')
+          this.statusArmed = 1
+        }
+        else if((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) === 0 && this.statusArmed === 1) {
+          console.log('Vehicle DISARMED')
+          winston.info('Vehicle DISARMED')
+          this.statusArmed = 0
+        }
+
         // set the target system/comp ID if needed
         if (this.targetSystem === null) {
           console.log('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
@@ -112,9 +125,6 @@ class mavManager {
       } else if (msg.name === 'STATUSTEXT') {
         // Remove whitespace
         this.statusText += msg.text.trim().replace(/[^ -~]+/g, '') + '\n'
-      } else if (msg.name === 'POWER_STATUS') {
-        // console.log(msg);
-        // this.statusText += msg.text;
       }
     })
   }
