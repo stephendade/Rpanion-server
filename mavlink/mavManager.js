@@ -108,10 +108,12 @@ class mavManager {
           console.log('Vehicle ARMED')
           winston.info('Vehicle ARMED')
           this.statusArmed = 1
+          this.eventEmitter.emit('armed')
         } else if ((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) === 0 && this.statusArmed === 1) {
           console.log('Vehicle DISARMED')
           winston.info('Vehicle DISARMED')
           this.statusArmed = 0
+          this.eventEmitter.emit('disarmed')
         }
 
         // set the target system/comp ID if needed

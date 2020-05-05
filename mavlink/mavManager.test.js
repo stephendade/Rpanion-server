@@ -10,12 +10,17 @@ describe('MAVLink Functions', function () {
     assert.notEqual(m.mav, null)
   })
 
-  it('#receivepacket()', function () {
+  it('#receivepacket()', function (done) {
     var m = new mavManager('common', 2, [])
     var packets = []
 
     m.eventEmitter.on('gotMessage', (msg) => {
       packets.push(msg)
+    })
+
+    m.eventEmitter.on('armed', () => {
+      assert.equal(m.statusArmed, 1)
+      done()
     })
 
     assert.equal(m.conStatusStr(), 'Not connected')
