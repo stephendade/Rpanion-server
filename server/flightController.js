@@ -205,6 +205,14 @@ class FCDetails {
         this.eventEmitter.emit('gotMessage', msg)
       })
 
+      // arming events - just pass them on
+      this.m.eventEmitter.on('armed', () => {
+        this.eventEmitter.emit('armed')
+      })
+      this.m.eventEmitter.on('disarmed', () => {
+        this.eventEmitter.emit('disarmed')
+      })
+
       return callback(null, true)
     })
     // Switches the port into "flowing mode"
