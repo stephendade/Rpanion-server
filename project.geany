@@ -10,7 +10,7 @@ strip_trailing_spaces=true
 replace_tabs=true
 
 [indentation]
-indent_width=4
+indent_width=2
 indent_type=0
 indent_hard_tab_width=8
 detect_indent=false
@@ -28,11 +28,15 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=3
+current_page=7
 FILE_NAME_0=197;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fabout.js;0;4
 FILE_NAME_1=217;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FaboutInfo.js;0;4
-FILE_NAME_2=4883;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FnetworkManager.js;0;4
-FILE_NAME_3=529;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FaboutInfo.test.js;0;4
+FILE_NAME_2=1868;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.js;0;4
+FILE_NAME_3=6632;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.js;0;4
+FILE_NAME_4=1757;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.test.js;0;4
+FILE_NAME_5=7736;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;2
+FILE_NAME_6=2219;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fflightcontroller.js;0;2
+FILE_NAME_7=943;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.test.js;0;2
 
 [build-menu]
 EX_00_LB=_Execute
@@ -57,3 +61,12 @@ JavascriptFT_01_WD=%p
 
 [VTE]
 last_dir=/home/stephen
+
+[prjorg]
+source_patterns=*.c;*.C;*.cpp;*.cxx;*.c++;*.cc;*.m;
+header_patterns=*.h;*.H;*.hpp;*.hxx;*.h++;*.hh;
+ignored_dirs_patterns=.*;CVS;
+ignored_file_patterns=*.o;*.obj;*.a;*.lib;*.so;*.dll;*.lo;*.la;*.class;*.jar;*.pyc;*.mo;*.gmo;
+generate_tag_prefs=0
+show_empty_dirs=true
+external_dirs=
