@@ -12,19 +12,19 @@ class mavManager {
     this.dialect = dialect
 
     // load the correct MAVLink definitions
-    if (version === 1 && dialect === "common") {
+    if (version === 1 && dialect === 'common') {
       var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
       this.mav = new MAVLink10Processor(null, 255, 0)
       this.mavmsg = mavlink10
-    } else if (version === 2 && dialect === "common") {
+    } else if (version === 2 && dialect === 'common') {
       var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
       this.mav = new MAVLink20Processor(null, 255, 0)
       this.mavmsg = mavlink20
-    } else if (version === 1 && dialect === "ardupilot") {
+    } else if (version === 1 && dialect === 'ardupilot') {
       var { mavlink10, MAVLink10Processor } = require('./mavlink_ardupilot_v1')
       this.mav = new MAVLink10Processor(null, 255, 0)
       this.mavmsg = mavlink10
-    } else if (version === 2 && dialect === "ardupilot") {
+    } else if (version === 2 && dialect === 'ardupilot') {
       var { mavlink20, MAVLink20Processor } = require('./mavlink_ardupilot_v2')
       this.mav = new MAVLink20Processor(null, 255, 0)
       this.mavmsg = mavlink20
@@ -103,13 +103,12 @@ class mavManager {
         this.statusFWName = msg.autopilot
         this.statusVehType = msg.type
 
-        //arming status
-        if((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) !== 0 && this.statusArmed === 0) {
+        // arming status
+        if ((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) !== 0 && this.statusArmed === 0) {
           console.log('Vehicle ARMED')
           winston.info('Vehicle ARMED')
           this.statusArmed = 1
-        }
-        else if((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) === 0 && this.statusArmed === 1) {
+        } else if ((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) === 0 && this.statusArmed === 1) {
           console.log('Vehicle DISARMED')
           winston.info('Vehicle DISARMED')
           this.statusArmed = 0
@@ -161,16 +160,16 @@ class mavManager {
       winston.info('Restarting UDP output to ' + udpendpoints[i].IP + ':' + udpendpoints[i].port)
 
       // load the correct MAVLink definitions
-      if (this.version === 1 && this.dialect === "common") {
+      if (this.version === 1 && this.dialect === 'common') {
         var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
         var newmav = new MAVLink10Processor(null, 255, 0)
-      } else if (this.version === 2 && this.dialect === "common") {
+      } else if (this.version === 2 && this.dialect === 'common') {
         var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
         var newmav = new MAVLink20Processor(null, 255, 0)
-      } else if (this.version === 1 && this.dialect === "ardupilot") {
+      } else if (this.version === 1 && this.dialect === 'ardupilot') {
         var { mavlink10, MAVLink10Processor } = require('./mavlink_ardupilot_v1')
         var newmav = new MAVLink10Processor(null, 255, 0)
-      } else if (this.version === 2 && this.dialect === "ardupilot") {
+      } else if (this.version === 2 && this.dialect === 'ardupilot') {
         var { mavlink20, MAVLink20Processor } = require('./mavlink_ardupilot_v2')
         var newmav = new MAVLink20Processor(null, 255, 0)
       } else {
