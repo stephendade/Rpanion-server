@@ -14,7 +14,11 @@ class flightLogger {
   constructor (settings) {
     this.topfolder = path.join(appRoot.toString(), 'flightlogs')
     this.tlogfolder = path.join(this.topfolder, 'tlogs')
+    this.binlogfolder = path.join(this.topfolder, 'binlogs')
     this.activeFileTlog = null
+    this.activeFileBinlog = null
+    this.binLogSeq = -1
+    this.binLogLastTime = 0
     this.activeLogging = true
     this.settings = settings
 
@@ -28,6 +32,7 @@ class flightLogger {
 
     // mkdir the log folders (both of them)
     fs.mkdirSync(this.tlogfolder, { recursive: true })
+    fs.mkdirSync(this.binlogfolder, { recursive: true })
   }
 
   // Start a new tlog
@@ -43,12 +48,45 @@ class flightLogger {
     winston.info('New Tlog: ' + this.activeFileTlog)
   }
 
+  // Start a new binlog
+  newbinlog () {
+    if (parseInt(process.versions.node) < 12) {
+      console.log('Cannot do logging on nodejs version <12')
+      winston.info('Cannot do logging on nodejs version <12')
+      return
+    }
+    // already logging
+    if (this.activeFileBinlog) {
+      console.log("Error: Bi already active")
+      return
+    }
+
+    this.binLogSeq = -1
+    this.binLogLastTime = 0
+
+    var filename = moment().format('YYYYMMDD-HHmmss') // new Date().toISOString();
+    this.activeFileBinlog = path.join(this.binlogfolder, filename + '.bin')
+    console.log('New Binlog: ' + this.activeFileBinlog)
+    winston.info('New Binlog: ' + this.activeFileBinlog)
+  }
+
   // stop logging (Tlog)
   stoptlog () {
     if (this.activeFileTlog) {
       console.log('Closed Tlog: ' + this.activeFileTlog)
       winston.info('Closed Tlog: ' + this.activeFileTlog)
       this.activeFileTlog = null
+    }
+  }
+
+  // stop logging (Binlog)
+  stopbinlog () {
+    if (this.activeFileBinlog) {
+      console.log('Closed Binlog: ' + this.activeFileBinlog)
+      winston.info('Closed Binlog: ' + this.activeFileBinlog)
+      this.activeFileBinlog = null
+      this.binLogSeq = -1
+      this.binLogLastTime = 0
     }
   }
 
@@ -98,6 +136,48 @@ class flightLogger {
     }
   }
 
+  // write data to active bin log
+  // takes in a mavlink message of
+  // needs to be synchonous to ensure logfile isn't opened in parallel
+  writeBinlog (msg) {
+    if ((this.binLogLastTime+1000) < Date.now() && this.binLogLastTime !== 0) {
+      //close log - no new packets in a while (1 sec)
+      this.stopbinlog();
+      return false;
+    }
+    if (!this.activeLogging || msg.name !== 'REMOTE_LOG_DATA_BLOCK') {
+      return false
+    }
+    if (msg.seqno === 0) {
+      //start a new log
+      this.newbinlog()
+    }
+    if (this.activeFileBinlog === null) {
+      return false
+    }
+    try {
+      if((this.binLogSeq+1) !== msg.seqno) {
+        console.log("Binlog OOT: seq=" + msg.seqno + ", exp=" + (this.binLogSeq+1))
+      }
+      this.binLogSeq = Math.max(msg.seqno, this.binLogSeq)
+      this.binLogLastTime = Date.now()
+
+      fs.open(this.activeFileBinlog, 'a', function (err, file) {
+        if (err) throw err;
+        fs.write(file, msg.data, msg.seqno*200, function(err, writtenbytes) {
+          if(err) {
+            console.log("Write error: " + err)
+          }
+          fs.closeSync(file)
+        });
+      });
+      //fs.appendFileSync(this.activeFileBinlog, msg.data, 'binary')
+      return true
+    } catch (err) {
+      console.log(err)
+      return false
+    }
+  }
   // enable or disable logging by sending true or false
   setLogging (logstat) {
     if (parseInt(process.versions.node) < 12) {

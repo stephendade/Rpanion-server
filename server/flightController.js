@@ -166,6 +166,24 @@ class FCDetails {
     }
   }
 
+  startBinLogging () {
+    // command the flight controller to start streaming bin log
+    if (this.m !== null) {
+      console.log('Bin log start request')
+      winston.info('Bin log start request')
+      this.m.sendBinStreamRequest()
+    }
+  }
+
+  stopBinLogging () {
+    // command the flight controller to stop streaming bin log
+    if (this.m !== null) {
+      console.log('Bin log stop request')
+      winston.info('Bin log stop request')
+      this.m.sendBinStreamRequestStop()
+    }
+  }
+
   startLink (callback) {
     // start the serial link
     console.log('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value + ', ' + this.activeDevice.mavdialect.value)
