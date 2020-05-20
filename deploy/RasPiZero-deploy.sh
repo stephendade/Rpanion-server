@@ -41,15 +41,24 @@ sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/npm /usr/local/b
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
-pip3 install netifaces --user
+pip3 install netifaces future pymavlink --user
 
 ## Rpanion (+ gst-rpicamsrc)
 git clone https://github.com/stephendade/Rpanion-server.git
 cd ./Rpanion-server
+git submodule update --init --recursive
 
-git submodule init && git submodule update
+## GStreamer raspi
 cd ./modules/gst-rpicamsrc
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
+make
+sudo make install
+cd ../../
+
+## mavlink-router
+cd ./modules/mavlink-router
+./autogen.sh
+./configure CFLAGS='-g -O2'
 make
 sudo make install
 cd ../../

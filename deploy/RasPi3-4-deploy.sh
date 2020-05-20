@@ -40,7 +40,7 @@ sudo apt install -y nodejs
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
-pip3 install netifaces --user
+pip3 install netifaces future pymavlink --user
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
@@ -48,10 +48,19 @@ sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkMa
 ## Rpanion (+ gst-rpicamsrc)
 git clone https://github.com/stephendade/Rpanion-server.git
 cd ./Rpanion-server
+git submodule update --init --recursive
 
-git submodule init && git submodule update
+## GStreamer raspi
 cd ./modules/gst-rpicamsrc
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
+make
+sudo make install
+cd ../../
+
+## mavlink-router
+cd ./modules/mavlink-router
+./autogen.sh
+./configure CFLAGS='-g -O2'
 make
 sudo make install
 cd ../../
