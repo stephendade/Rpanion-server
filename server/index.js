@@ -40,6 +40,10 @@ fcManager.eventEmitter.on('gotMessage', (msg) => {
     //logManager.writetlog(msg.buf);
     try {
         logManager.writetlog(msg);
+        if(logManager.writeBinlog(msg)) {
+          //send back ack
+          fcManager.m.sendBinStreamAck(msg.seqno);
+        }
     }
     catch (err) {
         console.log(err);
@@ -51,17 +55,38 @@ fcManager.eventEmitter.on('newLink', () => {
         logManager.newtlog();
     }
     catch (err) {
-        //console.log("Can't write log");
+        console.log(err);
     }
 });
 
 fcManager.eventEmitter.on('stopLink', () => {
     try {
         logManager.stoptlog();
+        logManager.stopbinlog();
+    }
+    catch (err) {
+        console.log(err);
+    }
+});
+
+fcManager.eventEmitter.on('armed', () => {
+    try {
+        //logManager.newbinlog();
+        // send logging request
+        if (!logManager.activeFileBinlog) {
+          fcManager.startBinLogging();
+        }
     }
     catch (err) {
         //console.log("Can't write log");
     }
+});
+
+fcManager.eventEmitter.on('disarmed', () => {
+  // send logging request
+  if (logManager.activeFileBinlog) {
+    fcManager.stopBinLogging();
+  }
 });
 
 var FCStatusLoop = null;

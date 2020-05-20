@@ -150,6 +150,33 @@ class mavManager {
     this.eventEmitter.emit('sendData', msg.pack(this.mav))
   }
 
+  sendBinStreamRequest () {
+    // create a bin log streaming request. Requires LOG_BACKEND = 3
+    if (this.dialect !== 'ardupilot') {
+      return
+    }
+    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
+    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+  }
+
+  sendBinStreamRequestStop () {
+    // stop a bin log streaming request. Requires LOG_BACKEND = 3
+    if (this.dialect !== 'ardupilot') {
+      return
+    }
+    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
+    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+  }
+
+  sendBinStreamAck(seqno) {
+    // send back acknowlegement of bin stream packet recieved
+    if (this.dialect !== 'ardupilot') {
+      return
+    }
+    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, seqno, 1)
+    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+  }
+
   restartUDP (udpendpoints) {
     // restart all UDP endpoints
     this.outputs = []
