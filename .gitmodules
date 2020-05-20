@@ -1,3 +1,6 @@
 [submodule "modules/gst-rpicamsrc"]
 	path = modules/gst-rpicamsrc
 	url = https://github.com/thaytan/gst-rpicamsrc.git
+[submodule "modules/mavlink-router"]
+	path = modules/mavlink-router
+	url = https://github.com/intel/mavlink-router.git
