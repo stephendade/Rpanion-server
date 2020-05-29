@@ -30,6 +30,10 @@ class FCPage extends basePage {
         this.socket.on('FCStatus', function(msg){
             this.setState({FCStatus: msg});
         }.bind(this));
+        this.socket.on('reconnect', function(){
+            //refresh state
+            this.componentDidMount();
+        }.bind(this));
     }
 
     componentDidMount() {
