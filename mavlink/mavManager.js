@@ -4,10 +4,9 @@ var udp = require('dgram')
 var winston = require('../server/winstonconfig')(module)
 
 class mavManager {
-  constructor (dialect, version, outputs) {
+  constructor (dialect, version, inudpIP, inudpPort) {
     this.mav = null
     this.mavmsg = null
-    this.buf = 0
     this.version = version
     this.dialect = dialect
 
@@ -50,25 +49,23 @@ class mavManager {
     this.targetSystem = null
     this.targetComponent = null
 
-    // outputs
-    this.outputs = []
+    // udp input
     this.udpStream = udp.createSocket('udp4')
-    this.UDPMav = []
+    this.inudpPort = inudpPort
+    this.inudpIP = inudpIP
+    this.RinudpPort = null
+    this.RinudpIP = null
 
-    // event for recieving udp messages from clients (ie commands)
-    this.udpStream.on('message', (msg, info) => {
-      if (this.outputs.length > 0) {
-        // check it's from a valid client
-        for (var i = 0, len = this.outputs.length; i < len; i++) {
-          if (this.UDPMav.length === this.outputs.length && info.address === this.outputs[i].IP && parseInt(info.port) === this.outputs[i].port) {
-            // decode and send to FC
-            this.UDPMav[i].parseBuffer(msg)
-          }
-        }
+    this.udpStream.on('message', (msg, rinfo) => {
+      this.mav.parseBuffer(msg)
+      // lock onto server port
+      if (this.RinudpPort === null || this.RinudpIP === null) {
+        this.RinudpPort = rinfo.port
+        this.RinudpIP = rinfo.address
       }
     })
 
-    this.restartUDP(outputs)
+    this.udpStream.bind(inudpPort, inudpIP)
 
     this.mav.on('error', function (e) {
       // console.log(e);
@@ -79,19 +76,6 @@ class mavManager {
       // raise event for external objects
       this.eventEmitter.emit('gotMessage', msg)
 
-      // send on to UDP clients - very easy. No mavlink processor required
-      if (this.outputs.length > 0) {
-        for (var i = 0, len = this.outputs.length; i < len; i++) {
-          this.udpStream.send(msg.msgbuf, this.outputs[i].port, this.outputs[i].IP, function (error) {
-            if (error) {
-              console.log('UDP Error: ' + error)
-              winston.error('UDP Error: ', { message: error })
-            } else {
-              // console.log('Data sent !!!');
-            }
-          })
-        }
-      }
       if (msg.id === -1) {
         // bad message - can't process here any further
         return
@@ -130,9 +114,51 @@ class mavManager {
     })
   }
 
-  parseBuffer (data) {
-    // incoming data
-    this.mav.parseBuffer(data)
+  close () {
+    // close cleanly
+    if (this.udpStream) {
+      this.udpStream.close()
+    }
+  }
+
+  restart () {
+    // reset remote UDP stream
+    this.close()
+    this.RinudpPort = null
+    this.RinudpIP = null
+    this.udpStream = udp.createSocket('udp4')
+
+    this.udpStream.on('message', (msg, rinfo) => {
+      // lock onto server port
+      if (this.RinudpPort === null || this.RinudpIP === null) {
+        this.RinudpPort = rinfo.port
+        this.RinudpIP = rinfo.address
+        this.sendDSRequest()
+      } else {
+        this.mav.parseBuffer(msg)
+      }
+    })
+
+    this.udpStream.bind(this.inudpPort, this.inudpIP)
+  }
+
+  sendData (msgbuf) {
+    // msgbuf outgoing data
+    if (this.RinudpPort === null || this.RinudpIP === null) {
+      console.log("Can't send here")
+      return
+    }
+
+    var buf = Buffer.from(msgbuf)
+    this.udpStream.send(buf, this.RinudpPort, this.RinudpIP, function (error) {
+      if (error) {
+        this.udpStream.close()
+        console.log(error)
+      } else {
+        // console.log(msgbuf)
+        // console.log(buf)
+      }
+    })
   }
 
   sendReboot () {
@@ -140,14 +166,15 @@ class mavManager {
     var msg = new this.mavmsg.messages.command_long(this.targetSystem, this.targetComponent, this.mavmsg.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
       1, 0, 0, 0, 0, 0, 0)
     this.isRebooting = true
-    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+    // this.eventEmitter.emit('sendData', msg.pack(this.mav))
+    this.sendData(msg.pack(this.mav))
   }
 
   sendDSRequest () {
     // create a datastream request packet
     // console.log("Sent DS");
     var msg = new this.mavmsg.messages.request_data_stream(this.targetSystem, this.targetComponent, this.mavmsg.MAV_DATA_STREAM_ALL, 1, 1)
-    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+    this.sendData(msg.pack(this.mav))
   }
 
   sendBinStreamRequest () {
@@ -156,7 +183,7 @@ class mavManager {
       return
     }
     var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
-    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+    this.sendData(msg.pack(this.mav))
   }
 
   sendBinStreamRequestStop () {
@@ -165,7 +192,7 @@ class mavManager {
       return
     }
     var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
-    this.eventEmitter.emit('sendData', msg.pack(this.mav))
+    this.sendData(msg.pack(this.mav))
   }
 
   sendBinStreamAck(seqno) {
@@ -174,45 +201,7 @@ class mavManager {
       return
     }
     var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, seqno, 1)
-    this.eventEmitter.emit('sendData', msg.pack(this.mav))
-  }
-
-  restartUDP (udpendpoints) {
-    // restart all UDP endpoints
-    this.outputs = []
-    this.UDPMav = []
-
-    // each udp output has a mavlink processor
-    // this ensures non-fragmented mavlink packets from the clients
-    for (var i = 0, len = udpendpoints.length; i < len; i++) {
-      console.log('Restarting UDP output to ' + udpendpoints[i].IP + ':' + udpendpoints[i].port)
-      winston.info('Restarting UDP output to ' + udpendpoints[i].IP + ':' + udpendpoints[i].port)
-
-      // load the correct MAVLink definitions
-      if (this.version === 1 && this.dialect === 'common') {
-        var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
-        var newmav = new MAVLink10Processor(null, 255, 0)
-      } else if (this.version === 2 && this.dialect === 'common') {
-        var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
-        var newmav = new MAVLink20Processor(null, 255, 0)
-      } else if (this.version === 1 && this.dialect === 'ardupilot') {
-        var { mavlink10, MAVLink10Processor } = require('./mavlink_ardupilot_v1')
-        var newmav = new MAVLink10Processor(null, 255, 0)
-      } else if (this.version === 2 && this.dialect === 'ardupilot') {
-        var { mavlink20, MAVLink20Processor } = require('./mavlink_ardupilot_v2')
-        var newmav = new MAVLink20Processor(null, 255, 0)
-      } else {
-        console.log('Error - no valid MAVLink version or dialect')
-        winston.error('Error - no valid MAVLink version or dialect: ', { message: version })
-      }
-
-      newmav.on('message', (msg) => {
-        this.eventEmitter.emit('sendData', msg.msgbuf)
-      })
-      this.UDPMav.push(newmav)
-    }
-
-    this.outputs = udpendpoints
+    this.sendData(msg.pack(this.mav))
   }
 
   autopilotFromID () {
