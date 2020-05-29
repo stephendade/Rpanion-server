@@ -2,6 +2,7 @@ const SerialPort = require('serialport')
 const fs = require('fs')
 var events = require('events')
 var winston = require('./winstonconfig')(module)
+const { spawn } = require('child_process')
 
 const mavManager = require('../mavlink/mavManager.js')
 
@@ -27,8 +28,10 @@ class FCDetails {
     // JSON of active device (port and baud and mavversion). User selected
     // null if user selected no link (or no serial port of that name)
     this.activeDevice = null
-    // the serial device object
-    this.port = null
+
+    // mavlink-router process
+    this.router = null
+
     // the mavlink manager object
     this.m = null
 
@@ -40,18 +43,20 @@ class FCDetails {
     this.intervalObj = null
 
     // UDP Outputs
-    this.outputs = []
+    this.UDPoutputs = []
 
     // load settings
     this.settings = settings
     this.activeDevice = this.settings.value('flightcontroller.activeDevice', null)
-    this.outputs = this.settings.value('flightcontroller.outputs', [])
+    this.UDPoutputs = this.settings.value('flightcontroller.outputs', [])
 
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
+      var found = false
       this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active) => {
         for (var i = 0, len = devices.length; i < len; i++) {
           if (this.activeDevice.serial.value === devices[i].value) {
+            found = true
             this.startLink((err, active) => {
               if (err) {
                 console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
@@ -63,7 +68,7 @@ class FCDetails {
             break
           }
         }
-        if (this.port === null) {
+        if (!found) {
           console.log("Can't find saved FC, resetting")
           winston.info("Can't find saved FC, resetting")
           this.activeDevice = null
@@ -75,8 +80,8 @@ class FCDetails {
   getUDPOutputs () {
     // get list of current UDP outputs
     var ret = []
-    for (var i = 0, len = this.outputs.length; i < len; i++) {
-      ret.push({ IPPort: this.outputs[i].IP + ':' + this.outputs[i].port })
+    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+      ret.push({ IPPort: this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port })
     }
     return ret
   }
@@ -84,19 +89,29 @@ class FCDetails {
   addUDPOutput (newIP, newPort) {
     // add a new udp output, if not already in
     // check if this ip:port is already in the list
-    for (var i = 0, len = this.outputs.length; i < len; i++) {
-      if (this.outputs[i].IP === newIP && this.outputs[i].port === newPort) {
+    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+      if (this.UDPoutputs[i].IP === newIP && this.UDPoutputs[i].port === newPort) {
         return this.getUDPOutputs()
       }
     }
     // add it in
-    this.outputs.push({ IP: newIP, port: newPort })
+    this.UDPoutputs.push({ IP: newIP, port: newPort })
     console.log('Added UDP Output ' + newIP + ':' + newPort)
     winston.info('Added UDP Output ' + newIP + ':' + newPort)
 
-    // restart udp outputs, if link active
+    // restart mavlink-router, if link active
     if (this.m) {
-      this.m.restartUDP(this.outputs)
+      this.closeLink((err) => {
+        this.startLink((err) => {
+          if (err) {
+          } else {
+            // resend DS request to init link
+            // console.log('New UDP Link DS Request')
+            // winston.info('New UDP Link DS Request')
+            // this.m.sendDSRequest()
+          }
+        })
+      })
     }
 
     // try to save. Will be invalid if running under test runner
@@ -111,16 +126,26 @@ class FCDetails {
   removeUDPOutput (remIP, remPort) {
     // remove new udp output
     // check if this ip:port is already in the list
-    for (var i = 0, len = this.outputs.length; i < len; i++) {
-      if (this.outputs[i].IP === remIP && this.outputs[i].port === remPort) {
+    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+      if (this.UDPoutputs[i].IP === remIP && this.UDPoutputs[i].port === remPort) {
         // and remove
-        this.outputs.splice(i, 1)
+        this.UDPoutputs.splice(i, 1)
         console.log('Removed UDP Output ' + remIP + ':' + remPort)
         winston.info('Removed UDP Output ' + remIP + ':' + remPort)
 
-        // restart udp outputs, if link active
+        // restart mavlink-router, if link active
         if (this.m) {
-          this.m.restartUDP(this.outputs)
+          this.closeLink((err) => {
+            this.startLink((err) => {
+              if (err) {
+              } else {
+                // resend DS request to init link
+                // console.log('New UDP Link DS Request')
+                // winston.info('New UDP Link DS Request')
+                // this.m.sendDSRequest()
+              }
+            })
+          })
         }
 
         // try to save. Will be invalid if running under test runner
@@ -188,40 +213,47 @@ class FCDetails {
     // start the serial link
     console.log('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value + ', ' + this.activeDevice.mavdialect.value)
     winston.info('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value + ', ' + this.activeDevice.mavdialect.value)
-    this.port = new SerialPort(this.activeDevice.serial.value, { baudRate: parseInt(this.activeDevice.baud.value) }, (err) => {
-      if (err) {
-        this.closeLink((err) => {
-          winston.error('Error in startLink() port ', { message: err })
-        })
-        console.log('Serial Error: ', err.message)
-        winston.error('Serial Error: ', { message: err })
-        return callback(err.message, false)
-      }
+    // this.outputs.push({ IP: newIP, port: newPort })
 
-      // only restart the mavlink processor if it's a new link,
-      // not a reconnect attempt
-      if (this.m === null) {
-        this.m = new mavManager(this.activeDevice.mavdialect.value, this.activeDevice.mavversion.value, this.outputs)
-      }
+    // build up the commandline for mavlink-router
+    var cmd = ['-e', '127.0.0.1:14540', '--tcp-port', '0']
+    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+      cmd.push('-e')
+      cmd.push(this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port)
+    }
+    cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud.value)
+    console.log(cmd)
 
-      this.eventEmitter.emit('newLink')
+    // start mavlink-router
+    this.router = spawn('mavlink-routerd', cmd)
+    this.router.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`)
+    })
 
-      this.m.eventEmitter.on('sendData', (buffer) => {
-        if (this.port) {
-          this.port.write(buffer, function (err) {
-            if (err) {
-              winston.error('Error in startLink() serial ', { message: err })
-              console.log('FC Serial Error on write: ', err.message)
-              return callback(null, false)
-            }
-          })
-        }
-      })
+    this.router.stderr.on('data', (data) => {
+      console.error(`stderr: ${data}`)
+    })
+
+    this.router.on('close', (code) => {
+      console.log(`child process exited with code ${code}`)
+      console.log('Closed Router')
+      winston.info('Closed Router')
+      this.eventEmitter.emit('stopLink')
+    })
+
+    console.log('Opened Router')
+    winston.info('Opened Router')
+
+    // only restart the mavlink processor if it's a new link,
+    // not a reconnect attempt
+    if (this.m === null) {
+      this.m = new mavManager(this.activeDevice.mavdialect.value, this.activeDevice.mavversion.value, '127.0.0.1', 14540)
       this.m.eventEmitter.on('gotMessage', (msg) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
         this.eventEmitter.emit('gotMessage', msg)
       })
+    }
 
       // arming events - just pass them on
       this.m.eventEmitter.on('armed', () => {
@@ -230,28 +262,22 @@ class FCDetails {
       this.m.eventEmitter.on('disarmed', () => {
         this.eventEmitter.emit('disarmed')
       })
+    this.eventEmitter.emit('newLink')
+    this.m.sendDSRequest()
 
-      return callback(null, true)
-    })
-    // Switches the port into "flowing mode"
-    this.port.on('data', (data) => {
-      if (this.m !== null) {
-        this.m.parseBuffer(data)
-      }
-    })
+    return callback(null, true)
   }
 
   closeLink (callback) {
     // stop the serial link
-    if (this.port && this.port.isOpen) {
-      this.port.close()
-      console.log('Closed Serial')
-      winston.info('Closed Serial')
-      this.eventEmitter.emit('stopLink')
+    if (this.router && this.router.exitCode === null) {
+      this.router.kill('SIGINT')
+      console.log('Trying to close router')
+      winston.info('Trying to close router')
       return callback(null)
-    } else if (this.port) {
-      console.log('Already Closed Serial')
-      winston.info('Already Closed Serial')
+    } else {
+      console.log('Already Closed Router')
+      winston.info('Already Closed Router')
       this.eventEmitter.emit('stopLink')
       return callback(null)
     }
@@ -265,8 +291,8 @@ class FCDetails {
       ports => {
         for (var i = 0, len = ports.length; i < len; i++) {
           if (ports[i].pnpId !== undefined) {
-          // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
-          // console.log("Port: ", ports[i].pnpID);
+            // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
+            // console.log("Port: ", ports[i].pnpID);
             if (ports[i].pnpId.split('_').length > 2) {
               var name = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
             } else {
@@ -282,10 +308,11 @@ class FCDetails {
         }
 
         // has the active device been disconnected?
-        if (this.port && !this.port.isOpen) {
+        if (this.port) {
           console.log('Lost active device')
           winston.info('Lost active device')
           // this.active = false;
+          this.m.close()
           this.m = null
         }
         // set the active device as selected
@@ -304,14 +331,13 @@ class FCDetails {
   startInterval () {
     // start the 1-sec loop checking for disconnects
     this.intervalObj = setInterval(() => {
-      if (this.m && this.m.statusNumRxPackets === 0) {
+      if (this.m && (this.m.statusNumRxPackets === 0 || this.m.conStatusInt() === -1)) {
         // waiting for initial connection
-        console.log('Initial DS Request')
-        winston.info('Initial DS Request')
+        console.log('Initial or RS DS Request')
+        winston.info('Initial or RS DS Request')
         this.m.sendDSRequest()
       }
       // check for timeouts in serial link (ie disconnected cable or reboot)
-      // console.log('Status: ' + this.m.conStatusInt());
       if (this.m && this.m.conStatusInt() === -1) {
         console.log('Trying to reconnect FC...')
         winston.info('Trying to reconnect FC...')
@@ -319,10 +345,8 @@ class FCDetails {
           this.startLink((err) => {
             if (err) {
             } else {
-              // resend DS request to init link
-              console.log('Continue DS Request')
-              winston.info('Continue DS Request')
-              this.m.sendDSRequest()
+              // DS request is in this.m.restart()
+              this.m.restart()
             }
           })
         })
@@ -362,15 +386,22 @@ class FCDetails {
         }
       }
 
-      if (this.activeDevice.baud.value === null || this.activeDevice.serial.value === null || this.activeDevice.mavversion.value === null || this.activeDevice.mavdialect.value === null) {
-        return callback('Bad serial device or baud or mavlink version or dialect', this.activeDevice !== null)
+      if (this.activeDevice.serial === null || this.activeDevice.baud.value === null || this.activeDevice.serial.value === null || this.activeDevice.mavversion.value === null || this.activeDevice.mavdialect.value === null) {
+        this.activeDevice = null
+        return callback('Bad serial device or baud or mavlink version or dialect', false)
       }
 
       // this.activeDevice = {serial: device, baud: baud};
       this.startLink((err) => {
-        this.saveSerialSettings()
-        // start timeout function for auto-reconnect
-        this.startInterval()
+        if (err) {
+          console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
+          winston.info("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
+          this.activeDevice = null
+        } else {
+          // start timeout function for auto-reconnect
+          this.startInterval()
+          this.saveSerialSettings()
+        }
         return callback(null, this.activeDevice !== null)
       })
     } else {
@@ -379,6 +410,7 @@ class FCDetails {
         this.saveSerialSettings()
         clearInterval(this.intervalObj)
         this.previousConnection = false
+        this.m.close()
         this.m = null
         return callback(null, this.activeDevice !== null)
       })
@@ -388,7 +420,7 @@ class FCDetails {
   saveSerialSettings () {
     // Save the current settings to file
     this.settings.setValue('flightcontroller.activeDevice', this.activeDevice)
-    this.settings.setValue('flightcontroller.outputs', this.outputs)
+    this.settings.setValue('flightcontroller.outputs', this.UDPoutputs)
     console.log('Saved FC settings')
     winston.info('Saved FC settings')
   }
