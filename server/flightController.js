@@ -2,7 +2,7 @@ const SerialPort = require('serialport')
 const fs = require('fs')
 var events = require('events')
 var winston = require('./winstonconfig')(module)
-const { spawn } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
 
 const mavManager = require('../mavlink/mavManager.js')
 
@@ -74,6 +74,18 @@ class FCDetails {
           this.activeDevice = null
         }
       })
+    }
+  }
+
+  validMavlinkRouter() {
+    // check mavlink-router is installed
+    var ls = spawnSync('which', ['mavlink-routerd']);
+    console.log(ls.stdout.toString())
+    if (ls.stdout.toString().trim() == '') {
+      return false
+    }
+    else {
+      return true
     }
   }
 
@@ -223,6 +235,13 @@ class FCDetails {
     }
     cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud.value)
     console.log(cmd)
+
+    //check mavlink-router exists
+    if(!this.validMavlinkRouter()) {
+        console.log('Could not find mavlink-routerd')
+        winston.info('Could not find mavlink-routerd')
+        return callback('Could not find mavlink-routerd', false)
+    }
 
     // start mavlink-router
     this.router = spawn('mavlink-routerd', cmd)
