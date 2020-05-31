@@ -5,13 +5,14 @@ var udp = require('dgram')
 
 describe('MAVLink Functions', function () {
   it('#startup()', function () {
-    var m = new mavManager('common', 1, [])
+    var m = new mavManager("common", 1, '127.0.0.1', 15000)
 
     assert.notEqual(m.mav, null)
+    m.close()
   })
 
   it('#receivepacket()', function (done) {
-    var m = new mavManager('common', 2, [])
+    var m = new mavManager("common", 2, '127.0.0.1', 15000)
     var packets = []
 
     m.eventEmitter.on('gotMessage', (msg) => {
@@ -28,7 +29,7 @@ describe('MAVLink Functions', function () {
     assert.equal(m.statusArmed, 0)
 
     var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
-    m.parseBuffer(hb)
+    m.mav.parseBuffer(hb)
 
     assert.equal(m.conStatusStr(), 'Connected')
     assert.equal(m.conStatusInt(), 1)
@@ -39,20 +40,18 @@ describe('MAVLink Functions', function () {
 
     // check arming
     var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x01, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x8d, 0x0d, 0x02, 0x4c, 0x4f])
-    m.parseBuffer(hb)
+    m.mav.parseBuffer(hb)
 
     assert.equal(m.statusArmed, 1)
   })
 
   it('#datastreamSend()', function (done) {
-    var m = new mavManager('common', 2, [])
+    var m = new mavManager("common", 2, '127.0.0.1', 16000)
+    var udpStream = udp.createSocket('udp4')
 
-    m.eventEmitter.on('sendData', (buffer) => {
-      buffer.should.eql([0xfd, 0x06, 0x00, 0x00, 0x00, 0xff, 0x00, 0x42, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2c, 0x7e])
-      done()
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendDSRequest()
     })
-
-    m.sendDSRequest()
   })
 
   it('#rebootSend()', function (done) {
@@ -63,47 +62,50 @@ describe('MAVLink Functions', function () {
       done()
     })
 
-    m.sendReboot()
+    udpStream.send(Buffer.from([0xfd, 0x06]), 16000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
   })
 
-  it('#udpReceiveSend()', function (done) {
-    var m = new mavManager('ardupilot', 2, [{ IP: '127.0.0.1', port: 14580 }])
-    var udpStream = udp.createSocket('udp4')
-    var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
 
-    m.eventEmitter.on('sendData', (buffer) => {
-      m.udpStream.close()
+  it('#rebootSend()', function (done) {
+    var m = new mavManager("common", 2, '127.0.0.1', 15000)
+    var udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendReboot()
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([253, 29, 0, 0, 0, 255, 0, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 51, 134]))
+      m.close()
       udpStream.close()
-      buffer.should.eql(hb)
       done()
     })
 
-    udpStream.on('message', function (msg, info) {
-      udpStream.send(hb, info.port, info.address)
-
-      msg.should.eql(hb)
-      // send msg back
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
     })
-
-    udpStream.bind(14580, '127.0.0.1')
-
-    m.parseBuffer(hb)
   })
 
   it('#perfTest()', function () {
     // how fast can we process packets and send out over udp?
-    var m = new mavManager('common', 2, [{ IP: '127.0.0.1', port: 14580 }])
+    var m = new mavManager("common", 2, '127.0.0.1', 15000)
 
     // time how long 255 packets takes
     var starttime = Date.now().valueOf()
     for (var i = 0; i < 255; i++) {
       var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, i, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
-      m.parseBuffer(hb)
+      m.mav.parseBuffer(hb)
     }
     var delta = Date.now().valueOf() - starttime
     var packetsPerSec = 1000 * (255 / delta)
-    m.udpStream.close()
 
     console.log('MAVLink performance is ' + parseInt(packetsPerSec) + ' packets/sec')
+    m.close()
   })
 })

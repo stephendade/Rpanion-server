@@ -58,10 +58,11 @@ class mavManager {
 
     this.udpStream.on('message', (msg, rinfo) => {
       this.mav.parseBuffer(msg)
-      // lock onto server port
+      //lock onto server port
       if (this.RinudpPort === null || this.RinudpIP === null) {
         this.RinudpPort = rinfo.port
         this.RinudpIP = rinfo.address
+        this.eventEmitter.emit('linkready', true)
       }
     })
 
@@ -145,7 +146,6 @@ class mavManager {
   sendData (msgbuf) {
     // msgbuf outgoing data
     if (this.RinudpPort === null || this.RinudpIP === null) {
-      console.log("Can't send here")
       return
     }
 
