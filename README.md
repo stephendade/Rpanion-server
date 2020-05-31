@@ -71,7 +71,7 @@ sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspser
 
 sudo apt purge openresolv dhcpcd5
 
-pip3 install netifaces --user
+pip3 install netifaces future pymavlink --user
 ```
 
 For some systems (such as the Raspberry Pi), additional permissions may be requires to run ``nmcli`` from the
@@ -84,6 +84,18 @@ https://github.com/thaytan/gst-rpicamsrc) must be installed:
 git submodule init && git submodule update
 cd ./modules/gst-rpicamsrc
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
+make
+sudo make install
+```
+
+The mavlink-router (https://github.com/intel/mavlink-router) software is used for
+backend routing and is required to be installed:
+
+```
+git submodule init && git submodule update
+cd ./modules/mavlink-router
+./autogen.sh
+./configure CFLAGS='-g -O2'
 make
 sudo make install
 ```
