@@ -55,4 +55,21 @@ describe('Flight Controller Functions', function () {
     FC.removeUDPOutput('127.0.0.1', 15003)
     assert.equal(FC.getUDPOutputs().length, 1)
   })
+
+  it('#fcStartStop()', function (done) {
+    var FC = new FCManagerClass(settings)
+    FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
+
+    FC.startStopTelemetry({ pnpId: '456'}, {value: 115200}, {value: 2}, {value: 'common'}, (err, isSuccess) => {
+      assert.equal(err, null)
+      assert.equal(isSuccess, true)
+
+      FC.startStopTelemetry({ pnpId: '456'}, {value: 115200}, {value: 2}, {value: 'common'}, (err, isSuccess) => {
+        assert.equal(err, null)
+        assert.equal(isSuccess, false)
+        done()
+      });
+    });
+  })
+
 })

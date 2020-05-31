@@ -438,10 +438,15 @@ class FCDetails {
 
   saveSerialSettings () {
     // Save the current settings to file
-    this.settings.setValue('flightcontroller.activeDevice', this.activeDevice)
-    this.settings.setValue('flightcontroller.outputs', this.UDPoutputs)
-    console.log('Saved FC settings')
-    winston.info('Saved FC settings')
+    try {
+      this.settings.setValue('flightcontroller.activeDevice', this.activeDevice)
+      this.settings.setValue('flightcontroller.outputs', this.UDPoutputs)
+      console.log('Saved FC settings')
+      winston.info('Saved FC settings')
+    } catch (e) {
+
+    }
+
   }
 }
 
