@@ -5,6 +5,20 @@ node_js:
 
 cache: npm
 
+install:
+  - pip --version
+  - pip install future pymavlink --user
+
+before_script:
+  - git submodule update --init --recursive
+  ## mavlink-router
+  - cd ./modules/mavlink-router
+  - ./autogen.sh
+  - ./configure CFLAGS='-g -O2'
+  - make
+  - sudo make install
+  - cd ../../
+
 script:
   - npm run testback
   - npm run testfront
