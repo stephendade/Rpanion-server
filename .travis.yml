@@ -5,9 +5,16 @@ node_js:
 
 cache: npm
 
+addons:
+  apt:
+    packages:
+      - python3-pip
+      - python3-setuptools
+
 install:
-  - pip --version
-  - pip install future pymavlink --user
+  - pip3 --version
+  - pip3 install future pymavlink --user
+  - npm install
 
 before_script:
   - git submodule update --init --recursive
@@ -23,3 +30,4 @@ script:
   - npm run testback
   - npm run testfront
   - npm run build
+
