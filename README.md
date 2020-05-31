@@ -50,7 +50,7 @@ via package manager:
 
 ```
 curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-sudo apt-get install -y nodejs npm
+sudo apt-get install -y nodejs
 ```
 
 Note that the Raspberry Pi Zero is not compatible with version 12 (or later) of node.js. Version 11 
