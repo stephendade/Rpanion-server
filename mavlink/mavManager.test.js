@@ -5,7 +5,7 @@ var udp = require('dgram')
 
 describe('MAVLink Functions', function () {
   it('#startup()', function () {
-    var m = new mavManager("common", 1, '127.0.0.1', 15000)
+    var m = new mavManager('common', 1, '127.0.0.1', 15000)
 
     assert.notEqual(m.mav, null)
     m.close()
@@ -46,7 +46,7 @@ describe('MAVLink Functions', function () {
   })
 
   it('#datastreamSend()', function (done) {
-    var m = new mavManager("common", 2, '127.0.0.1', 16000)
+    var m = new mavManager('common', 2, '127.0.0.1', 16000)
     var udpStream = udp.createSocket('udp4')
 
     m.eventEmitter.on('linkready', (info) => {
@@ -71,7 +71,7 @@ describe('MAVLink Functions', function () {
 
 
   it('#rebootSend()', function (done) {
-    var m = new mavManager("common", 2, '127.0.0.1', 15000)
+    var m = new mavManager('common', 2, '127.0.0.1', 15000)
     var udpStream = udp.createSocket('udp4')
 
     m.eventEmitter.on('linkready', (info) => {
@@ -94,7 +94,7 @@ describe('MAVLink Functions', function () {
 
   it('#perfTest()', function () {
     // how fast can we process packets and send out over udp?
-    var m = new mavManager("common", 2, '127.0.0.1', 15000)
+    var m = new mavManager('common', 2, '127.0.0.1', 15000)
 
     // time how long 255 packets takes
     var starttime = Date.now().valueOf()

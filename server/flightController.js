@@ -77,14 +77,13 @@ class FCDetails {
     }
   }
 
-  validMavlinkRouter() {
+  validMavlinkRouter () {
     // check mavlink-router is installed
-    var ls = spawnSync('which', ['mavlink-routerd']);
+    var ls = spawnSync('which', ['mavlink-routerd'])
     console.log(ls.stdout.toString())
     if (ls.stdout.toString().trim() == '') {
       return false
-    }
-    else {
+    } else {
       return true
     }
   }
@@ -236,11 +235,11 @@ class FCDetails {
     cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud.value)
     console.log(cmd)
 
-    //check mavlink-router exists
-    if(!this.validMavlinkRouter()) {
-        console.log('Could not find mavlink-routerd')
-        winston.info('Could not find mavlink-routerd')
-        return callback('Could not find mavlink-routerd', false)
+    // check mavlink-router exists
+    if (!this.validMavlinkRouter()) {
+      console.log('Could not find mavlink-routerd')
+      winston.info('Could not find mavlink-routerd')
+      return callback('Could not find mavlink-routerd', false)
     }
 
     // start mavlink-router
@@ -446,7 +445,6 @@ class FCDetails {
     } catch (e) {
 
     }
-
   }
 }
 
