@@ -455,7 +455,7 @@ class NetworkConfig extends basePage {
       this.setState({ showModal: false});
       var nm = this.state.netConnectionFilteredSelected.label;
       this.setState({netConnectionFilteredSelected: {value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: ""},
-          curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
+          curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: ""}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
     }
 
     renderContent() {
