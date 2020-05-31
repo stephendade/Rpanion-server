@@ -58,7 +58,7 @@ class mavManager {
 
     this.udpStream.on('message', (msg, rinfo) => {
       this.mav.parseBuffer(msg)
-      //lock onto server port
+      // lock onto server port
       if (this.RinudpPort === null || this.RinudpIP === null) {
         this.RinudpPort = rinfo.port
         this.RinudpIP = rinfo.address
