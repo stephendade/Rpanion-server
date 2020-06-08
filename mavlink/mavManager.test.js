@@ -21,6 +21,7 @@ describe('MAVLink Functions', function () {
 
     m.eventEmitter.on('armed', () => {
       assert.equal(m.statusArmed, 1)
+      m.close()
       done()
     })
 
@@ -42,7 +43,6 @@ describe('MAVLink Functions', function () {
     var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x01, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x8d, 0x0d, 0x02, 0x4c, 0x4f])
     m.mav.parseBuffer(hb)
 
-    assert.equal(m.statusArmed, 1)
   })
 
   it('#datastreamSend()', function (done) {
@@ -52,13 +52,11 @@ describe('MAVLink Functions', function () {
     m.eventEmitter.on('linkready', (info) => {
       m.sendDSRequest()
     })
-  })
 
-  it('#rebootSend()', function (done) {
-    var m = new mavManager('common', 2, [])
-
-    m.eventEmitter.on('sendData', (buffer) => {
-      buffer.should.eql([253, 29, 0, 0, 0, 255, 0, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 51, 134])
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([0xfd, 0x06, 0x00, 0x00, 0x00, 0xff, 0x00, 0x42, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2c, 0x7e]))
+      m.close()
+      udpStream.close()
       done()
     })
 
@@ -80,6 +78,72 @@ describe('MAVLink Functions', function () {
 
     udpStream.on('message', (msg, rinfo) => {
       msg.should.eql(Buffer.from([253, 29, 0, 0, 0, 255, 0, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 51, 134]))
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
+  it('#sendBinStreamRequest()', function (done) {
+    var m = new mavManager('ardupilot', 2, '127.0.0.1', 15000)
+    var udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendBinStreamRequest()
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([253, 7, 0, 0, 0, 255, 0, 185, 0, 0, 254, 255, 255, 127, 0, 0, 1, 150, 172]))
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
+  it('#sendBinStreamRequestStop()', function (done) {
+    var m = new mavManager('ardupilot', 2, '127.0.0.1', 15000)
+    var udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendBinStreamRequestStop()
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([253, 7, 0, 0, 0, 255, 0, 185, 0, 0, 253, 255, 255, 127, 0, 0, 1, 70, 38]))
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
+  it('#sendBinStreamAck()', function (done) {
+    var m = new mavManager('ardupilot', 2, '127.0.0.1', 15000)
+    var udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendBinStreamAck(1)
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([253, 7, 0, 0, 0, 255, 0, 185, 0, 0, 1, 0, 0, 0, 0, 0, 1, 63, 82]))
       m.close()
       udpStream.close()
       done()
