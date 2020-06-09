@@ -11,6 +11,7 @@ class LoggerPage extends basePage {
             loading: false,
             waiting: false,
             TlogFiles: [],
+            BinlogFiles: [],
             logStatus: "",
             enablelogging: false
         };
@@ -38,16 +39,27 @@ class LoggerPage extends basePage {
     }
 
     clearLogs = (event) => {
-        this.setState({ waiting: true }, () => {
-            fetch('/api/deletelogfiles').then(response => response.json())
-                                        .then(result => {
-                                            this.componentDidMount();
-                                            this.setState({waiting: false});
-                                        })
-                                        .catch(error => {
-                                            window.alert("Error deleting logfiles: " + error);
-                                            this.setState({waiting: false});
-                                        });
+        //this.setState((state) => ({ value: state.value + 1}));
+        const id = event.target.id;
+        this.setState({ waiting: true}, () => {
+            fetch('/api/deletelogfiles', {
+              method: 'POST',
+              headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  logtype: id,
+              })
+            }).then(response => response.json())
+              .then(result => {
+                  this.componentDidMount();
+                  this.setState({waiting: false});
+              })
+              .catch(error => {
+                  window.alert("Error deleting logfiles: " + error);
+                  this.setState({waiting: false});
+              });
         });
         event.preventDefault();
     }
@@ -95,17 +107,30 @@ class LoggerPage extends basePage {
     renderContent() {
         return (
         <div>
-            <h3>Telemetry Logs</h3>
             <p>Logging Status: {this.state.logStatus}</p>
-            <button onClick={this.clearLogs}>Clear inactive logs</button>
-            <button onClick={this.startLog}>Start new logfile</button>
             <label><input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />Enable Logging</label>
+            <h3>Telemetry Logs</h3>
+            <button onClick={this.startLog}>Start new telemetry log</button>
+            <button id='tlog' onClick={this.clearLogs}>Clear inactive logs</button>
             <table id='Tlogfile'>
                 <thead>
-                    <tr><th>Log File</th><th>Size</th><th>Modified</th></tr>
+                    <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
                 </thead>
                 <tbody>
                     {this.renderLogTableData(this.state.TlogFiles)}
+                </tbody>
+            </table>
+            <br />
+            <h3>Bin Logs</h3>
+            <p>This requires the "ArduPilot" MAVLink dialect setting in Flight Controller settings
+                and the LOG_BACKEND_TYPE parameter in ArduPilot set to "Mavlink".</p>
+            <button id='binlog' onClick={this.clearLogs}>Clear inactive logs</button>
+            <table id='Binlogfile'>
+                <thead>
+                    <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
+                </thead>
+                <tbody>
+                    {this.renderLogTableData(this.state.BinlogFiles)}
                 </tbody>
             </table>
         </div>
