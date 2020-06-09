@@ -20,7 +20,8 @@ class FCDetails {
       { value: 115200, label: '115200' },
       { value: 230400, label: '230400' },
       { value: 460800, label: '460800' },
-      { value: 921600, label: '921600' }]
+      { value: 921600, label: '921600' },
+      { value: 1500000, label: '1500000' }]
     this.mavlinkVersions = [{ value: 1, label: '1.0' },
       { value: 2, label: '2.0' }]
     this.dialects = [{ value: 'ardupilot', label: 'ArduPilot' },
