@@ -273,13 +273,13 @@ class FCDetails {
       })
     }
 
-      // arming events - just pass them on
-      this.m.eventEmitter.on('armed', () => {
-        this.eventEmitter.emit('armed')
-      })
-      this.m.eventEmitter.on('disarmed', () => {
-        this.eventEmitter.emit('disarmed')
-      })
+    // arming events - just pass them on
+    this.m.eventEmitter.on('armed', () => {
+      this.eventEmitter.emit('armed')
+    })
+    this.m.eventEmitter.on('disarmed', () => {
+      this.eventEmitter.emit('disarmed')
+    })
     this.eventEmitter.emit('newLink')
     this.m.sendDSRequest()
 

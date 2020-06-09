@@ -57,7 +57,7 @@ class flightLogger {
     }
     // already logging
     if (this.activeFileBinlog) {
-      console.log("Error: Binlog already active")
+      console.log('Error: Binlog already active')
       return
     }
 
@@ -103,8 +103,7 @@ class flightLogger {
       })
       console.log('Deleted tlogs')
       winston.info('Deleted tlogs')
-    }
-    else if (logtype === 'binlog') {
+    } else if (logtype === 'binlog') {
       const files = fs.readdirSync(this.binlogfolder)
       files.forEach((file) => {
         const filePath = path.join(this.binlogfolder, file)
@@ -152,44 +151,45 @@ class flightLogger {
   // takes in a mavlink message of
   // needs to be synchonous to ensure logfile isn't opened in parallel
   writeBinlog (msg) {
-    if ((this.binLogLastTime+1000) < Date.now() && this.binLogLastTime !== 0) {
-      //close log - no new packets in a while (1 sec)
-      this.stopbinlog();
-      return false;
+    if ((this.binLogLastTime + 1000) < Date.now() && this.binLogLastTime !== 0) {
+      // close log - no new packets in a while (1 sec)
+      this.stopbinlog()
+      return false
     }
     if (!this.activeLogging || msg.name !== 'REMOTE_LOG_DATA_BLOCK') {
       return false
     }
     if (msg.seqno === 0) {
-      //start a new log
+      // start a new log
       this.newbinlog()
     }
     if (this.activeFileBinlog === null) {
       return false
     }
     try {
-      if((this.binLogSeq+1) !== msg.seqno) {
-        console.log("Binlog OOT: seq=" + msg.seqno + ", exp=" + (this.binLogSeq+1))
+      if ((this.binLogSeq + 1) !== msg.seqno) {
+        console.log('Binlog OOT: seq=' + msg.seqno + ', exp=' + (this.binLogSeq + 1))
       }
       this.binLogSeq = Math.max(msg.seqno, this.binLogSeq)
       this.binLogLastTime = Date.now()
 
       fs.open(this.activeFileBinlog, 'a', function (err, file) {
-        if (err) throw err;
-        fs.write(file, msg.data, msg.seqno*200, function(err, writtenbytes) {
-          if(err) {
-            console.log("Write error: " + err)
+        if (err) throw err
+        fs.write(file, msg.data, msg.seqno * 200, function (err, writtenbytes) {
+          if (err) {
+            console.log('Write error: ' + err)
           }
           fs.closeSync(file)
-        });
-      });
-      //fs.appendFileSync(this.activeFileBinlog, msg.data, 'binary')
+        })
+      })
+      // fs.appendFileSync(this.activeFileBinlog, msg.data, 'binary')
       return true
     } catch (err) {
       console.log(err)
       return false
     }
   }
+
   // enable or disable logging by sending true or false
   setLogging (logstat) {
     if (parseInt(process.versions.node) < 12) {
