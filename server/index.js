@@ -105,15 +105,21 @@ app.use(express.static(path.join(__dirname, '..', '/build')));
 app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')));
 
 app.get('/api/logfiles', (req, res) => {
-    logManager.getLogs((err, tlogs, activeLogging) => {
+    logManager.getLogs((err, tlogs, binlogs, activeLogging) => {
         res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, url: req.protocol+"://"+req.headers.host, logStatus: logManager.getStatus() }));
+        res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, BinlogFiles: binlogs, url: req.protocol+"://"+req.headers.host, logStatus: logManager.getStatus() }));
     });
 
 });
 
-app.get('/api/deletelogfiles', (req, res) => {
-    logManager.cleartlogs();
+app.post('/api/deletelogfiles', [check('logtype').isIn(['tlog', 'binlog'])], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/deletelogfiles', { message: errors.array() });
+        return res.status(422).json({ errors: errors.array() });
+    }
+
+    logManager.cleartlogs(req.body.logtype);
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify({}));
 

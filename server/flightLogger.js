@@ -57,7 +57,7 @@ class flightLogger {
     }
     // already logging
     if (this.activeFileBinlog) {
-      console.log("Error: Bi already active")
+      console.log("Error: Binlog already active")
       return
     }
 
@@ -90,20 +90,32 @@ class flightLogger {
     }
   }
 
-  // Delete all tlogs
-  cleartlogs () {
-    const files = fs.readdirSync(this.tlogfolder)
-
-    files.forEach((file) => {
-      const filePath = path.join(this.tlogfolder, file)
-      // don't remove the actively logging file
-      if (!(this.activeFileTlog === filePath && this.activeLogging)) {
-        fs.unlinkSync(filePath)
-      }
-    })
-
-    console.log('Deleted tlogs')
-    winston.info('Deleted tlogs')
+  // Delete all logs - tlog or binlog
+  cleartlogs (logtype) {
+    if (logtype === 'tlog') {
+      const files = fs.readdirSync(this.tlogfolder)
+      files.forEach((file) => {
+        const filePath = path.join(this.tlogfolder, file)
+        // don't remove the actively logging file
+        if (!(this.activeFileTlog === filePath && this.activeLogging)) {
+          fs.unlinkSync(filePath)
+        }
+      })
+      console.log('Deleted tlogs')
+      winston.info('Deleted tlogs')
+    }
+    else if (logtype === 'binlog') {
+      const files = fs.readdirSync(this.binlogfolder)
+      files.forEach((file) => {
+        const filePath = path.join(this.binlogfolder, file)
+        // don't remove the actively logging file
+        if (!(this.activeFileBinlog === filePath && this.activeLogging)) {
+          fs.unlinkSync(filePath)
+        }
+      })
+      console.log('Deleted binlogs')
+      winston.info('Deleted binlogs')
+    }
   }
 
   // write data to active log(s)
@@ -200,10 +212,12 @@ class flightLogger {
     if (parseInt(process.versions.node) < 12) {
       return 'Cannot do logging on nodejs version <12'
     }
-    if (this.activeFileTlog && this.activeLogging) {
+    if (this.activeFileBinlog && this.activeFileTlog && this.activeLogging) {
+      return 'Logging to ' + path.basename(this.activeFileTlog) + ' and ' + path.basename(this.activeFileBinlog)
+    } else if (!this.activeFileBinLog && this.activeFileTlog && this.activeLogging) {
       return 'Logging to ' + path.basename(this.activeFileTlog)
     } else if (!this.activeFileTlog && this.activeLogging) {
-      return 'Logging Enabled, no FC packets'
+      return 'Logging Enabled, no packets from ArduPilot'
     } else {
       return 'Not Logging'
     }
@@ -234,7 +248,8 @@ class flightLogger {
   // return format is (err, tlogs)
   getLogs (callback) {
     var newfilestlog = this.findInDir(this.tlogfolder)
-    return callback(false, newfilestlog, this.activeLogging)
+    var newfilesbinlog = this.findInDir(this.binlogfolder)
+    return callback(false, newfilestlog, newfilesbinlog, this.activeLogging)
   };
 }
 
