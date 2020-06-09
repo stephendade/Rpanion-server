@@ -28,21 +28,39 @@ long_line_behaviour=1
 long_line_column=72
 
 [files]
-current_page=4
+current_page=7
 FILE_NAME_0=197;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fabout.js;0;4
 FILE_NAME_1=217;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FaboutInfo.js;0;4
-FILE_NAME_2=8338;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.js;0;4
-FILE_NAME_3=6735;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.js;0;4
-FILE_NAME_4=324;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.test.js;0;4
+FILE_NAME_2=1868;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.js;0;4
+FILE_NAME_3=6632;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.js;0;4
+FILE_NAME_4=1757;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fmavlink%2FmavManager.test.js;0;4
 FILE_NAME_5=7736;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2Findex.js;0;2
 FILE_NAME_6=2219;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fsrc%2Fflightcontroller.js;0;2
 FILE_NAME_7=943;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fstephen%2FDocuments%2FUAV_code%2FRpanion-server%2Fserver%2FflightController.test.js;0;2
 
+[build-menu]
+EX_00_LB=_Execute
+EX_00_CM=./%e
+EX_00_WD=
+JavascriptFT_00_LB=Run
+JavascriptFT_00_CM=
+JavascriptFT_00_WD=
+filetypes=Javascript;
+EX_01_LB=Run
+EX_01_CM=npm run dev
+EX_01_WD=
+NF_03_LB=
+NF_03_CM=
+NF_03_WD=
+JavascriptFT_02_LB=_Lint File
+JavascriptFT_02_CM=./node_modules/.bin/eslint "%d/%f"
+JavascriptFT_02_WD=%p
+JavascriptFT_01_LB=Lint Fix
+JavascriptFT_01_CM=./node_modules/.bin/eslint --fix "%d/%f"
+JavascriptFT_01_WD=%p
+
 [VTE]
 last_dir=/home/stephen
-
-[build-menu]
-filetypes=Javascript;
 
 [prjorg]
 source_patterns=*.c;*.C;*.cpp;*.cxx;*.c++;*.cc;*.m;
