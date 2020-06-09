@@ -10,10 +10,17 @@ addons:
     packages:
       - python3-pip
       - python3-setuptools
+      - libgstreamer-plugins-base1.0*
+      - libgstreamer1.0-dev
+      - libgstrtspserver-1.0-dev
+      - gstreamer1.0-plugins-bad
+      - gstreamer1.0-plugins-ugly
+      - gstreamer1.0-plugins-base-apps
+      - python3-gst-1.0
 
 install:
   - pip3 --version
-  - pip3 install future pymavlink --user
+  - pip3 install future netifaces pymavlink --user
   - npm install
 
 before_script:
