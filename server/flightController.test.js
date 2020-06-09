@@ -17,7 +17,7 @@ describe('Flight Controller Functions', function () {
     FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active) => {
       assert.equal(err, null)
       assert.equal(devices.length, 0)
-      assert.equal(bauds.length, 8)
+      assert.equal(bauds.length, 9)
       assert.equal(seldevice.length, 0)
       assert.equal(selbaud.value, 9600)
       assert.equal(mavers.length, 2)
