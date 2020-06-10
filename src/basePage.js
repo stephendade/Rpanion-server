@@ -47,8 +47,13 @@ class basePage extends Component {
       this.setState({ error: null});
     }
 
+    handleCloseInformation = event => {
+      // user has closed the information window
+      this.setState({ infoMessage: null});
+    }
+
     render() {
-        let { loading, usedSocketIO, socketioStatus, waiting, error } = this.state;
+        let { loading, usedSocketIO, socketioStatus, waiting, error, infoMessage } = this.state;
         return (
           <div>
             <Helmet>
@@ -81,6 +86,13 @@ class basePage extends Component {
                   <div className="ModalContent">{this.state.error}</div>
                   <div className="ModalActions">
                     <button onClick={this.handleCloseError}>OK</button>
+                  </div>
+                </Modal>
+                <Modal appElement={document.getElementById('root')} isOpen={this.state.infoMessage !== null} contentLabel="InfoDialog" className="Modal">
+                  <h3 className="ModalTitle">Information</h3>
+                  <div className="ModalContent">{this.state.infoMessage}</div>
+                  <div className="ModalActions">
+                    <button onClick={this.handleCloseInformation}>OK</button>
                   </div>
                 </Modal>
                 <div>

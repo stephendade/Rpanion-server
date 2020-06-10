@@ -14,7 +14,8 @@ class LoggerPage extends basePage {
             BinlogFiles: [],
             logStatus: "",
             enablelogging: false,
-            error: null
+            error: null,
+            infoMessage: null
         };
     }
 

@@ -7,7 +7,8 @@ class Home extends basePage {
         super(props);
         this.state = {
             loading: true,
-            error: null
+            error: null,
+            infoMessage: null
         }
 
     }

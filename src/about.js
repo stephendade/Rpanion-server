@@ -13,7 +13,8 @@ class AboutPage extends basePage {
       RAMName: '',
       HATName: {},
       loading: true,
-      error: null
+      error: null,
+      infoMessage: null
     }
   }
 
