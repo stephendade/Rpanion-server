@@ -90,6 +90,20 @@ class mavManager {
         // bad message - can't process here any further
         return
       }
+
+      // set the target system/comp ID if needed
+      // ensure it's NOT a GCS, as mavlink-router will sometimes route
+      // messages from connected GCS's
+      if (this.targetSystem === null && msg.name === 'HEARTBEAT' && msg.type !== 6) {
+        console.log('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
+        winston.info('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
+        this.targetSystem = msg.header.srcSystem
+        this.targetComponent = msg.header.srcComponent
+      } else if (this.targetSystem !== msg.header.srcSystem || this.targetComponent !== msg.header.srcComponent) {
+        // don't use packets from other systems or components in Rpanion-server
+        return
+      }
+
       this.statusNumRxPackets += 1
       this.timeofLastPacket = (Date.now().valueOf())
       if (msg.name === 'HEARTBEAT') {
@@ -108,14 +122,6 @@ class mavManager {
           winston.info('Vehicle DISARMED')
           this.statusArmed = 0
           this.eventEmitter.emit('disarmed')
-        }
-
-        // set the target system/comp ID if needed
-        if (this.targetSystem === null) {
-          console.log('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
-          winston.info('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
-          this.targetSystem = msg.header.srcSystem
-          this.targetComponent = msg.header.srcComponent
         }
       } else if (msg.name === 'STATUSTEXT') {
         // Remove whitespace
