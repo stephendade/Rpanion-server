@@ -155,7 +155,7 @@ class FCPage extends basePage {
                 </table>
                   <label>Add new output<input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><button onClick={this.addUdpOutput}>Add</button></label>
               <h2>Status</h2>
-                  <p>Packets Recieved: {this.state.FCStatus.numpackets}</p>
+                  <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
                   <p>Connection Status: {this.state.FCStatus.conStatus}</p>
                   <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
                   <p>Vehicle Firmware: {this.state.FCStatus.FW}</p>
