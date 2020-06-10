@@ -20,7 +20,8 @@ class VideoPage extends basePage {
             rotations: [{label:"0°", value:0}, {label:"90°", value:90}, {label:"180°", value:180}, {label:"270°", value:270}],
             rotSelected: {label:"0°", value:0},
             bitrate: 1000,
-            loading: true
+            loading: true,
+            error: null
         }
     }
 

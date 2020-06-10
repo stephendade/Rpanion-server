@@ -22,6 +22,7 @@ class FCPage extends basePage {
             UDPoutputs: [],
             addrow: "",
             loading: true,
+            error: null,
             socketioStatus: false,
             usedSocketIO: true
         }

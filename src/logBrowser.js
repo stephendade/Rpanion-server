@@ -13,7 +13,8 @@ class LoggerPage extends basePage {
             TlogFiles: [],
             BinlogFiles: [],
             logStatus: "",
-            enablelogging: false
+            enablelogging: false,
+            error: null
         };
     }
 
@@ -57,8 +58,7 @@ class LoggerPage extends basePage {
                   this.setState({waiting: false});
               })
               .catch(error => {
-                  window.alert("Error deleting logfiles: " + error);
-                  this.setState({waiting: false});
+                  this.setState({waiting: false, error: "Error deleting logfiles: " + error});
               });
         });
         event.preventDefault();
@@ -72,8 +72,7 @@ class LoggerPage extends basePage {
                                             this.setState({waiting: false});
                                         })
                                         .catch(error => {
-                                            window.alert("Error creating logfile: " + error);
-                                            this.setState({waiting: false});
+                                            this.setState({waiting: false, error: "Error creating logfile: " + error});
                                         });
         });
         event.preventDefault();
@@ -97,8 +96,7 @@ class LoggerPage extends basePage {
                                     this.setState({waiting: false});
                                 })
                                 .catch(error => {
-                                    window.alert("Error setting logging: " + error);
-                                    this.setState({waiting: false});
+                                    this.setState({waiting: false, error: "Error setting logging: " + error});
                                 });
         });
         event.preventDefault();

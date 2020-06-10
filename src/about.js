@@ -12,7 +12,8 @@ class AboutPage extends basePage {
       CPUName: '',
       RAMName: '',
       HATName: {},
-      loading: true
+      loading: true,
+      error: null
     }
   }
 

@@ -4,6 +4,7 @@ import { css } from '@emotion/core';
 import ClipLoader from 'react-spinners/ClipLoader';
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
+import Modal from 'react-modal';
 
 class basePage extends Component {
     constructor(props, useSocketIO=false) {
@@ -40,8 +41,14 @@ class basePage extends Component {
         }
     }
 
+
+    handleCloseError = event => {
+      // user has closed the error window
+      this.setState({ error: null});
+    }
+
     render() {
-        let { loading, usedSocketIO, socketioStatus, waiting } = this.state;
+        let { loading, usedSocketIO, socketioStatus, waiting, error } = this.state;
         return (
           <div>
             <Helmet>
@@ -69,6 +76,13 @@ class basePage extends Component {
                 <div className='pagedetails' style={{ display: (loading) ? "none" : "block"}}>
                     {this.renderContent()}
                 </div>
+                <Modal appElement={document.getElementById('root')} isOpen={this.state.error !== null} contentLabel="ErrorDialog" className="Modal">
+                  <h3 className="ModalTitle">Error</h3>
+                  <div className="ModalContent">{this.state.error}</div>
+                  <div className="ModalActions">
+                    <button onClick={this.handleCloseError}>OK</button>
+                  </div>
+                </Modal>
                 <div>
                   {usedSocketIO ? (
                     <SocketIOFooter socketioStatus={socketioStatus}/>
