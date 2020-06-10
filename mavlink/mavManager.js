@@ -39,6 +39,7 @@ class mavManager {
 
     // System status
     this.statusNumRxPackets = 0
+    this.statusBytesPerSec = { avgBytesSec: 0, bytes: 0, lastTime: Date.now().valueOf() }
     this.statusFWName = ''
     this.statusVehType = ''
     this.timeofLastPacket = 0
@@ -57,6 +58,14 @@ class mavManager {
     this.RinudpIP = null
 
     this.udpStream.on('message', (msg, rinfo) => {
+      // calculate bytes/sec rate (once per 2 sec)
+      if ((this.statusBytesPerSec.lastTime + 2000) < Date.now().valueOf()) {
+        this.statusBytesPerSec.avgBytesSec = Math.round(1000 * this.statusBytesPerSec.bytes / (Date.now().valueOf() - this.statusBytesPerSec.lastTime))
+        this.statusBytesPerSec.bytes = 0
+        this.statusBytesPerSec.lastTime = Date.now().valueOf()
+      } else {
+        this.statusBytesPerSec.bytes += msg.length
+      }
       this.mav.parseBuffer(msg)
       // lock onto server port
       if (this.RinudpPort === null || this.RinudpIP === null) {
@@ -128,6 +137,7 @@ class mavManager {
     this.RinudpPort = null
     this.RinudpIP = null
     this.udpStream = udp.createSocket('udp4')
+    this.statusBytesPerSec = { avgBytesSec: 0, bytes: 0, lastTime: Date.now().valueOf() }
 
     this.udpStream.on('message', (msg, rinfo) => {
       // lock onto server port
@@ -136,6 +146,14 @@ class mavManager {
         this.RinudpIP = rinfo.address
         this.sendDSRequest()
       } else {
+        // calculate bytes/sec rate (once per 2 sec)
+        if ((this.statusBytesPerSec.lastTime + 2000) < Date.now().valueOf()) {
+          this.statusBytesPerSec.avgBytesSec = Math.round(1000 * this.statusBytesPerSec.bytes / (Date.now().valueOf() - this.statusBytesPerSec.lastTime))
+          this.statusBytesPerSec.bytes = 0
+          this.statusBytesPerSec.lastTime = Date.now().valueOf()
+        } else {
+          this.statusBytesPerSec.bytes += msg.length
+        }
         this.mav.parseBuffer(msg)
       }
     })
@@ -195,7 +213,7 @@ class mavManager {
     this.sendData(msg.pack(this.mav))
   }
 
-  sendBinStreamAck(seqno) {
+  sendBinStreamAck (seqno) {
     // send back acknowlegement of bin stream packet recieved
     if (this.dialect !== 'ardupilot') {
       return

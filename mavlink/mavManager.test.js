@@ -12,7 +12,7 @@ describe('MAVLink Functions', function () {
   })
 
   it('#receivepacket()', function (done) {
-    var m = new mavManager("common", 2, '127.0.0.1', 15000)
+    var m = new mavManager('common', 2, '127.0.0.1', 15000)
     var packets = []
 
     m.eventEmitter.on('gotMessage', (msg) => {
@@ -42,12 +42,13 @@ describe('MAVLink Functions', function () {
     // check arming
     var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x01, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x8d, 0x0d, 0x02, 0x4c, 0x4f])
     m.mav.parseBuffer(hb)
-
   })
 
   it('#datastreamSend()', function (done) {
     var m = new mavManager('common', 2, '127.0.0.1', 16000)
     var udpStream = udp.createSocket('udp4')
+
+    assert.equal(m.statusBytesPerSec.avgBytesSec, 0)
 
     m.eventEmitter.on('linkready', (info) => {
       m.sendDSRequest()
@@ -55,6 +56,7 @@ describe('MAVLink Functions', function () {
 
     udpStream.on('message', (msg, rinfo) => {
       msg.should.eql(Buffer.from([0xfd, 0x06, 0x00, 0x00, 0x00, 0xff, 0x00, 0x42, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01, 0x2c, 0x7e]))
+      assert.equal(m.statusBytesPerSec.bytes, 2)
       m.close()
       udpStream.close()
       done()
@@ -66,7 +68,6 @@ describe('MAVLink Functions', function () {
       }
     })
   })
-
 
   it('#rebootSend()', function (done) {
     var m = new mavManager('common', 2, '127.0.0.1', 15000)
