@@ -11,6 +11,7 @@ class NetworkConfig extends basePage {
       loading: true,
       showModal: false,
       showModalResult: "",
+      error: null,
       netDevice: [],
       netDeviceSelected: null,
       netConnection: [],
@@ -227,15 +228,13 @@ class NetworkConfig extends basePage {
                           window.alert("Network Added")
                       }
                       else {
-                          this.setState({waiting: false});
-                          window.alert("Error adding network: " + data.error)
+                          this.setState({waiting: false, error: "Error adding network: " + data.error});
                       }
                       //and refresh connections list
                       this.handleStart();
                   })
                   .catch(error => {
-                         window.alert("Error adding network: " + error);
-                         this.setState({waiting: false});
+                         this.setState({waiting: false, error: "Error adding network: " + error});
                   });
             });
         }
@@ -260,15 +259,13 @@ class NetworkConfig extends basePage {
                           window.alert("Network Edited")
                       }
                       else {
-                          this.setState({waiting: false});
-                          window.alert("Error editing network: " + data.error)
+                          this.setState({waiting: false, error: "Error editing network: " + data.error});
                       }
                       //and refresh connections list
                       this.handleStart();
                   })
                   .catch(error => {
-                        this.setState({waiting: false});
-                        window.alert("Error editing network: " + error)
+                        this.setState({waiting: false, error: "Error editing network: " + error});
                   });
             });
         }
@@ -301,15 +298,13 @@ class NetworkConfig extends basePage {
                               window.alert("Network Deleted")
                           }
                           else {
-                              this.setState({waiting: false})
-                              window.alert("Error deleting network: " + data.error)
+                              this.setState({waiting: false, error: "Error deleting network: " + data.error});
                           }
                           //and refresh connections list
                           this.handleStart();
                       })
                       .catch(error => {
-                            this.setState({waiting: false})
-                            window.alert("Error deleting network: " + error)
+                            this.setState({waiting: false, error: "Error deleting network: " + error});
                       });
                   });
             }
@@ -351,15 +346,13 @@ class NetworkConfig extends basePage {
                               window.alert("Network Activated")
                           }
                           else {
-                              this.setState({waiting: false})
-                              window.alert("Error activating network: " + data.error)
+                              this.setState({waiting: false, error: "Error activating network: " + data.error});
                           }
                           //and refresh connections list
                           this.handleStart();
                       })
                       .catch(error => {
-                             this.setState({waiting: false})
-                             window.alert("Error activating network: " + error)
+                             this.setState({waiting: false, error: "Error activating network: " + error});
                       });
             });
         }
@@ -388,15 +381,13 @@ class NetworkConfig extends basePage {
                               window.alert("Network Dectivated")
                           }
                           else {
-                              this.setState({waiting: false})
-                              window.alert("Error deactivating network: " + data.error)
+                              this.setState({waiting: false, error: "Error deactivating network: " + data.error});
                           }
                           //and refresh connections list
                           this.handleStart();
                       })
                       .catch(error => {
-                          this.setState({waiting: false})
-                          window.alert("Error deactivating network: " + error)
+                          this.setState({waiting: false, error: "Error deactivating network: " + error});
                       });
             });
         }
@@ -525,7 +516,7 @@ class NetworkConfig extends basePage {
                 </div>
                 <input type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} value="Save Changes" />
                 <input type="button" value="Discard Changes" onClick={this.resetForm}/>
-                <Modal isOpen={this.state.showModal} contentLabel="ModalDialog" className="Modal">
+                <Modal isOpen={this.state.showModal} appElement={document.getElementById('root')} contentLabel="WifiSelectDialog" className="Modal">
                   <h3 class="ModalTitle">WiFi Network Type</h3>
                   <div class="ModalContent">Please select the WiFi network type for this connection.</div>
                   <div class="ModalActions">
