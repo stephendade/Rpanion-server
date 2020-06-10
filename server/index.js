@@ -253,11 +253,11 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
             //console.log(isSuccess);
-            res.send(JSON.stringify({telemetryStatus: isSuccess}));
+            res.send(JSON.stringify({telemetryStatus: isSuccess, error: null}));
         }
         else {
             res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify({ telemetryStatus: false}));
+            res.send(JSON.stringify({ telemetryStatus: false, error: err}));
             winston.error('Error in /api/FCModify ', { message: err });
 
         }

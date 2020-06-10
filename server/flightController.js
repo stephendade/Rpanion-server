@@ -423,9 +423,10 @@ class FCDetails {
           this.startInterval()
           this.saveSerialSettings()
         }
-        return callback(null, this.activeDevice !== null)
+        return callback(err, this.activeDevice !== null)
       })
     } else {
+      // close link
       this.activeDevice = null
       this.closeLink((err) => {
         this.saveSerialSettings()
