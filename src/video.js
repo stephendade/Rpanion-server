@@ -21,7 +21,8 @@ class VideoPage extends basePage {
             rotSelected: {label:"0°", value:0},
             bitrate: 1000,
             loading: true,
-            error: null
+            error: null,
+            infoMessage: null
         }
     }
 

@@ -12,6 +12,7 @@ class NetworkConfig extends basePage {
       showModal: false,
       showModalResult: "",
       error: null,
+      infoMessage: null,
       netDevice: [],
       netDeviceSelected: null,
       netConnection: [],
@@ -224,8 +225,7 @@ class NetworkConfig extends basePage {
                 }).then(response => response.json())
                   .then(data => {
                       if (data.error == null) {
-                          this.setState({waiting: false});
-                          window.alert("Network Added")
+                          this.setState({waiting: false, infoMessage: "Network Added"});
                       }
                       else {
                           this.setState({waiting: false, error: "Error adding network: " + data.error});
@@ -255,8 +255,7 @@ class NetworkConfig extends basePage {
                 }).then(response => response.json())
                   .then(data => {
                       if (data.error == null) {
-                          this.setState({waiting: false});
-                          window.alert("Network Edited")
+                          this.setState({waiting: false, infoMessage: "Network Edited"});
                       }
                       else {
                           this.setState({waiting: false, error: "Error editing network: " + data.error});
@@ -294,8 +293,7 @@ class NetworkConfig extends basePage {
                     }).then(response => response.json())
                       .then(data => {
                           if (data.error == null) {
-                              this.setState({waiting: false})
-                              window.alert("Network Deleted")
+                              this.setState({waiting: false, infoMessage: "Network Deleted"});
                           }
                           else {
                               this.setState({waiting: false, error: "Error deleting network: " + data.error});
@@ -342,8 +340,7 @@ class NetworkConfig extends basePage {
                 }).then(response => response.json())
                       .then(data => {
                           if (data.error == null) {
-                              this.setState({waiting: false})
-                              window.alert("Network Activated")
+                              this.setState({waiting: false, infoMessage: "Network Activated"});
                           }
                           else {
                               this.setState({waiting: false, error: "Error activating network: " + data.error});
@@ -377,8 +374,7 @@ class NetworkConfig extends basePage {
                 }).then(response => response.json())
                       .then(data => {
                           if (data.error == null) {
-                              this.setState({waiting: false})
-                              window.alert("Network Dectivated")
+                              this.setState({waiting: false, infoMessage: "Network Deactivated"});
                           }
                           else {
                               this.setState({waiting: false, error: "Error deactivating network: " + data.error});

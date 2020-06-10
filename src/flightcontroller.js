@@ -23,6 +23,7 @@ class FCPage extends basePage {
             addrow: "",
             loading: true,
             error: null,
+            infoMessage: null,
             socketioStatus: false,
             usedSocketIO: true
         }
