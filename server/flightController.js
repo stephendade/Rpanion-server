@@ -181,7 +181,8 @@ class FCDetails {
         FW: this.m.autopilotFromID(),
         vehType: this.m.vehicleFromID(),
         conStatus: this.m.conStatusStr(),
-        statusText: this.m.statusText
+        statusText: this.m.statusText,
+        byteRate: this.m.statusBytesPerSec.avgBytesSec
       }
     } else {
       return {
@@ -189,7 +190,8 @@ class FCDetails {
         FW: '',
         vehType: '',
         conStatus: 'Not connected',
-        statusText: ''
+        statusText: '',
+        byteRate: 0
       }
     }
   }
