@@ -106,6 +106,12 @@ class FCDetails {
         return this.getUDPOutputs()
       }
     }
+
+    //check that it's not the internal 127.0.0.1:14540
+    if ('127.0.0.1' === newIP && newPort === 14540) {
+        return this.getUDPOutputs()
+    }
+
     // add it in
     this.UDPoutputs.push({ IP: newIP, port: newPort })
     console.log('Added UDP Output ' + newIP + ':' + newPort)
@@ -137,6 +143,12 @@ class FCDetails {
 
   removeUDPOutput (remIP, remPort) {
     // remove new udp output
+
+    //check that it's not the internal 127.0.0.1:14540
+    if ('127.0.0.1' === remIP && remPort === 14540) {
+        return this.getUDPOutputs()
+    }
+
     // check if this ip:port is already in the list
     for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
       if (this.UDPoutputs[i].IP === remIP && this.UDPoutputs[i].port === remPort) {
