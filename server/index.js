@@ -17,7 +17,7 @@ const app = express();
 const http = require("http").Server(app)
 const path = require('path');
 
-var io = require('socket.io')(http);
+var io = require('socket.io')(http, { cookie: false });
 const { check, validationResult } = require('express-validator');
 
 //Init settings before running the other classes
