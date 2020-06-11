@@ -152,6 +152,7 @@ class FCPage extends basePage {
                         <tr><th>Destination IP:Port</th><th>Action</th></tr>
                     </thead>
                     <tbody>
+                        <tr key={this.state.UDPoutputs.length}><td>127.0.0.1:14540</td><td><i>Required for Rpanion-server</i></td></tr>
                         {this.renderUDPTableData(this.state.UDPoutputs)}
                     </tbody>
                 </table>
