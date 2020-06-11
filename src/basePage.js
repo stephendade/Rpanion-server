@@ -81,16 +81,16 @@ class basePage extends Component {
                 <div className='pagedetails' style={{ display: (loading) ? "none" : "block"}}>
                     {this.renderContent()}
                 </div>
-                <Modal appElement={document.getElementById('root')} isOpen={this.state.error !== null} contentLabel="ErrorDialog" className="Modal">
+                <Modal appElement={document.getElementById('root')} isOpen={error !== null} contentLabel="ErrorDialog" className="Modal">
                   <h3 className="ModalTitle">Error</h3>
-                  <div className="ModalContent">{this.state.error}</div>
+                  <div className="ModalContent">{error}</div>
                   <div className="ModalActions">
                     <button onClick={this.handleCloseError}>OK</button>
                   </div>
                 </Modal>
-                <Modal appElement={document.getElementById('root')} isOpen={this.state.infoMessage !== null} contentLabel="InfoDialog" className="Modal">
+                <Modal appElement={document.getElementById('root')} isOpen={infoMessage !== null} contentLabel="InfoDialog" className="Modal">
                   <h3 className="ModalTitle">Information</h3>
-                  <div className="ModalContent">{this.state.infoMessage}</div>
+                  <div className="ModalContent">{infoMessage}</div>
                   <div className="ModalActions">
                     <button onClick={this.handleCloseInformation}>OK</button>
                   </div>
