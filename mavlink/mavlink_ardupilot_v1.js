@@ -110,6 +110,16 @@ mavlink10.ACCELCAL_VEHICLE_POS_SUCCESS = 16777215 //
 mavlink10.ACCELCAL_VEHICLE_POS_FAILED = 16777216 // 
 mavlink10.ACCELCAL_VEHICLE_POS_ENUM_END = 16777217 // 
 
+// HEADING_TYPE
+mavlink10.HEADING_TYPE_COURSE_OVER_GROUND = 0 // 
+mavlink10.HEADING_TYPE_HEADING = 1 // 
+mavlink10.HEADING_TYPE_ENUM_END = 2 // 
+
+// SPEED_TYPE
+mavlink10.SPEED_TYPE_AIRSPEED = 0 // 
+mavlink10.SPEED_TYPE_GROUNDSPEED = 1 // 
+mavlink10.SPEED_TYPE_ENUM_END = 2 // 
+
 // MAV_CMD
 mavlink10.MAV_CMD_NAV_WAYPOINT = 16 // Navigate to waypoint.
 mavlink10.MAV_CMD_NAV_LOITER_UNLIM = 17 // Loiter around this waypoint an unlimited amount of time
@@ -264,6 +274,7 @@ mavlink10.MAV_CMD_DO_SET_CAM_TRIGG_INTERVAL = 214 // Mission command to set came
                         // triggered each time this interval expires.
                         // This command can also be used to set the
                         // shutter integration time for the camera.
+mavlink10.MAV_CMD_DO_SET_RESUME_REPEAT_DIST = 215 // Set the distance to be repeated on mission resume
 mavlink10.MAV_CMD_DO_MOUNT_CONTROL_QUAT = 220 // Mission command to control a camera or antenna mount, using a
                         // quaternion as reference.
 mavlink10.MAV_CMD_DO_GUIDED_MASTER = 221 // set id of master controller
@@ -447,8 +458,7 @@ mavlink10.MAV_CMD_SOLO_BTN_PAUSE_CLICK = 42003 // PAUSE button has been clicked.
 mavlink10.MAV_CMD_FIXED_MAG_CAL = 42004 // Magnetometer calibration based on fixed position         in earth
                         // field given by inclination, declination and
                         // intensity.
-mavlink10.MAV_CMD_FIXED_MAG_CAL_FIELD = 42005 // Magnetometer calibration based on fixed expected field values in
-                        // milliGauss.
+mavlink10.MAV_CMD_FIXED_MAG_CAL_FIELD = 42005 // Magnetometer calibration based on fixed expected field values.
 mavlink10.MAV_CMD_FIXED_MAG_CAL_YAW = 42006 // Magnetometer calibration based on provided known yaw. This allows for
                         // fast calibration using WMM field tables in
                         // the vehicle, given only the known yaw of
@@ -456,7 +466,7 @@ mavlink10.MAV_CMD_FIXED_MAG_CAL_YAW = 42006 // Magnetometer calibration based on
                         // both zero then use the current vehicle
                         // location.
 mavlink10.MAV_CMD_DO_START_MAG_CAL = 42424 // Initiate a magnetometer calibration.
-mavlink10.MAV_CMD_DO_ACCEPT_MAG_CAL = 42425 // Initiate a magnetometer calibration.
+mavlink10.MAV_CMD_DO_ACCEPT_MAG_CAL = 42425 // Accept a magnetometer calibration.
 mavlink10.MAV_CMD_DO_CANCEL_MAG_CAL = 42426 // Cancel a running magnetometer calibration.
 mavlink10.MAV_CMD_SET_FACTORY_TEST_MODE = 42427 // Command autopilot to get into factory test/diagnostic mode.
 mavlink10.MAV_CMD_DO_SEND_BANNER = 42428 // Reply with the version banner.
@@ -476,7 +486,30 @@ mavlink10.MAV_CMD_BATTERY_RESET = 42651 // Reset battery capacity for batteries 
 mavlink10.MAV_CMD_DEBUG_TRAP = 42700 // Issue a trap signal to the autopilot process, presumably to enter the
                         // debugger.
 mavlink10.MAV_CMD_SCRIPTING = 42701 // Control onboard scripting.
-mavlink10.MAV_CMD_ENUM_END = 42702 // 
+mavlink10.MAV_CMD_GUIDED_CHANGE_SPEED = 43000 // Change flight speed at a given rate. This slews the vehicle at a
+                        // controllable rate between it's previous
+                        // speed and the new one. (affects GUIDED
+                        // only. Outside GUIDED, aircraft ignores
+                        // these commands. Designed for onboard
+                        // companion-computer command-and-control, not
+                        // normally operator/GCS control.)
+mavlink10.MAV_CMD_GUIDED_CHANGE_ALTITUDE = 43001 // Change target altitude at a given rate. This slews the vehicle at a
+                        // controllable rate between it's previous
+                        // altitude and the new one. (affects GUIDED
+                        // only. Outside GUIDED, aircraft ignores
+                        // these commands. Designed for onboard
+                        // companion-computer command-and-control, not
+                        // normally operator/GCS control.)
+mavlink10.MAV_CMD_GUIDED_CHANGE_HEADING = 43002 // Change to target heading at a given rate, overriding previous
+                        // heading/s. This slews the vehicle at a
+                        // controllable rate between it's previous
+                        // heading and the new one. (affects GUIDED
+                        // only. Exiting GUIDED returns aircraft to
+                        // normal behaviour defined elsewhere.
+                        // Designed for onboard companion-computer
+                        // command-and-control, not normally
+                        // operator/GCS control.)
+mavlink10.MAV_CMD_ENUM_END = 43003 // 
 
 // SCRIPTING_CMD
 mavlink10.SCRIPTING_CMD_REPL_START = 0 // Start a REPL session.
@@ -2033,6 +2066,146 @@ mavlink10.PARACHUTE_DISABLE = 0 // Disable parachute release.
 mavlink10.PARACHUTE_ENABLE = 1 // Enable parachute release.
 mavlink10.PARACHUTE_RELEASE = 2 // Release parachute.
 mavlink10.PARACHUTE_ACTION_ENUM_END = 3 // 
+
+// AIS_TYPE
+mavlink10.AIS_TYPE_UNKNOWN = 0 // Not available (default).
+mavlink10.AIS_TYPE_RESERVED_1 = 1 // 
+mavlink10.AIS_TYPE_RESERVED_2 = 2 // 
+mavlink10.AIS_TYPE_RESERVED_3 = 3 // 
+mavlink10.AIS_TYPE_RESERVED_4 = 4 // 
+mavlink10.AIS_TYPE_RESERVED_5 = 5 // 
+mavlink10.AIS_TYPE_RESERVED_6 = 6 // 
+mavlink10.AIS_TYPE_RESERVED_7 = 7 // 
+mavlink10.AIS_TYPE_RESERVED_8 = 8 // 
+mavlink10.AIS_TYPE_RESERVED_9 = 9 // 
+mavlink10.AIS_TYPE_RESERVED_10 = 10 // 
+mavlink10.AIS_TYPE_RESERVED_11 = 11 // 
+mavlink10.AIS_TYPE_RESERVED_12 = 12 // 
+mavlink10.AIS_TYPE_RESERVED_13 = 13 // 
+mavlink10.AIS_TYPE_RESERVED_14 = 14 // 
+mavlink10.AIS_TYPE_RESERVED_15 = 15 // 
+mavlink10.AIS_TYPE_RESERVED_16 = 16 // 
+mavlink10.AIS_TYPE_RESERVED_17 = 17 // 
+mavlink10.AIS_TYPE_RESERVED_18 = 18 // 
+mavlink10.AIS_TYPE_RESERVED_19 = 19 // 
+mavlink10.AIS_TYPE_WIG = 20 // Wing In Ground effect.
+mavlink10.AIS_TYPE_WIG_HAZARDOUS_A = 21 // 
+mavlink10.AIS_TYPE_WIG_HAZARDOUS_B = 22 // 
+mavlink10.AIS_TYPE_WIG_HAZARDOUS_C = 23 // 
+mavlink10.AIS_TYPE_WIG_HAZARDOUS_D = 24 // 
+mavlink10.AIS_TYPE_WIG_RESERVED_1 = 25 // 
+mavlink10.AIS_TYPE_WIG_RESERVED_2 = 26 // 
+mavlink10.AIS_TYPE_WIG_RESERVED_3 = 27 // 
+mavlink10.AIS_TYPE_WIG_RESERVED_4 = 28 // 
+mavlink10.AIS_TYPE_WIG_RESERVED_5 = 29 // 
+mavlink10.AIS_TYPE_FISHING = 30 // 
+mavlink10.AIS_TYPE_TOWING = 31 // 
+mavlink10.AIS_TYPE_TOWING_LARGE = 32 // Towing: length exceeds 200m or breadth exceeds 25m.
+mavlink10.AIS_TYPE_DREDGING = 33 // Dredging or other underwater ops.
+mavlink10.AIS_TYPE_DIVING = 34 // 
+mavlink10.AIS_TYPE_MILITARY = 35 // 
+mavlink10.AIS_TYPE_SAILING = 36 // 
+mavlink10.AIS_TYPE_PLEASURE = 37 // 
+mavlink10.AIS_TYPE_RESERVED_20 = 38 // 
+mavlink10.AIS_TYPE_RESERVED_21 = 39 // 
+mavlink10.AIS_TYPE_HSC = 40 // High Speed Craft.
+mavlink10.AIS_TYPE_HSC_HAZARDOUS_A = 41 // 
+mavlink10.AIS_TYPE_HSC_HAZARDOUS_B = 42 // 
+mavlink10.AIS_TYPE_HSC_HAZARDOUS_C = 43 // 
+mavlink10.AIS_TYPE_HSC_HAZARDOUS_D = 44 // 
+mavlink10.AIS_TYPE_HSC_RESERVED_1 = 45 // 
+mavlink10.AIS_TYPE_HSC_RESERVED_2 = 46 // 
+mavlink10.AIS_TYPE_HSC_RESERVED_3 = 47 // 
+mavlink10.AIS_TYPE_HSC_RESERVED_4 = 48 // 
+mavlink10.AIS_TYPE_HSC_UNKNOWN = 49 // 
+mavlink10.AIS_TYPE_PILOT = 50 // 
+mavlink10.AIS_TYPE_SAR = 51 // Search And Rescue vessel.
+mavlink10.AIS_TYPE_TUG = 52 // 
+mavlink10.AIS_TYPE_PORT_TENDER = 53 // 
+mavlink10.AIS_TYPE_ANTI_POLLUTION = 54 // Anti-pollution equipment.
+mavlink10.AIS_TYPE_LAW_ENFORCEMENT = 55 // 
+mavlink10.AIS_TYPE_SPARE_LOCAL_1 = 56 // 
+mavlink10.AIS_TYPE_SPARE_LOCAL_2 = 57 // 
+mavlink10.AIS_TYPE_MEDICAL_TRANSPORT = 58 // 
+mavlink10.AIS_TYPE_NONECOMBATANT = 59 // Noncombatant ship according to RR Resolution No. 18.
+mavlink10.AIS_TYPE_PASSENGER = 60 // 
+mavlink10.AIS_TYPE_PASSENGER_HAZARDOUS_A = 61 // 
+mavlink10.AIS_TYPE_PASSENGER_HAZARDOUS_B = 62 // 
+mavlink10.AIS_TYPE_AIS_TYPE_PASSENGER_HAZARDOUS_C = 63 // 
+mavlink10.AIS_TYPE_PASSENGER_HAZARDOUS_D = 64 // 
+mavlink10.AIS_TYPE_PASSENGER_RESERVED_1 = 65 // 
+mavlink10.AIS_TYPE_PASSENGER_RESERVED_2 = 66 // 
+mavlink10.AIS_TYPE_PASSENGER_RESERVED_3 = 67 // 
+mavlink10.AIS_TYPE_AIS_TYPE_PASSENGER_RESERVED_4 = 68 // 
+mavlink10.AIS_TYPE_PASSENGER_UNKNOWN = 69 // 
+mavlink10.AIS_TYPE_CARGO = 70 // 
+mavlink10.AIS_TYPE_CARGO_HAZARDOUS_A = 71 // 
+mavlink10.AIS_TYPE_CARGO_HAZARDOUS_B = 72 // 
+mavlink10.AIS_TYPE_CARGO_HAZARDOUS_C = 73 // 
+mavlink10.AIS_TYPE_CARGO_HAZARDOUS_D = 74 // 
+mavlink10.AIS_TYPE_CARGO_RESERVED_1 = 75 // 
+mavlink10.AIS_TYPE_CARGO_RESERVED_2 = 76 // 
+mavlink10.AIS_TYPE_CARGO_RESERVED_3 = 77 // 
+mavlink10.AIS_TYPE_CARGO_RESERVED_4 = 78 // 
+mavlink10.AIS_TYPE_CARGO_UNKNOWN = 79 // 
+mavlink10.AIS_TYPE_TANKER = 80 // 
+mavlink10.AIS_TYPE_TANKER_HAZARDOUS_A = 81 // 
+mavlink10.AIS_TYPE_TANKER_HAZARDOUS_B = 82 // 
+mavlink10.AIS_TYPE_TANKER_HAZARDOUS_C = 83 // 
+mavlink10.AIS_TYPE_TANKER_HAZARDOUS_D = 84 // 
+mavlink10.AIS_TYPE_TANKER_RESERVED_1 = 85 // 
+mavlink10.AIS_TYPE_TANKER_RESERVED_2 = 86 // 
+mavlink10.AIS_TYPE_TANKER_RESERVED_3 = 87 // 
+mavlink10.AIS_TYPE_TANKER_RESERVED_4 = 88 // 
+mavlink10.AIS_TYPE_TANKER_UNKNOWN = 89 // 
+mavlink10.AIS_TYPE_OTHER = 90 // 
+mavlink10.AIS_TYPE_OTHER_HAZARDOUS_A = 91 // 
+mavlink10.AIS_TYPE_OTHER_HAZARDOUS_B = 92 // 
+mavlink10.AIS_TYPE_OTHER_HAZARDOUS_C = 93 // 
+mavlink10.AIS_TYPE_OTHER_HAZARDOUS_D = 94 // 
+mavlink10.AIS_TYPE_OTHER_RESERVED_1 = 95 // 
+mavlink10.AIS_TYPE_OTHER_RESERVED_2 = 96 // 
+mavlink10.AIS_TYPE_OTHER_RESERVED_3 = 97 // 
+mavlink10.AIS_TYPE_OTHER_RESERVED_4 = 98 // 
+mavlink10.AIS_TYPE_OTHER_UNKNOWN = 99 // 
+mavlink10.AIS_TYPE_ENUM_END = 100 // 
+
+// AIS_NAV_STATUS
+mavlink10.UNDER_WAY = 0 // Under way using engine.
+mavlink10.AIS_NAV_ANCHORED = 1 // 
+mavlink10.AIS_NAV_UN_COMMANDED = 2 // 
+mavlink10.AIS_NAV_RESTRICTED_MANOEUVERABILITY = 3 // 
+mavlink10.AIS_NAV_DRAUGHT_CONSTRAINED = 4 // 
+mavlink10.AIS_NAV_MOORED = 5 // 
+mavlink10.AIS_NAV_AGROUND = 6 // 
+mavlink10.AIS_NAV_FISHING = 7 // 
+mavlink10.AIS_NAV_SAILING = 8 // 
+mavlink10.AIS_NAV_RESERVED_HSC = 9 // 
+mavlink10.AIS_NAV_RESERVED_WIG = 10 // 
+mavlink10.AIS_NAV_RESERVED_1 = 11 // 
+mavlink10.AIS_NAV_RESERVED_2 = 12 // 
+mavlink10.AIS_NAV_RESERVED_3 = 13 // 
+mavlink10.AIS_NAV_AIS_SART = 14 // Search And Rescue Transponder.
+mavlink10.AIS_NAV_UNKNOWN = 15 // Not available (default).
+mavlink10.AIS_NAV_STATUS_ENUM_END = 16 // 
+
+// AIS_FLAGS
+mavlink10.AIS_FLAGS_POSITION_ACCURACY = 1 // 1 = Position accuracy less than 10m, 0 = position accuracy greater
+                        // than 10m.
+mavlink10.AIS_FLAGS_VALID_COG = 2 // 
+mavlink10.AIS_FLAGS_VALID_VELOCITY = 4 // 
+mavlink10.AIS_FLAGS_HIGH_VELOCITY = 8 // 1 = Velocity over 52.5765m/s (102.2 knots)
+mavlink10.AIS_FLAGS_VALID_TURN_RATE = 16 // 
+mavlink10.AIS_FLAGS_TURN_RATE_SIGN_ONLY = 32 // Only the sign of the returned turn rate value is valid, either greater
+                        // than 5deg/30s or less than -5deg/30s
+mavlink10.AIS_FLAGS_VALID_DIMENSIONS = 64 // 
+mavlink10.AIS_FLAGS_LARGE_BOW_DIMENSION = 128 // Distance to bow is larger than 511m
+mavlink10.AIS_FLAGS_LARGE_STERN_DIMENSION = 256 // Distance to stern is larger than 511m
+mavlink10.AIS_FLAGS_LARGE_PORT_DIMENSION = 512 // Distance to port side is larger than 63m
+mavlink10.AIS_FLAGS_LARGE_STARBOARD_DIMENSION = 1024 // Distance to starboard side is larger than 63m
+mavlink10.AIS_FLAGS_VALID_CALLSIGN = 2048 // 
+mavlink10.AIS_FLAGS_VALID_NAME = 4096 // 
+mavlink10.AIS_FLAGS_ENUM_END = 4097 // 
 
 // UAVIONIX_ADSB_OUT_DYNAMIC_STATE
 mavlink10.UAVIONIX_ADSB_OUT_DYNAMIC_STATE_INTENT_CHANGE = 1 // 

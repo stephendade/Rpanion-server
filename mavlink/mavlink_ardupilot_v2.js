@@ -115,6 +115,16 @@ mavlink20.ACCELCAL_VEHICLE_POS_SUCCESS = 16777215 //
 mavlink20.ACCELCAL_VEHICLE_POS_FAILED = 16777216 // 
 mavlink20.ACCELCAL_VEHICLE_POS_ENUM_END = 16777217 // 
 
+// HEADING_TYPE
+mavlink20.HEADING_TYPE_COURSE_OVER_GROUND = 0 // 
+mavlink20.HEADING_TYPE_HEADING = 1 // 
+mavlink20.HEADING_TYPE_ENUM_END = 2 // 
+
+// SPEED_TYPE
+mavlink20.SPEED_TYPE_AIRSPEED = 0 // 
+mavlink20.SPEED_TYPE_GROUNDSPEED = 1 // 
+mavlink20.SPEED_TYPE_ENUM_END = 2 // 
+
 // MAV_CMD
 mavlink20.MAV_CMD_NAV_WAYPOINT = 16 // Navigate to waypoint.
 mavlink20.MAV_CMD_NAV_LOITER_UNLIM = 17 // Loiter around this waypoint an unlimited amount of time
@@ -269,6 +279,7 @@ mavlink20.MAV_CMD_DO_SET_CAM_TRIGG_INTERVAL = 214 // Mission command to set came
                         // triggered each time this interval expires.
                         // This command can also be used to set the
                         // shutter integration time for the camera.
+mavlink20.MAV_CMD_DO_SET_RESUME_REPEAT_DIST = 215 // Set the distance to be repeated on mission resume
 mavlink20.MAV_CMD_DO_MOUNT_CONTROL_QUAT = 220 // Mission command to control a camera or antenna mount, using a
                         // quaternion as reference.
 mavlink20.MAV_CMD_DO_GUIDED_MASTER = 221 // set id of master controller
@@ -452,8 +463,7 @@ mavlink20.MAV_CMD_SOLO_BTN_PAUSE_CLICK = 42003 // PAUSE button has been clicked.
 mavlink20.MAV_CMD_FIXED_MAG_CAL = 42004 // Magnetometer calibration based on fixed position         in earth
                         // field given by inclination, declination and
                         // intensity.
-mavlink20.MAV_CMD_FIXED_MAG_CAL_FIELD = 42005 // Magnetometer calibration based on fixed expected field values in
-                        // milliGauss.
+mavlink20.MAV_CMD_FIXED_MAG_CAL_FIELD = 42005 // Magnetometer calibration based on fixed expected field values.
 mavlink20.MAV_CMD_FIXED_MAG_CAL_YAW = 42006 // Magnetometer calibration based on provided known yaw. This allows for
                         // fast calibration using WMM field tables in
                         // the vehicle, given only the known yaw of
@@ -461,7 +471,7 @@ mavlink20.MAV_CMD_FIXED_MAG_CAL_YAW = 42006 // Magnetometer calibration based on
                         // both zero then use the current vehicle
                         // location.
 mavlink20.MAV_CMD_DO_START_MAG_CAL = 42424 // Initiate a magnetometer calibration.
-mavlink20.MAV_CMD_DO_ACCEPT_MAG_CAL = 42425 // Initiate a magnetometer calibration.
+mavlink20.MAV_CMD_DO_ACCEPT_MAG_CAL = 42425 // Accept a magnetometer calibration.
 mavlink20.MAV_CMD_DO_CANCEL_MAG_CAL = 42426 // Cancel a running magnetometer calibration.
 mavlink20.MAV_CMD_SET_FACTORY_TEST_MODE = 42427 // Command autopilot to get into factory test/diagnostic mode.
 mavlink20.MAV_CMD_DO_SEND_BANNER = 42428 // Reply with the version banner.
@@ -481,7 +491,30 @@ mavlink20.MAV_CMD_BATTERY_RESET = 42651 // Reset battery capacity for batteries 
 mavlink20.MAV_CMD_DEBUG_TRAP = 42700 // Issue a trap signal to the autopilot process, presumably to enter the
                         // debugger.
 mavlink20.MAV_CMD_SCRIPTING = 42701 // Control onboard scripting.
-mavlink20.MAV_CMD_ENUM_END = 42702 // 
+mavlink20.MAV_CMD_GUIDED_CHANGE_SPEED = 43000 // Change flight speed at a given rate. This slews the vehicle at a
+                        // controllable rate between it's previous
+                        // speed and the new one. (affects GUIDED
+                        // only. Outside GUIDED, aircraft ignores
+                        // these commands. Designed for onboard
+                        // companion-computer command-and-control, not
+                        // normally operator/GCS control.)
+mavlink20.MAV_CMD_GUIDED_CHANGE_ALTITUDE = 43001 // Change target altitude at a given rate. This slews the vehicle at a
+                        // controllable rate between it's previous
+                        // altitude and the new one. (affects GUIDED
+                        // only. Outside GUIDED, aircraft ignores
+                        // these commands. Designed for onboard
+                        // companion-computer command-and-control, not
+                        // normally operator/GCS control.)
+mavlink20.MAV_CMD_GUIDED_CHANGE_HEADING = 43002 // Change to target heading at a given rate, overriding previous
+                        // heading/s. This slews the vehicle at a
+                        // controllable rate between it's previous
+                        // heading and the new one. (affects GUIDED
+                        // only. Exiting GUIDED returns aircraft to
+                        // normal behaviour defined elsewhere.
+                        // Designed for onboard companion-computer
+                        // command-and-control, not normally
+                        // operator/GCS control.)
+mavlink20.MAV_CMD_ENUM_END = 43003 // 
 
 // SCRIPTING_CMD
 mavlink20.SCRIPTING_CMD_REPL_START = 0 // Start a REPL session.
@@ -2039,6 +2072,146 @@ mavlink20.PARACHUTE_ENABLE = 1 // Enable parachute release.
 mavlink20.PARACHUTE_RELEASE = 2 // Release parachute.
 mavlink20.PARACHUTE_ACTION_ENUM_END = 3 // 
 
+// AIS_TYPE
+mavlink20.AIS_TYPE_UNKNOWN = 0 // Not available (default).
+mavlink20.AIS_TYPE_RESERVED_1 = 1 // 
+mavlink20.AIS_TYPE_RESERVED_2 = 2 // 
+mavlink20.AIS_TYPE_RESERVED_3 = 3 // 
+mavlink20.AIS_TYPE_RESERVED_4 = 4 // 
+mavlink20.AIS_TYPE_RESERVED_5 = 5 // 
+mavlink20.AIS_TYPE_RESERVED_6 = 6 // 
+mavlink20.AIS_TYPE_RESERVED_7 = 7 // 
+mavlink20.AIS_TYPE_RESERVED_8 = 8 // 
+mavlink20.AIS_TYPE_RESERVED_9 = 9 // 
+mavlink20.AIS_TYPE_RESERVED_10 = 10 // 
+mavlink20.AIS_TYPE_RESERVED_11 = 11 // 
+mavlink20.AIS_TYPE_RESERVED_12 = 12 // 
+mavlink20.AIS_TYPE_RESERVED_13 = 13 // 
+mavlink20.AIS_TYPE_RESERVED_14 = 14 // 
+mavlink20.AIS_TYPE_RESERVED_15 = 15 // 
+mavlink20.AIS_TYPE_RESERVED_16 = 16 // 
+mavlink20.AIS_TYPE_RESERVED_17 = 17 // 
+mavlink20.AIS_TYPE_RESERVED_18 = 18 // 
+mavlink20.AIS_TYPE_RESERVED_19 = 19 // 
+mavlink20.AIS_TYPE_WIG = 20 // Wing In Ground effect.
+mavlink20.AIS_TYPE_WIG_HAZARDOUS_A = 21 // 
+mavlink20.AIS_TYPE_WIG_HAZARDOUS_B = 22 // 
+mavlink20.AIS_TYPE_WIG_HAZARDOUS_C = 23 // 
+mavlink20.AIS_TYPE_WIG_HAZARDOUS_D = 24 // 
+mavlink20.AIS_TYPE_WIG_RESERVED_1 = 25 // 
+mavlink20.AIS_TYPE_WIG_RESERVED_2 = 26 // 
+mavlink20.AIS_TYPE_WIG_RESERVED_3 = 27 // 
+mavlink20.AIS_TYPE_WIG_RESERVED_4 = 28 // 
+mavlink20.AIS_TYPE_WIG_RESERVED_5 = 29 // 
+mavlink20.AIS_TYPE_FISHING = 30 // 
+mavlink20.AIS_TYPE_TOWING = 31 // 
+mavlink20.AIS_TYPE_TOWING_LARGE = 32 // Towing: length exceeds 200m or breadth exceeds 25m.
+mavlink20.AIS_TYPE_DREDGING = 33 // Dredging or other underwater ops.
+mavlink20.AIS_TYPE_DIVING = 34 // 
+mavlink20.AIS_TYPE_MILITARY = 35 // 
+mavlink20.AIS_TYPE_SAILING = 36 // 
+mavlink20.AIS_TYPE_PLEASURE = 37 // 
+mavlink20.AIS_TYPE_RESERVED_20 = 38 // 
+mavlink20.AIS_TYPE_RESERVED_21 = 39 // 
+mavlink20.AIS_TYPE_HSC = 40 // High Speed Craft.
+mavlink20.AIS_TYPE_HSC_HAZARDOUS_A = 41 // 
+mavlink20.AIS_TYPE_HSC_HAZARDOUS_B = 42 // 
+mavlink20.AIS_TYPE_HSC_HAZARDOUS_C = 43 // 
+mavlink20.AIS_TYPE_HSC_HAZARDOUS_D = 44 // 
+mavlink20.AIS_TYPE_HSC_RESERVED_1 = 45 // 
+mavlink20.AIS_TYPE_HSC_RESERVED_2 = 46 // 
+mavlink20.AIS_TYPE_HSC_RESERVED_3 = 47 // 
+mavlink20.AIS_TYPE_HSC_RESERVED_4 = 48 // 
+mavlink20.AIS_TYPE_HSC_UNKNOWN = 49 // 
+mavlink20.AIS_TYPE_PILOT = 50 // 
+mavlink20.AIS_TYPE_SAR = 51 // Search And Rescue vessel.
+mavlink20.AIS_TYPE_TUG = 52 // 
+mavlink20.AIS_TYPE_PORT_TENDER = 53 // 
+mavlink20.AIS_TYPE_ANTI_POLLUTION = 54 // Anti-pollution equipment.
+mavlink20.AIS_TYPE_LAW_ENFORCEMENT = 55 // 
+mavlink20.AIS_TYPE_SPARE_LOCAL_1 = 56 // 
+mavlink20.AIS_TYPE_SPARE_LOCAL_2 = 57 // 
+mavlink20.AIS_TYPE_MEDICAL_TRANSPORT = 58 // 
+mavlink20.AIS_TYPE_NONECOMBATANT = 59 // Noncombatant ship according to RR Resolution No. 18.
+mavlink20.AIS_TYPE_PASSENGER = 60 // 
+mavlink20.AIS_TYPE_PASSENGER_HAZARDOUS_A = 61 // 
+mavlink20.AIS_TYPE_PASSENGER_HAZARDOUS_B = 62 // 
+mavlink20.AIS_TYPE_AIS_TYPE_PASSENGER_HAZARDOUS_C = 63 // 
+mavlink20.AIS_TYPE_PASSENGER_HAZARDOUS_D = 64 // 
+mavlink20.AIS_TYPE_PASSENGER_RESERVED_1 = 65 // 
+mavlink20.AIS_TYPE_PASSENGER_RESERVED_2 = 66 // 
+mavlink20.AIS_TYPE_PASSENGER_RESERVED_3 = 67 // 
+mavlink20.AIS_TYPE_AIS_TYPE_PASSENGER_RESERVED_4 = 68 // 
+mavlink20.AIS_TYPE_PASSENGER_UNKNOWN = 69 // 
+mavlink20.AIS_TYPE_CARGO = 70 // 
+mavlink20.AIS_TYPE_CARGO_HAZARDOUS_A = 71 // 
+mavlink20.AIS_TYPE_CARGO_HAZARDOUS_B = 72 // 
+mavlink20.AIS_TYPE_CARGO_HAZARDOUS_C = 73 // 
+mavlink20.AIS_TYPE_CARGO_HAZARDOUS_D = 74 // 
+mavlink20.AIS_TYPE_CARGO_RESERVED_1 = 75 // 
+mavlink20.AIS_TYPE_CARGO_RESERVED_2 = 76 // 
+mavlink20.AIS_TYPE_CARGO_RESERVED_3 = 77 // 
+mavlink20.AIS_TYPE_CARGO_RESERVED_4 = 78 // 
+mavlink20.AIS_TYPE_CARGO_UNKNOWN = 79 // 
+mavlink20.AIS_TYPE_TANKER = 80 // 
+mavlink20.AIS_TYPE_TANKER_HAZARDOUS_A = 81 // 
+mavlink20.AIS_TYPE_TANKER_HAZARDOUS_B = 82 // 
+mavlink20.AIS_TYPE_TANKER_HAZARDOUS_C = 83 // 
+mavlink20.AIS_TYPE_TANKER_HAZARDOUS_D = 84 // 
+mavlink20.AIS_TYPE_TANKER_RESERVED_1 = 85 // 
+mavlink20.AIS_TYPE_TANKER_RESERVED_2 = 86 // 
+mavlink20.AIS_TYPE_TANKER_RESERVED_3 = 87 // 
+mavlink20.AIS_TYPE_TANKER_RESERVED_4 = 88 // 
+mavlink20.AIS_TYPE_TANKER_UNKNOWN = 89 // 
+mavlink20.AIS_TYPE_OTHER = 90 // 
+mavlink20.AIS_TYPE_OTHER_HAZARDOUS_A = 91 // 
+mavlink20.AIS_TYPE_OTHER_HAZARDOUS_B = 92 // 
+mavlink20.AIS_TYPE_OTHER_HAZARDOUS_C = 93 // 
+mavlink20.AIS_TYPE_OTHER_HAZARDOUS_D = 94 // 
+mavlink20.AIS_TYPE_OTHER_RESERVED_1 = 95 // 
+mavlink20.AIS_TYPE_OTHER_RESERVED_2 = 96 // 
+mavlink20.AIS_TYPE_OTHER_RESERVED_3 = 97 // 
+mavlink20.AIS_TYPE_OTHER_RESERVED_4 = 98 // 
+mavlink20.AIS_TYPE_OTHER_UNKNOWN = 99 // 
+mavlink20.AIS_TYPE_ENUM_END = 100 // 
+
+// AIS_NAV_STATUS
+mavlink20.UNDER_WAY = 0 // Under way using engine.
+mavlink20.AIS_NAV_ANCHORED = 1 // 
+mavlink20.AIS_NAV_UN_COMMANDED = 2 // 
+mavlink20.AIS_NAV_RESTRICTED_MANOEUVERABILITY = 3 // 
+mavlink20.AIS_NAV_DRAUGHT_CONSTRAINED = 4 // 
+mavlink20.AIS_NAV_MOORED = 5 // 
+mavlink20.AIS_NAV_AGROUND = 6 // 
+mavlink20.AIS_NAV_FISHING = 7 // 
+mavlink20.AIS_NAV_SAILING = 8 // 
+mavlink20.AIS_NAV_RESERVED_HSC = 9 // 
+mavlink20.AIS_NAV_RESERVED_WIG = 10 // 
+mavlink20.AIS_NAV_RESERVED_1 = 11 // 
+mavlink20.AIS_NAV_RESERVED_2 = 12 // 
+mavlink20.AIS_NAV_RESERVED_3 = 13 // 
+mavlink20.AIS_NAV_AIS_SART = 14 // Search And Rescue Transponder.
+mavlink20.AIS_NAV_UNKNOWN = 15 // Not available (default).
+mavlink20.AIS_NAV_STATUS_ENUM_END = 16 // 
+
+// AIS_FLAGS
+mavlink20.AIS_FLAGS_POSITION_ACCURACY = 1 // 1 = Position accuracy less than 10m, 0 = position accuracy greater
+                        // than 10m.
+mavlink20.AIS_FLAGS_VALID_COG = 2 // 
+mavlink20.AIS_FLAGS_VALID_VELOCITY = 4 // 
+mavlink20.AIS_FLAGS_HIGH_VELOCITY = 8 // 1 = Velocity over 52.5765m/s (102.2 knots)
+mavlink20.AIS_FLAGS_VALID_TURN_RATE = 16 // 
+mavlink20.AIS_FLAGS_TURN_RATE_SIGN_ONLY = 32 // Only the sign of the returned turn rate value is valid, either greater
+                        // than 5deg/30s or less than -5deg/30s
+mavlink20.AIS_FLAGS_VALID_DIMENSIONS = 64 // 
+mavlink20.AIS_FLAGS_LARGE_BOW_DIMENSION = 128 // Distance to bow is larger than 511m
+mavlink20.AIS_FLAGS_LARGE_STERN_DIMENSION = 256 // Distance to stern is larger than 511m
+mavlink20.AIS_FLAGS_LARGE_PORT_DIMENSION = 512 // Distance to port side is larger than 63m
+mavlink20.AIS_FLAGS_LARGE_STARBOARD_DIMENSION = 1024 // Distance to starboard side is larger than 63m
+mavlink20.AIS_FLAGS_VALID_CALLSIGN = 2048 // 
+mavlink20.AIS_FLAGS_VALID_NAME = 4096 // 
+mavlink20.AIS_FLAGS_ENUM_END = 4097 // 
+
 // UAVIONIX_ADSB_OUT_DYNAMIC_STATE
 mavlink20.UAVIONIX_ADSB_OUT_DYNAMIC_STATE_INTENT_CHANGE = 1 // 
 mavlink20.UAVIONIX_ADSB_OUT_DYNAMIC_STATE_AUTOPILOT_ENABLED = 2 // 
@@ -2343,6 +2516,7 @@ mavlink20.MAVLINK_MSG_ID_LOGGING_DATA = 266
 mavlink20.MAVLINK_MSG_ID_LOGGING_DATA_ACKED = 267
 mavlink20.MAVLINK_MSG_ID_LOGGING_ACK = 268
 mavlink20.MAVLINK_MSG_ID_WIFI_CONFIG_AP = 299
+mavlink20.MAVLINK_MSG_ID_AIS_VESSEL = 301
 mavlink20.MAVLINK_MSG_ID_UAVCAN_NODE_STATUS = 310
 mavlink20.MAVLINK_MSG_ID_UAVCAN_NODE_INFO = 311
 mavlink20.MAVLINK_MSG_ID_OBSTACLE_DISTANCE = 330
@@ -9223,6 +9397,47 @@ mavlink20.messages.wifi_config_ap.prototype.pack = function(mav) {
 }
 
 /* 
+The location and information of an AIS vessel
+
+                MMSI                      : Mobile Marine Service Identifier, 9 decimal digits (uint32_t)
+                lat                       : Latitude (int32_t)
+                lon                       : Longitude (int32_t)
+                COG                       : Course over ground (uint16_t)
+                heading                   : True heading (uint16_t)
+                velocity                  : Speed over ground (uint16_t)
+                turn_rate                 : Turn rate (int8_t)
+                navigational_status        : Navigational status (uint8_t)
+                type                      : Type of vessels (uint8_t)
+                dimension_bow             : Distance from lat/lon location to bow (uint16_t)
+                dimension_stern           : Distance from lat/lon location to stern (uint16_t)
+                dimension_port            : Distance from lat/lon location to port side (uint8_t)
+                dimension_starboard        : Distance from lat/lon location to starboard side (uint8_t)
+                callsign                  : The vessel callsign (char)
+                name                      : The vessel name (char)
+                tslc                      : Time since last communication in seconds (uint16_t)
+                flags                     : Bitmask to indicate various statuses including valid data fields (uint16_t)
+
+*/
+mavlink20.messages.ais_vessel = function(MMSI, lat, lon, COG, heading, velocity, turn_rate, navigational_status, type, dimension_bow, dimension_stern, dimension_port, dimension_starboard, callsign, name, tslc, flags) {
+
+    this.format = '<IiiHHHHHHHbBBBB7s20s';
+    this.id = mavlink20.MAVLINK_MSG_ID_AIS_VESSEL;
+    this.order_map = [0, 1, 2, 3, 4, 5, 10, 11, 12, 6, 7, 13, 14, 15, 16, 8, 9];
+    this.crc_extra = 243;
+    this.name = 'AIS_VESSEL';
+
+    this.fieldnames = ['MMSI', 'lat', 'lon', 'COG', 'heading', 'velocity', 'turn_rate', 'navigational_status', 'type', 'dimension_bow', 'dimension_stern', 'dimension_port', 'dimension_starboard', 'callsign', 'name', 'tslc', 'flags'];
+
+
+    this.set(arguments);
+
+}
+        mavlink20.messages.ais_vessel.prototype = new mavlink20.message;
+mavlink20.messages.ais_vessel.prototype.pack = function(mav) {
+    return mavlink20.message.prototype.pack.call(this, mav, this.crc_extra, jspack.Pack(this.format, [ this.MMSI, this.lat, this.lon, this.COG, this.heading, this.velocity, this.dimension_bow, this.dimension_stern, this.tslc, this.flags, this.turn_rate, this.navigational_status, this.type, this.dimension_port, this.dimension_starboard, this.callsign, this.name]));
+}
+
+/* 
 General status information of an UAVCAN node. Please refer to the
 definition of the UAVCAN message "uavcan.protocol.NodeStatus" for the
 background information. The UAVCAN specification is available at
@@ -9895,6 +10110,7 @@ mavlink20.map = {
         267: { format: '<HBBBB249s', type: mavlink20.messages.logging_data_acked, order_map: [1, 2, 0, 3, 4, 5], crc_extra: 35 },
         268: { format: '<HBB', type: mavlink20.messages.logging_ack, order_map: [1, 2, 0], crc_extra: 14 },
         299: { format: '<32s64s', type: mavlink20.messages.wifi_config_ap, order_map: [0, 1], crc_extra: 19 },
+        301: { format: '<IiiHHHHHHHbBBBB7s20s', type: mavlink20.messages.ais_vessel, order_map: [0, 1, 2, 3, 4, 5, 10, 11, 12, 6, 7, 13, 14, 15, 16, 8, 9], crc_extra: 243 },
         310: { format: '<QIHBBB', type: mavlink20.messages.uavcan_node_status, order_map: [0, 1, 3, 4, 5, 2], crc_extra: 28 },
         311: { format: '<QII80sBB16sBB', type: mavlink20.messages.uavcan_node_info, order_map: [0, 1, 3, 4, 5, 6, 7, 8, 2], crc_extra: 95 },
         330: { format: '<Q72HHHBBffB', type: mavlink20.messages.obstacle_distance, order_map: [0, 4, 1, 5, 2, 3, 6, 7, 8], crc_extra: 23 },
