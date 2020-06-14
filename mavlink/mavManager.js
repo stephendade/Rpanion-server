@@ -83,9 +83,6 @@ class mavManager {
 
     // what to do when we get a message
     this.mav.on('message', (msg) => {
-      // raise event for external objects
-      this.eventEmitter.emit('gotMessage', msg)
-
       if (msg.id === -1) {
         // bad message - can't process here any further
         return
@@ -99,10 +96,13 @@ class mavManager {
         winston.info('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
         this.targetSystem = msg.header.srcSystem
         this.targetComponent = msg.header.srcComponent
-      } else if (this.targetSystem !== msg.header.srcSystem || this.targetComponent !== msg.header.srcComponent) {
+      } else if (this.targetSystem !== msg.header.srcSystem) {
         // don't use packets from other systems or components in Rpanion-server
         return
       }
+
+      // raise event for external objects
+      this.eventEmitter.emit('gotMessage', msg)
 
       this.statusNumRxPackets += 1
       this.timeofLastPacket = (Date.now().valueOf())
@@ -206,7 +206,7 @@ class mavManager {
     if (this.dialect !== 'ardupilot') {
       return
     }
-    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
+    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
     this.sendData(msg.pack(this.mav))
   }
 
@@ -215,7 +215,7 @@ class mavManager {
     if (this.dialect !== 'ardupilot') {
       return
     }
-    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
+    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
     this.sendData(msg.pack(this.mav))
   }
 
@@ -224,7 +224,7 @@ class mavManager {
     if (this.dialect !== 'ardupilot') {
       return
     }
-    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.mavmsg.MAV_COMP_ID_ALL, seqno, 1)
+    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, seqno, 1)
     this.sendData(msg.pack(this.mav))
   }
 
