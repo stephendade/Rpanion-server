@@ -107,8 +107,8 @@ class LoggerPage extends basePage {
         return (
         <div>
             <p>Logging Status: {this.state.logStatus}</p>
-            <label><input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />Enable Logging</label>
             <h3>Telemetry Logs</h3>
+            <label><input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />Enable Telemetry Logging</label>
             <button onClick={this.startLog}>Start new telemetry log</button>
             <button id='tlog' onClick={this.clearLogs}>Clear inactive logs</button>
             <table id='Tlogfile'>
@@ -121,8 +121,7 @@ class LoggerPage extends basePage {
             </table>
             <br />
             <h3>Bin Logs</h3>
-            <p>This requires the "ArduPilot" MAVLink dialect setting in Flight Controller settings
-                and the LOG_BACKEND_TYPE parameter in ArduPilot set to "Mavlink".</p>
+            <p>This requires the LOG_BACKEND_TYPE parameter in ArduPilot set to "Mavlink".</p>
             <button id='binlog' onClick={this.clearLogs}>Clear inactive logs</button>
             <table id='Binlogfile'>
                 <thead>
