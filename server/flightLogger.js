@@ -91,7 +91,7 @@ class flightLogger {
   }
 
   // Delete all logs - tlog or binlog
-  cleartlogs (logtype) {
+  clearlogs (logtype, curBinLog) {
     if (logtype === 'tlog') {
       const files = fs.readdirSync(this.tlogfolder)
       files.forEach((file) => {
@@ -108,7 +108,7 @@ class flightLogger {
       files.forEach((file) => {
         const filePath = path.join(this.binlogfolder, file)
         // don't remove the actively logging file
-        if (!(this.activeFileBinlog === filePath && this.activeLogging)) {
+        if (curBinLog !== filePath) {
           fs.unlinkSync(filePath)
         }
       })

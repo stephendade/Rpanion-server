@@ -1,6 +1,8 @@
 const SerialPort = require('serialport')
 const fs = require('fs')
 var events = require('events')
+const path = require('path')
+var appRoot = require('app-root-path')
 var winston = require('./winstonconfig')(module)
 const { spawn, spawnSync } = require('child_process')
 
@@ -45,6 +47,9 @@ class FCDetails {
 
     // UDP Outputs
     this.UDPoutputs = []
+
+    // Current binlog via mavlink-router
+    this.binlog = null
 
     // load settings
     this.settings = settings
@@ -107,9 +112,9 @@ class FCDetails {
       }
     }
 
-    //check that it's not the internal 127.0.0.1:14540
-    if ('127.0.0.1' === newIP && newPort === 14540) {
-        return this.getUDPOutputs()
+    // check that it's not the internal 127.0.0.1:14540
+    if (newIP === '127.0.0.1' && newPort === 14540) {
+      return this.getUDPOutputs()
     }
 
     // add it in
@@ -144,9 +149,9 @@ class FCDetails {
   removeUDPOutput (remIP, remPort) {
     // remove new udp output
 
-    //check that it's not the internal 127.0.0.1:14540
-    if ('127.0.0.1' === remIP && remPort === 14540) {
-        return this.getUDPOutputs()
+    // check that it's not the internal 127.0.0.1:14540
+    if (remIP === '127.0.0.1' && remPort === 14540) {
+      return this.getUDPOutputs()
     }
 
     // check if this ip:port is already in the list
@@ -247,6 +252,8 @@ class FCDetails {
       cmd.push('-e')
       cmd.push(this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port)
     }
+    cmd.push('--log')
+    cmd.push('./flightlogs/binlogs')
     cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud.value)
     console.log(cmd)
 
@@ -265,6 +272,21 @@ class FCDetails {
 
     this.router.stderr.on('data', (data) => {
       console.error(`stderr: ${data}`)
+      if (data.toString().includes('Logging target')) {
+        // remove old log, if it exists and is >60kB
+        try {
+          if (this.binlog !== null) {
+            const fileStat = fs.lstatSync(this.binlog)
+            if (Math.round(fileStat.size / 1024) < 52) {
+              fs.unlinkSync(this.binlog)
+            }
+          }
+        } catch (err) {}
+        var res = data.toString().split(' ')
+        var curLog = (res[res.length - 1]).trim()
+        this.binlog = path.join(appRoot.toString(), 'flightlogs', 'binlogs', curLog)
+        console.log('Current log is: ' + this.binlog)
+      }
     })
 
     this.router.on('close', (code) => {

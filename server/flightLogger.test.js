@@ -64,8 +64,8 @@ describe('Logging Functions', function () {
     Lgr.stoptlog()
     Lgr.stopbinlog()
 
-    Lgr.cleartlogs('tlog')
-    Lgr.cleartlogs('binlog')
+    Lgr.clearlogs('tlog', null)
+    Lgr.clearlogs('binlog', null)
 
     // assert all files deleted
     assert.equal(Lgr.activeFileTlog, null)
