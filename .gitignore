@@ -23,5 +23,7 @@ yarn-error.log*
 /package-lock.json
 
 settings.json
+settingsTest.json
 /logs
 /flightlogs
+.nyc_output
