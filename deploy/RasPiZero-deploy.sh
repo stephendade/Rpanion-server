@@ -58,7 +58,7 @@ cd ../../
 ## mavlink-router
 cd ./modules/mavlink-router
 ./autogen.sh
-./configure CFLAGS='-g -O2'
+./configure CFLAGS='-g -O2' --disable-systemd
 make
 sudo make install
 cd ../../
