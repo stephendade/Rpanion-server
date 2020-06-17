@@ -17,6 +17,9 @@ sudo raspi-config nonint do_serial 2
 sudo raspi-config nonint do_hostname rpanion
 sudo perl -pe 's/raspberrypi/rpanion/' -i /etc/hosts
 
+## Blob for Compute Modules which support dual CSI cameras
+sudo wget http://goo.gl/U4t12b -O /boot/dt-blob.bin
+
 ## Power switch config for Pi-Connect
 echo "" | sudo tee -a /boot/config.txt >/dev/null
 echo "# Power switch" | sudo tee -a /boot/config.txt >/dev/null
@@ -67,5 +70,8 @@ cd ../../
 
 ## and build & run Rpanion
 ./deploy/build.sh
+
+## Clean out packages no longer required
+sudo apt autoremove --purge -y
 
 sudo reboot
