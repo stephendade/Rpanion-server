@@ -12,6 +12,7 @@ class AboutPage extends basePage {
       CPUName: '',
       RAMName: '',
       HATName: {},
+      diskSpaceStatus: '',
       loading: true,
       error: null,
       infoMessage: null
@@ -20,6 +21,7 @@ class AboutPage extends basePage {
 
   componentDidMount () {
     fetch('/api/softwareinfo').then(response => response.json()).then(state => this.setState(state))
+    fetch('/api/diskinfo').then(response => response.json()).then(state => this.setState(state))
     fetch('/api/hardwareinfo').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
@@ -40,6 +42,7 @@ class AboutPage extends basePage {
         <h2>About Hardware</h2>
         <p>CPU: {this.state.CPUName}</p>
         <p>RAM: {this.state.RAMName} GB</p>
+        <p>Disk Space: {this.state.diskSpaceStatus}</p>
         {this.HATInfo()}
         <h2>About Software</h2>
         <p>OS version: {this.state.OSVersion}</p>

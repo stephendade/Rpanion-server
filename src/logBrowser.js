@@ -15,12 +15,14 @@ class LoggerPage extends basePage {
             logStatus: "",
             enablelogging: false,
             error: null,
-            infoMessage: null
+            infoMessage: null,
+            diskSpaceStatus: ""
         };
     }
 
     componentDidMount() {
         fetch(`/api/logfiles`).then(response => response.json()).then(state => {this.setState(state); this.loadDone()});
+        fetch(`/api/diskinfo`).then(response => response.json()).then(state => {this.setState(state)});
     }
 
     renderTitle() {
@@ -107,6 +109,7 @@ class LoggerPage extends basePage {
         return (
         <div>
             <p>Logging Status: {this.state.logStatus}</p>
+            <p>Disk Space: {this.state.diskSpaceStatus}</p>
             <h3>Telemetry Logs</h3>
             <label><input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />Enable Telemetry Logging</label>
             <button onClick={this.startLog}>Start new telemetry log</button>
