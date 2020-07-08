@@ -1,6 +1,7 @@
 const process = require('process')
 const { exec } = require('child_process')
 const si = require('systeminformation')
+var winston = require('./winstonconfig')(module)
 
 function getSoftwareInfo (callback) {
   // get the OS, Node.js and Rpanion-server versions
@@ -18,6 +19,16 @@ function getDiskInfo (callback) {
         return callback((disk.size / (1024 * 1024 * 1024)).toFixed(2), (disk.used / (1024 * 1024 * 1024)).toFixed(2), disk.use, null)
       }
     }
+  })
+}
+
+function shutdownCC () {
+  // shutdown the companion computer
+  console.log('Shutting down')
+  winston.info('Shutting down')
+  exec('shutdown -r now', function (error, stdout, stderr) {
+    console.log(stdout)
+    winston.info(stdout)
   })
 }
 
@@ -45,4 +56,4 @@ function getHardwareInfo (callback) {
   })
 }
 
-module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo }
+module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC }
