@@ -255,6 +255,11 @@ app.get('/api/FCDetails', (req, res) => {
     });
 });
 
+app.post('/api/shutdowncc', function (req, res) {
+    //User wants to shutdown the computer
+    aboutPage.shutdownCC();
+});
+
 app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('mavdialect').isJSON()], function (req, res) {
     //User wants to start/stop FC telemetry
     const errors = validationResult(req);
