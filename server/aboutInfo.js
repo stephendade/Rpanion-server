@@ -26,7 +26,7 @@ function shutdownCC () {
   // shutdown the companion computer
   console.log('Shutting down')
   winston.info('Shutting down')
-  exec('shutdown -r now', function (error, stdout, stderr) {
+  exec('shutdown now', function (error, stdout, stderr) {
     console.log(stdout)
     winston.info(stdout)
   })
