@@ -211,6 +211,20 @@ app.get('/api/hardwareinfo', (req, res) => {
 
 });
 
+app.get('/api/diskinfo', (req, res) => {
+    aboutPage.getDiskInfo((total, used, percent, err) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ diskSpaceStatus: "Used " + used + "/"+ total + " Gb (" + percent + "%)"}));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ diskSpaceStatus: err}));
+            winston.error('Error in /api/diskinfo ', { message: err });
+        }
+    });
+
+});
 
 app.get('/api/FCOutputs', (req, res) => {
     res.setHeader('Content-Type', 'application/json');

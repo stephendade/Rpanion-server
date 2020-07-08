@@ -9,6 +9,18 @@ function getSoftwareInfo (callback) {
   })
 }
 
+function getDiskInfo (callback) {
+  // get the used and total disk space (in Gb) of root "/"
+  // callback is (totalsize, usedsize, percentUsed, err)
+  si.fsSize(function (data) {
+    for (const disk of data) {
+      if (disk.mount === '/') {
+        return callback((disk.size / (1024 * 1024 * 1024)).toFixed(2), (disk.used / (1024 * 1024 * 1024)).toFixed(2), disk.use, null)
+      }
+    }
+  })
+}
+
 function getHardwareInfo (callback) {
   // get the CPU, RAM info
   si.cpu(function (CPUdata) {
@@ -33,4 +45,4 @@ function getHardwareInfo (callback) {
   })
 }
 
-module.exports = { getSoftwareInfo, getHardwareInfo }
+module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo }
