@@ -25,6 +25,17 @@ class AboutPage extends basePage {
     fetch('/api/hardwareinfo').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
+  handleshutdown = (event) => {
+      //user clicked the shutdown button
+      fetch('/api/shutdowncc', {
+          method: 'POST',
+          headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+          }
+      });
+  }
+
   renderTitle () {
     return 'About'
   }
@@ -48,6 +59,8 @@ class AboutPage extends basePage {
         <p>OS version: {this.state.OSVersion}</p>
         <p>Node.js version: {this.state.Nodejsversion}</p>
         <p>Rpanion-server version: {this.state.rpanionversion}</p>
+        <h2>Controls</h2>
+        <button onClick={this.handleshutdown}>Shutdown Companion Computer</button>
       </div>
     )
   }
