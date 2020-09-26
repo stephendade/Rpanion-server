@@ -15,6 +15,13 @@ Gst.init(sys.argv)
 device_provider = Gst.DeviceProviderFactory.get_by_name("v4l2deviceprovider")
 devices = device_provider.get_devices()
 
+# Get list of vals in cap
+def getcapval(caps):
+    allval = []
+    for cap in caps:
+        allval.append(cap['value'])      
+    return allval
+
 retDevices = []
 
 for device in devices:
@@ -48,10 +55,13 @@ for device in devices:
         # enumerate available resolutions
         for i in range(capsGST.get_size()):
             structure = capsGST.get_structure(i)
-            if structure.get_name() in ['video/x-raw', 'video/x-h264'] :
+            if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg'] :
                 width = structure.get_int('width').value
                 height = structure.get_int('height').value
-                caps.append({'value': "{0}x{1}".format(width, height), 'label': "{0}x{1}".format(width, height), 'height': int(height), 'width': int(width), 'format': structure.get_name()})
+                #Only append if it's a unique value
+                if "{0}x{1}".format(width, height) not in getcapval(caps):
+                    form = structure.get_name().split('/')[1]
+                    caps.append({'value': "{0}x{1}".format(width, height), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name()})
 
     retDevices.append({'value': path, 'label': name, 'caps': caps})
 

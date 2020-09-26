@@ -56,6 +56,10 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         elif self.format == "video/x-h264":
                 s_src = "v4l2src device={0} ! {3},width={1},height={2}".format(self.device, self.width, self.height, self.format)
                 pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
+        elif self.format == "image/jpeg":
+                s_src = "v4l2src device={0} ! {3},width={1},height={2} ! jpegdec ! {4}".format(self.device, self.width, self.height, self.format, self.rotation)
+                s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(self.bitrate)
+                pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
         print(pipeline_str)
         return Gst.parse_launch(pipeline_str)
 
