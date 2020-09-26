@@ -362,7 +362,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
                                  check('height').isInt({min: 1}),
                                  check('width').isInt({min: 1}),
                                  check('bitrate').isInt({min: 100, max: 10000}),
-                                 check('format').isIn(['video/x-raw', 'video/x-h264']),
+                                 check('format').isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
                                  check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
