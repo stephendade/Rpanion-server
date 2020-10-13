@@ -78,9 +78,9 @@ class AboutPage extends basePage {
         <button onClick={this.confirmShutdown}>Shutdown Companion Computer</button>
 
         <Modal isOpen={this.state.showModal} appElement={document.getElementById('root')} contentLabel="ShutdownConfirm" className="Modal">
-          <h3 class="ModalTitle">Confirm</h3>
-          <div class="ModalContent">Are you sure you want to shutdown the Companion Computer?</div>
-          <div class="ModalActions">
+          <h3 className="ModalTitle">Confirm</h3>
+          <div className="ModalContent">Are you sure you want to shutdown the Companion Computer?</div>
+          <div className="ModalActions">
             <button onClick={this.handleShutdown}>Yes</button>
             <button onClick={this.handleCloseModal}>No</button>
           </div>

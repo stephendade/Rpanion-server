@@ -522,9 +522,9 @@ class NetworkConfig extends basePage {
                 <input type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} value="Save Changes" />
                 <input type="button" value="Discard Changes" onClick={this.resetForm}/>
                 <Modal isOpen={this.state.showModal} appElement={document.getElementById('root')} contentLabel="WifiSelectDialog" className="Modal">
-                  <h3 class="ModalTitle">WiFi Network Type</h3>
-                  <div class="ModalContent">Please select the WiFi network type for this connection.</div>
-                  <div class="ModalActions">
+                  <h3 className="ModalTitle">WiFi Network Type</h3>
+                  <div className="ModalContent">Please select the WiFi network type for this connection.</div>
+                  <div className="ModalActions">
                     <button onClick={this.handleCloseModalAP}>Access Point</button>
                     <button onClick={this.handleCloseModalClient}>Client</button>
                   </div>
