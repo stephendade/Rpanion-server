@@ -19,6 +19,7 @@ addons:
       - python3-gst-1.0
 
 install:
+  - pip install --upgrade pip
   - pip3 --version
   - pip3 install future netifaces pymavlink --user
   - npm install
