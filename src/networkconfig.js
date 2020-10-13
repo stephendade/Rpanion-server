@@ -12,6 +12,7 @@ class NetworkConfig extends basePage {
       showModal: false,
       showModalResult: "",
       error: null,
+      showPW: false,
       infoMessage: null,
       netDevice: [],
       netDeviceSelected: null,
@@ -406,6 +407,10 @@ class NetworkConfig extends basePage {
         });
     }
 
+    togglePasswordVisible = event => {
+        this.setState({ showPW: event.target.checked});
+    }
+
     resetForm = (event) => {
         //if it's a new connection, go back to old connection
         if (this.state.netConnectionFilteredSelected.value === "new") {
@@ -485,7 +490,9 @@ class NetworkConfig extends basePage {
                         </select>
                     Security</label>
                     <br />
-                    <label><input name="password" type="text" disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
+                    <label><input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
+                    <br />
+                    <label><input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none"} onChange={this.togglePasswordVisible}/>Show Password</label>
                 </div>
                 <div nameclass="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap" ||  this.state.curSettings.mode.value === "adhoc")? "block" : "none" }}><h3>Wifi Access Point</h3>
                     <label><input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text"/>SSID Name</label>
@@ -506,7 +513,9 @@ class NetworkConfig extends basePage {
                         </select>
                     Security</label>
                     <br />
-                    <label><input name="password" type="text" disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
+                    <label><input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
+                    <br />
+                    <label><input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none" } onChange={this.togglePasswordVisible}/>Show Password</label>
                     <br />
                     <label><input name="ipaddress" onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} type="text"/>Starting IP address</label>
                 </div>
