@@ -1,4 +1,5 @@
 import React from 'react'
+import Modal from 'react-modal';
 
 import basePage from './basePage.js'
 
@@ -15,7 +16,9 @@ class AboutPage extends basePage {
       diskSpaceStatus: '',
       loading: true,
       error: null,
-      infoMessage: null
+      infoMessage: null,
+      showModal: false,
+      showModalResult: ""
     }
   }
 
@@ -25,15 +28,27 @@ class AboutPage extends basePage {
     fetch('/api/hardwareinfo').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
-  handleshutdown = (event) => {
-      //user clicked the shutdown button
-      fetch('/api/shutdowncc', {
-          method: 'POST',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-          }
-      });
+  confirmShutdown = (event) => {
+    //user clicked the shutdown button
+    // modal events take it from here
+    this.setState({ showModal: true });
+  }
+
+  handleCloseModal = (event) => {
+    // user does not want to shutdown
+    this.setState({ showModal: false});
+  }
+
+  handleShutdown = (event) => {
+    // user does want to shutdown
+    this.setState({ showModal: false});
+    fetch('/api/shutdowncc', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      }
+    });
   }
 
   renderTitle () {
@@ -60,7 +75,16 @@ class AboutPage extends basePage {
         <p>Node.js version: {this.state.Nodejsversion}</p>
         <p>Rpanion-server version: {this.state.rpanionversion}</p>
         <h2>Controls</h2>
-        <button onClick={this.handleshutdown}>Shutdown Companion Computer</button>
+        <button onClick={this.confirmShutdown}>Shutdown Companion Computer</button>
+
+        <Modal isOpen={this.state.showModal} appElement={document.getElementById('root')} contentLabel="ShutdownConfirm" className="Modal">
+          <h3 class="ModalTitle">Confirm</h3>
+          <div class="ModalContent">Are you sure you want to shutdown the Companion Computer?</div>
+          <div class="ModalActions">
+            <button onClick={this.handleShutdown}>Yes</button>
+            <button onClick={this.handleCloseModal}>No</button>
+          </div>
+        </Modal>
       </div>
     )
   }
