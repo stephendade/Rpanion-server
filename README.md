@@ -1,5 +1,7 @@
 [![Build Status](https://travis-ci.org/stephendade/Rpanion-server.svg?branch=master)](https://travis-ci.org/stephendade/Rpanion-server)
 
+[![Coverage Status](https://coveralls.io/repos/github/stephendade/Rpanion-server/badge.svg)](https://coveralls.io/github/stephendade/Rpanion-server)
+
 User Documentation is at https://www.docs.rpanion.com/software/rpanion-server
 
 # Rpanion-server
