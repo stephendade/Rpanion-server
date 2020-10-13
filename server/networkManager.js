@@ -1,4 +1,4 @@
-const {exec} = require('child_process');
+const {exec, execSync} = require('child_process');
 var winston = require('./winstonconfig')(module);
 
 function getAdapters(callback) {
@@ -355,27 +355,15 @@ function getConnections(callback) {
 }
 
 function getConnectionIfaceSync(conName){
-        //synchonous get if connection mapped to specific interface
-        var ret;
-        exec('nmcli -s -t -f connection.interface-name connection show ' + conName, (error, stdout, stderr) => {
-            if (stderr) {
-                //no connection with that name
-                console.error(`exec error: ${error}`);
-                winston.error('Error in getConnectionIfaceSync() ', { message: stderr });
-                ret = "";
-            }
-            else if (stdout.split(":")[0] === "connection.interface-name") {
-                ret = stdout.split(":")[1].trim();
-            }
-            else {
-                ret = "";
-            }
-        });
-        while(ret === undefined) {
-            require('deasync').sleep(100);
-        }
-        return ret;
+    //synchonous get if connection mapped to specific interface
+    try {
+        var output = execSync('nmcli -s -t -f connection.interface-name connection show ' + conName);
+        return output.toString().split(":")[1].trim();
+    } catch (e) {
+        winston.info("No info");
+        return "";
     }
+}
 
 function getConnectionDetails(conName, callback) {
     exec('nmcli -s -t -f ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.interface-name connection show ' + conName, (error, stdout, stderr) => {
