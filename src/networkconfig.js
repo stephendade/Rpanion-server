@@ -1,6 +1,8 @@
 import React from 'react';
 import Select from 'react-select';
-import Modal from 'react-modal';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import Form from 'react-bootstrap/Form';
 
 import basePage from './basePage.js';
 
@@ -455,11 +457,12 @@ class NetworkConfig extends basePage {
         <div>
             Adapters: <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected}/>
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
-            <button onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</button>
-            <button onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</button>
-            <button onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} nameclass="activateConnection">Activate</button>
-            <button onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} nameclass="deactivateConnection">Deactivate</button>
-            <form onSubmit={this.handleNetworkSubmit} style={{display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none"}}>
+            <br />
+            <Button size="sm"variant="primary" onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</Button>{' '}
+            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} nameclass="activateConnection">Activate</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} nameclass="deactivateConnection">Deactivate</Button>{' '}
+            <Form onSubmit={this.handleNetworkSubmit} style={{display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none"}}>
                 <div nameclass="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block"}}>
                     <br />
                     <label>
@@ -519,17 +522,23 @@ class NetworkConfig extends basePage {
                     <br />
                     <label><input name="ipaddress" onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} type="text"/>Starting IP address</label>
                 </div>
-                <input type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} value="Save Changes" />
-                <input type="button" value="Discard Changes" onClick={this.resetForm}/>
-                <Modal isOpen={this.state.showModal} appElement={document.getElementById('root')} contentLabel="WifiSelectDialog" className="Modal">
-                  <h3 className="ModalTitle">WiFi Network Type</h3>
-                  <div className="ModalContent">Please select the WiFi network type for this connection.</div>
-                  <div className="ModalActions">
-                    <button onClick={this.handleCloseModalAP}>Access Point</button>
-                    <button onClick={this.handleCloseModalClient}>Client</button>
-                  </div>
+                <Button size="sm" variant="primary" type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"}>Save Changes</Button>{' '}
+                <Button size="sm" variant="secondary" onClick={this.resetForm}>Discard Changes</Button>{' '}
+                <Modal show={this.state.showModal}>
+                  <Modal.Header>
+                    <Modal.Title>WiFi Network Type</Modal.Title>
+                  </Modal.Header>
+
+                  <Modal.Body>
+                    <p>Please select the WiFi network type for this connection.</p>
+                  </Modal.Body>
+
+                  <Modal.Footer>
+                    <Button variant="secondary" onClick={this.handleCloseModalAP}>Access Point</Button>
+                    <Button variant="primary" onClick={this.handleCloseModalClient}>Client</Button>
+                  </Modal.Footer>
                 </Modal>
-            </form>
+            </Form>
         </div>
       );
     }

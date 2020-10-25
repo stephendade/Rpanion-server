@@ -1,4 +1,6 @@
 import React from 'react';
+import Button from 'react-bootstrap/Button';
+import Table from  'react-bootstrap/Table';
 
 import basePage from './basePage.js';
 
@@ -112,28 +114,28 @@ class LoggerPage extends basePage {
             <p>Disk Space: {this.state.diskSpaceStatus}</p>
             <h3>Telemetry Logs</h3>
             <label><input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />Enable Telemetry Logging</label>
-            <button onClick={this.startLog}>Start new telemetry log</button>
-            <button id='tlog' onClick={this.clearLogs}>Clear inactive logs</button>
-            <table id='Tlogfile'>
+            <Button size="sm" onClick={this.startLog}>Start new telemetry log</Button>{' '}
+            <Button size="sm" id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>{' '}
+            <Table id='Tlogfile' striped bordered hover size="sm">
                 <thead>
                     <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
                 </thead>
                 <tbody>
                     {this.renderLogTableData(this.state.TlogFiles)}
                 </tbody>
-            </table>
+            </Table>
             <br />
             <h3>Bin Logs</h3>
             <p>This requires the LOG_BACKEND_TYPE parameter in ArduPilot set to "Mavlink".</p>
-            <button id='binlog' onClick={this.clearLogs}>Clear inactive logs</button>
-            <table id='Binlogfile'>
+            <Button size="sm" id='binlog' onClick={this.clearLogs}>Clear inactive logs</Button>{' '}
+            <Table id='Binlogfile' striped bordered hover size="sm">
                 <thead>
                     <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
                 </thead>
                 <tbody>
                     {this.renderLogTableData(this.state.BinlogFiles)}
                 </tbody>
-            </table>
+            </Table>
         </div>
         );
     }

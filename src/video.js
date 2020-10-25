@@ -1,6 +1,8 @@
 import React from 'react';
 import Select from 'react-select';
-import Collapsible from 'react-collapsible';
+import Button from 'react-bootstrap/Button';
+import Accordion from 'react-bootstrap/Accordion';
+import Card from  'react-bootstrap/Card';
 
 import basePage from './basePage.js';
 
@@ -84,25 +86,47 @@ class VideoPage extends basePage {
             Resolution: <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
             Rotation: <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
             Average Bitrate: <input type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
-            <button onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</button>
-            <div nameclass="streamdetails" style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>
-                <br/><h4>Connection strings for video stream</h4>
-                <Collapsible transitionTime={200} trigger="RTSP Streaming Addresses (for VLC, etc)">
+            <Button size="sm" onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</Button>{' '}
+            <br/>
+            <h4 style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>Connection strings for video stream</h4>
+            <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>
+              <Card>
+                <Accordion.Toggle as={Card.Header} eventKey="0">
+                  + RTSP Streaming Addresses (for VLC, etc)
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="0">
+                  <Card.Body>
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>{item}</p>
                     ))}
-                </Collapsible>
-                <Collapsible transitionTime={200} trigger="GStreamer Connection Strings">
+                  </Card.Body>
+                </Accordion.Collapse>
+              </Card>
+              <Card>
+                <Accordion.Toggle as={Card.Header} eventKey="1">
+                  + GStreamer Connection Strings
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="1">
+                  <Card.Body>
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</p>
                     ))}
-                </Collapsible>
-                <Collapsible transitionTime={200} trigger="Mission Planner Connection Strings">
+                  </Card.Body>
+                </Accordion.Collapse>
+              </Card>
+              <Card>
+                <Accordion.Toggle as={Card.Header} eventKey="2">
+                  + Mission Planner Connection Strings
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="2">
+                  <Card.Body>
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
                     ))}
-                </Collapsible>
-            </div>
+                  </Card.Body>
+                </Accordion.Collapse>
+              </Card>
+            </Accordion>
         </div>
         );
     }

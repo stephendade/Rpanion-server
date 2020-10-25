@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import { Helmet } from 'react-helmet'
-import { css } from '@emotion/core';
-import ClipLoader from 'react-spinners/ClipLoader';
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
-import Modal from 'react-modal';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import Spinner from  'react-bootstrap/Spinner';
 
 class basePage extends Component {
     constructor(props, useSocketIO=false) {
@@ -60,40 +60,46 @@ class basePage extends Component {
                 <title>{this.renderTitle()}</title>
             </Helmet>
             <h1>{this.renderTitle()}</h1>
-                <div className='sweet-loading' style={{"textAlign": "center"}}>
-                    <ClipLoader
-                        sizeUnit={"px"}
-                        size={35}
-                        color={'#36D7B7'}
-                        loading={loading}
-                    />
-                </div>
+                <Spinner animation="border" role="status" style={{display: (loading) ? "block" : "none"}}>
+                  <span className="sr-only" size={35}>Loading...</span>
+                </Spinner>
+
                 <div className='sweet-waiting' style={{display: (waiting) ? "block" : "none", "textAlign": "center", "position": "fixed", "width": "100%", "height": "100%", "top": "0", "left": "0", "right": "0", "bottom": "0", "zIndex": "9", "backgroundColor": "rgba(65,117,5,0.5)"}}>
-                    <ClipLoader
-                        sizeUnit={"px"}
-                        css={css`position: absolute; top: 50%; -ms-transform: translateY(-50%); transform: translateY(-50%);`}
-                        size={60}
-                        color={'#417505'}
-                        loading={waiting}
-                    />
-                    <h2 style={{"position": "absolute", "top": "65%", "left": "40%", "msTransform": "translateY(-50%)", "transform": "translateY(-50%)"}}>Submitting Changes</h2>
+                  <Spinner style={{"position": "absolute", "top": "45%", "left": "50%"}} animation="border" role="status">
+                    <span className="sr-only" size={60}>Submitting Changes...</span>
+                  </Spinner>
+                  <h2 style={{"position": "absolute", "top": "65%", "left": "40%", "msTransform": "translateY(-50%)", "transform": "translateY(-50%)"}}>Submitting Changes</h2>
                 </div>
+
                 <div className='pagedetails' style={{ display: (loading) ? "none" : "block"}}>
                     {this.renderContent()}
                 </div>
-                <Modal appElement={document.getElementById('root')} isOpen={error !== null} contentLabel="ErrorDialog" className="Modal">
-                  <h3 className="ModalTitle">Error</h3>
-                  <div className="ModalContent">{error}</div>
-                  <div className="ModalActions">
-                    <button onClick={this.handleCloseError}>OK</button>
-                  </div>
+                <Modal show={error !== null} onHide={this.handleCloseError}>
+                  <Modal.Header closeButton>
+                    <Modal.Title>Error</Modal.Title>
+                  </Modal.Header>
+
+                  <Modal.Body>
+                    <p>{error}</p>
+                  </Modal.Body>
+
+                  <Modal.Footer>
+                    <Button variant="primary" onClick={this.handleCloseError}>OK</Button>
+                  </Modal.Footer>
                 </Modal>
-                <Modal appElement={document.getElementById('root')} isOpen={infoMessage !== null} contentLabel="InfoDialog" className="Modal">
-                  <h3 className="ModalTitle">Information</h3>
-                  <div className="ModalContent">{infoMessage}</div>
-                  <div className="ModalActions">
-                    <button onClick={this.handleCloseInformation}>OK</button>
-                  </div>
+
+                <Modal show={infoMessage !== null} onHide={this.handleCloseInformation}>
+                  <Modal.Header closeButton>
+                    <Modal.Title>Information</Modal.Title>
+                  </Modal.Header>
+
+                  <Modal.Body>
+                    <p>{infoMessage}</p>
+                  </Modal.Body>
+
+                  <Modal.Footer>
+                    <Button variant="primary" onClick={this.handleCloseInformation}>OK</Button>
+                  </Modal.Footer>
                 </Modal>
                 <div>
                   {usedSocketIO ? (
