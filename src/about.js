@@ -1,5 +1,6 @@
 import React from 'react'
-import Modal from 'react-modal';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
 
 import basePage from './basePage.js'
 
@@ -75,16 +76,23 @@ class AboutPage extends basePage {
         <p>Node.js version: {this.state.Nodejsversion}</p>
         <p>Rpanion-server version: {this.state.rpanionversion}</p>
         <h2>Controls</h2>
-        <button onClick={this.confirmShutdown}>Shutdown Companion Computer</button>
+        <Button size="sm" onClick={this.confirmShutdown}>Shutdown Companion Computer</Button>
 
-        <Modal isOpen={this.state.showModal} appElement={document.getElementById('root')} contentLabel="ShutdownConfirm" className="Modal">
-          <h3 className="ModalTitle">Confirm</h3>
-          <div className="ModalContent">Are you sure you want to shutdown the Companion Computer?</div>
-          <div className="ModalActions">
-            <button onClick={this.handleShutdown}>Yes</button>
-            <button onClick={this.handleCloseModal}>No</button>
-          </div>
+        <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <p>Are you sure you want to shutdown the Companion Computer?</p>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="secondary" onClick={this.handleShutdown}>Yes</Button>
+            <Button variant="primary" onClick={this.handleCloseModal}>No</Button>
+          </Modal.Footer>
         </Modal>
+
       </div>
     )
   }

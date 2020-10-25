@@ -1,5 +1,7 @@
 import React from 'react';
 import Select from 'react-select';
+import Button from 'react-bootstrap/Button';
+import Table from  'react-bootstrap/Table';
 
 import basePage from './basePage.js';
 
@@ -131,7 +133,7 @@ class FCPage extends basePage {
             return (
                 <tr key={index}>
                     <td>{output.IPPort}</td>
-                    <td><button id={index} onClick={() => this.removeUdpOutput(output)}>Delete</button></td>
+                    <td><Button size="sm" id={index} onClick={() => this.removeUdpOutput(output)}>Delete</Button></td>
                 </tr>
             )
         });
@@ -145,9 +147,9 @@ class FCPage extends basePage {
               Baud Rate: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected}/>
               MAVLink Version: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected}/>
               MAVLink Dialect: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavDialectChange} options={this.state.mavDialects} value={this.state.mavDialectSelected}/>
-              <button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</button>
+              <Button size="sm" disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
               <h2>UDP Outputs</h2>
-                <table id='UDPOut'>
+                <Table id='UDPOut' striped bordered hover size="sm">
                     <thead>
                         <tr><th>Destination IP:Port</th><th>Action</th></tr>
                     </thead>
@@ -155,8 +157,8 @@ class FCPage extends basePage {
                         <tr key={this.state.UDPoutputs.length}><td>127.0.0.1:14540</td><td><i>Required for Rpanion-server</i></td></tr>
                         {this.renderUDPTableData(this.state.UDPoutputs)}
                     </tbody>
-                </table>
-                  <label>Add new output<input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><button onClick={this.addUdpOutput}>Add</button></label>
+                </Table>
+                  <label>Add new output<input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><Button size="sm" onClick={this.addUdpOutput}>Add</Button></label>
               <h2>Status</h2>
                   <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
                   <p>Connection Status: {this.state.FCStatus.conStatus}</p>
@@ -165,7 +167,8 @@ class FCPage extends basePage {
                   <label>Console Output:
                     <textarea readOnly rows = "5" cols = "100" value={this.state.FCStatus.statusText}></textarea>
                   </label>
-                  <button disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</button>
+                  <br />
+                  <Button size="sm" disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</Button>
             </div>
           );
     }
