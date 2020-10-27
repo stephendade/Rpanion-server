@@ -13,6 +13,9 @@ class NetworkConfig extends basePage {
       loading: true,
       showModal: false,
       showModalResult: "",
+      showModalDelete: false,
+      showModalNewNetworkName: false,
+      newNetworkName: '',
       error: null,
       showPW: false,
       infoMessage: null,
@@ -276,52 +279,15 @@ class NetworkConfig extends basePage {
 
     deleteConnection = (event) =>{
         //delete network button clicked
-        if (window.confirm('Confirm you wish to delete this network')) {
-            //if it's a new connection, go back to old connection
-            if (this.state.netConnectionFilteredSelected.value === "new") {
-                //this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
-                this.handleAdapterChange(this.state.netDeviceSelected, {action: "select-option"})
-            }
-            else {
-                this.setState({ waiting: true }, () => {
-                    fetch('/api/networkdelete', {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            conName: this.state.netConnectionFilteredSelected.value,
-                        })
-                    }).then(response => response.json())
-                      .then(data => {
-                          if (data.error == null) {
-                              this.setState({waiting: false, infoMessage: "Network Deleted"});
-                          }
-                          else {
-                              this.setState({waiting: false, error: "Error deleting network: " + data.error});
-                          }
-                          //and refresh connections list
-                          this.handleStart();
-                      })
-                      .catch(error => {
-                            this.setState({waiting: false, error: "Error deleting network: " + error});
-                      });
-                  });
-            }
-        }
+        this.setState({ showModalDelete: true});
+
         event.preventDefault();
     };
 
     addConnection = (event) =>{
         //add new network button clicked
-        const enteredName = prompt('Please enter new connection name');
-        if (enteredName !== '' && enteredName !== null) {
-            this.setState({netConnectionFilteredSelected: {value: 'new', label: enteredName, type: this.state.netDeviceSelected.type, state: ""}});
-            // ask the user if this is a AP of client connection
-            // modal events take it from here
-            this.setState({ showModal: true });
-        }
+        this.setState({ newNetworkName: '' });
+        this.setState({ showModalNewNetworkName: true});
         event.preventDefault();
     };
 
@@ -452,6 +418,77 @@ class NetworkConfig extends basePage {
           curSettings: {mode: {value: "infrastructure"}, ipaddresstype: {value: "auto"}, band: {value: ""}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
     }
 
+    handleCloseModalDelete = (event) => {
+      // user does not want to delete network
+      this.setState({ showModalDelete: false});
+    }
+
+    handleDelete = (event) => {
+      // user DOES want to delete network
+      this.setState({ showModalDelete: false});
+        if (this.state.netConnectionFilteredSelected.value === "new") {
+            //this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
+            this.handleAdapterChange(this.state.netDeviceSelected, {action: "select-option"})
+        }
+        else {
+            this.setState({ waiting: true }, () => {
+                fetch('/api/networkdelete', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conName: this.state.netConnectionFilteredSelected.value,
+                    })
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.error == null) {
+                          this.setState({waiting: false, infoMessage: "Network Deleted"});
+                      }
+                      else {
+                          this.setState({waiting: false, error: "Error deleting network: " + data.error});
+                      }
+                      //and refresh connections list
+                      this.handleStart();
+                  })
+                  .catch(error => {
+                        this.setState({waiting: false, error: "Error deleting network: " + error});
+                  });
+              });
+        }
+    }
+
+    handleNewNetworkNameCancel = (event) => {
+      // user does not want to add a new network
+      this.setState({ showModalNewNetworkName: false});
+    }
+
+    handleCloseModalNewNetworkName = (event) => {
+      // user DOES want to add a new network
+      this.setState({ showModalNewNetworkName: false});
+      if (this.state.newNetworkName !== '' && this.state.newNetworkName !== null) {
+        this.setState({netConnectionFilteredSelected: {value: 'new', label: this.state.newNetworkName, type: this.state.netDeviceSelected.type, state: ""}});
+        // ask the user if this is a AP of client connection
+        // modal events take it from here
+        this.setState({ showModal: true });
+      }
+      else {
+      }
+    }
+
+    changeNetworkNameHandler = (event) => {
+      const value = event.target.value;
+      this.setState({ newNetworkName: value });
+
+    }
+
+    handleNewNetworkTypeCancel = (event) => {
+      // user does not want to add a new network
+      this.setState({ showModal: false});
+      this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
+    }
+
     renderContent() {
       return (
         <div>
@@ -524,8 +561,8 @@ class NetworkConfig extends basePage {
                 </div>
                 <Button size="sm" variant="primary" type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"}>Save Changes</Button>{' '}
                 <Button size="sm" variant="secondary" onClick={this.resetForm}>Discard Changes</Button>{' '}
-                <Modal show={this.state.showModal}>
-                  <Modal.Header>
+                <Modal show={this.state.showModal} onHide={this.handleNewNetworkTypeCancel}>
+                  <Modal.Header closeButton>
                     <Modal.Title>WiFi Network Type</Modal.Title>
                   </Modal.Header>
 
@@ -534,8 +571,40 @@ class NetworkConfig extends basePage {
                   </Modal.Body>
 
                   <Modal.Footer>
-                    <Button variant="secondary" onClick={this.handleCloseModalAP}>Access Point</Button>
+                    <Button variant="primary" onClick={this.handleCloseModalAP}>Access Point</Button>
                     <Button variant="primary" onClick={this.handleCloseModalClient}>Client</Button>
+                    <Button variant="secondary" onClick={this.handleNewNetworkTypeCancel}>Cancel</Button>
+                  </Modal.Footer>
+                </Modal>
+
+                <Modal show={this.state.showModalDelete} onHide={this.handleCloseModalDelete}>
+                  <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                  </Modal.Header>
+
+                  <Modal.Body>
+                    <p>Are you sure you want to Delete the '{this.state.netConnectionFilteredSelected === null ? "" : this.state.netConnectionFilteredSelected.label}' network?</p>
+                  </Modal.Body>
+
+                  <Modal.Footer>
+                    <Button variant="secondary" onClick={this.handleDelete}>Yes</Button>
+                    <Button variant="primary" onClick={this.handleCloseModalDelete}>No</Button>
+                  </Modal.Footer>
+                </Modal>
+
+                <Modal show={this.state.showModalNewNetworkName} onHide={this.handleNewNetworkNameCancel}>
+                  <Modal.Header closeButton>
+                    <Modal.Title>New Network</Modal.Title>
+                  </Modal.Header>
+
+                  <Modal.Body>
+                    <p>Enter the name of the new network:</p>
+                    <input name="newNetworkName" onChange={this.changeNetworkNameHandler} value={this.state.newNetworkName} type="text"/>
+                  </Modal.Body>
+
+                  <Modal.Footer>
+                    <Button variant="secondary" onClick={this.handleCloseModalNewNetworkName}>OK</Button>
+                    <Button variant="primary" onClick={this.handleNewNetworkNameCancel}>Cancel</Button>
                   </Modal.Footer>
                 </Modal>
             </Form>
