@@ -19,6 +19,7 @@ class NetworkConfig extends basePage {
       error: null,
       showPW: false,
       infoMessage: null,
+      wirelessEnabled: true,
       netDevice: [],
       netDeviceSelected: null,
       netConnection: [],
@@ -79,8 +80,9 @@ class NetworkConfig extends basePage {
         this.setState({loading: true});
         Promise.all([
             fetch(`/api/networkconnections`).then(response => response.json()).then(state => this.setState(state)),
+            fetch(`/api/wirelessstatus`).then(response => response.json()).then(state => this.setState(state)),
             fetch(`/api/networkadapters`).then(response => response.json()).then(state => {this.setState(state); this.setState({netDeviceSelected: state.netDevice[0]}); return state;})
-        ]).then(retState => {this.handleAdapterChange(retState[1].netDevice[0], {action: "select-option"}); this.loadDone()});
+        ]).then(retState => {this.handleAdapterChange(retState[2].netDevice[0], {action: "select-option"}); this.loadDone()});
       }
 
     handleAdapterChange = (value, action) => {
@@ -489,9 +491,33 @@ class NetworkConfig extends basePage {
       this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
     }
 
+    togglewirelessEnabled = (event) => {
+        const value = event.target.checked;
+        this.setState({ waiting: true }, () => {
+            fetch('/api/setwirelessstatus', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    status: value,
+                })
+            }).then(response => response.json())
+              .then(status => {
+                this.setState({waiting: false});
+                this.setState(status);
+              })
+              .catch(error => {
+                    this.setState({waiting: false, error: "Error toggling wireless: " + error});
+              });
+          });
+    }
+
     renderContent() {
       return (
         <div>
+            <input type="checkbox" checked={this.state.wirelessEnabled} onChange={this.togglewirelessEnabled}/>Wifi interfaces enabled<br />
             Adapters: <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected}/>
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
             <br />

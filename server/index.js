@@ -341,6 +341,44 @@ app.get('/api/networkadapters', (req, res) => {
     });
 });
 
+app.get('/api/wirelessstatus', (req, res) => {
+    networkManager.getWirelessStatus((err, status) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {wirelessEnabled: status};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {wirelessEnabled: true};
+            res.send(JSON.stringify(ret));
+            winston.error('Error in /api/wirelessstatus ', { message: err });
+        }
+    });
+});
+
+app.post('/api/setwirelessstatus', [check('status').isBoolean()], (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/setwirelessstatus ', { message: errors.array() });
+        return res.status(422).json({ errors: errors.array() });
+    }
+    //user wants to toggle wifi enabled/disabled
+    networkManager.setWirelessStatus(req.body.status, (err, status) => {
+        if(!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {wirelessEnabled: status};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {wirelessEnabled: status};
+            res.send(JSON.stringify(ret));
+            winston.error('Error in /api/setwirelessstatus ', { message: err });
+        }
+    });
+});
+
 app.get('/api/networkconnections', (req, res) => {
     networkManager.getConnections((err, netConnectionList) => {
         if (!err) {
