@@ -17,6 +17,7 @@ addons:
       - gstreamer1.0-plugins-ugly
       - gstreamer1.0-plugins-base-apps
       - python3-gst-1.0
+      - network-manager
 
 install:
   - pip install --upgrade pip
@@ -33,6 +34,7 @@ before_script:
   - make
   - sudo make install
   - cd ../../
+  - sudo /etc/init.d/network-manager start
 
 script:
   - npm run testback
