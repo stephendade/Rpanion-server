@@ -24,6 +24,44 @@ function getAdapters(callback) {
     });
 }
 
+function getWirelessStatus(callback) {
+    //get the "flight mode" status of the wireless (wifi) adapters
+    exec('nmcli -t radio wifi', (error, stdout, stderr) => {
+        if (stderr) {
+            console.error(`exec error: ${error}`);
+            winston.error('Error in getWirelessStatus() ', { message: stderr });
+            return callback(stderr);
+        }
+        else {
+            console.log("Wifi is " + stdout);
+            if (stdout == "enabled\n") {
+                return callback(null, true);
+            }
+            else {
+                return callback(null, false);
+            }
+        }
+    });
+}
+
+function setWirelessStatus(status, callback) {
+    exec('nmcli radio wifi ' + ((status === true) ? "on" : "off") + ' && nmcli -t radio wifi', (error, stdout, stderr) => {
+        if (stderr) {
+            console.error(`exec error: ${error}`);
+            winston.error('Error in setWirelessStatus() ', { message: stderr });
+            return callback(stderr);
+        }
+        else {
+            if (stdout == "enabled\n") {
+                return callback(null, true);
+            }
+            else {
+                return callback(null, false);
+            }
+        }
+    });
+}
+
 function activateConnection(conName, callback) {
     //activate the connection (by id)
     //assumed that conName is a valid UUID
@@ -449,4 +487,6 @@ module.exports = {getAdapters,
                   deleteConnection,
                   editConnection,
                   addConnection,
-                  deactivateConnection};
+                  deactivateConnection,
+                  getWirelessStatus,
+                  setWirelessStatus};
