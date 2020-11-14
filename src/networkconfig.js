@@ -507,6 +507,8 @@ class NetworkConfig extends basePage {
               .then(status => {
                 this.setState({waiting: false});
                 this.setState(status);
+                //and refresh connections list
+                this.handleStart();
               })
               .catch(error => {
                     this.setState({waiting: false, error: "Error toggling wireless: " + error});
