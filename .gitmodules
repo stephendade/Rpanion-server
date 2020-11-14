@@ -3,4 +3,4 @@
 	url = https://github.com/thaytan/gst-rpicamsrc.git
 [submodule "modules/mavlink-router"]
 	path = modules/mavlink-router
-	url = https://github.com/intel/mavlink-router.git
+	url = https://github.com/mavlink-router/mavlink-router
