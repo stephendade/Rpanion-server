@@ -16,7 +16,7 @@ function getAdapters(callback) {
                     if (device.length == 3 && device[0] != "lo") {
                         console.log("Adding Network device " + device[0]);
                         winston.info('getAdapters() adding ' + device);
-                        netStatusList.push({value: device[0], label: device[0] + " (" + device[1] + ")", type: device[1], state: device[2]});
+                        netStatusList.push({value: device[0], label: device[0] + " (" + device[1] + ")", type: device[1], state: device[2], isDisabled: (device[2] === "unavailable" && device[1] === "wifi") ? true : false});
                     }
             });
         }
