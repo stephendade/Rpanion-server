@@ -39,7 +39,8 @@ for device in devices:
         caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264'})
         name = "Raspberry Pi Camera (V2)"
         path = "rpicam"
-
+    elif "bcm2835-isp" in name:
+        continue
     else:
         #Get better name for camera
         if "UVC Camera (" in name:
