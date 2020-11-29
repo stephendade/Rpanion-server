@@ -46,7 +46,7 @@ describe('Logging Functions', function () {
 
     if (parseInt(process.versions.node) >= 12) {
       // log a byte
-      assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
       assert.ok(fs.existsSync(Lgr.activeFileTlog))
     }
   })
@@ -58,7 +58,7 @@ describe('Logging Functions', function () {
 
     if (parseInt(process.versions.node) > 12) {
       // log a byte
-      assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
     }
 
     Lgr.stoptlog()
@@ -88,7 +88,7 @@ describe('Logging Functions', function () {
       })
     } else {
       // log a byte
-      assert.equal(Lgr.writetlog({ msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
 
       Lgr.getLogs(function (err, tlogs, binlogs, activeLogging) {
         assert.equal(tlogs.length, 1)

@@ -138,7 +138,7 @@ class flightLogger {
       // use this instead of jspack.Pack('>Q', [microSeconds]);
       timebits.writeBigInt64BE(microSeconds)
 
-      var toWrite = Buffer.concat([timebits, msg.msgbuf])
+      var toWrite = Buffer.concat([timebits, msg._msgbuf])
       fs.appendFileSync(this.activeFileTlog, toWrite, 'binary')
       return true
     } catch (err) {

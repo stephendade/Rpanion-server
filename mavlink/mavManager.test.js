@@ -161,7 +161,7 @@ describe('MAVLink Functions', function () {
     // how fast can we process packets and send out over udp?
     var m = new mavManager('common', 2, '127.0.0.1', 15000)
 
-    // time how long 255 packets takes
+    // time how long 255 HB packets takes
     var starttime = Date.now().valueOf()
     for (var i = 0; i < 255; i++) {
       var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, i, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])

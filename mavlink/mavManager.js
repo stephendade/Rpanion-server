@@ -83,7 +83,7 @@ class mavManager {
 
     // what to do when we get a message
     this.mav.on('message', (msg) => {
-      if (msg.id === -1) {
+      if (msg._id === -1) {
         // bad message - can't process here any further
         return
       }
@@ -91,12 +91,12 @@ class mavManager {
       // set the target system/comp ID if needed
       // ensure it's NOT a GCS, as mavlink-router will sometimes route
       // messages from connected GCS's
-      if (this.targetSystem === null && msg.name === 'HEARTBEAT' && msg.type !== 6) {
-        console.log('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
-        winston.info('Vehicle is S/C: ' + msg.header.srcSystem + '/' + msg.header.srcComponent)
-        this.targetSystem = msg.header.srcSystem
-        this.targetComponent = msg.header.srcComponent
-      } else if (this.targetSystem !== msg.header.srcSystem) {
+      if (this.targetSystem === null && msg._name === 'HEARTBEAT' && msg.type !== 6) {
+        console.log('Vehicle is S/C: ' + msg._header.srcSystem + '/' + msg._header.srcComponent)
+        winston.info('Vehicle is S/C: ' + msg._header.srcSystem + '/' + msg._header.srcComponent)
+        this.targetSystem = msg._header.srcSystem
+        this.targetComponent = msg._header.srcComponent
+      } else if (this.targetSystem !== msg._header.srcSystem) {
         // don't use packets from other systems or components in Rpanion-server
         return
       }
@@ -106,7 +106,7 @@ class mavManager {
 
       this.statusNumRxPackets += 1
       this.timeofLastPacket = (Date.now().valueOf())
-      if (msg.name === 'HEARTBEAT') {
+      if (msg._name === 'HEARTBEAT') {
         // System status
         this.statusFWName = msg.autopilot
         this.statusVehType = msg.type
@@ -123,7 +123,7 @@ class mavManager {
           this.statusArmed = 0
           this.eventEmitter.emit('disarmed')
         }
-      } else if (msg.name === 'STATUSTEXT') {
+      } else if (msg._name === 'STATUSTEXT') {
         // Remove whitespace
         this.statusText += msg.text.trim().replace(/[^ -~]+/g, '') + '\n'
       }
