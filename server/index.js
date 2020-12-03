@@ -7,6 +7,7 @@ const aboutPage = require('./aboutInfo');
 const videoStream = require('./videostream');
 const fcManagerClass = require('./flightController');
 const flightLogger = require('./flightLogger.js');
+const networkClients = require('./networkClients.js');
 
 var winston = require('./winstonconfig')(module);
 
@@ -100,6 +101,15 @@ app.use(bodyParser.json());
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, '..', '/build')));
+
+//Serve the AP clients info
+app.get('/api/networkclients', (req, res) => {
+    networkClients.getClients((err, apname, apclients) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify({error: err,  apname: apname, apclients: apclients}));
+    });
+
+});
 
 // Serve the logfiles
 app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')));
