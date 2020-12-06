@@ -49,8 +49,8 @@ function getClients (callback) {
                     allclients.push({ ip: ip, mac: mac, hostname: hostname })
                   }
                 }
+                return callback(null, connection, allclients)
               })
-              return callback(null, connection, allclients)
             }
           })
         }
