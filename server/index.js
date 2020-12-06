@@ -104,9 +104,9 @@ app.use(express.static(path.join(__dirname, '..', '/build')));
 
 //Serve the AP clients info
 app.get('/api/networkclients', (req, res) => {
-    networkClients.getClients((err, apname, apclients) => {
+    networkClients.getClients((err, apnamev, apclientsv) => {
         res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify({error: err,  apname: apname, apclients: apclients}));
+        res.send(JSON.stringify({error: err,  apname: apnamev, apclients: apclientsv}));
     });
 
 });
