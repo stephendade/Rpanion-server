@@ -11,6 +11,7 @@ function getClients (callback) {
       return callback(stderr, null, null)
     } else {
       var allConns = stdout.split('\n')
+      var hasRet = false
       // stdout.split("\n").forEach(function (item) {
       for (var i = 0, len = allConns.length; i < len; i++) {
         var item = allConns[i]
@@ -22,6 +23,7 @@ function getClients (callback) {
             if (stderr) {
               console.error(`exec error: ${error}`)
               winston.error('Error in getClients() inter2 ', { message: stderr })
+              hasRet = true
               return callback(stderr, null, null)
             }
             var modeline = stdout.split('\n')[0].split(':')[1]
@@ -34,6 +36,7 @@ function getClients (callback) {
                 if (stderr) {
                   console.error(`exec error: ${error}`)
                   winston.error('Error in getClients() inter ', { message: stderr })
+                  hasRet = true
                   return callback(stderr, null, null)
                 } else {
                   var allleases = stdout.split('\n')
@@ -49,6 +52,7 @@ function getClients (callback) {
                     allclients.push({ ip: ip, mac: mac, hostname: hostname })
                   }
                 }
+                hasRet = true
                 return callback(null, connection, allclients)
               })
             }
@@ -56,7 +60,9 @@ function getClients (callback) {
         }
       }
       // no AP
-      return callback(null, '', null)
+      if (!hasRet) {
+        return callback(null, '', null)
+      }
     }
   })
 }
