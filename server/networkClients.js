@@ -24,8 +24,8 @@ function getClients (callback) {
               winston.error('Error in getClients() inter2 ', { message: stderr })
               return callback(stderr, null, null)
             }
-            var mode = stdout.split('\n').split(':')[1]
-            if (mode === 'ap') {
+            var modeline = stdout.split('\n')[0].split(':')[1]
+            if (modeline === 'ap') {
               // Stored in sudo cat /var/lib/NetworkManager/dnsmasq-wlan0.leases
               // 1606808691 34:7d:f6:65:b1:1b 10.0.2.117 l5411 01:34:7d:f6:65:b1:1b
               // we have an active AP
