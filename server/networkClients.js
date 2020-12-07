@@ -19,7 +19,7 @@ function getClients (callback) {
         if (connection[2] === '802-11-wireless' && (connection[3] !== '' && connection[3] !== '--')) {
           // get connection details
           try {
-            var output = execSync('nmcli -s -t -f 802-11-wireless.mode connection show ' + connection[1])
+            var output = execSync('nmcli -s -t -f 802-11-wireless.mode,802-11-wireless.ssid connection show ' + connection[1])
             var modeline = output.toString().split('\n')[0].split(':')[1]
             if (modeline === 'ap') {
               // Stored in sudo cat /var/lib/NetworkManager/dnsmasq-wlan0.leases
@@ -29,17 +29,19 @@ function getClients (callback) {
               var out = execSync('sudo cat /var/lib/NetworkManager/dnsmasq-' + device + '.leases')
               var allleases = out.toString().split('\n')
               for (var j = 0, lenn = allleases.length; j < lenn; j++) {
-                var details = allleases[j].split(' ')
-                if (details.length !== 5) {
-                  winston.error('Bad lease ', { message: details })
-                  return callback('Bad lease', connection, [])
+                if (allleases[j] !== '') {
+                  var details = allleases[j].split(' ')
+                  if (details.length !== 5) {
+                    winston.error('Bad lease ', { message: details })
+                    return callback('Bad lease', connection, [])
+                  }
+                  var ip = details[2]
+                  var mac = details[1]
+                  var hostname = details[3]
+                  allclients.push({ ip: ip, mac: mac, hostname: hostname })
                 }
-                var ip = details[2]
-                var mac = details[1]
-                var hostname = details[3]
-                allclients.push({ ip: ip, mac: mac, hostname: hostname })
               }
-              return callback(null, connection, allclients)
+              return callback(null, device, allclients)
             }
           } catch (e) {
             winston.error('Error in getClients() inter2 ', { message: e })
