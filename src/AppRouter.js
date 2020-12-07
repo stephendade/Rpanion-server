@@ -8,6 +8,7 @@ import NetworkConfig from './networkconfig.js';
 import Video from './video.js';
 import FCConfig from './flightcontroller.js';
 import LogBrowser from './logBrowser.js'
+import NetworkClients from './networkClients.js'
 
 function AppRouter() {
   return (
@@ -19,6 +20,7 @@ function AppRouter() {
                     <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/apclients">Access Point Clients</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
                 </div>
@@ -33,6 +35,7 @@ function AppRouter() {
                 <Route exact path="/about" component={About} />
                 <Route exact path="/video" component={Video} />
                 <Route exact path="/flightlogs" component={LogBrowser} />
+                <Route exact path="/apclients" component={NetworkClients} />
                 <Route component={NoMatch} />
             </Switch>
           </div>
