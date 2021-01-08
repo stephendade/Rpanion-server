@@ -22,6 +22,9 @@ class VideoPage extends basePage {
             rotations: [{label:"0°", value:0}, {label:"90°", value:90}, {label:"180°", value:180}, {label:"270°", value:270}],
             rotSelected: {label:"0°", value:0},
             bitrate: 1000,
+            UDPChecked: false,
+            useUDPIP: "127.0.0.1",
+            useUDPPort: 5600,
             loading: true,
             error: null,
             infoMessage: null
@@ -53,6 +56,21 @@ class VideoPage extends basePage {
         this.setState({bitrate: event.target.value});
     }
 
+    handleUseUDPChange = (event) => {
+        //bitrate spinner new value
+        this.setState({UDPChecked: event.target.checked});
+    }
+
+    handleUDPIPChange = (event) => {
+        //bitrate spinner new value
+        this.setState({useUDPIP: event.target.value});
+    }
+
+    handleUDPPortChange = (event) => {
+        //bitrate spinner new value
+        this.setState({useUDPPort: event.target.value});
+    }
+
     handleStreaming = (event) => {
         //user clicked start/stop streaming
         this.setState({ waiting: true }, () => {
@@ -69,7 +87,10 @@ class VideoPage extends basePage {
                     width: this.state.vidResSelected.width,
                     format: this.state.vidResSelected.format,
                     rotation: this.state.rotSelected.value,
-                    bitrate: this.state.bitrate
+                    bitrate: this.state.bitrate,
+                    useUDP: this.state.UDPChecked,
+                    useUDPIP: this.state.useUDPIP,
+                    useUDPPort: this.state.useUDPPort
                  })
             }).then(response => response.json()).then(state => {this.setState(state); this.setState({waiting: false})});
         });
@@ -86,10 +107,13 @@ class VideoPage extends basePage {
             Resolution: <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
             Rotation: <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
             Average Bitrate: <input type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
+            <input type="checkbox" checked={this.state.UDPChecked} disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange}/>Use UDP Stream instead of RTSP Server (Used for QGroundControl)<br />
+            <label><input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange}/>Destination IP Address</label><br />
+            <label><input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange}/>Destination Port</label><br />
             <Button size="sm" onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</Button>{' '}
             <br/>
             <h4 style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>Connection strings for video stream</h4>
-            <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>
+            <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !this.state.UDPChecked) ? "block" : "none"}}>
               <Card>
                 <Accordion.Toggle as={Card.Header} eventKey="0">
                   + RTSP Streaming Addresses (for VLC, etc)
@@ -123,6 +147,29 @@ class VideoPage extends basePage {
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
                     ))}
+                  </Card.Body>
+                </Accordion.Collapse>
+              </Card>
+            </Accordion>
+            <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && this.state.UDPChecked) ? "block" : "none"}}>
+              <Card>
+                <Accordion.Toggle as={Card.Header} eventKey="0">
+                  + QGroundControl
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="0">
+                  <Card.Body>
+                        <p style={{fontFamily: "monospace"}}>Video Source: UDP h.264 Video Stream</p>
+                        <p style={{fontFamily: "monospace"}}>Port: {this.state.useUDPPort}</p>
+                  </Card.Body>
+                </Accordion.Collapse>
+              </Card>
+              <Card>
+                <Accordion.Toggle as={Card.Header} eventKey="1">
+                  + GStreamer
+                </Accordion.Toggle>
+                <Accordion.Collapse eventKey="1">
+                  <Card.Body>
+                        <p style={{fontFamily: "monospace"}}>gst-launch-1.0 udpsrc port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false</p>
                   </Card.Body>
                 </Accordion.Collapse>
               </Card>
