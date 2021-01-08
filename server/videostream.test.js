@@ -28,13 +28,16 @@ describe('Video Functions', function () {
     var vManager = new videoStream(settings)
 
     vManager.populateAddresses()
-    vManager.getVideoDevices(function (err, devices, active, seldevice, selRes, selRot, selbitrate) {
+    vManager.getVideoDevices(function (err, devices, active, seldevice, selRes, selRot, selbitrate, SeluseUDP, SeluseUDPIP, SeluseUDPPort) {
       assert.equal(err, null)
       assert.equal(active, false)
       assert.equal(seldevice, null)
       assert.equal(selRes, null)
       assert.equal(selRot, null)
       assert.equal(selbitrate, null)
+      assert.equal(SeluseUDP, false)
+      assert.equal(SeluseUDPIP, '127.0.0.1')
+      assert.equal(SeluseUDPPort, 5400)
       done()
     })
   })

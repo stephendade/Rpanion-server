@@ -19,11 +19,12 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
-      this.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate) => {
+      this.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selUDP, selUDPIP, selUDPPort) => {
         if (!err) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
-            this.savedDevice.rotation, this.savedDevice.bitrate,
+            this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.useUDP,
+            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort,
             (err, status, addresses) => {
               if (err) {
                 // failed setup, reset settings
@@ -61,7 +62,7 @@ class videoStream {
         this.devices = JSON.parse(stdout)
         // and return current settings
         if (!this.active) {
-          return callback(null, this.devices, this.active, null)
+          return callback(null, this.devices, this.active, null, null, null, null, false, '127.0.0.1', 5400)
         } else {
           // format saved settings
           var seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
@@ -70,17 +71,17 @@ class videoStream {
             console.error('Bad video settings. Resetting')
             winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null)
+            return callback(null, this.devices, this.active, null, null, null, null, false, '127.0.0.1', 5400)
           }
           var selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString())
           if (seldevice.length === 1 && selRes.length === 1) {
-            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate)
+            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort)
           } else {
             // bad settings
             console.error('Bad video settings. Resetting')
             winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null)
+            return callback(null, this.devices, this.active, null, null, null, null, false, '127.0.0.1', 5400)
           }
         }
       }
@@ -120,7 +121,7 @@ class videoStream {
     return iface
   }
 
-  startStopStreaming (active, device, height, width, format, rotation, bitrate, callback) {
+  startStopStreaming (active, device, height, width, format, rotation, bitrate, useUDP, useUDPIP, useUDPPort, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -149,7 +150,10 @@ class videoStream {
         width: width,
         format: format,
         bitrate: bitrate,
-        rotation: rotation
+        rotation: rotation,
+        useUDP: useUDP,
+        useUDPIP: useUDPIP,
+        useUDPPort: useUDPPort
       }
 
       console.log(format)
@@ -162,8 +166,16 @@ class videoStream {
         '--width=' + width,
         '--format=' + format,
         '--bitrate=' + bitrate,
-        '--rotation=' + rotation
+        '--rotation=' + rotation,
+        '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString())
       ])
+
+      if (this.deviceStream === null) {
+        this.settings.setValue('videostream.active', false)
+        console.log('Error spawning rtsp-server.py')
+        winston.info('Error spawning rtsp-server.py')
+        return callback(null, this.active, this.deviceAddresses)
+      }
       this.settings.setValue('videostream.active', this.active)
       this.settings.setValue('videostream.savedDevice', this.savedDevice)
 
