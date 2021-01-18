@@ -9,6 +9,12 @@ cd ~/
 ## Change hostname
 sudo hostnamectl set-hostname rpanion --static
 
+## Enable serial port
+sudo perl -pe 's/console=serial0,115200//' -i /boot/firmware/cmdline.txt 
+
+echo "export PATH=$PATH:$HOME/.local/bin" >> ~/.bashrc
+
+
 ## Power switch config for Pi-Connect
 echo "" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
 echo "# Power switch" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
@@ -63,5 +69,5 @@ cd ../../
 ## Change user and home dir to ubuntu defaults, then reload service
 sudo perl -pe 's/pi/ubuntu/' -i /etc/systemd/system/rpanion.service
 sudo systemctl daemon-reload
-sudo systemctl status rpanion.service
+sudo systemctl restart rpanion.service
 
