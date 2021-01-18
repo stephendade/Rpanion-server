@@ -361,6 +361,9 @@ class FCDetails {
         if (fs.existsSync('/dev/serial0')) {
           this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
         }
+        else if (fs.existsSync('/dev/ttyS0')) {
+          this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
+        }
 
         // has the active device been disconnected?
         if (this.port) {
