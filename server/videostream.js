@@ -37,7 +37,9 @@ class videoStream {
           // failed setup, reset settings
           this.resetVideo()
         }
-      })
+      }).catch((error) => {
+      console.log(error)
+    });
     }
   }
 
