@@ -6,8 +6,11 @@
   "dependencies": {
     "app-root-path": "^3.0.0",
     "bootstrap": "^4.5.3",
+    "detect-rpi": "^1.4.0",
     "express-validator": "^6.5.0",
     "install": "^0.13.0",
+    "jspack": "file:local_modules/jspack",
+    "long": "file:local_modules/long",
     "microtime": "^3.0.0",
     "moment": "^2.29.1",
     "npm": "^6.14.8",
@@ -26,9 +29,7 @@
     "startbootstrap-simple-sidebar": "^5.1.1",
     "systeminformation": "^4.27.8",
     "underscore": "^1.11.0",
-    "winston": "^3.2.1",
-    "jspack": "file:local_modules/jspack",
-    "long": "file:local_modules/long"
+    "winston": "^3.2.1"
   },
   "scripts": {
     "start": "react-scripts start",
