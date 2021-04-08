@@ -25,6 +25,7 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/firmware/usercfg.txt >/dev/nu
 echo "" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
 echo "# Enable Camera" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
 echo "start_x=1" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
+echo "gpu_mem=128" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
 
 ## Packages
 sudo apt update
