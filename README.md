@@ -11,6 +11,8 @@ This is a node.js based server for companion computers used in Mavlink-based veh
 It presents a web-based interface (running on the companion computer), where system settings such as network,
 telemetry and video streaming can be configured from.
 
+On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and Ubuntu 20.04.1 LTS.
+
 ## Features
 
 Rpanion-server allows the user to configure:
@@ -23,19 +25,25 @@ Rpanion-server allows the user to configure:
 
 ### Automatic (Raspberry Pi)
 
-For the Raspberry Pi 2, 3 or 4, run the ``./deploy/RasPi2-3-4-deploy.sh`` on a fresh Raspian install
+For the Raspberry Pi 2, 3 or 4, run the ``./deploy/RasPi2-3-4-deploy.sh`` on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server. Note this does not configure an initial Wifi hotspot.
 
-This can be done directly by typing the following into a Raspian console:
+This can be done directly by typing the following into a Raspberry Pi OS console:
 
 ```
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi2-3-4-deploy.sh | bash -
 ```
 
-For the Raspberry Pi Zero W, run the ``./deploy/RasPiZero-deploy.sh`` on a fresh Raspian install
+If running Ubuntu 20.04.1 OS, use:
+
+```
+curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-ubuntu20-deploy.sh | bash -
+```
+
+For the Raspberry Pi Zero W, run the ``./deploy/RasPiZero-deploy.sh`` on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server. Note this does configure an initial Wifi hotspot.
 
-This can be done directly by typing the following into a Raspian console:
+This can be done directly by typing the following into a Raspberry Pi OS console:
 
 ```
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPiZero-deploy.sh | bash -
@@ -45,7 +53,7 @@ If not already configured, for an initial Wifi hotspot, run the ``./deploy/wifi_
 The hotspot has the SSID "rpanion" and password "rpanion123". The Pi's IP address will be 10.0.2.100,
 so the Rpanion-sever website will be available at http://10.0.2.100:3000.
 
-### Manual
+### Manual (Raspberry Pi OS)
 
 Rpanion-server requires a recent version of node.js. It can be installed
 via package manager:

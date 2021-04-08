@@ -22,10 +22,13 @@ echo "dtoverlay=gpio-shutdown" | sudo tee -a /boot/firmware/usercfg.txt >/dev/nu
 echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
 
 ## Camera
-echo "" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-echo "# Enable Camera" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-echo "start_x=1" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-echo "gpu_mem=128" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
+echo "" | sudo tee -a /boot/firmware/config.txt >/dev/null
+echo "# Enable Camera" | sudo tee -a /boot/firmware/config.txt >/dev/null
+echo "start_x=1" | sudo tee -a /boot/firmware/config.txt >/dev/null
+echo "gpu_mem=128" | sudo tee -a /boot/firmware/config.txt >/dev/null
+
+## Need to temp disable this
+sudo systemctl stop unattended-upgrades.service
 
 ## Packages
 sudo apt update
@@ -71,4 +74,9 @@ cd ../../
 sudo perl -pe 's/pi/ubuntu/' -i /etc/systemd/system/rpanion.service
 sudo systemctl daemon-reload
 sudo systemctl restart rpanion.service
+
+## And re-enable
+sudo systemctl start unattended-upgrades.service
+
+sudo reboot
 
