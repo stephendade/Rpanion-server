@@ -166,6 +166,7 @@ class videoStream {
       // rpi camera has different name under Ubuntu
       if (await this.isUbuntu() && device === 'rpicam') {
           device = '/dev/video0'
+          format = 'video/x-raw'
       }
 
       this.deviceStream = spawn('python3', ['./python/rtsp-server.py',
