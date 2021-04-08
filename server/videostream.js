@@ -1,6 +1,7 @@
 const { exec, spawn } = require('child_process')
 const os = require('os')
 var winston = require('./winstonconfig')(module)
+const si = require('systeminformation')
 
 class videoStream {
   constructor (settings) {
@@ -121,7 +122,7 @@ class videoStream {
     return iface
   }
 
-  startStopStreaming (active, device, height, width, format, rotation, bitrate, useUDP, useUDPIP, useUDPPort, callback) {
+  async startStopStreaming (active, device, height, width, format, rotation, bitrate, useUDP, useUDPIP, useUDPPort, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -159,6 +160,11 @@ class videoStream {
       console.log(format)
 
       this.populateAddresses()
+
+      // rpi camera has different name under Ubuntu
+      if (await this.isUbuntu() && device === 'rpicam') {
+          device = '/dev/video0'
+      }
 
       this.deviceStream = spawn('python3', ['./python/rtsp-server.py',
         '--video=' + device,
@@ -207,6 +213,21 @@ class videoStream {
       this.resetVideo()
     }
     return callback(null, this.active, this.deviceAddresses)
+  }
+
+  async isUbuntu() {
+    // Check if we are running Ubuntu
+    var ret;
+    var data = await si.osInfo()
+    if (data.distro.toString().includes('Ubuntu')) {
+      console.log("Video Running Ubuntu")
+      winston.info('Video Running Ubuntu')
+      ret = true
+    }
+    else {
+      ret = false
+    }
+    return ret
   }
 }
 
