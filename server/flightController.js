@@ -6,6 +6,7 @@ var appRoot = require('app-root-path')
 var winston = require('./winstonconfig')(module)
 const { spawn, spawnSync } = require('child_process')
 const si = require('systeminformation')
+const isPi = require('detect-rpi')
 
 const mavManager = require('../mavlink/mavManager.js')
 
@@ -359,12 +360,12 @@ class FCDetails {
           }
         }
         // for the Ras Pi's inbuilt UART
-        if (fs.existsSync('/dev/serial0')) {
+        if (fs.existsSync('/dev/serial0') && isPi()) {
           this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
         }
         // rpi uart has different name under Ubuntu
         var data = await si.osInfo()
-        if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0')) {
+        if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
            //console.log("Running Ubuntu")
            this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
         }
@@ -387,7 +388,9 @@ class FCDetails {
         }
       },
       err => console.error(err)
-    )
+    ).catch((error) => {
+      console.log(error)
+    });
   }
 
   startInterval () {
