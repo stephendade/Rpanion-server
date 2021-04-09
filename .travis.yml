@@ -20,7 +20,7 @@ addons:
       - network-manager
 
 install:
-  - pip3 install --upgrade pip
+  - pip3 install --upgrade pip --user
   - pip3 --version
   - pip3 install future netifaces pymavlink --user
   - npm install
