@@ -18,9 +18,11 @@ addons:
       - gstreamer1.0-plugins-base-apps
       - python3-gst-1.0
       - network-manager
-
+      
+before_install:
+  - python3 -m pip install --upgrade pip
+  
 install:
-  - pip3 install --upgrade pip --user
   - pip3 --version
   - pip3 install future netifaces pymavlink --user
   - npm install
