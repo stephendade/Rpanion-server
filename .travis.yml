@@ -8,8 +8,6 @@ cache: npm
 addons:
   apt:
     packages:
-      - python3-pip
-      - python3-setuptools
       - libgstreamer-plugins-base1.0*
       - libgstreamer1.0-dev
       - libgstrtspserver-1.0-dev
