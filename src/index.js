@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { BrowserRouter } from 'react-router-dom'
 
 import 'bootstrap/dist/css/bootstrap.css';
-import '../node_modules/startbootstrap-simple-sidebar/css/simple-sidebar.css';
+import 'startbootstrap-simple-sidebar/dist/css/styles.css';
 
 import AppRouter from './AppRouter';
 import * as serviceWorker from './serviceWorker';
