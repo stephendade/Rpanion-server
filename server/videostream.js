@@ -20,11 +20,11 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
-      this.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selUDP, selUDPIP, selUDPPort) => {
-        if (!err) {
+      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, selfps, selUDP, selUDPIP, selUDPPort) => {
+        if (!error) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
-            this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.useUDP,
+            this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP,
             this.savedDevice.useUDPIP, this.savedDevice.useUDPPort,
             (err, status, addresses) => {
               if (err) {
@@ -36,10 +36,9 @@ class videoStream {
         } else {
           // failed setup, reset settings
           this.resetVideo()
+          console.log(error)
         }
-      }).catch((error) => {
-      console.log(error)
-    });
+      })
     }
   }
 
@@ -57,7 +56,7 @@ class videoStream {
   getVideoDevices (callback) {
     // get all video device details
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
-      if (stderr) {
+      if (stderr && !stderr.includes("DeprecationWarning")) {
         console.error(`exec error: ${error}`)
         winston.error('Error in getVideoDevices() ', { message: stderr })
         return callback(stderr)
@@ -65,7 +64,7 @@ class videoStream {
         this.devices = JSON.parse(stdout)
         // and return current settings
         if (!this.active) {
-          return callback(null, this.devices, this.active, null, null, null, null, false, '127.0.0.1', 5400)
+          return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
         } else {
           // format saved settings
           var seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
@@ -74,17 +73,17 @@ class videoStream {
             console.error('Bad video settings. Resetting')
             winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null, null, null, null, false, '127.0.0.1', 5400)
+            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
           }
           var selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString())
           if (seldevice.length === 1 && selRes.length === 1) {
-            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort)
+            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort)
           } else {
             // bad settings
             console.error('Bad video settings. Resetting')
             winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null, null, null, null, false, '127.0.0.1', 5400)
+            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
           }
         }
       }
@@ -124,7 +123,7 @@ class videoStream {
     return iface
   }
 
-  async startStopStreaming (active, device, height, width, format, rotation, bitrate, useUDP, useUDPIP, useUDPPort, callback) {
+  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -153,6 +152,7 @@ class videoStream {
         width: width,
         format: format,
         bitrate: bitrate,
+        fps: fps,
         rotation: rotation,
         useUDP: useUDP,
         useUDPIP: useUDPIP,
@@ -165,8 +165,8 @@ class videoStream {
 
       // rpi camera has different name under Ubuntu
       if (await this.isUbuntu() && device === 'rpicam') {
-          device = '/dev/video0'
-          format = 'video/x-raw'
+        device = '/dev/video0'
+        format = 'video/x-raw'
       }
 
       this.deviceStream = spawn('python3', ['./python/rtsp-server.py',
@@ -176,6 +176,7 @@ class videoStream {
         '--format=' + format,
         '--bitrate=' + bitrate,
         '--rotation=' + rotation,
+        '--fps=' + fps,
         '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString())
       ])
 
@@ -218,16 +219,15 @@ class videoStream {
     return callback(null, this.active, this.deviceAddresses)
   }
 
-  async isUbuntu() {
+  async isUbuntu () {
     // Check if we are running Ubuntu
-    var ret;
+    var ret
     var data = await si.osInfo()
     if (data.distro.toString().includes('Ubuntu')) {
-      console.log("Video Running Ubuntu")
+      console.log('Video Running Ubuntu')
       winston.info('Video Running Ubuntu')
       ret = true
-    }
-    else {
+    } else {
       ret = false
     }
     return ret
