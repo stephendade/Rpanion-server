@@ -173,7 +173,7 @@ app.get('/api/softwareinfo', (req, res) => {
 
 app.get('/api/videodevices', (req, res) => {
     vManager.populateAddresses();
-    vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, SeluseUDP, SeluseUDPIP, SeluseUDPPort) => {
+    vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort) => {
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
             if (!active) {
@@ -181,6 +181,8 @@ app.get('/api/videodevices', (req, res) => {
                                           vidDeviceSelected: ((devices.length > 0) ? devices[0] : []),
                                           vidres: ((devices.length > 0) ? devices[0].caps : []),
                                           vidResSelected: ((devices.length > 0) ? devices[0].caps[0] : []),
+                                          //fpsSelected:  ((devices.length > 0) ? devices[0].caps[0].fpsmax : 1),
+                                          fpsSelected:  ((devices.length > 0) ? (devices[0].caps[0].fpsmax === 0 ? devices[0].caps[0].fps[0] : devices[0].caps[0].fpsmax) : 1),
                                           streamingStatus: active,
                                           streamAddresses: vManager.deviceAddresses,
                                           UDPChecked: SeluseUDP,
@@ -197,6 +199,7 @@ app.get('/api/videodevices', (req, res) => {
                                           streamAddresses: vManager.deviceAddresses,
                                           rotSelected: selRot,
                                           bitrate: selbitrate,
+                                          fpsSelected: selfps,
                                           UDPChecked: SeluseUDP,
                                           useUDP: SeluseUDPIP,
                                           useUDPPort: SeluseUDPPort,
@@ -420,6 +423,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
                                  check('useUDPIP').isIP(),
                                  check('bitrate').isInt({min: 100, max: 10000}),
                                  check('format').isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
+                                 check('fps').isInt({min: 1, max: 100}),
                                  check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -427,7 +431,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
         return res.status(422).json({ errors: errors.array() });
     }
     //user wants to start/stop video streaming
-    vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, (err, status, addresses) => {
+    vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, (err, status, addresses) => {
         if(!err) {
             res.setHeader('Content-Type', 'application/json');
             var ret = {streamingStatus: status, streamAddresses: addresses};
