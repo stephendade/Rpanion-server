@@ -7,6 +7,7 @@ Requires gst
 import sys
 import json
 import gi
+import math
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 
@@ -33,10 +34,10 @@ for device in devices:
     # Also change path to tell rtsp-server to use specific ras pi cam driver
     if "mmal service" in name:
         caps = []
-        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264'})
-        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264'})
-        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264'})
-        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264'})
+        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
+        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
+        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
+        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
         name = "Raspberry Pi Camera (V2)"
         path = "rpicam"
     elif "bcm2835-isp" in name:
@@ -53,16 +54,35 @@ for device in devices:
 
         capsGST = device.get_caps()
 
-        # enumerate available resolutions
+        # enumerate available resolutions and framerates
         for i in range(capsGST.get_size()):
             structure = capsGST.get_structure(i)
+            #print(structure.to_string())
             if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg'] :
                 width = structure.get_int('width').value
                 height = structure.get_int('height').value
+                #print(structure.get_list('framerate')[1].get_nth(0).fps_numerator)
+                #(_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
+                #single fpsmax, or list of available fps'
+                FPSMax = 0
+                fps = []
+                if structure.get_fraction('framerate')[0] == True:
+                    (_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
+                    #fpsmaxstruct = structure.get_fraction('framerate') #math.floor(int(fps_numerator)/int(fps_denominator))
+                    FPSMax = math.floor(int(fps_numerator)/int(fps_denominator))
+                else:
+                    framerates = structure.get_list('framerate').array
+                    fps = []
+                    for i in range(framerates.n_values):
+                        fp = str(framerates.get_nth(i)).split('/')
+                        if int(fp[1]) == 1:
+                            fps.append({'value': str(int(fp[0])/int(fp[1])), 'label': (str(int(fp[0])/int(fp[1])) + " fps")})
+                        #print(' - framerate = ', framerates.get_nth(i))
+                
                 #Only append if it's a unique value
                 if "{0}x{1}".format(width, height) not in getcapval(caps):
                     form = structure.get_name().split('/')[1]
-                    caps.append({'value': "{0}x{1}".format(width, height), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name()})
+                    caps.append({'value': "{0}x{1}".format(width, height), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name(), 'fpsmax': FPSMax, 'fps': fps})
 
     retDevices.append({'value': path, 'label': name, 'caps': caps})
 
