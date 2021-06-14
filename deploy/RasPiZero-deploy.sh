@@ -50,6 +50,8 @@ git submodule update --init --recursive
 
 ## GStreamer raspi
 cd ./modules/gst-rpicamsrc
+# Fix bug with low framerates in raspicam
+perl -pe 's/(encoded_buffer_q, 500)/encoded_buffer_q, 5000/' -i ./src/RaspiCapture.c
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
 make
 sudo make install
