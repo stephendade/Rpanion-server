@@ -25,6 +25,9 @@ class VideoPage extends basePage {
             UDPChecked: false,
             useUDPIP: "127.0.0.1",
             useUDPPort: 5600,
+            FPSMax: 0,
+            fps: [],
+            fpsSelected: 1,
             loading: true,
             error: null,
             infoMessage: null
@@ -32,7 +35,7 @@ class VideoPage extends basePage {
     }
 
     componentDidMount() {
-        fetch(`/api/videodevices`).then(response => response.json()).then(state => {this.setState(state); this.loadDone()});
+        fetch(`/api/videodevices`).then(response => response.json()).then(state => {this.setState(state); this.loadDone(); this.handleVideoChange(this.state.vidDeviceSelected, "")});
      }
 
     handleVideoChange = (value, action) => {
@@ -43,7 +46,12 @@ class VideoPage extends basePage {
 
     handleResChange = (value, action) => {
         //resolution box new selected value
-        this.setState({vidResSelected: value});
+        if (value.fpsmax !== 0) {
+          this.setState({vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: value.fpsmax, fps: value.fps});
+        }
+        else {
+          this.setState({vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: value.fps[0], fps: value.fps});
+        }
     }
 
     handleRotChange = (value, action) => {
@@ -71,6 +79,16 @@ class VideoPage extends basePage {
         this.setState({useUDPPort: event.target.value});
     }
 
+    handleFPSChange = (event) => {
+        //bitrate spinner new value
+        this.setState({fpsSelected: event.target.value});
+    }
+
+    handleFPSChangeSelect = (value, action) => {
+        //resolution box new selected value
+        this.setState({fpsSelected: value});
+    }
+
     handleStreaming = (event) => {
         //user clicked start/stop streaming
         this.setState({ waiting: true }, () => {
@@ -87,6 +105,8 @@ class VideoPage extends basePage {
                     width: this.state.vidResSelected.width,
                     format: this.state.vidResSelected.format,
                     rotation: this.state.rotSelected.value,
+                    fps: this.state.FPSMax !== 0 ? this.state.fpsSelected : Number(this.state.fpsSelected.value),
+                    //fps: this.state.fpsSelected,
                     bitrate: this.state.bitrate,
                     useUDP: this.state.UDPChecked,
                     useUDPIP: this.state.useUDPIP,
@@ -106,7 +126,13 @@ class VideoPage extends basePage {
             Device: <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected}/>
             Resolution: <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
             Rotation: <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
-            Average Bitrate: <input type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
+            Average Bitrate: <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
+            <div style={{ display: (this.state.FPSMax === 0) ? "block" : "none"}}>
+              Frame rate: <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect}/><br />
+            </div>
+            <div style={{ display: (this.state.FPSMax !== 0) ? "inherit" : "none"}}>
+              Frame rate: <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})<br />
+            </div>
             <input type="checkbox" checked={this.state.UDPChecked} disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange}/>Use UDP Stream instead of RTSP Server (Used for QGroundControl)<br />
             <label><input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange}/>Destination IP Address</label><br />
             <label><input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange}/>Destination Port</label><br />
