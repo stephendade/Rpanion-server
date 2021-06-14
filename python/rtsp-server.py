@@ -25,7 +25,7 @@ def ip4_addresses():
                        ip_list.append(link['addr'])
        return ip_list
 
-def getPipeline(device, height, width, bitrate, format, rotation):
+def getPipeline(device, height, width, bitrate, format, rotation, framerate):
     #rotation
     if device == "rpicam":
         devrotation = rotation
@@ -39,24 +39,24 @@ def getPipeline(device, height, width, bitrate, format, rotation):
             devrotation = "videoflip video-direction=90l"
 
     if device == "rpicam":
-            s_src = "rpicamsrc bitrate={0} rotation={3} ! video/x-h264,width={1},height={2}".format(bitrate*1000, width, height, devrotation)
+            "rpicamsrc bitrate={0} rotation={3} preview=false ! video/x-h264,width={1},height={2},framerate={4}/1".format(bitrate*1000, width, height, devrotation, framerate)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-raw":
-            s_src = "v4l2src device={0} ! {3},width={1},height={2} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation)
+            s_src = "v4l2src device={0} ! videorate ! {3},framerate={5}/1,width={1},height={2} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framerate)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-h264":
-            s_src = "v4l2src device={0} ! {3},width={1},height={2} ! {4}".format(device, width, height, format, devrotation)
+            s_src = "v4l2src device={0} ! {3},width={1},height={2},framerate={5}/1 ! {4}".format(device, width, height, format, devrotation, framerate)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
     elif format == "image/jpeg":
-            s_src = "v4l2src device={0} ! {3},width={1},height={2} ! jpegdec ! {4}".format(device, width, height, format, devrotation)
+            s_src = "v4l2src device={0} ! videorate ! {3},framerate={5}/1,width={1},height={2} ! jpegdec ! {4}".format(device, width, height, format, devrotation, framerate)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
     print(pipeline_str)
     return pipeline_str
                         
 class MyFactory(GstRtspServer.RTSPMediaFactory):
-    def __init__(self, device, h, w, bitrate, format, rotation):
+    def __init__(self, device, h, w, bitrate, format, rotation, framerate):
         GstRtspServer.RTSPMediaFactory.__init__(self)
         self.device = device
         self.height = h
@@ -64,15 +64,16 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.bitrate = bitrate
         self.format = format
         self.rotation = rotation
+        self.framerate = framerate
 
     def do_create_element(self, url):
-        pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation)
+        pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation, self.framerate)
         return Gst.parse_launch(pipeline_str)
 
 class GstServer():
-    def __init__(self, device,h, w, bitrate, format, rotation):
+    def __init__(self, device,h, w, bitrate, format, rotation, framerate):
         self.server = GstRtspServer.RTSPServer()
-        f = MyFactory(device, h, w, bitrate, format, rotation)
+        f = MyFactory(device, h, w, bitrate, format, rotation, framerate)
         f.set_shared(True)
         m = self.server.get_mount_points()
         m.add_factory("/video", f)
@@ -87,6 +88,7 @@ if __name__ == '__main__':
     parser.add_argument("--videosource", help="Video Device", default="/dev/video0", type=str)
     parser.add_argument("--height", help="Height", default=480, type=int)
     parser.add_argument("--width", help="Width", default=640, type=int)
+    parser.add_argument("--fps", help="Framerate", default=10, type=int)
     parser.add_argument("--bitrate", help="bitrate (kbps)", default=2000, type=int)
     parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
     parser.add_argument("--rotation", help="rotation angle", default=0, type=int, choices=[0, 90, 180, 270])
@@ -100,7 +102,7 @@ if __name__ == '__main__':
     Gst.debug_set_default_threshold(3)
 
     if args.udp.split(':')[0] == "0":
-        s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation)
+        s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps)
 
         try:
             loop.run()
@@ -108,7 +110,7 @@ if __name__ == '__main__':
             print("Exiting RTSP Server")
             loop.quit()
     else:
-        pipeline_str = getPipeline(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation)
+        pipeline_str = getPipeline(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps)
         pipeline_str += " ! udpsink host={0} port={1}".format(args.udp.split(':')[0], args.udp.split(':')[1])
         pipeline = Gst.parse_launch(pipeline_str)
         pipeline.set_state(Gst.State.PLAYING)
