@@ -564,7 +564,7 @@ app.post('/api/networkedit', [check('conName').isUUID(),
                               check('conSettings.ssid.value').optional().escape(),
                               check('conSettings.attachedIface.value').optional().escape(),
                               check('conSettings.band.value').optional().isIn(['a', 'bg']),
-                              check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap']),
+                              check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap', 'adhoc']),
                               ],
                               (req, res) => {
     // Finds the validation errors in this request and wraps them in an object with handy functions
@@ -602,7 +602,7 @@ app.post('/api/networkadd', [check('conSettings.ipaddresstype.value').isIn(['aut
                               check('conSettings.ssid.value').optional().escape(),
                               check('conSettings.band.value').optional().isIn(['a', 'bg']),
                               check('conSettings.attachedIface.value').optional().escape(),
-                              check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap']),
+                              check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap', 'adhoc']),
                               check('conName').escape(),
                               check('conType').escape(),
                               check('conAdapter').escape()
