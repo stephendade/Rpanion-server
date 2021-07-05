@@ -68,6 +68,7 @@ class NetworkConfig extends basePage {
     this.addConnection = this.addConnection.bind(this);
     this.handleCloseModalAP = this.handleCloseModalAP.bind(this);
     this.handleCloseModalClient = this.handleCloseModalClient.bind(this);
+    this.handleCloseModalP2P = this.handleCloseModalP2P.bind(this);
     //this.handleIPTypeChange = this.handleIPTypeChange.bind(this);
   }
 
@@ -116,7 +117,7 @@ class NetworkConfig extends basePage {
                 });
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
-                    if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === value.value)) {
+                    if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === "undefined" || item.attachedIface === value.value)) {
                         if (item.state === value.value) {
                             item.label = item.labelPre + " (Active)";
                             netConnection.push(item);
@@ -183,6 +184,7 @@ class NetworkConfig extends basePage {
         }).then(response => response.json())
           .then(state => this.setState(state))
           .then(state => this.setState({netConnectionFilteredSelected: value}))
+          .then(state => this.setState({netConnectionSimilarIfaces: this.getSameAdapter()}))
           .then(state => this.setState({ curSettings: {
                     ipaddresstype: {value: this.state.netConnectionDetails.DHCP},
                     ipaddress: {value: this.state.netConnectionDetails.IP},
@@ -193,8 +195,7 @@ class NetworkConfig extends basePage {
                     band: {value: this.state.netConnectionDetails.band},
                     mode: {value: this.state.netConnectionDetails.mode},
                     attachedIface: {value: this.state.netConnectionDetails.attachedIface}
-                    },
-                netConnectionSimilarIfaces: this.getSameAdapter()
+                    }
                 }));
         }
     };
@@ -412,6 +413,14 @@ class NetworkConfig extends basePage {
           curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
     }
 
+    handleCloseModalP2P () {
+      // user has selected Adhoc new Wifi connection
+      this.setState({ showModal: false});
+      var nm = this.state.netConnectionFilteredSelected.label;
+      this.setState({netConnectionFilteredSelected: {value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: ""},
+          curSettings: {mode: {value: "adhoc"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
+    }
+
     handleCloseModalClient () {
       // user has selected client new Wifi connection
       this.setState({ showModal: false});
@@ -562,7 +571,7 @@ class NetworkConfig extends basePage {
                     <br />
                     <label><input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none"} onChange={this.togglePasswordVisible}/>Show Password</label>
                 </div>
-                <div nameclass="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap" ||  this.state.curSettings.mode.value === "adhoc")? "block" : "none" }}><h3>Wifi Access Point</h3>
+                <div nameclass="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap")? "block" : "none" }}><h3>Wifi Access Point</h3>
                     <label><input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text"/>SSID Name</label>
                     <br />
                     <label>
@@ -587,6 +596,31 @@ class NetworkConfig extends basePage {
                     <br />
                     <label><input name="ipaddress" onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} type="text"/>Starting IP address</label>
                 </div>
+                <div nameclass="wifip2pconfig" style={{ display: (this.state.curSettings.mode.value === "adhoc")? "block" : "none" }}><h3>Wifi Adhoc (P2P)</h3>
+                    <label><input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text"/>SSID Name</label>
+                    <br />
+                    <label>
+                        <select name="band" onChange={this.changeHandler} value={this.state.curSettings.band.value}>
+                            {this.state.bandTypes.map((option, index) => (
+                                <option key={option.value} value={option.value}>{option.text}</option>
+                            ))}
+                        </select>
+                    Band</label>
+                    <br />
+                    <label>
+                        <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
+                            {this.state.wpaTypes.map((option, index) => (
+                                <option key={option.value} value={option.value}>{option.text}</option>
+                            ))}
+                        </select>
+                    Security</label>
+                    <br />
+                    <label><input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler}/>Password</label>
+                    <br />
+                    <label><input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none" } onChange={this.togglePasswordVisible}/>Show Password</label>
+                    <br />
+                    <label><input type="text" name="ipaddress" onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value}/>IP Address</label>
+                </div>
                 <Button size="sm" variant="primary" type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"}>Save Changes</Button>{' '}
                 <Button size="sm" variant="secondary" onClick={this.resetForm}>Discard Changes</Button>{' '}
                 <Modal show={this.state.showModal} onHide={this.handleNewNetworkTypeCancel}>
@@ -601,6 +635,7 @@ class NetworkConfig extends basePage {
                   <Modal.Footer>
                     <Button variant="primary" onClick={this.handleCloseModalAP}>Access Point</Button>
                     <Button variant="primary" onClick={this.handleCloseModalClient}>Client</Button>
+                    <Button variant="primary" onClick={this.handleCloseModalP2P}>Adhoc (P2P)</Button>
                     <Button variant="secondary" onClick={this.handleNewNetworkTypeCancel}>Cancel</Button>
                   </Modal.Footer>
                 </Modal>
