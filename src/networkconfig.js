@@ -116,7 +116,7 @@ class NetworkConfig extends basePage {
                 });
                 //filter the connections
                 this.state.netConnection.forEach(function (item) {
-                    if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === value.value)) {
+                    if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === "undefined" || item.attachedIface === value.value)) {
                         if (item.state === value.value) {
                             item.label = item.labelPre + " (Active)";
                             netConnection.push(item);
@@ -183,6 +183,7 @@ class NetworkConfig extends basePage {
         }).then(response => response.json())
           .then(state => this.setState(state))
           .then(state => this.setState({netConnectionFilteredSelected: value}))
+          .then(state => this.setState({netConnectionSimilarIfaces: this.getSameAdapter()}))
           .then(state => this.setState({ curSettings: {
                     ipaddresstype: {value: this.state.netConnectionDetails.DHCP},
                     ipaddress: {value: this.state.netConnectionDetails.IP},
@@ -193,8 +194,7 @@ class NetworkConfig extends basePage {
                     band: {value: this.state.netConnectionDetails.band},
                     mode: {value: this.state.netConnectionDetails.mode},
                     attachedIface: {value: this.state.netConnectionDetails.attachedIface}
-                    },
-                netConnectionSimilarIfaces: this.getSameAdapter()
+                    }
                 }));
         }
     };
