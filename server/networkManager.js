@@ -216,7 +216,7 @@ function editConnection(conName, conSettings, callback) {
 
 function editConnectionAttached(conName, conSettings, callback) {
     //edit the attached interface for a connection
-    if (conSettings.attachedIface.value === "&quot;&quot;") {
+    if (conSettings.attachedIface.value === "&quot;&quot;" || conSettings.attachedIface.value === "undefined") {
         conSettings.attachedIface.value = "\"\"";
     }
 
@@ -360,46 +360,46 @@ function deleteConnection(conName, callback) {
 }
 
 function getConnections(callback) {
-    //get all connections
-    exec('nmcli -t -f NAME,UUID,TYPE,DEVICE connection show', (error, stdout, stderr) => {
+    var output = "";
     var conStatusList = [];
-    if (stderr) {
-        console.error(`exec error: ${error}`);
-        winston.error('Error in getConnections() ', { message: stderr });
-        return callback(stderr);
+    try {
+        var output = execSync('nmcli -t -f NAME,UUID,TYPE,DEVICE connection show');
+    } catch (e) {
+        console.error('exec error: ' + e);
+        winston.error('Error in getConnections() ', { message: e });
+        return callback(e);
     }
-    else {
-        var allConns = stdout.split("\n");
-        //stdout.split("\n").forEach(function (item) {
-        for (var i = 0, len = allConns.length; i < len; i++) {
-            var item = allConns[i];
-            var connection = item.split(':');
-            var curConn = {};
-            if (connection[3] == "" || connection[3] == "--") {
-                curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: "", attachedIface: getConnectionIfaceSync(connection[1])};
-                conStatusList.push(curConn);
-            }
-            //active connection
-            else if (connection.length == 4) {
-                curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: connection[3], attachedIface: getConnectionIfaceSync(connection[1])};
-                conStatusList.push(curConn);
+
+    var allConns = output.toString().split("\n");
+    for (var i = 0, len = allConns.length; i < len; i++) {
+        var item = allConns[i];
+        var connection = item.split(':');
+        var curConn = {};
+        var subout = '';
+        if (connection.length == 4 || connection.length == 3) {
+            try {
+                var subout = execSync('nmcli -s -t -f connection.interface-name connection show ' + connection[1]);
+                subout = subout.toString().split(":")[1].trim();
+            } catch (e) {
+                winston.info('Error in getConnections2() ', { message: e });
+                console.error('exec error: ' + e);
+                //return callback("");
             }
         }
-        winston.info('getConnections() got: ' + allConns.length);
-    }
-    return callback(null, conStatusList);
-    });
-
-}
-
-function getConnectionIfaceSync(conName){
-    //synchonous get if connection mapped to specific interface
-    try {
-        var output = execSync('nmcli -s -t -f connection.interface-name connection show ' + conName);
-        return output.toString().split(":")[1].trim();
-    } catch (e) {
-        winston.info("No info");
-        return "";
+        if (connection[3] == "" || connection[3] == "--") {
+            curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: "", attachedIface: subout};
+            conStatusList.push(curConn);
+        }
+        //active connection
+        else if (connection.length == 4) {
+            curConn = {value: connection[1], label: "", labelPre: connection[0], type: connection[2], state: connection[3], attachedIface: subout};
+            conStatusList.push(curConn);
+        }
+        //if we're at the end, return callback
+        if (i === allConns.length - 1) {
+            winston.info('getConnections() got: ' + allConns.length);
+            return callback(null, conStatusList);
+        }
     }
 }
 
