@@ -20,6 +20,7 @@ class FCPage extends basePage {
             baudRateSelected: null,
             mavVersionSelected: null,
             mavDialectSelected: null,
+            enableTCP: null,
             FCStatus: {},
             UDPoutputs: [],
             addrow: "",
@@ -60,6 +61,11 @@ class FCPage extends basePage {
     handleMavDialectChange = (value, action) => {
         this.setState({mavDialectSelected: value});
     }
+
+    handleUseTCPChange = (event) => {
+        this.setState({enableTCP: event.target.checked});
+    }
+
     handleSubmit = (event) => {
         //user clicked start/stop telemetry
         fetch('/api/FCModify', {
@@ -72,7 +78,8 @@ class FCPage extends basePage {
                 device: JSON.stringify(this.state.serialPortSelected),
                 baud: JSON.stringify(this.state.baudRateSelected),
                 mavversion: JSON.stringify(this.state.mavVersionSelected),
-                mavdialect: JSON.stringify(this.state.mavDialectSelected)
+                mavdialect: JSON.stringify(this.state.mavDialectSelected),
+                enableTCP: this.state.enableTCP
              })
         }).then(response => response.json()).then(state => {this.setState(state)});
     }
@@ -147,6 +154,7 @@ class FCPage extends basePage {
               Baud Rate: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected}/>
               MAVLink Version: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected}/>
               MAVLink Dialect: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavDialectChange} options={this.state.mavDialects} value={this.state.mavDialectSelected}/>
+              Enable TCP Server at port 5760 <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange}/><br />
               <Button size="sm" disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
               <h2>UDP Outputs</h2>
                 <Table id='UDPOut' striped bordered hover size="sm">

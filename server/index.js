@@ -252,7 +252,7 @@ app.get('/api/FCOutputs', (req, res) => {
 
 app.get('/api/FCDetails', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
-    fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active) => {
+    fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
         if (!err) {
             console.log("Sending");
             console.log(devices);
@@ -264,7 +264,8 @@ app.get('/api/FCDetails', (req, res) => {
                                       mavVersionSelected: selmav,
                                       mavDialects: mavdialects,
                                       mavDialectSelected: seldialect,
-                                      baudRateSelected: selbaud }));
+                                      baudRateSelected: selbaud,
+                                      enableTCP: enableTCP }));
         }
         else {
             res.setHeader('Content-Type', 'application/json');
@@ -279,7 +280,7 @@ app.post('/api/shutdowncc', function (req, res) {
     aboutPage.shutdownCC();
 });
 
-app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('mavdialect').isJSON()], function (req, res) {
+app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('mavdialect').isJSON(), check('enableTCP').isBoolean()], function (req, res) {
     //User wants to start/stop FC telemetry
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -287,7 +288,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
         return res.status(422).json({ errors: errors.array() });
     }
 
-    fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), JSON.parse(req.body.mavdialect), (err, isSuccess) => {
+    fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), JSON.parse(req.body.mavdialect), req.body.enableTCP, (err, isSuccess) => {
         if (!err) {
             res.setHeader('Content-Type', 'application/json');
             //console.log(isSuccess);
