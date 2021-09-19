@@ -14,6 +14,7 @@
     "microtime": "^3.0.0",
     "moment": "^2.29.1",
     "npm": "^7.17.0",
+    "ntrip-client": "^1.0.3",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
     "react-bootstrap": "^1.5.2",

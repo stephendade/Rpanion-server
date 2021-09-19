@@ -8,6 +8,7 @@ const videoStream = require('./videostream');
 const fcManagerClass = require('./flightController');
 const flightLogger = require('./flightLogger.js');
 const networkClients = require('./networkClients.js');
+const ntrip = require('./ntrip.js');
 
 var winston = require('./winstonconfig')(module);
 
@@ -34,13 +35,29 @@ const fcManager = new fcManagerClass(settings);
 
 const logManager = new flightLogger(settings);
 
+const ntripClient = new ntrip(settings);
 
+
+//Got an RTCM message, send to flight controller
+ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
+    //logManager.writetlog(msg.buf);
+    try {
+      if (fcManager.m) {
+        fcManager.m.sendRTCMMessage(msg, seq);
+      }
+    }
+    catch (err) {
+        console.log(err);
+    }
+});
 
 //Connecting the flight controller datastream to the logger
+//and ntrip
 fcManager.eventEmitter.on('gotMessage', (msg) => {
     //logManager.writetlog(msg.buf);
     try {
         logManager.writetlog(msg);
+        ntripClient.onMavPacket(msg);
         //if(logManager.writeBinlog(msg)) {
         //  //send back ack
         //  fcManager.m.sendBinStreamAck(msg.seqno);
@@ -101,6 +118,37 @@ app.use(bodyParser.json());
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, '..', '/build')));
+
+//Serve the ntrip info
+app.get('/api/ntripconfig', (req, res) => {
+    ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
+        res.setHeader('Content-Type', 'application/json');
+        //console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
+        res.send(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password, active: active}));
+    });
+});
+
+//change ntrip settings
+app.post('/api/ntripmodify', [check('active').isBoolean(),
+                              check('host').isLength({min: 5}),
+                              check('port').isPort(),
+                              check('mountpoint').isLength({min: 1}),
+                              check('username').isLength({min: 5}),
+                              check('password').isLength({min: 5})], function (req, res) {
+    //User wants to start/stop NTRIP
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        winston.error('Bad POST vars in /api/ntripmodify', { message: errors.array().toString() });
+        return res.status(422).json({ errors: errors.array() });
+    }
+
+    ntripClient.setSettings(JSON.parse(req.body.host), req.body.port, JSON.parse(req.body.mountpoint), JSON.parse(req.body.username), JSON.parse(req.body.password), req.body.active);
+    ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
+        res.setHeader('Content-Type', 'application/json');
+        //console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
+        res.send(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password, active: active}));
+    });
+});
 
 //Serve the AP clients info
 app.get('/api/networkclients', (req, res) => {
@@ -339,9 +387,10 @@ io.on('connection', function(socket) {
         return;
     }
 
-    // send Flight Controller status out 1 per second
+    // send Flight Controller and NTRIP status out 1 per second
     FCStatusLoop = setInterval(function() {
         io.sockets.emit('FCStatus', fcManager.getSystemStatus());
+        io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr());
     }, 1000);
 });
 
