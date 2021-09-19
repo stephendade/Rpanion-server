@@ -7,8 +7,9 @@ import Home from './home.js';
 import NetworkConfig from './networkconfig.js';
 import Video from './video.js';
 import FCConfig from './flightcontroller.js';
-import LogBrowser from './logBrowser.js'
-import NetworkClients from './networkClients.js'
+import LogBrowser from './logBrowser.js';
+import NetworkClients from './networkClients.js';
+import NTRIPPage from './ntripcontroller.js';
 
 function AppRouter() {
   return (
@@ -19,6 +20,7 @@ function AppRouter() {
                     <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
+                    <Link className='list-group-item list-group-item-action bg-light' to="/ntrip">NTRIP Config</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/apclients">Access Point Clients</Link>
                     <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
@@ -36,6 +38,7 @@ function AppRouter() {
                 <Route exact path="/video" component={Video} />
                 <Route exact path="/flightlogs" component={LogBrowser} />
                 <Route exact path="/apclients" component={NetworkClients} />
+                <Route exact path="/ntrip" component={NTRIPPage} />
                 <Route component={NoMatch} />
             </Switch>
           </div>

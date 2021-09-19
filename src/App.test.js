@@ -6,8 +6,8 @@ import Home from './home.js';
 import NetworkConfig from './networkconfig.js';
 import Video from './video.js';
 import FCConfig from './flightcontroller.js';
-import LogBrowser from './logBrowser.js'
-
+import LogBrowser from './logBrowser.js';
+import NTRIPPage from './ntripcontroller.js';
 
 it('homepage renders without crashing', () => {
   const div = document.createElement('div');
@@ -42,5 +42,11 @@ it('flightcontroller page renders without crashing', () => {
 it('logging page renders without crashing', () => {
   const div = document.createElement('div');
   ReactDOM.render(<LogBrowser />, div);
+  ReactDOM.unmountComponentAtNode(div);
+});
+
+it('ntrip page renders without crashing', () => {
+  const div = document.createElement('div');
+  ReactDOM.render(<NTRIPPage />, div);
   ReactDOM.unmountComponentAtNode(div);
 });

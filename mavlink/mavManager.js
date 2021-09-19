@@ -201,6 +201,44 @@ class mavManager {
     this.sendData(msg.pack(this.mav))
   }
 
+  sendRTCMMessage (gpmessage, seq) {
+    // create a rtcm message for the flight controller
+    var flags = 0
+    if (gpmessage.length > 180) {
+      flags = 1
+    }
+    // add in the sequence number
+    flags |= (seq & 0x1F) << 3
+
+    if (gpmessage.length > 4*180) {
+      // can't send this with GPS_RTCM_DATA
+      return
+    }
+    //send data in 180 byte parts
+    var buf = Buffer.from(gpmessage)
+    var msgset = []
+    var maxBytes = 180
+    while (true) {
+        if (buf.length > maxBytes) {
+          //slice
+          msgset.push(buf.slice(0, maxBytes))
+          buf = buf.slice(maxBytes)
+        }
+        else {
+          // need to pad to 180 chars? No, message packing
+          // will do this for us
+          msgset.push(buf)
+          break
+        }
+    }
+
+    for (var i = 0, len = msgset.length; i < len; i++) {
+      var msg = new this.mavmsg.messages.gps_rtcm_data(flags | (i << 1), msgset[i].length, msgset[i])
+      this.sendData(msg.pack(this.mav))
+    }
+
+  }
+
   sendBinStreamRequest () {
     // create a bin log streaming request. Requires LOG_BACKEND = 3
     if (this.dialect !== 'ardupilot') {
