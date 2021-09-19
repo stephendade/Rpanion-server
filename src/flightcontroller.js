@@ -148,7 +148,7 @@ class FCPage extends basePage {
 
     renderContent() {
       return (
-            <div>
+            <div style={{width: 500}}>
               <h2>Serial Input</h2>
               Serial Device: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected}/>
               Baud Rate: <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected}/>
