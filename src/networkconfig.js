@@ -518,7 +518,7 @@ class NetworkConfig extends basePage {
 
     renderContent() {
       return (
-        <div>
+        <div style={{width: 500}}>
             <input type="checkbox" checked={this.state.wirelessEnabled} onChange={this.togglewirelessEnabled}/>Wifi interfaces enabled<br />
             Adapters: <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected}/>
             Connections: <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected}/>
