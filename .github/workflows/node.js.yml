@@ -47,3 +47,10 @@ jobs:
     - run: npm run testback
     - run: npm run testfront
     - run: npm run test-cov
+    
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: $node-${{ matrix.node-version }}
+        parallel: true
