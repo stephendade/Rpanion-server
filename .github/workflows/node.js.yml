@@ -48,9 +48,9 @@ jobs:
     
     - name: Run tests  
     - run: |
-      npm run build --if-present
-      npm run testback
-      npm run testfront
+        npm run build --if-present
+        npm run testback
+        npm run testfront
 
     - name: Run Coveralls tests  
     - run: npm run test-cov
