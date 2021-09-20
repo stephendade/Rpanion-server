@@ -88,6 +88,10 @@
     ],
     "exclude": [
       "server/**/*.test.js"
+    ],
+    "reporter": [
+      "lcov",
+      "text-summary"
     ]
   }
 }
