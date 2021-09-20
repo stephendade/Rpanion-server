@@ -21,6 +21,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Install packages
+      run: |
+        sudo apt -y install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev
+        sudo apt -y install gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps
+        sudo apt -y install python3-gst-1.0 network-manager
+        pip3 --version
+        pip3 install future netifaces pymavlink --user
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
