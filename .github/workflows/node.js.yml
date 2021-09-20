@@ -37,7 +37,6 @@ jobs:
         ./configure CFLAGS='-g -O2' --disable-systemd
         make
         sudo make install
-        cd ../../
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
