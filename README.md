@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/stephendade/Rpanion-server.svg?branch=master)](https://travis-ci.org/stephendade/Rpanion-server)
+![GitHub Actions](https://github.com/stephendade/Rpanion-server/actions/workflows/node.js.yml/badge.svg)
 
 [![Coverage Status](https://coveralls.io/repos/github/stephendade/Rpanion-server/badge.svg)](https://coveralls.io/github/stephendade/Rpanion-server)
 
