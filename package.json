@@ -37,7 +37,7 @@
     "start": "DISABLE_ESLINT_PLUGIN=true react-scripts start",
     "build": "DISABLE_ESLINT_PLUGIN=true react-scripts build",
     "testfront": "DISABLE_ESLINT_PLUGIN=true react-scripts test",
-    "testback": " nyc mocha ./server/*.test.js ./mavlink/*.test.js &&  nyc report --reporter=text-lcov | coveralls",
+    "testback": " mocha ./server/*.test.js ./mavlink/*.test.js",
     "lint": "eslint .",
     "eject": "react-scripts eject",
     "server": "node-env-run server --exec nodemon | pino-colada",
@@ -54,7 +54,6 @@
   "devDependencies": {
     "auto-changelog": "^2.3.0",
     "body-parser": "^1.19.0",
-    "coveralls": "^3.1.0",
     "eslint": "^7.28.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.23.4",
@@ -68,18 +67,7 @@
     "node-env-run": "^4.0.2",
     "nodemon": "^2.0.7",
     "npm-run-all": "^4.1.5",
-    "nyc": "^15.0.1",
     "pino-colada": "^2.1.0",
     "should": "^13.2.3"
-  },
-  "nyc": {
-    "all": true,
-    "include": [
-      "server/**/*.js",
-      "mavlink/mavManager.js"
-    ],
-    "exclude": [
-      "server/**/*.test.js"
-    ]
   }
 }
