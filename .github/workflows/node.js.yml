@@ -47,9 +47,10 @@ jobs:
     - run: npm ci
     
     - name: Run tests  
-    - run: npm run build --if-present
-    - run: npm run testback
-    - run: npm run testfront
+    - run: |
+      npm run build --if-present
+      npm run testback
+      npm run testfront
 
     - name: Run Coveralls tests  
     - run: npm run test-cov
