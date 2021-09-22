@@ -29,6 +29,7 @@ jobs:
         sudo apt -y install python3-gst-1.0 network-manager
         pip3 --version
         pip3 install future netifaces pymavlink --user
+        
     - name: Build mavlink-router
       run: |
         git submodule update --init --recursive
@@ -37,6 +38,7 @@ jobs:
         ./configure CFLAGS='-g -O2' --disable-systemd
         make
         sudo make install
+        
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
