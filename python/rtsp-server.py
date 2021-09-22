@@ -37,19 +37,25 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate):
             devrotation = "videoflip video-direction=180"
         elif rotation == 270:
             devrotation = "videoflip video-direction=90l"
-
+    
+    # -1 is no framerate specified
+    if framerate == -1:
+        framestr = ""
+    else:
+        framestr = ",framerate={0}/1".format(framerate)
+        
     if device == "rpicam":
-            "rpicamsrc bitrate={0} rotation={3} preview=false ! video/x-h264,width={1},height={2},framerate={4}/1".format(bitrate*1000, width, height, devrotation, framerate)
+            "rpicamsrc bitrate={0} rotation={3} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-raw":
-            s_src = "v4l2src device={0} ! videorate ! {3},framerate={5}/1,width={1},height={2} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framerate)
+            s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-h264":
-            s_src = "v4l2src device={0} ! {3},width={1},height={2},framerate={5}/1 ! {4}".format(device, width, height, format, devrotation, framerate)
+            s_src = "v4l2src device={0} ! {3},width={1},height={2}{5} ! {4}".format(device, width, height, format, devrotation, framestr)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
     elif format == "image/jpeg":
-            s_src = "v4l2src device={0} ! videorate ! {3},framerate={5}/1,width={1},height={2} ! jpegdec ! {4}".format(device, width, height, format, devrotation, framerate)
+            s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! jpegdec ! {4}".format(device, width, height, format, devrotation, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
     print(pipeline_str)
