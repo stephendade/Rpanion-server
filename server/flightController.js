@@ -50,7 +50,7 @@ class FCDetails {
     // UDP Outputs
     this.UDPoutputs = []
 
-    //Use TCP output?
+    // Use TCP output?
     this.enableTCP = false
 
     // Current binlog via mavlink-router
@@ -256,8 +256,7 @@ class FCDetails {
     var cmd = ['-e', '127.0.0.1:14540', '--tcp-port']
     if (this.enableTCP == true) {
       cmd.push('5760')
-    }
-    else {
+    } else {
       cmd.push('0')
     }
     for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
@@ -376,8 +375,12 @@ class FCDetails {
         // rpi uart has different name under Ubuntu
         var data = await si.osInfo()
         if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
-           //console.log("Running Ubuntu")
-           this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
+          // console.log("Running Ubuntu")
+          this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
+        }
+        // jetson serial ports
+        if (fs.existsSync('/dev/ttyTHS1')) {
+          this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '' })
         }
 
         // has the active device been disconnected?
@@ -400,7 +403,7 @@ class FCDetails {
       err => console.error(err)
     ).catch((error) => {
       console.log(error)
-    });
+    })
   }
 
   startInterval () {
@@ -433,7 +436,7 @@ class FCDetails {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
-    this.enableTCP = enableTCP;
+    this.enableTCP = enableTCP
 
     // check port, mavversion and baud are valid (if starting telem)
     if (!this.activeDevice) {
