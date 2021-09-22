@@ -56,7 +56,7 @@ class videoStream {
   getVideoDevices (callback) {
     // get all video device details
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
-      if (stderr && !stderr.includes("DeprecationWarning")) {
+      if (stderr && !stderr.includes('DeprecationWarning') && !stderr.includes('gst_element_message_full_with_details')) {
         console.error(`exec error: ${error}`)
         winston.error('Error in getVideoDevices() ', { message: stderr })
         return callback(stderr)

@@ -473,7 +473,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
                                  check('useUDPIP').isIP(),
                                  check('bitrate').isInt({min: 100, max: 10000}),
                                  check('format').isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
-                                 check('fps').isInt({min: 1, max: 100}),
+                                 check('fps').isInt({min: -1, max: 100}),
                                  check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

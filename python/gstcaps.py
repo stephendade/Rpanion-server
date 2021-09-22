@@ -73,11 +73,14 @@ for device in devices:
                 else:
                     framerates = structure.get_list('framerate').array
                     fps = []
-                    for i in range(framerates.n_values):
-                        fp = str(framerates.get_nth(i)).split('/')
-                        if int(fp[1]) == 1:
-                            fps.append({'value': str(int(fp[0])/int(fp[1])), 'label': (str(int(fp[0])/int(fp[1])) + " fps")})
-                        #print(' - framerate = ', framerates.get_nth(i))
+                    if framerates:
+                        for i in range(framerates.n_values):
+                            fp = str(framerates.get_nth(i)).split('/')
+                            if int(fp[1]) == 1:
+                                fps.append({'value': str(int(fp[0])/int(fp[1])), 'label': (str(int(fp[0])/int(fp[1])) + " fps")})
+                            #print(' - framerate = ', framerates.get_nth(i))
+                    else:
+                        fps.append({'value': "-1", 'label': "N/A"})
                 
                 #Only append if it's a unique value
                 if "{0}x{1}".format(width, height) not in getcapval(caps):
