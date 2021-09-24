@@ -41,5 +41,5 @@ describe('Video Functions', function () {
       assert.equal(SeluseUDPPort, 5400)
       done()
     })
-  })
+  }).timeout(5000);
 })
