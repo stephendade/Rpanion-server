@@ -13,10 +13,31 @@ function getAdapters(callback) {
         else {
             stdout.split("\n").forEach(function (item) {
                     var device = item.split(':');
-                    if (device.length == 3 && device[0] != "lo") {
+                    if (device.length == 3 && device[1] != "loopback" && device[1] != "bridge") {
                         console.log("Adding Network device " + device[0]);
                         winston.info('getAdapters() adding ' + device);
-                        netStatusList.push({value: device[0], label: device[0] + " (" + device[1] + ")", type: device[1], state: device[2], isDisabled: (device[2] === "unavailable" && device[1] === "wifi") ? true : false});
+                        // if wifi, check for avail channels
+                        var freqList = [];
+                        freqList.push({value: 0, freq: 0, text: "auto", band: 0})
+                        if (device[1] === "wifi") {
+                          try {
+                              var output = execSync('iwlist ' + device[0] + ' channel');
+                              var allFreqs = output.toString().split("\n");
+                              for (var i = 0, len = allFreqs.length; i < len; i++) {
+                                if (allFreqs[i].includes("Channel ") && !allFreqs[i].includes("Current")) {
+                                  var ln = allFreqs[i].split(' ').filter(i => i);
+                                  if (ln.length > 4) {
+                                    freqList.push({value: parseInt(ln[1]), freq: ln[3], text: "" + ln[1] + " (" + ln[3] + " GHz)", band: ((parseFloat(ln[3]) < 3) ? 'bg' : 'a')})
+                                  }
+                                }
+                              }
+                          } catch (e) {
+                              console.error('exec error: ' + e);
+                              winston.error('Error in getAdapters() ', { message: e });
+                              return callback(e);
+                          }
+                        }
+                        netStatusList.push({value: device[0], label: device[0] + " (" + device[1] + ")", type: device[1], state: device[2], channels: freqList, isDisabled: (device[2] === "unavailable" && device[1] === "wifi") ? true : false});
                     }
             });
         }
@@ -106,6 +127,7 @@ function addConnection(conNameStr, conType, conAdapter, conSettings, callback) {
         exec('nmcli connection add type ' + conType + " ifname " + conAdapter +
              " con-name " + conNameStr + " ssid " + conSettings.ssid.value + " 802-11-wireless.mode " +
              conSettings.mode.value + (conSettings.band === {} ? (' 802-11-wireless.band ' + conSettings.band.value) : '') +
+             (conSettings.channel === {} ? (' 802-11-wireless.channel ' + conSettings.channel.value) : '') +
              " ipv4.method " + conSettings.ipaddresstype.value + " connection.autoconnect no " + " && " +
              "nmcli -g connection.uuid con show " + conNameStr, (error, stdout, stderr) => {
             if (stderr) {
@@ -318,9 +340,11 @@ function editConnectionAP(conName, conSettings, callback) {
     if (conSettings.mode.value === "ap") {
         if (Object.keys(conSettings.ssid).length !== 0 &&
             Object.keys(conSettings.band).length !== 0 &&
+            Object.keys(conSettings.channel).length !== 0 &&
             Object.keys(conSettings.ipaddress).length !== 0) {
             exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value +
             ' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + "/24" +
+            ' 802-11-wireless.channel ' + conSettings.channel.value +
             ' 802-11-wireless-security.group ccmp ' +
             ' 802-11-wireless-security.wps-method 1 ' , (error, stdout, stderr) => {
             if (stderr) {
@@ -404,7 +428,7 @@ function getConnections(callback) {
 }
 
 function getConnectionDetails(conName, callback) {
-    exec('nmcli -s -t -f ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.interface-name connection show ' + conName, (error, stdout, stderr) => {
+    exec('nmcli -s -t -f ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.interface-name,802-11-wireless.channel connection show ' + conName, (error, stdout, stderr) => {
         if (stderr) {
             //no connection with that name
             console.error(`exec error: ${error}`);
@@ -444,6 +468,9 @@ function getConnectionDetails(conName, callback) {
                 }
                 else if (item.split(":")[0] === "connection.interface-name") {
                     ret.attachedIface = item.split(":")[1];
+                }
+                else if (item.split(":")[0] === "802-11-wireless.channel") {
+                    ret.channel = item.split(":")[1];
                 }
             });
             return callback(null, ret);
