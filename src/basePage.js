@@ -60,13 +60,14 @@ class basePage extends Component {
                 <title>{this.renderTitle()}</title>
             </Helmet>
             <h1>{this.renderTitle()}</h1>
-                <Spinner animation="border" role="status" style={{display: (loading) ? "block" : "none"}}>
-                  <span className="sr-only" size={35}>Loading...</span>
-                </Spinner>
+                <div style={{display: (loading) ? "block" : "none"}}>
+                  <Spinner animation="border" role="status" >
+                  </Spinner>
+                  <p><span className="sr-only" size={35}>Loading...</span></p>
+                </div>
 
                 <div className='sweet-waiting' style={{display: (waiting) ? "block" : "none", "textAlign": "center", "position": "fixed", "width": "100%", "height": "100%", "top": "0", "left": "0", "right": "0", "bottom": "0", "zIndex": "9", "backgroundColor": "rgba(65,117,5,0.5)"}}>
                   <Spinner style={{"position": "absolute", "top": "45%", "left": "50%"}} animation="border" role="status">
-                    <span className="sr-only" size={60}>Submitting Changes...</span>
                   </Spinner>
                   <h2 style={{"position": "absolute", "top": "65%", "left": "40%", "msTransform": "translateY(-50%)", "transform": "translateY(-50%)"}}>Submitting Changes</h2>
                 </div>
