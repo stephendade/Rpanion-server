@@ -58,6 +58,9 @@ class NetworkConfig extends basePage {
             },
             attachedIface: {
                 value: ''
+            },
+            channel: {
+                value: ''
             }
         }
     };
@@ -192,6 +195,7 @@ class NetworkConfig extends basePage {
                     password: {value: this.state.netConnectionDetails.password},
                     ssid: {value: this.state.netConnectionDetails.ssid},
                     band: {value: this.state.netConnectionDetails.band},
+                    channel: {value: this.state.netConnectionDetails.channel},
                     mode: {value: this.state.netConnectionDetails.mode},
                     attachedIface: {value: this.state.netConnectionDetails.attachedIface}
                     }
@@ -395,6 +399,7 @@ class NetworkConfig extends basePage {
             password: {value: this.state.netConnectionDetails.password},
             ssid: {value: this.state.netConnectionDetails.ssid},
             band: {value: this.state.netConnectionDetails.band},
+            channel: {value: this.state.netConnectionDetails.channel},
             mode: {value: this.state.netConnectionDetails.mode},
             attachedIface: {value: this.state.netConnectionDetails.attachedIface}
         }});
@@ -409,7 +414,7 @@ class NetworkConfig extends basePage {
       this.setState({ showModal: false});
       var nm = this.state.netConnectionFilteredSelected.label;
       this.setState({netConnectionFilteredSelected: {value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: ""},
-          curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
+          curSettings: {mode: {value: "ap"}, ipaddresstype: {value: "shared"}, band: {value: "bg"}, channel: {value: 0}, ssid: {value: ""}, ipaddress: {value: ""}, subnet: {value: ""}, wpaType: {value: "wpa-psk"}, password: {value: ""}, attachedIface: {value: '""'}}});
     }
 
     handleCloseModalClient () {
@@ -516,6 +521,17 @@ class NetworkConfig extends basePage {
           });
     }
 
+    getValidChannels() {
+      // filter valid wifi channels
+      var opt = [];
+      for (var i = 0, len = this.state.netDeviceSelected.channels.length; i < len; i++) {
+        if (this.state.netDeviceSelected.channels[i].band === this.state.curSettings.band.value || this.state.netDeviceSelected.channels[i].band === 0) {
+          opt.push(this.state.netDeviceSelected.channels[i]);
+        }
+      }
+      return opt;
+    }
+
     renderContent() {
       return (
         <div style={{width: 500}}>
@@ -572,6 +588,14 @@ class NetworkConfig extends basePage {
                             ))}
                         </select>
                     Band</label>
+                    <br />
+                    <label>
+                        <select name="channel" onChange={this.changeHandler} value={this.state.curSettings.channel.value}>
+                            {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option, index) => (
+                                <option key={option.value} value={option.value}>{option.text}</option>
+                            )) : <option></option>}
+                        </select>
+                    Channel</label>
                     <br />
                     <label>
                         <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
