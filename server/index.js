@@ -9,6 +9,7 @@ const fcManagerClass = require('./flightController');
 const flightLogger = require('./flightLogger.js');
 const networkClients = require('./networkClients.js');
 const ntrip = require('./ntrip.js');
+const adhocManager = require('./adhocManager.js');
 
 var winston = require('./winstonconfig')(module);
 
@@ -126,6 +127,56 @@ app.get('/api/ntripconfig', (req, res) => {
         //console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
         res.send(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password, active: active}));
     });
+});
+
+//Serve the adhocwifi info
+app.get('/api/adhocadapters', (req, res) => {
+    adhocManager.getAdapters((err, netDeviceList, netDeviceSelected, settings) => {
+        if (!err) {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings};
+            res.send(JSON.stringify(ret));
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            var ret = {netDevice: [], netDeviceSelected: [], cursettings: [], error: err};
+            res.send(JSON.stringify(ret));
+            winston.error('Error in /api/adhocadapters ', { message: err });
+        }
+    });
+});
+
+// activate or deactivate adhoc wifi
+app.post('/api/adhocadaptermodify', [check('settings.isActive').isBoolean(),
+                                    check('toState').isBoolean(),
+                                    check('netDeviceSelected').isAlphanumeric(),
+                                    check('settings.ipaddress').if(check('toState').isIn([true])).isIP(),
+                                    check('settings.wpaType').isIn(['none', 'wep']),
+                                    check('settings.password').if(check('settings.wpaType').isIn(['wep'])).isAlphanumeric(),
+                                    check('settings.ssid').if(check('toState').isIn([true])).isAlphanumeric(),
+                                    check('settings.band').isIn(['a', 'bg']),
+                                    check('settings.channel').if(check('toState').isIn([true])).isInt()], function (req, res) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        console.log(req.body);
+        winston.error('Bad POST vars in /api/adhocadaptermodify', { message: errors.array().toString() });
+        return res.status(422).json({ errors: errors.array() });
+    }
+    else {
+        adhocManager.setAdapter(req.body.toState, req.body.netDeviceSelected, req.body.settings, (err, netDeviceList, netDeviceSelected, settings)  => {
+            if (!err) {
+                res.setHeader('Content-Type', 'application/json');
+                var ret = {netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings};
+                res.send(JSON.stringify(ret));
+            }
+            else {
+                res.setHeader('Content-Type', 'application/json');
+                var ret = {netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings, error: err};
+                res.send(JSON.stringify(ret));
+                winston.error('Error in /api/adhocadapters ', { message: err });
+            }
+        });
+    }
 });
 
 //change ntrip settings
