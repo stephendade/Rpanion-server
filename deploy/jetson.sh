@@ -15,7 +15,7 @@ sudo adduser $USER dialout
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y gstreamer1.0-plugins-base libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git curl
+sudo apt install -y gstreamer1.0-plugins-base libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git curl ninja-build
 
 sudo apt purge -y modemmanager
 
@@ -24,8 +24,8 @@ sudo systemctl disable dnsmasq
 curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
 sudo apt install -y nodejs
 
-sudo apt install libxml2-dev libxslt1-dev python3-lxml -y
-pip3 install netifaces future pymavlink --user
+sudo pip3 install meson
+pip3 install netifaces --user
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
@@ -43,10 +43,9 @@ git submodule update --init --recursive
 
 ## mavlink-router
 cd ./modules/mavlink-router
-./autogen.sh
-./configure CFLAGS='-g -O2' --disable-systemd
-make
-sudo make install
+meson setup build . --buildtype=release
+ninja -C build
+sudo ninja -C build install
 cd ../../
 
 ## and build & run Rpanion
