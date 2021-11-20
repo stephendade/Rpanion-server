@@ -28,7 +28,7 @@ sudo apt update
 sudo apt upgrade -y
 sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad
 sudo apt install -y gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps 
-sudo apt install -y python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git
+sudo apt install -y python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
 
 ## node.js for the RPi Zero needs the "armv61" build
 wget https://nodejs.org/download/release/v11.15.0/node-v11.15.0-linux-armv6l.tar.xz
@@ -41,7 +41,8 @@ sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/npm /usr/local/b
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
-pip3 install netifaces future pymavlink --user
+sudo pip3 install meson
+pip3 install netifaces --user
 
 ## Rpanion (+ gst-rpicamsrc)
 git clone https://github.com/stephendade/Rpanion-server.git
@@ -59,10 +60,9 @@ cd ../../
 
 ## mavlink-router
 cd ./modules/mavlink-router
-./autogen.sh
-./configure CFLAGS='-g -O2' --disable-systemd
-make
-sudo make install
+meson setup build . --buildtype=release
+ninja -C build
+sudo ninja -C build install
 cd ../../
 
 ## and build & install Rpanion

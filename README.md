@@ -77,11 +77,12 @@ sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/npm /usr/local/b
 The required prerequisite packages can be installed via:
 
 ```
-sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq
+sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq ninja-build
 
 sudo apt purge openresolv dhcpcd5
 
-pip3 install netifaces future pymavlink --user
+sudo pip3 install meson
+pip3 install netifaces --user
 ```
 
 For some systems (such as the Raspberry Pi), additional permissions may be requires to run ``nmcli`` from the
@@ -104,10 +105,9 @@ backend routing and is required to be installed:
 ```
 git submodule init && git submodule update
 cd ./modules/mavlink-router
-./autogen.sh
-./configure CFLAGS='-g -O2'
-make
-sudo make install
+meson setup build . --buildtype=release
+ninja -C build
+sudo ninja -C build install
 ```
 
 The node.js packages need to be installed using ``npm install`` in the Rpanion-server folder.

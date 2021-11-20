@@ -26,7 +26,7 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git
+sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
 
 sudo apt purge -y openresolv dhcpcd5 modemmanager
 sudo apt remove -y modemmanager
@@ -40,7 +40,8 @@ sudo apt install -y nodejs
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
-pip3 install netifaces future pymavlink --user
+sudo pip3 install meson
+pip3 install netifaces --user
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
@@ -61,10 +62,9 @@ cd ../../
 
 ## mavlink-router
 cd ./modules/mavlink-router
-./autogen.sh
-./configure CFLAGS='-g -O2' --disable-systemd
-make
-sudo make install
+meson setup build . --buildtype=release
+ninja -C build
+sudo ninja -C build install
 cd ../../
 
 ## and build & run Rpanion
