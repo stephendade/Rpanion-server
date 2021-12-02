@@ -1,11 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch} from "react-router-dom";
-import { Link } from 'react-router-dom'
+import {Route, Routes, Link} from "react-router-dom";
 
 import About from './about.js';
 import Home from './home.js';
 import NetworkConfig from './networkconfig.js';
-import Video from './video.js';
+import VideoPage from './video.js';
 import FCConfig from './flightcontroller.js';
 import LogBrowser from './logBrowser.js';
 import NetworkClients from './networkClients.js';
@@ -14,39 +13,39 @@ import AdhocConfig from './adhocwifi.js';
 
 function AppRouter() {
   return (
-    <Router>
-            <div id="sidebar-wrapper" className="bg-light border-right">
-                <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
-                <div id="sidebar-items" className="list-group list-group-flush">
-                    <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/ntrip">NTRIP Config</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/adhoc">Adhoc Wifi Config</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/apclients">Access Point Clients</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
-                    <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
-                </div>
-            </div>
-
-        <div className="page-content-wrapper" style={{ "width": "100%" }}>
-          <div className="container-fluid">
-            <Switch>
-                <Route exact path="/" component={Home} />
-                <Route exact path="/controller" component={FCConfig} />
-                <Route exact path="/network" component={NetworkConfig} />
-                <Route exact path="/about" component={About} />
-                <Route exact path="/video" component={Video} />
-                <Route exact path="/flightlogs" component={LogBrowser} />
-                <Route exact path="/apclients" component={NetworkClients} />
-                <Route exact path="/ntrip" component={NTRIPPage} />
-                <Route exact path="/adhoc" component={AdhocConfig} />
-                <Route component={NoMatch} />
-            </Switch>
+    <div id="wrapper" className="d-flex">
+      <div id="sidebar-wrapper" className="bg-light border-right">
+          <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
+          <div id="sidebar-items" className="list-group list-group-flush">
+              <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/ntrip">NTRIP Config</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/adhoc">Adhoc Wifi Config</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/apclients">Access Point Clients</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
+              <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
           </div>
+      </div>
+
+      <div className="page-content-wrapper" style={{ "width": "100%" }}>
+        <div className="container-fluid">
+        <Routes>
+            <Route exact path="/" element={<Home />} />
+            <Route exact path="/controller" element={<FCConfig />} />
+            <Route exact path="/network" element={<NetworkConfig />} />
+            <Route exact path="/about" element={<About />} />
+            <Route exact path="/video" element={<VideoPage />} />
+            <Route exact path="/flightlogs" element={<LogBrowser />} />
+            <Route exact path="/apclients" element={<NetworkClients />} />
+            <Route exact path="/ntrip" element={<NTRIPPage />} />
+            <Route exact path="/adhoc" element={<AdhocConfig />} />
+            <Route element={NoMatch} />
+          </Routes>
         </div>
-    </Router>
+      </div>
+    </div>
   );
 }
 
