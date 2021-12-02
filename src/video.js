@@ -2,7 +2,6 @@ import React from 'react';
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Accordion from 'react-bootstrap/Accordion';
-import Card from  'react-bootstrap/Card';
 
 import basePage from './basePage.js';
 
@@ -140,65 +139,55 @@ class VideoPage extends basePage {
             <br/>
             <h4 style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>Connection strings for video stream</h4>
             <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !this.state.UDPChecked) ? "block" : "none"}}>
-              <Card>
-                <Accordion.Toggle as={Card.Header} eventKey="0">
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>
                   + RTSP Streaming Addresses (for VLC, etc)
-                </Accordion.Toggle>
-                <Accordion.Collapse eventKey="0">
-                  <Card.Body>
+                </Accordion.Header>
+                  <Accordion.Body>
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>{item}</p>
                     ))}
-                  </Card.Body>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Accordion.Toggle as={Card.Header} eventKey="1">
+                  </Accordion.Body>
+              </Accordion.Item>
+              <Accordion.Item eventKey="1">
+                <Accordion.Header>
                   + GStreamer Connection Strings
-                </Accordion.Toggle>
-                <Accordion.Collapse eventKey="1">
-                  <Card.Body>
+                </Accordion.Header>
+                  <Accordion.Body>
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</p>
                     ))}
-                  </Card.Body>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Accordion.Toggle as={Card.Header} eventKey="2">
+                  </Accordion.Body>
+              </Accordion.Item>
+              <Accordion.Item eventKey="2">
+                <Accordion.Header>
                   + Mission Planner Connection Strings
-                </Accordion.Toggle>
-                <Accordion.Collapse eventKey="2">
-                  <Card.Body>
+                </Accordion.Header>
+                  <Accordion.Body>
                     {this.state.streamAddresses.map((item, index) => (
                         <p style={{fontFamily: "monospace"}}>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
                     ))}
-                  </Card.Body>
-                </Accordion.Collapse>
-              </Card>
+                  </Accordion.Body>
+              </Accordion.Item>
             </Accordion>
             <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && this.state.UDPChecked) ? "block" : "none"}}>
-              <Card>
-                <Accordion.Toggle as={Card.Header} eventKey="0">
+              <Accordion.Item eventKey="0">
+                <Accordion.Header>
                   + QGroundControl
-                </Accordion.Toggle>
-                <Accordion.Collapse eventKey="0">
-                  <Card.Body>
+                </Accordion.Header>
+                  <Accordion.Body>
                         <p style={{fontFamily: "monospace"}}>Video Source: UDP h.264 Video Stream</p>
                         <p style={{fontFamily: "monospace"}}>Port: {this.state.useUDPPort}</p>
-                  </Card.Body>
-                </Accordion.Collapse>
-              </Card>
-              <Card>
-                <Accordion.Toggle as={Card.Header} eventKey="1">
+                  </Accordion.Body>
+              </Accordion.Item>
+              <Accordion.Item eventKey="1">
+                <Accordion.Header>
                   + GStreamer
-                </Accordion.Toggle>
-                <Accordion.Collapse eventKey="1">
-                  <Card.Body>
+                </Accordion.Header>
+                  <Accordion.Body>
                         <p style={{fontFamily: "monospace"}}>gst-launch-1.0 udpsrc port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false</p>
-                  </Card.Body>
-                </Accordion.Collapse>
-              </Card>
+                  </Accordion.Body>
+              </Accordion.Item>
             </Accordion>
         </div>
         );
