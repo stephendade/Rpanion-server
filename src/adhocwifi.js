@@ -25,7 +25,7 @@ class AdhocConfig extends basePage {
       netDeviceSelected: null,
       wpaTypes: [{ value: 'none', text: 'None' }, { value: 'wep', text: 'WEP' }],
       bandTypes: [{ value: 'bg', text: '2.4 GHz' }],
-      curSettings : {
+      curSettings: {
         ipaddress: '192.168.1.1',
         wpaType: 'none',
         password: '',
@@ -63,7 +63,7 @@ class AdhocConfig extends basePage {
 
   IPHandler = event => {
     let items = this.state.curSettings;
-    items.ipaddress =  event.target.value;
+    items.ipaddress = event.target.value;
     this.setState({ curSettings: items });
   }
 
@@ -105,30 +105,30 @@ class AdhocConfig extends basePage {
     //user clicked enable/disable adhoc wifi
     this.setState({ waiting: true }, () => {
       fetch('/api/adhocadaptermodify', {
-          method: 'POST',
-          headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            netDeviceSelected: this.state.netDeviceSelected.value,
-            settings: this.state.curSettings,
-            toState: !this.state.curSettings.isActive,
-          })
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          netDeviceSelected: this.state.netDeviceSelected.value,
+          settings: this.state.curSettings,
+          toState: !this.state.curSettings.isActive,
+        })
       }).then(response => response.json())
         .then(data => {
           if (data.error == null) {
-              this.setState({waiting: false, infoMessage: this.state.curSettings.isActive ? "Network Deactivated" : "Network Activated"});
+            this.setState({ waiting: false, infoMessage: this.state.curSettings.isActive ? "Network Deactivated" : "Network Activated" });
           }
           else {
-              this.setState({waiting: false, error: "Error: " + data.error});
+            this.setState({ waiting: false, error: "Error: " + data.error });
           }
           //and refresh connections list
           this.handleStart()
-      })
-      .catch(error => {
-            this.setState({waiting: false, error: "Error: " + error});
-      });
+        })
+        .catch(error => {
+          this.setState({ waiting: false, error: "Error: " + error });
+        });
     });
 
   }
@@ -141,7 +141,7 @@ class AdhocConfig extends basePage {
   renderContent() {
     return (
       <div>
-        <div style={{display: (this.state.netDeviceSelected !== null) ? "block" : "none" }}>
+        <div style={{ display: (this.state.netDeviceSelected !== null) ? "block" : "none" }}>
           <Form style={{ width: 600 }}>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Adapter</label>
@@ -196,7 +196,7 @@ class AdhocConfig extends basePage {
               <label className="col-sm-2 col-form-label">IP Address</label>
               <div className="col-sm-10">
                 {/* <IPut className="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} defaultValue={this.state.curSettings.ipaddress} value={this.state.curSettings.ipaddress} /> */}
-                <input name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} value={this.state.curSettings.ipaddress} type="text"/>
+                <input name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} value={this.state.curSettings.ipaddress} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
@@ -206,7 +206,7 @@ class AdhocConfig extends basePage {
             </div>
           </Form>
         </div>
-        <div style={{display: (this.state.netDeviceSelected === null) ? "block" : "none" }}>
+        <div style={{ display: (this.state.netDeviceSelected === null) ? "block" : "none" }}>
           <p>No wireless adapters detected</p>
         </div>
       </div>
