@@ -60,11 +60,9 @@ cd ./Rpanion-server
 git submodule update --init --recursive
 
 ## mavlink-router
-cd ./modules/mavlink-router
-meson setup build . --buildtype=release
-ninja -C build
-sudo ninja -C build install
-cd ../../
+cd ./deploy
+./build_mavlinkrouter.sh
+cd ../
 
 ## and build & run Rpanion
 ./deploy/build.sh

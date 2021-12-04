@@ -59,11 +59,9 @@ sudo make install
 cd ../../
 
 ## mavlink-router
-cd ./modules/mavlink-router
-meson setup build . --buildtype=release
-ninja -C build
-sudo ninja -C build install
-cd ../../
+cd ./deploy
+./build_mavlinkrouter.sh
+cd ../
 
 ## and build & install Rpanion
 set NODE_OPTIONS=--max-old-space-size=256
