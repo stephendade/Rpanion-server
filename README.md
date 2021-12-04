@@ -13,6 +13,8 @@ telemetry and video streaming can be configured from.
 
 On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and Ubuntu 20.04.1 LTS.
 
+On the Nvidia Jetson, Rpanion-server is compatible with Ubuntu 18.04 LTS.
+
 ## Features
 
 Rpanion-server allows the user to configure:
@@ -20,15 +22,15 @@ Rpanion-server allows the user to configure:
 - Flight Controller telemetry routing to udp outputs
 - Video Streaming via an RTSP server
 - Network configuration
+- NTRIP Streaming
+- Logging (tlog and bin logs)
 
 ## Dependencies and First-time configuration
 
 ### Automatic (Raspberry Pi)
 
-For the Raspberry Pi 2, 3 or 4, run the ``./deploy/RasPi2-3-4-deploy.sh`` on a fresh Raspberry Pi OS install
+For the Raspberry Pi 2, 3, 4 and Zero(2) run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server. Note this does not configure an initial Wifi hotspot.
-
-This can be done directly by typing the following into a Raspberry Pi OS console:
 
 ```
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi2-3-4-deploy.sh | bash -
@@ -40,10 +42,9 @@ If running Ubuntu 20.04.1 OS, use:
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-ubuntu20-deploy.sh | bash -
 ```
 
-For the Raspberry Pi Zero W, run the ``./deploy/RasPiZero-deploy.sh`` on a fresh Raspberry Pi OS install
+For the Raspberry Pi Zero W(1), run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server. Note this does configure an initial Wifi hotspot.
 
-This can be done directly by typing the following into a Raspberry Pi OS console:
 
 ```
 curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPiZero-deploy.sh | bash -
@@ -112,7 +113,14 @@ sudo ninja -C build install
 
 The node.js packages need to be installed using ``npm install`` in the Rpanion-server folder.
 
+### Automatic (Nvidia Jetson)
 
+For the Nvidia Jetson run the below command on a fresh OS install
+to configure and install Rpanion-server. Note this does not configure an initial Wifi hotspot.
+
+```
+curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/jetson-deploy.sh | bash -
+```
 
 ## Building and Running in production mode
 
@@ -128,7 +136,6 @@ npm run server
 ## Building and Running in development mode
 
 Running in development mode allows for any code changes to trigger a restart of Rpanion-server. 
-This is 
 
 Rpanion-server consists of a node.js server running on port 3001 and a React frontend application
 running on port 3000 in development mode. 
@@ -167,9 +174,11 @@ to be rebuilt.
 
 If running Rpanion-server as a service, ensure to restart the service.
 
+An automatic update script can be found at ``./deploy/update.sh``
+
 ## Tests
 
-Unit tests are split into seperate commands for the frontend (ReactJS) and backend.
+Unit tests are split into separate commands for the frontend (ReactJS) and backend.
 
 Unit tests can be run with the command:
 
