@@ -2,6 +2,7 @@ import React from 'react';
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Accordion from 'react-bootstrap/Accordion';
+import Form from 'react-bootstrap/Form';
 
 import basePage from './basePage.js';
 
@@ -121,23 +122,69 @@ class VideoPage extends basePage {
 
     renderContent() {
         return (
-        <div style={{width: 500}}>
-            Device: <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected}/>
-            Resolution: <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
-            Rotation: <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
-            Average Bitrate: <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps<br />
-            <div style={{ display: (this.state.FPSMax === 0) ? "block" : "none"}}>
-              Frame rate: <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect}/><br />
+        <Form style={{width: 500}}>
+            <h2>Configuration</h2>
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label">Device</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected}/>
+              </div>
             </div>
-            <div style={{ display: (this.state.FPSMax !== 0) ? "inherit" : "none"}}>
-              Frame rate: <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})<br />
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label">Resolution</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected}/>
+              </div>
             </div>
-            <input type="checkbox" checked={this.state.UDPChecked} disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange}/>Use UDP Stream instead of RTSP Server (Used for QGroundControl)<br />
-            <label><input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange}/>Destination IP Address</label><br />
-            <label><input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange}/>Destination Port</label><br />
-            <Button size="sm" onClick={this.handleStreaming}>{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</Button>{' '}
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label">Rotation</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected}/>
+              </div>
+            </div>
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label">Average Bitrate</label>
+              <div className="col-sm-8">
+                <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+              </div>
+            </div>
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label">Framerate</label>
+              <div className="col-sm-8" style={{display: (this.state.FPSMax === 0) ? "block" : "none"}}>
+                <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect}/>
+              </div>
+              <div className="col-sm-8" style={{display: (this.state.FPSMax !== 0) ? "block" : "none"}}>
+                <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
+              </div>
+            </div>
+
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label"></label>
+              <div className="col-sm-8">
+                <input type="checkbox" checked={this.state.UDPChecked} disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange}/>Use UDP Stream instead of RTSP Server (Used for QGroundControl)
+              </div>
+            </div>
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label ">Destination IP</label>
+              <div className="col-sm-8">
+                <input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange}/>
+              </div>
+            </div>
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <label className="col-sm-4 col-form-label">Destination Port</label>
+              <div className="col-sm-8">
+                <input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange}/>
+              </div>
+            </div>
+
+            <div className="form-group row" style={{marginBottom: '5px'}}>
+              <div className="col-sm-8">
+                <Button onClick={this.handleStreaming} className="btn btn-primary">{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</Button>
+              </div>
+            </div>
+
             <br/>
-            <h4 style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>Connection strings for video stream</h4>
+            <h3 style={{ display: (this.state.streamingStatus) ? "block" : "none"}}>Connection strings for video stream</h3>
             <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !this.state.UDPChecked) ? "block" : "none"}}>
               <Accordion.Item eventKey="0">
                 <Accordion.Header>
@@ -189,7 +236,7 @@ class VideoPage extends basePage {
                   </Accordion.Body>
               </Accordion.Item>
             </Accordion>
-        </div>
+        </Form>
         );
     }
 }
