@@ -1,35 +1,33 @@
-import React from 'react';
+import React from 'react'
 
-import basePage from './basePage.js';
+import basePage from './basePage.js'
 
 class Home extends basePage {
-    constructor(props) {
-        super(props);
-        this.state = {
-            loading: true,
-            error: null,
-            infoMessage: null
-        }
-
+  constructor (props) {
+    super(props)
+    this.state = {
+      loading: true,
+      error: null,
+      infoMessage: null
     }
+  }
 
-    componentDidMount() {
-        this.loadDone()
-    }
+  componentDidMount () {
+    this.loadDone()
+  }
 
-    renderTitle() {
-        return "Home Page";
-    }
+  renderTitle () {
+    return 'Home Page'
+  }
 
-    renderContent() {
-      return (
-        <div>
-          <p>Welcome to the Rpanion-server home page</p>
-          <p>Use the links on the left to configure the system</p>
-        </div>
-      );
-    }
-
+  renderContent () {
+    return (
+      <div>
+        <p>Welcome to the Rpanion-server home page</p>
+        <p>Use the links on the left to configure the system</p>
+      </div>
+    )
+  }
 }
 
-export default Home;
+export default Home
