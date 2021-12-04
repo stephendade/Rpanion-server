@@ -1,8 +1,6 @@
 import React from 'react';
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
-import Accordion from 'react-bootstrap/Accordion';
-import Card from  'react-bootstrap/Card';
 import Form from 'react-bootstrap/Form';
 
 import basePage from './basePage.js';
