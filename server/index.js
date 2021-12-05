@@ -11,16 +11,16 @@ const networkClients = require('./networkClients.js')
 const ntrip = require('./ntrip.js')
 const adhocManager = require('./adhocManager.js')
 
-var winston = require('./winstonconfig')(module)
+const winston = require('./winstonconfig')(module)
 
-var appRoot = require('app-root-path')
+const appRoot = require('app-root-path')
 const settings = require('settings-store')
 
 const app = express()
 const http = require('http').Server(app)
 const path = require('path')
 
-var io = require('socket.io')(http, { cookie: false })
+const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult, oneOf } = require('express-validator')
 
 // Init settings before running the other classes
@@ -102,7 +102,7 @@ fcManager.eventEmitter.on('disarmed', () => {
   // }
 })
 
-var FCStatusLoop = null
+let FCStatusLoop = null
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(pino)
@@ -119,7 +119,7 @@ app.get('/api/ntripconfig', (req, res) => {
   ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
-    res.send(JSON.stringify({ host: host,  port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
+    res.send(JSON.stringify({ host: host, port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
   })
 })
 
@@ -155,7 +155,7 @@ app.post('/api/adhocadaptermodify', [check('settings.isActive').isBoolean(),
     winston.error('Bad POST vars in /api/adhocadaptermodify', { message: errors.array().toString() })
     return res.status(422).json({ errors: errors.array() })
   } else {
-    adhocManager.setAdapter(req.body.toState, req.body.netDeviceSelected, req.body.settings, (err, netDeviceList, netDeviceSelected, settings)  => {
+    adhocManager.setAdapter(req.body.toState, req.body.netDeviceSelected, req.body.settings, (err, netDeviceList, netDeviceSelected, settings) => {
       if (!err) {
         res.setHeader('Content-Type', 'application/json')
         var ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
@@ -188,7 +188,7 @@ app.post('/api/ntripmodify', [check('active').isBoolean(),
   ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
-    res.send(JSON.stringify({ host: host,  port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
+    res.send(JSON.stringify({ host: host, port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
   })
 })
 
@@ -196,7 +196,7 @@ app.post('/api/ntripmodify', [check('active').isBoolean(),
 app.get('/api/networkclients', (req, res) => {
   networkClients.getClients((err, apnamev, apclientsv) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ error: err,  apname: apnamev, apclients: apclientsv }))
+    res.send(JSON.stringify({ error: err, apname: apnamev, apclients: apclientsv }))
   })
 })
 
@@ -206,7 +206,7 @@ app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')
 app.get('/api/logfiles', (req, res) => {
   logManager.getLogs((err, tlogs, binlogs, activeLogging) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, BinlogFiles: binlogs, url: req.protocol+'://'+req.headers.host, logStatus: logManager.getStatus() }))
+    res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, BinlogFiles: binlogs, url: req.protocol + '://' + req.headers.host, logStatus: logManager.getStatus() }))
   })
 })
 
@@ -393,7 +393,7 @@ app.post('/api/addudpoutput', [check('newoutputIP').isIP(), check('newoutputPort
     return res.status(422).json({ errors: errors.array() })
   }
 
-  var newOutput = fcManager.addUDPOutput(req.body.newoutputIP, parseInt(req.body.newoutputPort))
+  const newOutput = fcManager.addUDPOutput(req.body.newoutputIP, parseInt(req.body.newoutputPort))
 
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({ UDPoutputs: newOutput }))
@@ -406,20 +406,20 @@ app.post('/api/removeudpoutput', [check('removeoutputIP').isIP(), check('removeo
     return res.status(422).json({ errors: errors.array() })
   }
 
-  var newOutput = fcManager.removeUDPOutput(req.body.removeoutputIP, parseInt(req.body.removeoutputPort))
+  const newOutput = fcManager.removeUDPOutput(req.body.removeoutputIP, parseInt(req.body.removeoutputPort))
 
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({ UDPoutputs: newOutput }))
 })
 
-io.on('connection', function(socket) {
+io.on('connection', function (socket) {
   // only set interval if not already set
   if (FCStatusLoop !== null) {
     return
   }
 
   // send Flight Controller and NTRIP status out 1 per second
-  FCStatusLoop = setInterval(function() {
+  FCStatusLoop = setInterval(function () {
     io.sockets.emit('FCStatus', fcManager.getSystemStatus())
     io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr())
   }, 1000)
@@ -550,7 +550,7 @@ app.post('/api/networkactivate', [check('conName').isUUID()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     res.setHeader('Content-Type', 'application/json')
-    var ret = { error: 'Bad input - ' + errors.array()[0].param }
+    const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
     winston.error('Bad POST vars in /api/networkactivate ', { message: errors.array() })
   } else {
@@ -576,7 +576,7 @@ app.post('/api/networkdeactivate', [check('conName').isUUID()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     res.setHeader('Content-Type', 'application/json')
-    var ret = { error: 'Bad input - ' + errors.array()[0].param }
+    const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
     winston.error('Bad POST vars in /api/networkdeactivate ', { message: errors.array() })
   } else {
@@ -602,7 +602,7 @@ app.post('/api/networkdelete', [check('conName').isUUID()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     res.setHeader('Content-Type', 'application/json')
-    var ret = { error: 'Bad input - ' + errors.array()[0].param }
+    const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
     winston.error('Bad POST vars in /api/networkdelete ', { message: errors.array() })
   } else {
@@ -633,14 +633,14 @@ app.post('/api/networkedit', [check('conName').isUUID(),
   check('conSettings.attachedIface.value').optional().escape(),
   check('conSettings.band.value').optional().isIn(['a', 'bg']),
   check('conSettings.channel.value').optional().isInt(),
-  check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap']),
+  check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap'])
 ],
 (req, res) => {
   // Finds the validation errors in this request and wraps them in an object with handy functions
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     res.setHeader('Content-Type', 'application/json')
-    var ret = { error: 'Bad input - ' + errors.array()[0].param }
+    const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
     winston.error('Bad POST vars in /api/networkedit ', { message: errors.array() })
   } else {
@@ -680,7 +680,7 @@ app.post('/api/networkadd', [check('conSettings.ipaddresstype.value').isIn(['aut
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     res.setHeader('Content-Type', 'application/json')
-    var ret = { error: 'Bad input - ' + errors.array()[0].param }
+    const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
     winston.error('Bad POST vars in /api/networkadd ', { message: errors.array() })
   } else {
