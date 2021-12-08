@@ -1,7 +1,7 @@
 // Mavlink Manager
-var events = require('events')
-var udp = require('dgram')
-var winston = require('../server/winstonconfig')(module)
+const events = require('events')
+const udp = require('dgram')
+const winston = require('../server/winstonconfig')(module)
 
 class mavManager {
   constructor (dialect, version, inudpIP, inudpPort) {
@@ -173,7 +173,7 @@ class mavManager {
       return
     }
 
-    var buf = Buffer.from(msgbuf)
+    const buf = Buffer.from(msgbuf)
     this.udpStream.send(buf, this.RinudpPort, this.RinudpIP, function (error) {
       if (error) {
         this.udpStream.close()
@@ -187,7 +187,7 @@ class mavManager {
 
   sendReboot () {
     // create a reboot packet
-    var msg = new this.mavmsg.messages.command_long(this.targetSystem, this.targetComponent, this.mavmsg.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
+    const msg = new this.mavmsg.messages.command_long(this.targetSystem, this.targetComponent, this.mavmsg.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
       1, 0, 0, 0, 0, 0, 0)
     this.isRebooting = true
     // this.eventEmitter.emit('sendData', msg.pack(this.mav))
@@ -197,46 +197,44 @@ class mavManager {
   sendDSRequest () {
     // create a datastream request packet
     // console.log("Sent DS");
-    var msg = new this.mavmsg.messages.request_data_stream(this.targetSystem, this.targetComponent, this.mavmsg.MAV_DATA_STREAM_ALL, 1, 1)
+    const msg = new this.mavmsg.messages.request_data_stream(this.targetSystem, this.targetComponent, this.mavmsg.MAV_DATA_STREAM_ALL, 1, 1)
     this.sendData(msg.pack(this.mav))
   }
 
   sendRTCMMessage (gpmessage, seq) {
     // create a rtcm message for the flight controller
-    var flags = 0
+    let flags = 0
     if (gpmessage.length > 180) {
       flags = 1
     }
     // add in the sequence number
     flags |= (seq & 0x1F) << 3
 
-    if (gpmessage.length > 4*180) {
+    if (gpmessage.length > 4 * 180) {
       // can't send this with GPS_RTCM_DATA
       return
     }
-    //send data in 180 byte parts
-    var buf = Buffer.from(gpmessage)
-    var msgset = []
-    var maxBytes = 180
+    // send data in 180 byte parts
+    let buf = Buffer.from(gpmessage)
+    const msgset = []
+    const maxBytes = 180
     while (true) {
-        if (buf.length > maxBytes) {
-          //slice
-          msgset.push(buf.slice(0, maxBytes))
-          buf = buf.slice(maxBytes)
-        }
-        else {
-          // need to pad to 180 chars? No, message packing
-          // will do this for us
-          msgset.push(buf)
-          break
-        }
+      if (buf.length > maxBytes) {
+        // slice
+        msgset.push(buf.slice(0, maxBytes))
+        buf = buf.slice(maxBytes)
+      } else {
+        // need to pad to 180 chars? No, message packing
+        // will do this for us
+        msgset.push(buf)
+        break
+      }
     }
 
-    for (var i = 0, len = msgset.length; i < len; i++) {
-      var msg = new this.mavmsg.messages.gps_rtcm_data(flags | (i << 1), msgset[i].length, msgset[i])
+    for (let i = 0, len = msgset.length; i < len; i++) {
+      const msg = new this.mavmsg.messages.gps_rtcm_data(flags | (i << 1), msgset[i].length, msgset[i])
       this.sendData(msg.pack(this.mav))
     }
-
   }
 
   sendBinStreamRequest () {
@@ -244,7 +242,7 @@ class mavManager {
     if (this.dialect !== 'ardupilot') {
       return
     }
-    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
+    const msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
     this.sendData(msg.pack(this.mav))
   }
 
@@ -253,7 +251,7 @@ class mavManager {
     if (this.dialect !== 'ardupilot') {
       return
     }
-    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
+    const msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
     this.sendData(msg.pack(this.mav))
   }
 
@@ -262,7 +260,7 @@ class mavManager {
     if (this.dialect !== 'ardupilot') {
       return
     }
-    var msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, seqno, 1)
+    const msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, seqno, 1)
     this.sendData(msg.pack(this.mav))
   }
 
@@ -314,7 +312,7 @@ class mavManager {
 
   conStatusStr () {
     // connection status - connected, not connected, no packets for x sec
-    if ((Date.now().valueOf()) - this.timeofLastPacket < 2000) {
+    if ((Date.now().valueOf()) - this.timeofLastPacket < 5000) {
       return 'Connected'
     } else if (this.timeofLastPacket > 0) {
       return 'Connection lost for ' + (Date.now().valueOf() - this.timeofLastPacket) / 1000 + ' seconds'
@@ -325,7 +323,7 @@ class mavManager {
 
   conStatusInt () {
     // connection status - connected (1), not connected (0), no packets for x sec (-1)
-    if ((Date.now().valueOf()) - this.timeofLastPacket < 2000) {
+    if ((Date.now().valueOf()) - this.timeofLastPacket < 5000) {
       return 1
     } else if (this.timeofLastPacket > 0) {
       return -1
