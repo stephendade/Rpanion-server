@@ -3,9 +3,6 @@
 set -e
 set -x
 
-# need to run from home directory
-cd ~/
-
 ## Raspi-Config - camera, serial port, ssh
 sudo raspi-config nonint do_expand_rootfs
 sudo raspi-config nonint do_camera 0
@@ -44,11 +41,6 @@ source ~/.profile
 sudo pip3 install meson
 pip3 install netifaces --user
 
-## Rpanion (+ gst-rpicamsrc)
-git clone https://github.com/stephendade/Rpanion-server.git
-cd ./Rpanion-server
-git submodule update --init --recursive
-
 ## GStreamer raspi
 cd ./modules/gst-rpicamsrc
 # Fix bug with low framerates in raspicam
@@ -59,13 +51,10 @@ sudo make install
 cd ../../
 
 ## mavlink-router
-cd ./deploy
 ./build_mavlinkrouter.sh
-cd ../
 
-## and build & install Rpanion
-set NODE_OPTIONS=--max-old-space-size=256
-./deploy/build.sh
+## and build & run Rpanion
+./build.sh
 
 ## Setup networking (needs to be last, as it disconnects from Wifi)
 ### Configuring network...
