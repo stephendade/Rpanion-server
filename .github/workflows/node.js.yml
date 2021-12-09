@@ -36,10 +36,8 @@ jobs:
 
     - name: Build mavlink-router
       run: |
-        cd ./modules/mavlink-router
-        meson setup build . --buildtype=release
-        ninja -C build
-        sudo ninja -C build install
+        cd ./deploy && ./build_mavlinkrouter.sh
+        
         
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
