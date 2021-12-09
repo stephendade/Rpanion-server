@@ -27,19 +27,27 @@ Rpanion-server allows the user to configure:
 
 ## Dependencies and First-time configuration
 
+The following instructions assumes you have cloned the Rpanion-server repository to ``~/``.
+If not, use:
+
+```
+cd ~/ && git clone --recursive https://github.com/stephendade/Rpanion-server.git
+```
+
 ### Automatic (Raspberry Pi)
 
 For the Raspberry Pi 2, 3, 4 and Zero(2) run the below command on a fresh Raspberry Pi OS install
-to configure and install Rpanion-server. Note this does not configure an initial Wifi hotspot.
+to configure and install Rpanion-server with all required dependencies. Note this does not configure
+an initial Wifi hotspot.
 
 ```
-curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi2-3-4-deploy.sh | bash -
+cd ./deploy && ./RasPi2-3-4-deploy.sh
 ```
 
 If running Ubuntu 20.04.1 OS, use:
 
 ```
-curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPi-ubuntu20-deploy.sh | bash -
+cd ./deploy && ./RasPi-ubuntu20-deploy.sh
 ```
 
 For the Raspberry Pi Zero W(1), run the below command on a fresh Raspberry Pi OS install
@@ -47,10 +55,10 @@ to configure and install Rpanion-server. Note this does configure an initial Wif
 
 
 ```
-curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/RasPiZero-deploy.sh | bash -
+cd ./deploy && ./RasPiZero-deploy.sh
 ```
 
-If not already configured, for an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script.
+If not already configured for an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script.
 The hotspot has the SSID "rpanion" and password "rpanion123". The Pi's IP address will be 10.0.2.100,
 so the Rpanion-sever website will be available at http://10.0.2.100:3000.
 
@@ -116,10 +124,27 @@ The node.js packages need to be installed using ``npm install`` in the Rpanion-s
 ### Automatic (Nvidia Jetson)
 
 For the Nvidia Jetson run the below command on a fresh OS install
-to configure and install Rpanion-server. Note this does not configure an initial Wifi hotspot.
+to configure and install Rpanion-server and all required dependencies. Note this does not
+configure an initial Wifi hotspot.
 
 ```
-curl -sL https://github.com/stephendade/Rpanion-server/raw/master/deploy/jetson-deploy.sh | bash -
+cd ./deploy && ./jetson-deploy.sh
+```
+
+### Updating
+
+When updating Rpanion-server from Github, run ``npm install`` to grab any
+changed dependencies.
+
+If running in production mode, run ``npm run build`` too for the ReactJS app 
+to be rebuilt.
+
+If running Rpanion-server as a service, ensure to restart the service.
+
+An automatic update script performed via:
+
+```
+cd ./deploy && ./upgrade.sh
 ```
 
 ## Building and Running in production mode
@@ -163,18 +188,6 @@ npm run dev
 ```
 
 At this point, the website will be active at ``http://<ip of device>:3000``
-
-## Updating
-
-When updating Rpanion-server from Github, run ``npm install`` to grab any
-changed dependencies.
-
-If running in production mode, run ``npm run build`` too for the ReactJS app 
-to be rebuilt.
-
-If running Rpanion-server as a service, ensure to restart the service.
-
-An automatic update script can be found at ``./deploy/update.sh``
 
 ## Tests
 

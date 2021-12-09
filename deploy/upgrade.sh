@@ -7,12 +7,10 @@ set -x
 cd ../
 git pull
 git submodule update --init --recursive
+cd ./deploy
 
 ## mavlink-router
-cd ./deploy
 ./build_mavlinkrouter.sh
-cd ../
 
 ## and build & run Rpanion
-./deploy/build.sh
-
+./build.sh
