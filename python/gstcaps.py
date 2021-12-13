@@ -32,14 +32,17 @@ for device in devices:
 
     # Check if it's a Rpi Cam V2, if so manually add modes for hardware encoding
     # Also change path to tell rtsp-server to use specific ras pi cam driver
-    if "mmal service" in name:
+    if name in ["unicam", "mmal service"]:
         caps = []
         caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
         caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
         caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
         caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
+        
+        # If using the "unicam" interface in Bullseye, label the path
+        path = "rpicam" + ("-uni" if ("unicam" in name) else "")
         name = "Raspberry Pi Camera (V2)"
-        path = "rpicam"
+
     elif "bcm2835-isp" in name:
         continue
     else:
