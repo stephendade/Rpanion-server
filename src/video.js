@@ -47,7 +47,7 @@ class VideoPage extends basePage {
   handleResChange = (value, action) => {
     //resolution box new selected value
     if (value.fpsmax !== 0) {
-      this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: value.fpsmax, fps: value.fps });
+      this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: Math.min(value.fpsmax, 10), fps: value.fps });
     }
     else {
       this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: value.fps[0], fps: value.fps });
