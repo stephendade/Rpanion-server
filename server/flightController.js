@@ -288,7 +288,7 @@ class FCDetails {
         try {
           if (this.binlog !== null) {
             const fileStat = fs.lstatSync(this.binlog)
-            if (Math.round(fileStat.size / 1024) < 52) {
+            if (Math.round(fileStat.size / 1024) < 60) {
               fs.unlinkSync(this.binlog)
             }
           }
