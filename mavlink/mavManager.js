@@ -237,33 +237,6 @@ class mavManager {
     }
   }
 
-  sendBinStreamRequest () {
-    // create a bin log streaming request. Requires LOG_BACKEND = 3
-    if (this.dialect !== 'ardupilot') {
-      return
-    }
-    const msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_START, 1)
-    this.sendData(msg.pack(this.mav))
-  }
-
-  sendBinStreamRequestStop () {
-    // stop a bin log streaming request. Requires LOG_BACKEND = 3
-    if (this.dialect !== 'ardupilot') {
-      return
-    }
-    const msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, this.mavmsg.MAV_REMOTE_LOG_DATA_BLOCK_STOP, 1)
-    this.sendData(msg.pack(this.mav))
-  }
-
-  sendBinStreamAck (seqno) {
-    // send back acknowlegement of bin stream packet recieved
-    if (this.dialect !== 'ardupilot') {
-      return
-    }
-    const msg = new this.mavmsg.messages.remote_log_block_status(this.targetSystem, this.targetComponent, seqno, 1)
-    this.sendData(msg.pack(this.mav))
-  }
-
   autopilotFromID () {
     switch (this.statusFWName) {
       case 0:
