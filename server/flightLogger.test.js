@@ -54,7 +54,6 @@ describe('Logging Functions', function () {
   it('#clearlogfiles()', function () {
     var Lgr = new Logger(settings)
     Lgr.newtlog()
-    Lgr.newbinlog()
 
     if (parseInt(process.versions.node) > 12) {
       // log a byte
@@ -62,7 +61,6 @@ describe('Logging Functions', function () {
     }
 
     Lgr.stoptlog()
-    Lgr.stopbinlog()
 
     Lgr.clearlogs('tlog', null)
     Lgr.clearlogs('binlog', null)
