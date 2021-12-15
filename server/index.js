@@ -53,14 +53,9 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
 // Connecting the flight controller datastream to the logger
 // and ntrip
 fcManager.eventEmitter.on('gotMessage', (msg) => {
-  // logManager.writetlog(msg.buf);
   try {
     logManager.writetlog(msg)
     ntripClient.onMavPacket(msg)
-    // if(logManager.writeBinlog(msg)) {
-    //  //send back ack
-    //  fcManager.m.sendBinStreamAck(msg.seqno);
-    // }
   } catch (err) {
     console.log(err)
   }
@@ -77,29 +72,15 @@ fcManager.eventEmitter.on('newLink', () => {
 fcManager.eventEmitter.on('stopLink', () => {
   try {
     logManager.stoptlog()
-    logManager.stopbinlog()
   } catch (err) {
     console.log(err)
   }
 })
 
 fcManager.eventEmitter.on('armed', () => {
-  try {
-    // logManager.newbinlog();
-    // send logging request
-    // if (!logManager.activeFileBinlog) {
-    //  fcManager.startBinLogging();
-    // }
-  } catch (err) {
-    // console.log("Can't write log");
-  }
 })
 
 fcManager.eventEmitter.on('disarmed', () => {
-  // send logging request
-  // if (logManager.activeFileBinlog) {
-  //  fcManager.stopBinLogging();
-  // }
 })
 
 let FCStatusLoop = null
