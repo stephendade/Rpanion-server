@@ -3,9 +3,6 @@
 set -e
 set -x
 
-## Need to temp disable this
-sudo systemctl stop unattended-upgrades.service
-
 ## Set permissions
 sudo adduser $USER dialout
 
@@ -43,9 +40,6 @@ sudo service network-manager restart
 sudo perl -pe 's/pi/$ENV{SUDO_USER}/' -i /etc/systemd/system/rpanion.service
 sudo systemctl daemon-reload
 sudo systemctl restart rpanion.service
-
-## And re-enable
-sudo systemctl start unattended-upgrades.service
 
 sudo reboot
 
