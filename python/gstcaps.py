@@ -32,7 +32,7 @@ for device in devices:
 
     # Check if it's a Rpi Cam V2, if so manually add modes for hardware encoding
     # Also change path to tell rtsp-server to use specific ras pi cam driver
-    if name in ["unicam", "mmal service"]:
+    if "unicam" in name or "mmal service" in name:
         caps = []
         caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
         caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
