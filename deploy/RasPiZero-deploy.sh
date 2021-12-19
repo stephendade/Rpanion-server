@@ -42,13 +42,13 @@ sudo pip3 install meson
 pip3 install netifaces --user
 
 ## GStreamer raspi
-cd ./modules/gst-rpicamsrc
+cd ../modules/gst-rpicamsrc
 # Fix bug with low framerates in raspicam
 perl -pe 's/(encoded_buffer_q, 500)/encoded_buffer_q, 5000/' -i ./src/RaspiCapture.c
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
 make
 sudo make install
-cd ../../
+cd ../../deploy
 
 ## mavlink-router
 ./build_mavlinkrouter.sh
@@ -71,6 +71,6 @@ sudo systemctl disable dnsmasq
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
 
 ## Create Wifi AP
-./deploy/wifi_access_point.sh
+./wifi_access_point.sh
 
 sudo reboot
