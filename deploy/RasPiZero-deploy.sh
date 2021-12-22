@@ -70,6 +70,9 @@ sudo systemctl disable dnsmasq
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
 
+## NPM has a different directory here, so need the change service detials
+sudo perl -pi -w -e 's{/usr/bin/npm}{/usr/local/bin/npm}g;'  /etc/systemd/system/rpanion.service
+
 ## Create Wifi AP
 ./wifi_access_point.sh
 
