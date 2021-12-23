@@ -251,7 +251,7 @@ app.get('/api/videodevices', (req, res) => {
           streamingStatus: active,
           streamAddresses: vManager.deviceAddresses,
           UDPChecked: SeluseUDP,
-          useUDP: SeluseUDPIP,
+          useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
           errors: null
         }))
@@ -267,7 +267,7 @@ app.get('/api/videodevices', (req, res) => {
           bitrate: selbitrate,
           fpsSelected: selfps,
           UDPChecked: SeluseUDP,
-          useUDP: SeluseUDPIP,
+          useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
           errors: null
         }))
