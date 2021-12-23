@@ -41,7 +41,7 @@ class VideoPage extends basePage {
   handleVideoChange = (value, action) => {
     //new video device
     this.setState({ vidDeviceSelected: value, vidres: value.caps });
-    this.handleResChange(value.caps[0], "");
+    this.handleResChange(this.state.streamingStatus !== true ? value.caps[0] : this.state.vidResSelected, "");
   }
 
   handleResChange = (value, action) => {
