@@ -47,22 +47,22 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate):
     if device == "rpicam":
             # Old (Buster and earlier) can use the rpicamsrc interface
             s_src = "rpicamsrc bitrate={0} rotation={3} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())      
+            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())      
     elif device == "rpicam-uni":
             # Bullseye uses the new unicam interface ... so need a different pipeline
             s_src = "libcamerasrc ! capsfilter caps=video/x-raw,width={1},height={2},format=NV12{4},colorimetry=bt601,interlace-mode=progressive ! {3} ! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,video_bitrate={0}\" ! video/x-h264,level=(string)4".format(bitrate*1000, width, height, devrotation, framestr)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-raw":
             s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-h264":
             s_src = "v4l2src device={0} ! {3},width={1},height={2}{5} ! {4}".format(device, width, height, format, devrotation, framestr)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "image/jpeg":
             s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! jpegdec ! {4}".format(device, width, height, format, devrotation, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     print(pipeline_str)
     return pipeline_str
                         
@@ -127,7 +127,7 @@ if __name__ == '__main__':
         pipeline.set_state(Gst.State.PLAYING)
         
         print("Server sending UDP stream to " + args.udp)
-        print("Use: gst-launch-1.0 udpsrc port=5600 caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false")
+        print("Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false".format(args.udp.split(':')[1]))
         
         try:
             loop.run()
