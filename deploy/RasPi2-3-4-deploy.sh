@@ -55,6 +55,11 @@ cd ../../deploy
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
+## Rpanion-updater
+cd /etc/init.d
+sudo wget https://raw.githubusercontent.com/lorenzing/Rpanion-updater/main/rpanion-updater
+sudo chmod +x /etc/init.d/rpanion-updater
+
 ## and build & run Rpanion
 ./build.sh
 
