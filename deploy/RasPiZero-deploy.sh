@@ -73,11 +73,6 @@ sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkMa
 ## NPM has a different directory here, so need the change service detials
 sudo perl -pi -w -e 's{/usr/bin/npm}{/usr/local/bin/npm}g;'  /etc/systemd/system/rpanion.service
 
-## Rpanion-updater
-cd /etc/init.d
-sudo wget https://raw.githubusercontent.com/lorenzing/Rpanion-updater/main/rpanion-updater
-sudo chmod +x /etc/init.d/rpanion-updater
-
 ## Create Wifi AP
 ./wifi_access_point.sh
 
