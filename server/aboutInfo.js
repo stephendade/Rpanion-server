@@ -46,7 +46,7 @@ function updateRS () {
   // update Rpanion-server
   console.log('Upgrading')
   winston.info('Upgrading')
-  exec('sudo cd ./deploy && ./upgrade.sh', function (error, stdout, stderr) {
+  exec('cd ./deploy && ./upgrade.sh', function (error, stdout, stderr) {
     console.log(stdout)
     winston.info(stdout)
   })
