@@ -22,11 +22,31 @@ function getDiskInfo (callback) {
   })
 }
 
+function rebootCC () {
+  // reboot the companion computer
+  console.log('Reboot now')
+  winston.info('Reboot now')
+  exec('sudo reboot', function (error, stdout, stderr) {
+    console.log(stdout)
+    winston.info(stdout)
+  })
+}
+
 function shutdownCC () {
   // shutdown the companion computer
   console.log('Shutting down')
   winston.info('Shutting down')
   exec('sudo shutdown now', function (error, stdout, stderr) {
+    console.log(stdout)
+    winston.info(stdout)
+  })
+}
+
+function updateRS () {
+  // update Rpanion-server
+  console.log('Upgrading')
+  winston.info('Upgrading')
+  exec('cd ./deploy && ./upgrade.sh', function (error, stdout, stderr) {
     console.log(stdout)
     winston.info(stdout)
   })
