@@ -205,7 +205,8 @@ class FCDetails {
         vehType: this.m.vehicleFromID(),
         conStatus: this.m.conStatusStr(),
         statusText: this.m.statusText,
-        byteRate: this.m.statusBytesPerSec.avgBytesSec
+        byteRate: this.m.statusBytesPerSec.avgBytesSec,
+        fcVersion: this.m.fcVersion
       }
     } else {
       return {
@@ -214,7 +215,8 @@ class FCDetails {
         vehType: '',
         conStatus: 'Not connected',
         statusText: '',
-        byteRate: 0
+        byteRate: 0,
+        fcVersion: ''
       }
     }
   }
