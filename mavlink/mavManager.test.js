@@ -69,6 +69,34 @@ describe('MAVLink Functions', function () {
     })
   })
 
+  it('#versionSend()', function (done) {
+    var m = new mavManager('common', 2, '127.0.0.1', 16000)
+    var udpStream = udp.createSocket('udp4')
+
+    assert.equal(m.statusBytesPerSec.avgBytesSec, 0)
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendVersionRequest()
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([0xfd, 0x21, 0x00, 0x00, 0x00, 0xff, 0x00, 0x4c, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3f, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x02,
+        0x00, 0x00, 0x01, 0xc6, 0xb4]))
+      assert.equal(m.statusBytesPerSec.bytes, 2)
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 16000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
+
   it('#rebootSend()', function (done) {
     var m = new mavManager('common', 2, '127.0.0.1', 15000)
     var udpStream = udp.createSocket('udp4')
