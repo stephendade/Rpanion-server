@@ -42,6 +42,7 @@ class mavManager {
     this.statusBytesPerSec = { avgBytesSec: 0, bytes: 0, lastTime: Date.now().valueOf() }
     this.statusFWName = ''
     this.statusVehType = ''
+    this.fcVersion = ''
     this.timeofLastPacket = 0
     this.statusText = ''
     this.statusArmed = 0
@@ -96,6 +97,10 @@ class mavManager {
         winston.info('Vehicle is S/C: ' + msg._header.srcSystem + '/' + msg._header.srcComponent)
         this.targetSystem = msg._header.srcSystem
         this.targetComponent = msg._header.srcComponent
+
+        // send off initial messages
+        this.sendDSRequest()
+        this.sendVersionRequest()
       } else if (this.targetSystem !== msg._header.srcSystem) {
         // don't use packets from other systems or components in Rpanion-server
         return
@@ -126,8 +131,44 @@ class mavManager {
       } else if (msg._name === 'STATUSTEXT') {
         // Remove whitespace
         this.statusText += msg.text.trim().replace(/[^ -~]+/g, '') + '\n'
+      } else if (msg._name === 'AUTOPILOT_VERSION') {
+        // decode Ardupilot version
+        this.fcVersion = this.decodeFlightSwVersion(msg.flight_sw_version)
+        console.log(this.fcVersion)
+        winston.info(this.fcVersion)
       }
     })
+  }
+
+  decodeFlightSwVersion (flightSwVersion) {
+    // decode 32 bit flight_sw_version mavlink parameter - corresponds to encoding in ardupilot GCS_MAVLINK::send_autopilot_version
+    const fwTypeId = (flightSwVersion >> 0) % 256
+    const patch = (flightSwVersion >> 8) % 256
+    const minor = (flightSwVersion >> 16) % 256
+    const major = (flightSwVersion >> 24) % 256
+    let fwStr = ''
+
+    switch (fwTypeId) {
+      case 0:
+        fwStr = 'dev'
+        break
+      case 64:
+        fwStr = 'alpha'
+        break
+      case 128:
+        fwStr = 'beta'
+        break
+      case 192:
+        fwStr = 'rc'
+        break
+      case 255:
+        fwStr = 'official'
+        break
+      default:
+        fwStr = 'Unknown'
+        break
+    }
+    return `${major}.${minor}.${patch}-${fwStr}`
   }
 
   close () {
@@ -142,6 +183,9 @@ class mavManager {
     this.close()
     this.RinudpPort = null
     this.RinudpIP = null
+    this.targetSystem = null
+    this.targetComponent = null
+
     this.udpStream = udp.createSocket('udp4')
     this.statusBytesPerSec = { avgBytesSec: 0, bytes: 0, lastTime: Date.now().valueOf() }
 
@@ -150,7 +194,6 @@ class mavManager {
       if (this.RinudpPort === null || this.RinudpIP === null) {
         this.RinudpPort = rinfo.port
         this.RinudpIP = rinfo.address
-        this.sendDSRequest()
       } else {
         // calculate bytes/sec rate (once per 2 sec)
         if ((this.statusBytesPerSec.lastTime + 2000) < Date.now().valueOf()) {
@@ -191,6 +234,13 @@ class mavManager {
       1, 0, 0, 0, 0, 0, 0)
     this.isRebooting = true
     // this.eventEmitter.emit('sendData', msg.pack(this.mav))
+    this.sendData(msg.pack(this.mav))
+  }
+
+  sendVersionRequest () {
+    // request ArduPilot version
+    const msg = new this.mavmsg.messages.command_long(this.targetSystem, this.targetComponent, this.mavmsg.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1,
+      1, 0, 0, 0, 0, 0, 0)
     this.sendData(msg.pack(this.mav))
   }
 
