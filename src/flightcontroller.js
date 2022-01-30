@@ -210,7 +210,7 @@ class FCPage extends basePage {
         <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
         <p>Connection Status: {this.state.FCStatus.conStatus}</p>
         <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
-        <p>Vehicle Firmware: {this.state.FCStatus.FW}</p>
+        <p>Vehicle Firmware: {this.state.FCStatus.FW}{this.state.FCStatus.fcVersion === '' ? '' : (', Version: ' + this.state.FCStatus.fcVersion)}</p>
         <label>Console Output:
           <textarea readOnly rows="5" cols="50" value={this.state.FCStatus.statusText}></textarea>
         </label>
