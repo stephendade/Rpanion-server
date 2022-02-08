@@ -22,6 +22,7 @@ const path = require('path')
 
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult, oneOf } = require('express-validator')
+const { hostname } = require('os')
 
 // Init settings before running the other classes
 settings.init({
@@ -222,14 +223,14 @@ app.post('/api/logenable', [check('enable').isBoolean()], function (req, res) {
 })
 
 app.get('/api/softwareinfo', (req, res) => {
-  aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, err) => {
+  aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, hostname, err) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ OSVersion: OSV, Nodejsversion: NodeV, rpanionversion: RpanionV }))
-      winston.info('/api/softwareinfo OS:' + OSV + ' Node:' + NodeV + ' Rpanion:' + RpanionV)
+      res.send(JSON.stringify({ OSVersion: OSV, Nodejsversion: NodeV, rpanionversion: RpanionV, hostname: hostname}))
+      winston.info('/api/softwareinfo OS:' + OSV + ' Node:' + NodeV + ' Rpanion:' + RpanionV + ' Hostname: ' + hostname)
     } else {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ OSVersion: err, Nodejsversion: err, rpanionversion: err }))
+      res.send(JSON.stringify({ OSVersion: err, Nodejsversion: err, rpanionversion: err, hostname: err }))
       winston.error('Error in /api/softwareinfo ', { message: err })
     }
   })

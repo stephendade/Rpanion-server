@@ -4,10 +4,11 @@ const aboutPage = require('./aboutInfo')
 describe('About Functions', function () {
   describe('#getSoftwareInfo()', function () {
     it('should get software info', function (done) {
-      aboutPage.getSoftwareInfo(function (OSV, NodeV, RpanionV, err) {
+      aboutPage.getSoftwareInfo(function (OSV, NodeV, RpanionV, hostname, err) {
         assert.notEqual(OSV, '')
         assert.notEqual(NodeV, '')
         assert.notEqual(RpanionV, '')
+        assert.notEqual(hostname, '')
         assert.equal(err, null)
         done()
       })
