@@ -6,7 +6,7 @@ var winston = require('./winstonconfig')(module)
 function getSoftwareInfo (callback) {
   // get the OS, Node.js and Rpanion-server versions
   si.osInfo(function (data) {
-    return callback('' + data.distro + ' - ' + data.release, process.version, process.env.npm_package_version, null)
+    return callback('' + data.distro + ' - ' + data.release, process.version, process.env.npm_package_version, data.hostname, null)
   })
 }
 

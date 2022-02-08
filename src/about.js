@@ -72,6 +72,7 @@ class AboutPage extends basePage {
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
         {this.HATInfo()}
         <h2>About Software</h2>
+        <p>OS hostname: {this.state.hostname}</p>
         <p>OS version: {this.state.OSVersion}</p>
         <p>Node.js version: {this.state.Nodejsversion}</p>
         <p>Rpanion-server version: {this.state.rpanionversion}</p>
