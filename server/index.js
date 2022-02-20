@@ -21,6 +21,16 @@ const app = express()
 const http = require('http').Server(app)
 const path = require('path')
 
+// set up rate limiter: maximum of twenty requests per minute
+const RateLimit = require('express-rate-limit')
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20
+})
+
+// apply rate limiter to all requests
+app.use(limiter)
+
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult, oneOf } = require('express-validator')
 
