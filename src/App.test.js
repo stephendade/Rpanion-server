@@ -9,6 +9,7 @@ import FCConfig from './flightcontroller.js';
 import LogBrowser from './logBrowser.js';
 import NTRIPPage from './ntripcontroller.js';
 import AdhocConfig from './adhocwifi.js';
+import CloudConfig from './cloud.js';
 
 it('homepage renders without crashing', () => {
   const div = document.createElement('div');
@@ -55,5 +56,11 @@ it('ntrip page renders without crashing', () => {
 it('adhoc page renders without crashing', () => {
   const div = document.createElement('div');
   ReactDOM.render(<AdhocConfig />, div);
+  ReactDOM.unmountComponentAtNode(div);
+});
+
+it('cloud page renders without crashing', () => {
+  const div = document.createElement('div');
+  ReactDOM.render(<CloudConfig />, div);
   ReactDOM.unmountComponentAtNode(div);
 });

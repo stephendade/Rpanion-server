@@ -10,6 +10,7 @@ const flightLogger = require('./flightLogger.js')
 const networkClients = require('./networkClients.js')
 const ntrip = require('./ntrip.js')
 const adhocManager = require('./adhocManager.js')
+const cloudManager = require('./cloudUpload.js')
 
 const winston = require('./winstonconfig')(module)
 
@@ -37,6 +38,8 @@ const fcManager = new fcManagerClass(settings)
 const logManager = new flightLogger(settings)
 
 const ntripClient = new ntrip(settings)
+
+const cloud = new cloudManager(settings, winston)
 
 // Got an RTCM message, send to flight controller
 ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
@@ -102,6 +105,33 @@ app.get('/api/ntripconfig', (req, res) => {
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
     res.send(JSON.stringify({ host: host, port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
   })
+})
+
+// Serve the cloud info
+app.get('/api/cloudinfo', (req, res) => {
+  cloud.getSettings((doBinUpload, binUploadLink, syncDeletions) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ doBinUpload: doBinUpload, binUploadLink: binUploadLink, syncDeletions: syncDeletions }))
+  })
+})
+
+// activate or deactivate bin log upload
+app.post('/api/binlogupload', [check('doBinUpload').isBoolean(),
+  check('binUploadLink').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim(),
+  check('syncDeletions').isBoolean()], function (req, res) {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    console.log(req.body)
+    winston.error('Bad POST vars in /api/binlogupload', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  } else {
+    cloud.setSettingsBin(req.body.doBinUpload, req.body.binUploadLink, req.body.syncDeletions)
+    // send back refreshed settings
+    cloud.getSettings((doBinUpload, binUploadLink, syncDeletions) => {
+      res.setHeader('Content-Type', 'application/json')
+      res.send(JSON.stringify({ doBinUpload: doBinUpload, binUploadLink: binUploadLink, syncDeletions: syncDeletions }))
+    })
+  }
 })
 
 // Serve the adhocwifi info
@@ -403,6 +433,7 @@ io.on('connection', function (socket) {
   FCStatusLoop = setInterval(function () {
     io.sockets.emit('FCStatus', fcManager.getSystemStatus())
     io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr())
+    io.sockets.emit('CloudBinStatus', cloud.conStatusBinStr())
   }, 1000)
 })
 
