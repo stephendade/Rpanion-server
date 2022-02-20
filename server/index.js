@@ -135,11 +135,11 @@ app.get('/api/adhocadapters', (req, res) => {
   adhocManager.getAdapters((err, netDeviceList, netDeviceSelected, settings) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
+      const ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netDevice: [], netDeviceSelected: [], cursettings: [], error: err }
+      const ret = { netDevice: [], netDeviceSelected: [], cursettings: [], error: err }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/adhocadapters ', { message: err })
     }
@@ -165,11 +165,11 @@ app.post('/api/adhocadaptermodify', [check('settings.isActive').isBoolean(),
     adhocManager.setAdapter(req.body.toState, req.body.netDeviceSelected, req.body.settings, (err, netDeviceList, netDeviceSelected, settings) => {
       if (!err) {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
+        const ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
         res.send(JSON.stringify(ret))
       } else {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings, error: err }
+        const ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings, error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/adhocadapters ', { message: err })
       }
@@ -437,11 +437,11 @@ app.get('/api/networkadapters', (req, res) => {
   networkManager.getAdapters((err, netDeviceList) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netDevice: netDeviceList }
+      const ret = { netDevice: netDeviceList }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netDevice: [] }
+      const ret = { netDevice: [] }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/networkadapters ', { message: err })
     }
@@ -452,11 +452,11 @@ app.get('/api/wirelessstatus', (req, res) => {
   networkManager.getWirelessStatus((err, status) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { wirelessEnabled: status }
+      const ret = { wirelessEnabled: status }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { wirelessEnabled: true }
+      const ret = { wirelessEnabled: true }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/wirelessstatus ', { message: err })
     }
@@ -473,11 +473,11 @@ app.post('/api/setwirelessstatus', [check('status').isBoolean()], (req, res) => 
   networkManager.setWirelessStatus(req.body.status, (err, status) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { wirelessEnabled: status }
+      const ret = { wirelessEnabled: status }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { wirelessEnabled: status }
+      const ret = { wirelessEnabled: status }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/setwirelessstatus ', { message: err })
     }
@@ -488,11 +488,11 @@ app.get('/api/networkconnections', (req, res) => {
   networkManager.getConnections((err, netConnectionList) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netConnection: netConnectionList }
+      const ret = { netConnection: netConnectionList }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netConnection: [] }
+      const ret = { netConnection: [] }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/networkconnections ', { message: err })
     }
@@ -519,11 +519,11 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
   vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { streamingStatus: status, streamAddresses: addresses }
+      const ret = { streamingStatus: status, streamAddresses: addresses }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { streamingStatus: false, streamAddresses: ['Error ' + err] }
+      const ret = { streamingStatus: false, streamAddresses: ['Error ' + err] }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/startstopvideo ', { message: err })
     }
@@ -541,11 +541,11 @@ app.post('/api/networkIP', [check('conName').isUUID()], (req, res) => {
   networkManager.getConnectionDetails(req.body.conName, (err, conDetails) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netConnectionDetails: conDetails }
+      const ret = { netConnectionDetails: conDetails }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      var ret = { netConnectionDetails: {} }
+      const ret = { netConnectionDetails: {} }
       res.send(JSON.stringify(ret))
       winston.error('Error in /api/networkIP ', { message: err })
     }
@@ -566,12 +566,12 @@ app.post('/api/networkactivate', [check('conName').isUUID()], (req, res) => {
     networkManager.activateConnection(req.body.conName, (err) => {
       if (err) {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: err }
+        const ret = { error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/networkactivate ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: null, action: 'NetworkActivateOK' }
+        const ret = { error: null, action: 'NetworkActivateOK' }
         res.send(JSON.stringify(ret))
       }
     })
@@ -592,12 +592,12 @@ app.post('/api/networkdeactivate', [check('conName').isUUID()], (req, res) => {
     networkManager.deactivateConnection(req.body.conName, (err) => {
       if (err) {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: err }
+        const ret = { error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/networkdeactivate ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: null, action: 'NetworkDectivateOK' }
+        const ret = { error: null, action: 'NetworkDectivateOK' }
         res.send(JSON.stringify(ret))
       }
     })
@@ -618,12 +618,12 @@ app.post('/api/networkdelete', [check('conName').isUUID()], (req, res) => {
     networkManager.deleteConnection(req.body.conName, (err) => {
       if (err) {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: err }
+        const ret = { error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/networkdelete ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: null, action: 'NetworkDeleteOK' }
+        const ret = { error: null, action: 'NetworkDeleteOK' }
         res.send(JSON.stringify(ret))
       }
     })
@@ -656,12 +656,12 @@ app.post('/api/networkedit', [check('conName').isUUID(),
     networkManager.editConnection(req.body.conName, req.body.conSettings, (err) => {
       if (err) {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: err }
+        const ret = { error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/networkedit ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: null, action: 'NetworkEditOK' }
+        const ret = { error: null, action: 'NetworkEditOK' }
         res.send(JSON.stringify(ret))
       }
     })
@@ -696,12 +696,12 @@ app.post('/api/networkadd', [check('conSettings.ipaddresstype.value').isIn(['aut
     networkManager.addConnection(req.body.conName, req.body.conType, req.body.conAdapter, req.body.conSettings, (err) => {
       if (err) {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: err }
+        const ret = { error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/networkadd ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
-        var ret = { error: null, action: 'NetworkAddOK' }
+        const ret = { error: null, action: 'NetworkAddOK' }
         res.send(JSON.stringify(ret))
       }
     })

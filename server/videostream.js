@@ -31,7 +31,6 @@ class videoStream {
               if (err) {
                 // failed setup, reset settings
                 this.resetVideo()
-              } else {
               }
             })
         } else {
@@ -48,7 +47,7 @@ class videoStream {
     // set up the avail addresses
     this.ifaces = this.scanInterfaces()
     this.deviceAddresses = []
-    for (var j = 0; j < this.ifaces.length; j++) {
+    for (let j = 0; j < this.ifaces.length; j++) {
       this.deviceAddresses.push('rtsp://' + this.ifaces[j] + ':8554/video')
     }
   }
@@ -68,7 +67,7 @@ class videoStream {
           return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
         } else {
           // format saved settings
-          var seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
+          const seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
           if (seldevice.length !== 1) {
             // bad settings
             console.error('Bad video settings. Resetting')
@@ -76,7 +75,7 @@ class videoStream {
             this.resetVideo()
             return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
           }
-          var selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString())
+          const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString())
           if (seldevice.length === 1 && selRes.length === 1) {
             return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort)
           } else {
@@ -103,12 +102,12 @@ class videoStream {
 
   scanInterfaces () {
     // scan for available IP (v4 only) interfaces
-    var iface = []
-    var ifaces = os.networkInterfaces()
+    const iface = []
+    const ifaces = os.networkInterfaces()
 
     for (const ifacename in ifaces) {
-      var alias = 0
-      for (var j = 0; j < ifaces[ifacename].length; j++) {
+      let alias = 0
+      for (let j = 0; j < ifaces[ifacename].length; j++) {
         if (ifaces[ifacename][j].family === 'IPv4' && alias >= 1) {
           // this single interface has multiple ipv4 addresses
           // console.log("Found IP " + ifacename + ':' + alias, ifaces[ifacename][j].address);
@@ -134,8 +133,8 @@ class videoStream {
     // user wants to start or stop streaming
     if (active) {
       // check it's a valid video device
-      var found = false
-      for (var j = 0; j < this.devices.length; j++) {
+      let found = false
+      for (let j = 0; j < this.devices.length; j++) {
         if (device === this.devices[j].value) {
           found = true
         }
@@ -222,8 +221,8 @@ class videoStream {
 
   async isUbuntu () {
     // Check if we are running Ubuntu
-    var ret
-    var data = await si.osInfo()
+    let ret
+    const data = await si.osInfo()
     if (data.distro.toString().includes('Ubuntu')) {
       console.log('Video Running Ubuntu')
       this.winston.info('Video Running Ubuntu')

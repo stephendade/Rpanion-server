@@ -1,7 +1,7 @@
-var assert = require('assert')
+const assert = require('assert')
 const Path = require('path')
-var fs = require('fs')
-var appRoot = require('app-root-path')
+const fs = require('fs')
+const appRoot = require('app-root-path')
 const settings = require('settings-store')
 const Logger = require('./flightLogger')
 const winston = require('./winstonconfig')(module)
@@ -27,7 +27,7 @@ describe('Logging Functions', function () {
   }
 
   it('#loggerinit()', function () {
-    var Lgr = new Logger(settings, winston)
+    const Lgr = new Logger(settings, winston)
 
     // assert folders were created
     assert.ok(fs.existsSync(Lgr.topfolder))
@@ -42,7 +42,7 @@ describe('Logging Functions', function () {
   })
 
   it('#newlogfile()', function () {
-    var Lgr = new Logger(settings, winston)
+    const Lgr = new Logger(settings, winston)
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) >= 12) {
@@ -53,7 +53,7 @@ describe('Logging Functions', function () {
   })
 
   it('#clearlogfiles()', function () {
-    var Lgr = new Logger(settings, winston)
+    const Lgr = new Logger(settings, winston)
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) > 12) {
@@ -74,7 +74,7 @@ describe('Logging Functions', function () {
   })
 
   it('#getlogs()', function (done) {
-    var Lgr = new Logger(settings, winston)
+    const Lgr = new Logger(settings, winston)
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) < 12) {
@@ -99,7 +99,7 @@ describe('Logging Functions', function () {
   })
 
   it('#getstatus()', function () {
-    var Lgr = new Logger(settings, winston)
+    const Lgr = new Logger(settings, winston)
 
     if (parseInt(process.versions.node) < 12) {
       assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')

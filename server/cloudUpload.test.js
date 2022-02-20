@@ -1,12 +1,11 @@
-var assert = require('assert')
-var appRoot = require('app-root-path')
+const assert = require('assert')
 const settings = require('settings-store')
-const cloud = require('./cloudUpload')
+const Cloud = require('./cloudUpload')
 const winston = require('./winstonconfig')(module)
 
 describe('Cloud Upload Functions', function () {
   it('#cloudinit()', function () {
-    const cloudVar = new cloud(settings, winston)
+    const cloudVar = new Cloud(settings, winston)
 
     // check initial status
     assert.equal(cloudVar.options.doBinUpload, false)
@@ -16,7 +15,7 @@ describe('Cloud Upload Functions', function () {
 
   it('#cloudlocalupload()', function () {
     // Getting starting client with local copy
-    const cloudVar = new cloud(settings, winston)
+    const cloudVar = new Cloud(settings, winston)
 
     // check initial status
     assert.equal(cloudVar.conStatusBinStr(), 'Disabled')

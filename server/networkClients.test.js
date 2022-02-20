@@ -1,5 +1,4 @@
-var assert = require('assert')
-var appRoot = require('app-root-path')
+const assert = require('assert')
 const networkClients = require('./networkClients')
 
 describe('Network Client Functions', function () {

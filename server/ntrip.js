@@ -1,7 +1,7 @@
 // NTRIP Manager
 const { NtripClient } = require('ntrip-client')
 const { geoToEcef } = require('ntrip-client/lib/nmea/ecef')
-var events = require('events')
+const events = require('events')
 
 class ntrip {
   constructor (settings, winston) {

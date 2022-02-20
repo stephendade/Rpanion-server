@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-var assert = require('assert')
+const assert = require('assert')
 const adhocManager = require('./adhocManager')
 
 describe('Adhoc Manager Functions', function () {

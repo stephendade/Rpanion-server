@@ -1,8 +1,8 @@
 const SerialPort = require('serialport')
 const fs = require('fs')
-var events = require('events')
+const events = require('events')
 const path = require('path')
-var appRoot = require('app-root-path')
+const appRoot = require('app-root-path')
 const { spawn, spawnSync } = require('child_process')
 const si = require('systeminformation')
 const isPi = require('detect-rpi')
@@ -65,9 +65,9 @@ class FCDetails {
 
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
-      var found = false
+      let found = false
       this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
-        for (var i = 0, len = devices.length; i < len; i++) {
+        for (let i = 0, len = devices.length; i < len; i++) {
           if (this.activeDevice.serial.value === devices[i].value) {
             found = true
             this.startLink((err, active) => {
@@ -92,7 +92,7 @@ class FCDetails {
 
   validMavlinkRouter () {
     // check mavlink-router is installed
-    var ls = spawnSync('which', ['mavlink-routerd'])
+    const ls = spawnSync('which', ['mavlink-routerd'])
     console.log(ls.stdout.toString())
     if (ls.stdout.toString().trim() == '') {
       return false
@@ -103,8 +103,8 @@ class FCDetails {
 
   getUDPOutputs () {
     // get list of current UDP outputs
-    var ret = []
-    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+    const ret = []
+    for (let i = 0, len = this.UDPoutputs.length; i < len; i++) {
       ret.push({ IPPort: this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port })
     }
     return ret
@@ -113,7 +113,7 @@ class FCDetails {
   addUDPOutput (newIP, newPort) {
     // add a new udp output, if not already in
     // check if this ip:port is already in the list
-    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+    for (let i = 0, len = this.UDPoutputs.length; i < len; i++) {
       if (this.UDPoutputs[i].IP === newIP && this.UDPoutputs[i].port === newPort) {
         return this.getUDPOutputs()
       }
@@ -162,7 +162,7 @@ class FCDetails {
     }
 
     // check if this ip:port is already in the list
-    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+    for (let i = 0, len = this.UDPoutputs.length; i < len; i++) {
       if (this.UDPoutputs[i].IP === remIP && this.UDPoutputs[i].port === remPort) {
         // and remove
         this.UDPoutputs.splice(i, 1)
@@ -256,13 +256,13 @@ class FCDetails {
     // this.outputs.push({ IP: newIP, port: newPort })
 
     // build up the commandline for mavlink-router
-    var cmd = ['-e', '127.0.0.1:14540', '--tcp-port']
+    const cmd = ['-e', '127.0.0.1:14540', '--tcp-port']
     if (this.enableTCP == true) {
       cmd.push('5760')
     } else {
       cmd.push('0')
     }
-    for (var i = 0, len = this.UDPoutputs.length; i < len; i++) {
+    for (let i = 0, len = this.UDPoutputs.length; i < len; i++) {
       cmd.push('-e')
       cmd.push(this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port)
     }
@@ -296,8 +296,8 @@ class FCDetails {
             }
           }
         } catch (err) {}
-        var res = data.toString().split(' ')
-        var curLog = (res[res.length - 1]).trim()
+        const res = data.toString().split(' ')
+        const curLog = (res[res.length - 1]).trim()
         this.binlog = path.join(appRoot.toString(), 'flightlogs', 'binlogs', curLog)
         console.log('Current log is: ' + this.binlog)
       }
@@ -358,17 +358,18 @@ class FCDetails {
 
     SerialPort.list().then(
       async ports => {
-        for (var i = 0, len = ports.length; i < len; i++) {
+        for (let i = 0, len = ports.length; i < len; i++) {
           if (ports[i].pnpId !== undefined) {
             // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
             // console.log("Port: ", ports[i].pnpID);
+            let namePorts = ''
             if (ports[i].pnpId.split('_').length > 2) {
-              var name = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
+              namePorts = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
             } else {
-              var name = ports[i].manufacturer + ' (' + ports[i].path + ')'
+              namePorts = ports[i].manufacturer + ' (' + ports[i].path + ')'
             }
             // console.log("Port: ", ports[i].pnpID);
-            this.serialDevices.push({ value: ports[i].path, label: name, pnpId: ports[i].pnpId })
+            this.serialDevices.push({ value: ports[i].path, label: namePorts, pnpId: ports[i].pnpId })
           }
         }
         // for the Ras Pi's inbuilt UART
@@ -376,7 +377,7 @@ class FCDetails {
           this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
         }
         // rpi uart has different name under Ubuntu
-        var data = await si.osInfo()
+        const data = await si.osInfo()
         if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
           // console.log("Running Ubuntu")
           this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
@@ -444,25 +445,25 @@ class FCDetails {
     // check port, mavversion and baud are valid (if starting telem)
     if (!this.activeDevice) {
       this.activeDevice = { serial: null, baud: null }
-      for (var i = 0, len = this.serialDevices.length; i < len; i++) {
+      for (let i = 0, len = this.serialDevices.length; i < len; i++) {
         if (this.serialDevices[i].pnpId === device.pnpId) {
           this.activeDevice.serial = this.serialDevices[i]
           break
         }
       }
-      for (i = 0, len = this.baudRates.length; i < len; i++) {
+      for (let i = 0, len = this.baudRates.length; i < len; i++) {
         if (this.baudRates[i].value === baud.value) {
           this.activeDevice.baud = this.baudRates[i]
           break
         }
       }
-      for (i = 0, len = this.mavlinkVersions.length; i < len; i++) {
+      for (let i = 0, len = this.mavlinkVersions.length; i < len; i++) {
         if (this.mavlinkVersions[i].value === mavversion.value) {
           this.activeDevice.mavversion = this.mavlinkVersions[i]
           break
         }
       }
-      for (i = 0, len = this.dialects.length; i < len; i++) {
+      for (let i = 0, len = this.dialects.length; i < len; i++) {
         if (this.dialects[i].value === mavdialect.value) {
           this.activeDevice.mavdialect = this.dialects[i]
           break

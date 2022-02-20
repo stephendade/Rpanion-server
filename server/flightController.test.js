@@ -13,7 +13,7 @@ describe('Flight Controller Functions', function () {
   })
 
   it('#fcGetSerialDevices()', function (done) {
-    var FC = new FCManagerClass(settings, winston)
+    const FC = new FCManagerClass(settings, winston)
 
     FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
       assert.equal(err, null)
@@ -32,7 +32,7 @@ describe('Flight Controller Functions', function () {
   })
 
   it('#fcUDPadderemove()', function () {
-    var FC = new FCManagerClass(settings, winston)
+    const FC = new FCManagerClass(settings, winston)
 
     // check initial status
     assert.equal(FC.getUDPOutputs().length, 0)
@@ -59,7 +59,7 @@ describe('Flight Controller Functions', function () {
   })
 
   it('#fcStartStop()', function (done) {
-    var FC = new FCManagerClass(settings, winston)
+    const FC = new FCManagerClass(settings, winston)
     FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
 
     FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, (err, isSuccess) => {

@@ -3,10 +3,10 @@
  */
 
 const path = require('path')
-var appRoot = require('app-root-path')
-var fs = require('fs')
-var moment = require('moment')
-var microtime = require('microtime')
+const appRoot = require('app-root-path')
+const fs = require('fs')
+const moment = require('moment')
+const microtime = require('microtime')
 const process = require('process')
 
 class flightLogger {
@@ -40,7 +40,7 @@ class flightLogger {
       this.winston.info('Cannot do logging on nodejs version <12')
       return
     }
-    var filename = moment().format('YYYYMMDD-HHmmss') // new Date().toISOString();
+    const filename = moment().format('YYYYMMDD-HHmmss') // new Date().toISOString();
     this.activeFileTlog = path.join(this.tlogfolder, filename + '.tlog')
     console.log('New Tlog: ' + this.activeFileTlog)
     this.winston.info('New Tlog: ' + this.activeFileTlog)
@@ -99,12 +99,12 @@ class flightLogger {
       // Note we're using BigInt here, as a standard 32-bit Int
       // is too small to hold a microsecond timestamp
       const microSeconds = BigInt(microtime.now())
-      var timebits = Buffer.alloc(8) // 8 bytes = 64 bits = BigInt
+      const timebits = Buffer.alloc(8) // 8 bytes = 64 bits = BigInt
 
       // use this instead of jspack.Pack('>Q', [microSeconds]);
       timebits.writeBigInt64BE(microSeconds)
 
-      var toWrite = Buffer.concat([timebits, msg._msgbuf])
+      const toWrite = Buffer.concat([timebits, msg._msgbuf])
       fs.appendFileSync(this.activeFileTlog, toWrite, 'binary')
       return true
     } catch (err) {
@@ -158,8 +158,8 @@ class flightLogger {
       if (fileStat.isDirectory()) {
         this.findInDir(filePath, fileList)
       } else {
-        var relpath = path.relative(this.topfolder, filePath)
-        var mTime = moment(filemTime).format('LLL')
+        const relpath = path.relative(this.topfolder, filePath)
+        const mTime = moment(filemTime).format('LLL')
         fileList.push({ key: relpath, name: path.basename(filePath), modified: mTime, size: Math.round(fileStat.size / 1024) })
       }
     })
@@ -170,8 +170,8 @@ class flightLogger {
   // get list of logfiles for website
   // return format is (err, tlogs)
   getLogs (callback) {
-    var newfilestlog = this.findInDir(this.tlogfolder)
-    var newfilesbinlog = this.findInDir(this.binlogfolder)
+    const newfilestlog = this.findInDir(this.tlogfolder)
+    const newfilesbinlog = this.findInDir(this.binlogfolder)
     return callback(false, newfilestlog, newfilesbinlog, this.activeLogging)
   };
 }

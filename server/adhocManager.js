@@ -5,14 +5,14 @@ as nmcli does not support ad-hoc networks
 */
 
 const { exec, execSync } = require('child_process')
-var winston = require('./winstonconfig')(module)
+const winston = require('./winstonconfig')(module)
 
 function getAdapters (callback) {
   // Get all wifi adapters available to system
   exec('nmcli -t -f device,type,state dev', (error, stdout, stderr) => {
-    var netStatusList = []
-    var netDeviceSelected = {}
-    var settings = {
+    const netStatusList = []
+    let netDeviceSelected = {}
+    const settings = {
       ipaddress: '',
       wpaType: 'none',
       password: '',
@@ -21,7 +21,7 @@ function getAdapters (callback) {
       channel: 0,
       isActive: false
     }
-    var activeDevice = false
+    let activeDevice = false
 
     if (stderr) {
       console.error(`exec error: ${error}`)
@@ -29,18 +29,18 @@ function getAdapters (callback) {
       return callback(stderr)
     } else {
       stdout.split('\n').forEach(function (item) {
-        var device = item.split(':')
+        const device = item.split(':')
         if (device.length === 3 && device[1] === 'wifi' && device[2] !== 'unavailable') {
           console.log('Adding Network device ' + device[0])
           winston.info('getAdapters() adding ' + device)
           // if wifi, check for avail channels
-          var freqList = []
+          const freqList = []
           try {
-            var output = execSync('iwlist ' + device[0] + ' channel')
-            var allFreqs = output.toString().split('\n')
-            for (var i = 0, len = allFreqs.length; i < len; i++) {
+            const output = execSync('iwlist ' + device[0] + ' channel')
+            const allFreqs = output.toString().split('\n')
+            for (let i = 0, len = allFreqs.length; i < len; i++) {
               if (allFreqs[i].includes('Channel ') && !allFreqs[i].includes('Current')) {
-                var ln = allFreqs[i].split(' ').filter(i => i)
+                const ln = allFreqs[i].split(' ').filter(i => i)
                 // can only do 2.4GHz channels in adhoc mode
                 if (ln.length > 4 && parseFloat(ln[3]) < 3) {
                   freqList.push({ value: parseInt(ln[1]), freq: ln[3], text: '' + ln[1] + ' (' + ln[3] + ' GHz)', band: ((parseFloat(ln[3]) < 3) ? 'bg' : 'a') })
@@ -48,15 +48,15 @@ function getAdapters (callback) {
               }
             }
             // get adapter status
-            var outputcfg = execSync('iwconfig ' + device[0])
-            var ipcfg = execSync('ip -4 -j addr show ' + device[0])
-            var pwdLine = execSync('sudo iwlist ' + device[0] + ' key')
+            const outputcfg = execSync('iwconfig ' + device[0])
+            const ipcfg = execSync('ip -4 -j addr show ' + device[0])
+            const pwdLine = execSync('sudo iwlist ' + device[0] + ' key')
             if (outputcfg.toString().includes('Mode:Ad-Hoc')) {
               // adapter is acive in adhoc mopde, grab settings
               activeDevice = device[0]
-              var outputlines = outputcfg.toString().split(/[ :\n]+/)
+              const outputlines = outputcfg.toString().split(/[ :\n]+/)
               // console.log(outputlines)
-              for (var j = 0, lenn = outputlines.length; j < lenn; j++) {
+              for (let j = 0, lenn = outputlines.length; j < lenn; j++) {
                 if (outputlines[j] === 'ESSID') {
                   settings.ssid = outputlines[j + 1].replace(/"/g, '')
                 }
@@ -70,15 +70,15 @@ function getAdapters (callback) {
                 }
               }
               // get ip address
-              var ipjsonformat = JSON.parse(ipcfg)
-              for (var k = 0, lennn = ipjsonformat.length; k < lennn; k++) {
+              const ipjsonformat = JSON.parse(ipcfg)
+              for (let k = 0, lennn = ipjsonformat.length; k < lennn; k++) {
                 if ('ifname' in ipjsonformat[k] && ipjsonformat[k].ifname === device[0]) {
                   settings.ipaddress = ipjsonformat[k].addr_info[0].local
                 }
               }
               // get password
-              var password = pwdLine.toString().split('\n')[2]
-              var allpw = password.split(' ')
+              const password = pwdLine.toString().split('\n')[2]
+              const allpw = password.split(' ')
               if (allpw[1] === 'off') {
                 settings.wpaType = 'none'
                 settings.password = ''

@@ -355,10 +355,10 @@ function deleteConnection (conName, callback) {
 }
 
 function getConnections (callback) {
-  var output = ''
+  let output = ''
   const conStatusList = []
   try {
-    var output = execSync('nmcli -t -f NAME,UUID,TYPE,DEVICE connection show')
+    output = execSync('nmcli -t -f NAME,UUID,TYPE,DEVICE connection show')
   } catch (e) {
     console.error('exec error: ' + e)
     winston.error('Error in getConnections() ', { message: e })
@@ -370,10 +370,10 @@ function getConnections (callback) {
     const item = allConns[i]
     const connection = item.split(':')
     let curConn = {}
-    var subout = ''
+    let subout = ''
     if (connection.length == 4 || connection.length == 3) {
       try {
-        var subout = execSync('nmcli -s -t -f connection.interface-name connection show ' + connection[1])
+        subout = execSync('nmcli -s -t -f connection.interface-name connection show ' + connection[1])
         subout = subout.toString().split(':')[1].trim()
       } catch (e) {
         winston.info('Error in getConnections2() ', { message: e })
@@ -384,9 +384,8 @@ function getConnections (callback) {
     if (connection[3] === '' || connection[3] === '--') {
       curConn = { value: connection[1], label: '', labelPre: connection[0], type: connection[2], state: '', attachedIface: subout }
       conStatusList.push(curConn)
-    }
-    // active connection
-    else if (connection.length === 4) {
+    } else if (connection.length === 4) {
+      // active connection
       curConn = { value: connection[1], label: '', labelPre: connection[0], type: connection[2], state: connection[3], attachedIface: subout }
       conStatusList.push(curConn)
     }
