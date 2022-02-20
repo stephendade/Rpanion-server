@@ -23,7 +23,6 @@ const path = require('path')
 
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult, oneOf } = require('express-validator')
-const { hostname } = require('os')
 
 // Init settings before running the other classes
 settings.init({
@@ -32,14 +31,10 @@ settings.init({
   filename: path.join(appRoot.toString(), 'settings.json')
 })
 
-const vManager = new videoStream(settings)
-
-const fcManager = new fcManagerClass(settings)
-
-const logManager = new flightLogger(settings)
-
-const ntripClient = new ntrip(settings)
-
+const vManager = new videoStream(settings, winston)
+const fcManager = new fcManagerClass(settings, winston)
+const logManager = new flightLogger(settings, winston)
+const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings, winston)
 
 // Got an RTCM message, send to flight controller

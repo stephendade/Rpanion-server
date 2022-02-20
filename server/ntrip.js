@@ -1,11 +1,10 @@
 // NTRIP Manager
 const { NtripClient } = require('ntrip-client')
 const { geoToEcef } = require('ntrip-client/lib/nmea/ecef')
-var winston = require('./winstonconfig')(module)
 var events = require('events')
 
 class ntrip {
-  constructor (settings) {
+  constructor (settings, winston) {
     this.options = {
       host: '',
       port: 2101,
@@ -18,6 +17,8 @@ class ntrip {
       interval: 2000,
       active: false
     }
+
+    this.winston = winston
 
     // status. 0=not active, 1=waiting for FC, 2=waiting for GPS lock, 3=waiting for NTRIP server, 4=getting packets
     // -1=ntrip error
@@ -81,14 +82,14 @@ class ntrip {
         if (this.options.active) {
           console.log('NTRIP error')
           console.log(err)
-          winston.info(err)
+          this.winston.info(err)
           this.status = -1
         }
       })
 
       this.client.run()
       console.log('NTRIP started')
-      winston.info('NTRIP started')
+      this.winston.info('NTRIP started')
       this.status = 1
     } else {
       // stop the client
@@ -104,7 +105,7 @@ class ntrip {
 
       this.status = 0
       console.log('NTRIP stopped')
-      winston.info('NTRIP stopped')
+      this.winston.info('NTRIP stopped')
     }
   }
 
@@ -126,10 +127,10 @@ class ntrip {
       this.settings.setValue('ntrip.password', this.options.password)
       this.settings.setValue('ntrip.active', this.options.active)
       console.log('Saved NTRIP settings')
-      winston.info('Saved NTRIP settings')
+      this.winston.info('Saved NTRIP settings')
     } catch (e) {
       console.log(e)
-      winston.info(e)
+      this.winston.info(e)
     }
 
     this.startStopNTRIP()
