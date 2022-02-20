@@ -1,5 +1,5 @@
 const { exec, execSync } = require('child_process')
-var winston = require('./winstonconfig')(module)
+const winston = require('./winstonconfig')(module)
 
 function getClients (callback) {
   // If in AP mode, get list of clients
@@ -10,39 +10,39 @@ function getClients (callback) {
       winston.error('Error in getClients() ', { message: stderr })
       return callback(stderr.toString(), null, null)
     } else {
-      var allConns = stdout.split('\n')
+      const allConns = stdout.split('\n')
       // stdout.split("\n").forEach(function (item) {
-      for (var i = 0, len = allConns.length; i < len; i++) {
-        var item = allConns[i]
-        var connection = item.split(':')
-        var device = connection[3]
+      for (let i = 0, len = allConns.length; i < len; i++) {
+        const item = allConns[i]
+        const connection = item.split(':')
+        const device = connection[3]
         if (connection[2] === '802-11-wireless' && (connection[3] !== '' && connection[3] !== '--')) {
           // get connection details
           try {
-            var output = execSync('nmcli -s -t -f 802-11-wireless.mode connection show ' + connection[1])
-            var modeline = output.toString().split('\n')[0].split(':')[1]
+            const output = execSync('nmcli -s -t -f 802-11-wireless.mode connection show ' + connection[1])
+            const modeline = output.toString().split('\n')[0].split(':')[1]
             if (modeline === 'ap') {
               // Stored in sudo cat /var/lib/NetworkManager/dnsmasq-wlan0.leases
               // 1606808691 34:7d:f6:65:b1:1b 10.0.2.117 l5411 01:34:7d:f6:65:b1:1b
               // we have an active AP
-              var allclients = []
-              var out = execSync('sudo cat /var/lib/NetworkManager/dnsmasq-' + device + '.leases')
-              var allleases = out.toString().split('\n')
-              for (var j = 0, lenn = allleases.length; j < lenn; j++) {
+              const allclients = []
+              const out = execSync('sudo cat /var/lib/NetworkManager/dnsmasq-' + device + '.leases')
+              const allleases = out.toString().split('\n')
+              for (let j = 0, lenn = allleases.length; j < lenn; j++) {
                 if (allleases[j] !== '') {
-                  var details = allleases[j].split(' ')
+                  const details = allleases[j].split(' ')
                   if (details.length !== 5) {
                     winston.error('Bad lease ', { message: details })
                     return callback('Bad lease', connection, [])
                   }
-                  var ip = details[2]
-                  var mac = details[1]
-                  var hostname = details[3]
+                  const ip = details[2]
+                  const mac = details[1]
+                  const hostname = details[3]
                   allclients.push({ ip: ip, mac: mac, hostname: hostname })
                 }
               }
-              var ssidOut = execSync('nmcli -s -t -f 802-11-wireless.ssid connection show ' + connection[1])
-              var ssidStr = ssidOut.toString().split('\n')[0].split(':')[1]
+              const ssidOut = execSync('nmcli -s -t -f 802-11-wireless.ssid connection show ' + connection[1])
+              const ssidStr = ssidOut.toString().split('\n')[0].split(':')[1]
               return callback(null, ssidStr, allclients)
             }
           } catch (e) {

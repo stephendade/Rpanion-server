@@ -1,4 +1,4 @@
-var Rsync = require('rsync');
+const Rsync = require('rsync')
 const path = require('path')
 const appRoot = require('app-root-path')
 
@@ -62,7 +62,7 @@ class cloudUpload {
     if (this.rsyncPid) {
       this.rsyncPid.kill()
     }
-    //this.process.exit()
+    // this.process.exit()
   }
 
   getSettings (callback) {

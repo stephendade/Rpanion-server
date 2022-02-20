@@ -1,12 +1,11 @@
-var assert = require('assert')
-var appRoot = require('app-root-path')
+const assert = require('assert')
 const settings = require('settings-store')
-const videoStream = require('./videostream')
+const VideoStream = require('./videostream')
 const winston = require('./winstonconfig')(module)
 
 describe('Video Functions', function () {
   it('#videomanagerinit()', function () {
-    var vManager = new videoStream(settings, winston)
+    const vManager = new VideoStream(settings, winston)
 
     // check initial status
     assert.equal(vManager.active, false)
@@ -14,7 +13,7 @@ describe('Video Functions', function () {
 
   it('#videomanagerpopulateaddresses()', function () {
     // Getting a list of valid IP addresses
-    var vManager = new videoStream(settings, winston)
+    const vManager = new VideoStream(settings, winston)
 
     vManager.populateAddresses()
 
@@ -26,7 +25,7 @@ describe('Video Functions', function () {
   it('#videomanagerscan()', function (done) {
     // Scanning for video devices capable of streaming
     // in a CI environment, no devices will be returned
-    var vManager = new videoStream(settings, winston)
+    const vManager = new VideoStream(settings, winston)
 
     vManager.populateAddresses()
     vManager.getVideoDevices(function (err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort) {
@@ -42,5 +41,5 @@ describe('Video Functions', function () {
       assert.equal(SeluseUDPPort, 5400)
       done()
     })
-  }).timeout(5000);
+  }).timeout(5000)
 })

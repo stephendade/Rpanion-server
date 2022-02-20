@@ -1,4 +1,4 @@
-var assert = require('assert')
+const assert = require('assert')
 const aboutPage = require('./aboutInfo')
 
 describe('About Functions', function () {

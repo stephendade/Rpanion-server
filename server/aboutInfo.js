@@ -1,7 +1,7 @@
 const process = require('process')
 const { exec } = require('child_process')
 const si = require('systeminformation')
-var winston = require('./winstonconfig')(module)
+const winston = require('./winstonconfig')(module)
 
 function getSoftwareInfo (callback) {
   // get the OS, Node.js and Rpanion-server versions
@@ -27,6 +27,10 @@ function rebootCC () {
   console.log('Reboot now')
   winston.info('Reboot now')
   exec('sudo reboot', function (error, stdout, stderr) {
+    if (error) {
+      console.log(error)
+      winston.info(error)
+    }
     console.log(stdout)
     winston.info(stdout)
   })
@@ -37,6 +41,10 @@ function shutdownCC () {
   console.log('Shutting down')
   winston.info('Shutting down')
   exec('sudo shutdown now', function (error, stdout, stderr) {
+    if (error) {
+      console.log(error)
+      winston.info(error)
+    }
     console.log(stdout)
     winston.info(stdout)
   })
@@ -47,6 +55,10 @@ function updateRS () {
   console.log('Upgrading')
   winston.info('Upgrading')
   exec('cd ./deploy && ./upgrade.sh', function (error, stdout, stderr) {
+    if (error) {
+      console.log(error)
+      winston.info(error)
+    }
     console.log(stdout)
     winston.info(stdout)
   })
@@ -57,13 +69,13 @@ function getHardwareInfo (callback) {
   si.cpu(function (CPUdata) {
     // console.log(CPUdata);
     si.mem(function (MEMdata) {
-      var CPUString = CPUdata.manufacturer + ' ' + CPUdata.brand +
+      const CPUString = CPUdata.manufacturer + ' ' + CPUdata.brand +
                       ' (' + CPUdata.speed + 'GHz x ' + CPUdata.cores + ')'
-      var hatData = { product: '', vendor: '', version: '' }
+      const hatData = { product: '', vendor: '', version: '' }
       // get Pi HAT data, if it exists
       exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver', (error, stdout, stderr) => {
         if (!error && stdout.split('\n').length === 3) {
-          var items = stdout.split('\n')
+          const items = stdout.split('\n')
           hatData.product = items[0]
           hatData.vendor = items[1]
           hatData.version = items[2]
