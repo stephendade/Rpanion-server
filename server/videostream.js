@@ -1,16 +1,17 @@
 const { exec, spawn } = require('child_process')
 const os = require('os')
-var winston = require('./winstonconfig')(module)
 const si = require('systeminformation')
 
 class videoStream {
-  constructor (settings) {
+  constructor (settings, winston) {
     this.active = false
     this.deviceStream = null
     this.deviceAddresses = []
     this.devices = null
     this.settings = settings
     this.savedDevice = null
+
+    this.winston = winston
 
     // load settings. savedDevice is a json object storing all settings
     this.active = this.settings.value('videostream.active', false)
@@ -20,7 +21,7 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
-      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, selfps, selUDP, selUDPIP, selUDPPort) => {
+      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, thisps, selUDP, selUDPIP, selUDPPort) => {
         if (!error) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
@@ -58,7 +59,7 @@ class videoStream {
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
       if (stderr && !stderr.includes('DeprecationWarning') && !stderr.includes('gst_element_message_full_with_details')) {
         console.error(`exec error: ${error}`)
-        winston.error('Error in getVideoDevices() ', { message: stderr })
+        this.winston.error('Error in getVideoDevices() ', { message: stderr })
         return callback(stderr)
       } else {
         this.devices = JSON.parse(stdout)
@@ -71,7 +72,7 @@ class videoStream {
           if (seldevice.length !== 1) {
             // bad settings
             console.error('Bad video settings. Resetting')
-            winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
+            this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
             return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
           }
@@ -81,7 +82,7 @@ class videoStream {
           } else {
             // bad settings
             console.error('Bad video settings. Resetting')
-            winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
+            this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
             return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
           }
@@ -97,7 +98,7 @@ class videoStream {
     this.settings.setValue('videostream.active', this.active)
     this.settings.setValue('videostream.savedDevice', this.savedDevice)
     console.log('Reset Video Settings')
-    winston.info('Reset Video Settings')
+    this.winston.info('Reset Video Settings')
   }
 
   scanInterfaces () {
@@ -127,7 +128,7 @@ class videoStream {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
-      winston.info('Video current same')
+      this.winston.info('Video current same')
       return callback(null, this.active, this.deviceAddresses)
     }
     // user wants to start or stop streaming
@@ -141,7 +142,7 @@ class videoStream {
       }
       if (!found) {
         console.log('No video device: ' + device)
-        winston.info('No video device: ' + device)
+        this.winston.info('No video device: ' + device)
         return callback('No video device: ' + device)
       }
 
@@ -183,32 +184,32 @@ class videoStream {
       if (this.deviceStream === null) {
         this.settings.setValue('videostream.active', false)
         console.log('Error spawning rtsp-server.py')
-        winston.info('Error spawning rtsp-server.py')
+        this.winston.info('Error spawning rtsp-server.py')
         return callback(null, this.active, this.deviceAddresses)
       }
       this.settings.setValue('videostream.active', this.active)
       this.settings.setValue('videostream.savedDevice', this.savedDevice)
 
       this.deviceStream.stdout.on('data', (data) => {
-        winston.info('startStopStreaming() data ' + data)
+        this.winston.info('startStopStreaming() data ' + data)
         console.log(`GST stdout: ${data}`)
       })
 
       this.deviceStream.stderr.on('data', (data) => {
-        winston.error('startStopStreaming() err ', { message: data })
+        this.winston.error('startStopStreaming() err ', { message: data })
         console.error(`GST stderr: ${data}`)
       })
 
       this.deviceStream.on('close', (code) => {
         console.log(`GST process exited with code ${code}`)
-        winston.info('startStopStreaming() close ' + code)
+        this.winston.info('startStopStreaming() close ' + code)
         this.deviceStream.stdin.pause()
         this.deviceStream.kill()
         this.resetVideo()
       })
 
       console.log('Started Video Streaming of ' + device)
-      winston.info('Started Video Streaming of ' + device)
+      this.winston.info('Started Video Streaming of ' + device)
 
       return callback(null, this.active, this.deviceAddresses)
     } else {
@@ -225,7 +226,7 @@ class videoStream {
     var data = await si.osInfo()
     if (data.distro.toString().includes('Ubuntu')) {
       console.log('Video Running Ubuntu')
-      winston.info('Video Running Ubuntu')
+      this.winston.info('Video Running Ubuntu')
       ret = true
     } else {
       ret = false

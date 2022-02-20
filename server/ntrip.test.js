@@ -2,10 +2,11 @@ var assert = require('assert')
 var appRoot = require('app-root-path')
 const settings = require('settings-store')
 const ntrip = require('./ntrip')
+const winston = require('./winstonconfig')(module)
 
 describe('NTRIP Functions', function () {
   it('#ntripinit()', function () {
-    var ntripClient = new ntrip(settings)
+    var ntripClient = new ntrip(settings, winston)
 
     // check initial status
     assert.equal(ntripClient.options.active, false)
@@ -13,7 +14,7 @@ describe('NTRIP Functions', function () {
 
   it('#ntriptryconnect()', function () {
     // Getting starting client with bad details
-    var ntripClient = new ntrip(settings)
+    var ntripClient = new ntrip(settings, winston)
 
 
     //ntripClient.setSettings ("auscors.ga.gov.au", 2101, "MNT", "name", "pwd", true)

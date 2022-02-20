@@ -7,17 +7,18 @@ var appRoot = require('app-root-path')
 var fs = require('fs')
 var moment = require('moment')
 var microtime = require('microtime')
-var winston = require('./winstonconfig')(module)
 const process = require('process')
 
 class flightLogger {
-  constructor (settings) {
+  constructor (settings, winston) {
     this.topfolder = path.join(appRoot.toString(), 'flightlogs')
     this.tlogfolder = path.join(this.topfolder, 'tlogs')
     this.binlogfolder = path.join(this.topfolder, 'binlogs')
     this.activeFileTlog = null
     this.activeLogging = true
     this.settings = settings
+
+    this.winston = winston
 
     // get settings
     this.activeLogging = this.settings.value('flightLogger.activeLogging', true)
@@ -36,13 +37,13 @@ class flightLogger {
   newtlog () {
     if (parseInt(process.versions.node) < 12) {
       console.log('Cannot do logging on nodejs version <12')
-      winston.info('Cannot do logging on nodejs version <12')
+      this.winston.info('Cannot do logging on nodejs version <12')
       return
     }
     var filename = moment().format('YYYYMMDD-HHmmss') // new Date().toISOString();
     this.activeFileTlog = path.join(this.tlogfolder, filename + '.tlog')
     console.log('New Tlog: ' + this.activeFileTlog)
-    winston.info('New Tlog: ' + this.activeFileTlog)
+    this.winston.info('New Tlog: ' + this.activeFileTlog)
   }
 
   // stop logging (Tlog)
@@ -50,7 +51,7 @@ class flightLogger {
     if (this.activeFileTlog) {
       // delete if size 0?
       console.log('Closed Tlog: ' + this.activeFileTlog)
-      winston.info('Closed Tlog: ' + this.activeFileTlog)
+      this.winston.info('Closed Tlog: ' + this.activeFileTlog)
       this.activeFileTlog = null
     }
   }
@@ -67,7 +68,7 @@ class flightLogger {
         }
       })
       console.log('Deleted tlogs')
-      winston.info('Deleted tlogs')
+      this.winston.info('Deleted tlogs')
     } else if (logtype === 'binlog') {
       const files = fs.readdirSync(this.binlogfolder)
       files.forEach((file) => {
@@ -78,7 +79,7 @@ class flightLogger {
         }
       })
       console.log('Deleted binlogs')
-      winston.info('Deleted binlogs')
+      this.winston.info('Deleted binlogs')
     }
   }
 
@@ -124,7 +125,7 @@ class flightLogger {
     this.settings.setValue('flightLogger.activeLogging', this.activeLogging)
 
     console.log('Saved Logging settings: ' + this.activeLogging)
-    winston.info('Saved Logging settings: ' + this.activeLogging)
+    this.winston.info('Saved Logging settings: ' + this.activeLogging)
 
     return this.activeLogging
   }
