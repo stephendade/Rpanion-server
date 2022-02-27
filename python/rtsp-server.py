@@ -82,17 +82,20 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         return Gst.parse_launch(pipeline_str)
 
 class GstServer():
-    def __init__(self, device,h, w, bitrate, format, rotation, framerate):
+    def __init__(self):
         self.server = GstRtspServer.RTSPServer()
+        self.sourceID = self.server.attach(None)
+        print("Server available on rtsp://<IP>:8554")
+        print("Where IP is {0}".format(ip4_addresses()))
+        
+    def addStream(self, device,h, w, bitrate, format, rotation, framerate):
         f = MyFactory(device, h, w, bitrate, format, rotation, framerate)
         f.set_shared(True)
         m = self.server.get_mount_points()
-        m.add_factory("/video", f)
-        self.sourceID = self.server.attach(None)
-
-        print("Server available on rtsp://<IP>:8554/video")
-        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/video latency=0 ! queue ! decodebin ! autovideosink")
-        print("Where IP is {0}".format(ip4_addresses()))
+        m.add_factory("/" + device.replace('/', ''), f)
+        
+        print("Added " + "rtsp://<IP>:8554/" + device.replace('/', ''))
+        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" + device.replace('/', '') + " latency=0 ! queue ! decodebin ! autovideosink")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RTSP Server using Gstreamer")
@@ -104,6 +107,7 @@ if __name__ == '__main__':
     parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
     parser.add_argument("--rotation", help="rotation angle", default=0, type=int, choices=[0, 90, 180, 270])
     parser.add_argument("--udp", help="use UDP sink (dest IP:port) instead of RTSP", default="0:5600", type=str)
+    parser.add_argument("--multirtsp", help="CSV of multi-camera setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
     args = parser.parse_args()
 
     loop = GLib.MainLoop()
@@ -111,9 +115,35 @@ if __name__ == '__main__':
 
     Gst.debug_set_active(True)
     Gst.debug_set_default_threshold(3)
+    
+    if args.multirtsp != "":
+        # Multi-camera streaming, delimited via ';'
+        # Example commandline is:
+        # ./rtsp-server.py --multirtsp="/dev/video0,480,640,2000,video/x-raw,0,10;/dev/video2,480,640,2000,video/x-raw,0,10"
 
-    if args.udp.split(':')[0] == "0":
-        s = GstServer(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps)
+        cams = args.multirtsp.split(';')
+        s = GstServer()
+   
+        # Add each camera
+        for cam in cams:
+            try:
+                (videosource, height, width, bitrate, formatstr, rotation, fps) = cam.split(',')
+            except:
+                print("Bad format: " + cam)
+                break
+            if not (height.isdigit() and width.isdigit() and bitrate.isdigit() and rotation.isdigit() and fps.isdigit()):
+                print("Bad format: " + cam)
+                break
+            s.addStream(videosource, height, width, bitrate, formatstr, rotation, fps)
+
+        try:
+            loop.run()
+        except:
+            print("Exiting RTSP Server")
+            loop.quit()        
+    elif args.udp.split(':')[0] == "0":
+        s = GstServer()
+        s.addStream(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps)
 
         try:
             loop.run()
