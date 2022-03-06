@@ -370,15 +370,33 @@ class NetworkConfig extends basePage {
     const name = event.target.name;
     const value = event.target.value;
 
-    this.setState({
-      curSettings: {
-        ...this.state.curSettings,
-        [name]: {
-          ...this.state.curSettings[name],
-          value
+    if (name === 'band') {
+      // if it's a band change, reset the channel value
+      this.setState({
+        curSettings: {
+          ...this.state.curSettings,
+          [name]: {
+            ...this.state.curSettings[name],
+            value
+          },
+          ['channel']: {
+            ...this.state.curSettings['channel'],
+            value: '0'
+          }
         }
-      }
-    });
+      });
+    }
+    else {
+      this.setState({
+        curSettings: {
+          ...this.state.curSettings,
+          [name]: {
+            ...this.state.curSettings[name],
+            value
+          }
+        }
+      });
+    }
   }
 
   togglePasswordVisible = event => {
