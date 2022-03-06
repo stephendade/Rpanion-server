@@ -120,7 +120,7 @@ function addConnection (conNameStr, conType, conAdapter, conSettings, callback) 
     exec('nmcli connection add type ' + conType + ' ifname ' + conAdapter +
              ' con-name ' + conNameStr + ' ssid ' + conSettings.ssid.value + ' 802-11-wireless.mode ' +
              conSettings.mode.value + (conSettings.band === {} ? (' 802-11-wireless.band ' + conSettings.band.value) : '') +
-             (conSettings.channel === {} ? (' 802-11-wireless.channel ' + conSettings.channel.value) : '') +
+             (conSettings.channel === {} ? (' 802-11-wireless.channel ' + (conSettings.channel.value === '0' ? '\'\'' : conSettings.channel.value)) : '') +
              ' ipv4.method ' + conSettings.ipaddresstype.value + ' connection.autoconnect no ' + ' && ' +
              'nmcli -g connection.uuid con show ' + conNameStr, (error, stdout, stderr) => {
       if (stderr) {
@@ -318,7 +318,7 @@ function editConnectionAP (conName, conSettings, callback) {
             Object.keys(conSettings.ipaddress).length !== 0) {
       exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value +
             ' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + '/24' +
-            ' 802-11-wireless.channel ' + conSettings.channel.value +
+            ' 802-11-wireless.channel ' + (conSettings.channel.value === '0' ? '\'\'' : conSettings.channel.value) +
             ' 802-11-wireless-security.group ccmp ' +
             ' 802-11-wireless-security.wps-method 1 ', (error, stdout, stderr) => {
         if (stderr) {
