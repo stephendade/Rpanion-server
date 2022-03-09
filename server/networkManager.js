@@ -193,7 +193,7 @@ function editConnection (conName, conSettings, callback) {
           editConnectionPSK(conName, conSettings, (errPSK) => {
             console.log('PSK')
             if (!errPSK) {
-              editConnectionAP(conName, conSettings, (errAP) => {
+              editConnectionAPClient(conName, conSettings, (errAP) => {
                 console.log('AP')
                 if (!errAP) {
                   return callback(null, 'EditOK')
@@ -309,8 +309,8 @@ function editConnectionPSK (conName, conSettings, callback) {
   }
 }
 
-function editConnectionAP (conName, conSettings, callback) {
-  // now sort out Wifi ap settings - ssid, band, starting ip
+function editConnectionAPClient (conName, conSettings, callback) {
+  // now sort out Wifi ap or client settings - ssid, band, starting ip
   if (conSettings.mode.value === 'ap') {
     if (Object.keys(conSettings.ssid).length !== 0 &&
             Object.keys(conSettings.band).length !== 0 &&
@@ -323,18 +323,30 @@ function editConnectionAP (conName, conSettings, callback) {
             ' 802-11-wireless-security.wps-method 1 ', (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
-          winston.error('Error in editConnectionAP() ', { message: stderr })
+          winston.error('Error in editConnectionAPClient() ', { message: stderr })
           return callback(stderr)
         } else {
-          winston.info('editConnectionAP() edited ssid/band: ' + conName + ', ' + conSettings.ssid.value + ', ' + conSettings.ipaddress.value)
+          winston.info('editConnectionAPClient() edited ssid/band: ' + conName + ', ' + conSettings.ssid.value + ', ' + conSettings.ipaddress.value)
           console.log('Edited Wifi ap ssid/band: ' + conName)
           return callback(null, 'OK')
         }
       })
     }
   } else {
-    winston.info('editConnectionAP() not required')
-    return callback(null, 'EditNotRequired')
+    // client connection - edit ssid if required
+    if (Object.keys(conSettings.ssid).length !== 0) {
+      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value, (error, stdout, stderr) => {
+        if (stderr) {
+          console.error(`exec error: ${error}`)
+          winston.error('Error in editConnectionAPClient() ', { message: stderr })
+          return callback(stderr)
+        } else {
+          winston.info('editConnectionAPClient() edited ssid: ' + conName + ', ' + conSettings.ssid.value)
+          console.log('Edited Wifi client ssid: ' + conName)
+          return callback(null, 'OK')
+        }
+      })
+    }
   }
 }
 
