@@ -44,7 +44,6 @@ class videoStream {
 
   // Format and store all the possible rtsp addresses
   populateAddresses (factory) {
-    console.log(factory)
     // set up the avail addresses
     this.ifaces = this.scanInterfaces()
     this.deviceAddresses = []
@@ -159,8 +158,6 @@ class videoStream {
         useUDPIP: useUDPIP,
         useUDPPort: useUDPPort
       }
-
-      console.log(format)
 
       // note that video device URL's are the alphanumeric characters only. So /dev/video0 -> devvideo0
       this.populateAddresses(device.replace(/\W/g, ''))
