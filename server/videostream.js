@@ -43,12 +43,13 @@ class videoStream {
   }
 
   // Format and store all the possible rtsp addresses
-  populateAddresses () {
+  populateAddresses (factory) {
+    console.log(factory)
     // set up the avail addresses
     this.ifaces = this.scanInterfaces()
     this.deviceAddresses = []
     for (let j = 0; j < this.ifaces.length; j++) {
-      this.deviceAddresses.push('rtsp://' + this.ifaces[j] + ':8554/video')
+      this.deviceAddresses.push('rtsp://' + this.ifaces[j] + ':8554/' + factory)
     }
   }
 
@@ -161,7 +162,8 @@ class videoStream {
 
       console.log(format)
 
-      this.populateAddresses()
+      // note that video device URL's are the alphanumeric characters only. So /dev/video0 -> devvideo0
+      this.populateAddresses(device.replace(/\W/g, ''))
 
       // rpi camera has different name under Ubuntu
       if (await this.isUbuntu() && device === 'rpicam') {

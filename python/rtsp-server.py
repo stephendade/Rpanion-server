@@ -92,10 +92,11 @@ class GstServer():
         f = MyFactory(device, h, w, bitrate, format, rotation, framerate)
         f.set_shared(True)
         m = self.server.get_mount_points()
-        m.add_factory("/" + device.replace('/', ''), f)
+        name = ''.join(filter(str.isalnum, device))
+        m.add_factory("/" + name, f)
         
-        print("Added " + "rtsp://<IP>:8554/" + device.replace('/', ''))
-        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" + device.replace('/', '') + " latency=0 ! queue ! decodebin ! autovideosink")
+        print("Added " + "rtsp://<IP>:8554/" + name)
+        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" + name + " latency=0 ! queue ! decodebin ! autovideosink")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RTSP Server using Gstreamer")
