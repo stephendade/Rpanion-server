@@ -316,8 +316,8 @@ function editConnectionAPClient (conName, conSettings, callback) {
             Object.keys(conSettings.band).length !== 0 &&
             Object.keys(conSettings.channel).length !== 0 &&
             Object.keys(conSettings.ipaddress).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value +
-            ' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + '/24' +
+      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid \'' + conSettings.ssid.value +
+            '\' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + '/24' +
             ' 802-11-wireless.channel ' + (conSettings.channel.value === '0' ? '\'\'' : conSettings.channel.value) +
             ' 802-11-wireless-security.group ccmp ' +
             ' 802-11-wireless-security.wps-method 1 ', (error, stdout, stderr) => {
@@ -335,7 +335,7 @@ function editConnectionAPClient (conName, conSettings, callback) {
   } else {
     // client connection - edit ssid if required
     if (Object.keys(conSettings.ssid).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid ' + conSettings.ssid.value, (error, stdout, stderr) => {
+      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid \'' + conSettings.ssid.value + '\'', (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           winston.error('Error in editConnectionAPClient() ', { message: stderr })
