@@ -432,6 +432,7 @@ class NetworkConfig extends basePage {
   handleCloseModalAP() {
     // user has selected AP new Wifi connection
     this.setState({ showModal: false });
+    this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
     var nm = this.state.netConnectionFilteredSelected.label;
     this.setState({
       netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
@@ -442,6 +443,7 @@ class NetworkConfig extends basePage {
   handleCloseModalClient() {
     // user has selected client new Wifi connection
     this.setState({ showModal: false });
+    this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
     var nm = this.state.netConnectionFilteredSelected.label;
     this.setState({
       netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
