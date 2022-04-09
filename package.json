@@ -13,7 +13,7 @@
     "jspack": "file:local_modules/jspack",
     "long": "file:local_modules/long",
     "microtime": "^3.0.0",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "npm": "^7.24.2",
     "ntrip-client": "^1.0.3",
     "nyc": "^15.1.0",
