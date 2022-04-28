@@ -50,7 +50,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate):
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())      
     elif device == "rpicam-uni":
             # Bullseye uses the new unicam interface ... so need a different pipeline
-            s_src = "libcamerasrc ! video/x-raw,width={1},height={2},format=NV12,colorimetry=bt601,interlace-mode=progressive ! {3} ! videorate ! video/x-raw{4} ! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,video_bitrate_mode=1,h264_profile=3,video_bitrate={0}\" ! video/x-h264,profile=main,level=(string)4".format(bitrate*1000, width, height, devrotation, framestr)
+            s_src = "libcamerasrc ! video/x-raw,width={1},height={2},format=NV12,colorimetry=bt601,interlace-mode=progressive ! {3} ! videorate ! video/x-raw{4} ! v4l2convert ! v4l2h264enc output-io-mode=2 extra-controls=\"controls,repeat_sequence_header=1,video_bitrate_mode=1,h264_profile=3,video_bitrate={0}\" ! video/x-h264,profile=main,level=(string)4".format(bitrate*1000, width, height, devrotation, framestr)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-raw":
             s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
@@ -96,7 +96,7 @@ class GstServer():
         m.add_factory("/" + name, f)
         
         print("Added " + "rtsp://<IP>:8554/" + name)
-        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" + name + " latency=0 ! queue ! decodebin ! autovideosink")
+        print("Use: gst-launch-1.0 rtspsrc is-live=True location=rtsp://<IP>:8554/" + name + " latency=0 ! queue ! decodebin ! autovideosink")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RTSP Server using Gstreamer")

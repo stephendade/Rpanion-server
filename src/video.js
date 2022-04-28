@@ -145,7 +145,7 @@ class VideoPage extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Average Bitrate</label>
           <div className="col-sm-8">
-            <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="100" max="10000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+            <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="10000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
@@ -202,7 +202,7 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 rtspsrc location={item} latency=0 ! queue ! decodebin ! autovideosink</p>
+                <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 rtspsrc location={item} latency=0 is-live=True ! queue ! decodebin ! autovideosink</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
@@ -212,7 +212,7 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
+                <p style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
@@ -233,6 +233,14 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false</p>
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="2">
+            <Accordion.Header>
+              + Mission Planner Connection Strings
+            </Accordion.Header>
+            <Accordion.Body>
+              <p style={{ fontFamily: "monospace" }}>udpsrc port={this.state.useUDPPort} buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
