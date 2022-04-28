@@ -1,5 +1,5 @@
 const process = require('process')
-const { exec } = require('child_process')
+const { exec, spawn } = require('child_process')
 const si = require('systeminformation')
 const winston = require('./winstonconfig')(module)
 
@@ -50,17 +50,27 @@ function shutdownCC () {
   })
 }
 
-function updateRS () {
+function updateRS (io) {
   // update Rpanion-server
   console.log('Upgrading')
   winston.info('Upgrading')
-  exec('cd ./deploy && ./upgrade.sh', function (error, stdout, stderr) {
-    if (error) {
-      console.log(error)
-      winston.info(error)
-    }
-    console.log(stdout)
-    winston.info(stdout)
+  const ug = spawn('bash', ['./deploy/upgrade.sh'], { shell: true })
+  ug.stdout.on('data', function (data) {
+    console.log('stdout: ' + data.toString())
+    winston.info('stdout: ' + data.toString())
+    io.sockets.emit('upgradeText', data.toString())
+  })
+
+  ug.stderr.on('data', function (data) {
+    console.log('Upgrade fail: ' + data.toString())
+    winston.info('Upgrade fail: ' + data.toString())
+    io.sockets.emit('upgradeText', data.toString())
+  })
+
+  ug.on('exit', function (code) {
+    console.log('Upgrade complete: ' + code.toString())
+    winston.info('Upgrade complete: ' + code.toString())
+    io.sockets.emit('upgradeText', '---Upgrade Complete (' + code.toString() + ')---')
   })
 }
 
@@ -88,4 +98,4 @@ function getHardwareInfo (callback) {
   })
 }
 
-module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC }
+module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC, updateRS }
