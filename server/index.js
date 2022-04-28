@@ -378,6 +378,11 @@ app.post('/api/shutdowncc', function (req, res) {
   aboutPage.shutdownCC()
 })
 
+app.post('/api/updatemaster', function (req, res) {
+  // User wants to update Rpanion to latest master
+  aboutPage.updateRS(io)
+})
+
 app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('mavdialect').isJSON(), check('enableTCP').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
@@ -516,7 +521,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
   check('useUDP').isBoolean(),
   check('useUDPPort').isPort(),
   check('useUDPIP').isIP(),
-  check('bitrate').isInt({ min: 100, max: 10000 }),
+  check('bitrate').isInt({ min: 50, max: 10000 }),
   check('format').isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
   check('fps').isInt({ min: -1, max: 100 }),
   check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
