@@ -42,4 +42,26 @@ describe('Video Functions', function () {
       done()
     })
   }).timeout(5000)
+
+  it('#videomanagerisUbuntu()', async function () {
+    const vManager = new VideoStream(settings, winston)
+
+    const res = await vManager.isUbuntu()
+    assert.equal(res, true)
+  })
+
+  it('#videomanagerstartStopStreaming()', function (done) {
+    const vManager = new VideoStream(settings, winston)
+
+    vManager.startStopStreaming(true, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, function (err, status, addresses) {
+      assert.equal(err, null)
+      assert.equal(status, true)
+      assert.notEqual(vManager.deviceStream.pid, null)
+      vManager.startStopStreaming(false, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, function (err, status, addresses) {
+        assert.equal(err, null)
+        assert.equal(status, false)
+        done()
+      })
+    })
+  })
 })

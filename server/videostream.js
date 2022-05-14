@@ -94,8 +94,13 @@ class videoStream {
   resetVideo () {
     this.active = false
     this.savedDevice = null
-    this.settings.setValue('videostream.active', this.active)
-    this.settings.setValue('videostream.savedDevice', this.savedDevice)
+    try {
+      this.settings.setValue('videostream.active', this.active)
+      this.settings.setValue('videostream.savedDevice', this.savedDevice)
+    } catch (e) {
+      console.log(e)
+      this.winston.info(e)
+    }
     console.log('Reset Video Settings')
     this.winston.info('Reset Video Settings')
   }
@@ -134,15 +139,17 @@ class videoStream {
     if (active) {
       // check it's a valid video device
       let found = false
-      for (let j = 0; j < this.devices.length; j++) {
-        if (device === this.devices[j].value) {
-          found = true
+      if (this.devices !== null) {
+        for (let j = 0; j < this.devices.length; j++) {
+          if (device === this.devices[j].value) {
+            found = true
+          }
         }
-      }
-      if (!found) {
-        console.log('No video device: ' + device)
-        this.winston.info('No video device: ' + device)
-        return callback('No video device: ' + device)
+        if (!found) {
+          console.log('No video device: ' + device)
+          this.winston.info('No video device: ' + device)
+          return callback('No video device: ' + device)
+        }
       }
 
       this.active = true
@@ -179,14 +186,19 @@ class videoStream {
         '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString())
       ])
 
-      if (this.deviceStream === null) {
-        this.settings.setValue('videostream.active', false)
-        console.log('Error spawning rtsp-server.py')
-        this.winston.info('Error spawning rtsp-server.py')
-        return callback(null, this.active, this.deviceAddresses)
+      try {
+        if (this.deviceStream === null) {
+          this.settings.setValue('videostream.active', false)
+          console.log('Error spawning rtsp-server.py')
+          this.winston.info('Error spawning rtsp-server.py')
+          return callback(null, this.active, this.deviceAddresses)
+        }
+        this.settings.setValue('videostream.active', this.active)
+        this.settings.setValue('videostream.savedDevice', this.savedDevice)
+      } catch (e) {
+        console.log(e)
+        this.winston.info(e)
       }
-      this.settings.setValue('videostream.active', this.active)
-      this.settings.setValue('videostream.savedDevice', this.savedDevice)
 
       this.deviceStream.stdout.on('data', (data) => {
         this.winston.info('startStopStreaming() data ' + data)
