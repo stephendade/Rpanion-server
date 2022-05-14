@@ -36,7 +36,7 @@ sudo apt purge -y modemmanager
 
 sudo systemctl disable dnsmasq
 
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 
 sudo pip3 install meson

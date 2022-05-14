@@ -30,7 +30,7 @@ sudo apt remove -y modemmanager nodejs nodejs-doc
 
 sudo systemctl disable dnsmasq
 
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 
 ## Ensure the ~/.local/bin is on the system path
