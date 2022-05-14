@@ -92,6 +92,12 @@ for device in devices:
 
     retDevices.append({'value': path, 'label': name, 'caps': caps})
 
+# Include testsrc
+capsTest = []
+capsTest.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
+capsTest.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '30'})
+capsTest.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '30'})
+retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
 print(json.dumps(retDevices))
 
