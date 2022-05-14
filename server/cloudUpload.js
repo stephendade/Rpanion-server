@@ -16,10 +16,6 @@ class cloudUpload {
 
     this.rsyncPid = null
 
-    process.on('SIGINT', this.quitting) // run signal handler on CTRL-C
-    process.on('SIGTERM', this.quitting) // run signal handler on SIGTERM
-    process.on('exit', this.quitting) // run signal handler when main process exits
-
     // load settings
     this.settings = settings
     this.options.doBinUpload = this.settings.value('cloud.doBinUpload', false)
@@ -59,10 +55,10 @@ class cloudUpload {
   }
 
   quitting () {
+    this.winston.info('---Shutdown Cloud---')
     if (this.rsyncPid) {
       this.rsyncPid.kill()
     }
-    // this.process.exit()
   }
 
   getSettings (callback) {

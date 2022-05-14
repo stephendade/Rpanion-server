@@ -2,6 +2,8 @@ const express = require('express')
 const compression = require('compression')
 const bodyParser = require('body-parser')
 const pino = require('express-pino-logger')()
+const process = require('process');
+
 const networkManager = require('./networkManager')
 const aboutPage = require('./aboutInfo')
 const videoStream = require('./videostream')
@@ -46,6 +48,16 @@ const fcManager = new fcManagerClass(settings, winston)
 const logManager = new flightLogger(settings, winston)
 const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings, winston)
+
+// cleanup, if needed
+process.on('SIGINT', quitting) // run signal handler when main process exits
+
+function quitting () {
+  cloud.quitting()
+  console.log('---Shutdown Rpanion---')
+  winston.info('---Shutdown Rpanion---')
+  process.exit()
+}
 
 // Got an RTCM message, send to flight controller
 ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
