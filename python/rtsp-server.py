@@ -44,7 +44,11 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate):
     else:
         framestr = ",framerate={0}/1".format(framerate)
         
-    if device == "rpicam":
+    if device == "testsrc":
+            s_src = "videotestsrc ! video/x-raw,width={0},height={1}{2}".format(width, height, framestr)
+            s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
+            pipeline_str = "( {s_src} ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
+    elif device == "rpicam":
             # Old (Buster and earlier) can use the rpicamsrc interface
             s_src = "rpicamsrc bitrate={0} rotation={3} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr)
             pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())      
