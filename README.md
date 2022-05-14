@@ -77,7 +77,7 @@ Rpanion-server requires a recent version of node.js. It can be installed
 via package manager:
 
 ```
-curl -sL https://deb.nodesource.com/setup_14.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
@@ -153,7 +153,7 @@ If running Rpanion-server as a service, ensure to restart the service.
 An automatic update script performed via:
 
 ```
-cd ./deploy && ./upgrade.sh
+./deploy/upgrade.sh
 ```
 
 ## Building and Running in production mode
