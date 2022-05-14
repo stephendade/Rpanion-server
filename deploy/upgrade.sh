@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Needs to run from Rpanion root dir
+
 set -e
 set -x
 
@@ -10,7 +12,6 @@ git submodule foreach --recursive git reset --hard
 git submodule update --init --recursive
 
 ## Update source
-cd ../
 git pull
 git submodule update --init --recursive
 cd ./deploy
@@ -20,3 +21,6 @@ cd ./deploy
 
 ## and build & run Rpanion
 ./build.sh
+
+## and restart service
+sudo systemctl restart rpanion.service
