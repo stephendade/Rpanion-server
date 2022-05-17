@@ -20,7 +20,8 @@ class AboutPage extends basePage {
       infoMessage: null,
       showModal: false,
       showModalResult: "",
-      UpgradeStatus: ''
+      UpgradeStatus: '',
+      UpgradeIntStat: ''
     }
 
     this.upgradeTextContainer = React.createRef();
@@ -29,6 +30,9 @@ class AboutPage extends basePage {
     this.socket.on('upgradeText', function (msg) {
       const prevText = this.state.UpgradeStatus
       this.setState({ UpgradeStatus: (prevText + msg) })
+    }.bind(this));
+    this.socket.on('upgradeStatus', function (msg) {
+      this.setState({ UpgradeIntStat: msg })
     }.bind(this));
     this.socket.on('reconnect', function () {
       //refresh state
@@ -104,8 +108,14 @@ class AboutPage extends basePage {
         <p><Button size="sm" onClick={this.handleUpdateMaster}>Upgrade to lastest Github master</Button></p>
         <p><Button size="sm" onClick={this.confirmShutdown}>Shutdown Companion Computer</Button></p>
 
-        <div style={{ display: (this.state.UpgradeStatus !== '') ? "block" : "none" }}>
+        <div style={{ display: (this.state.UpgradeIntStat === 'InProgress' || this.state.UpgradeIntStat === 'Complete') ? "block" : "none" }}>
           <h2>Upgrade Status</h2>
+          <div style={{ display: (this.state.UpgradeIntStat === 'InProgress') ? "block" : "none" }}>
+            <p>Upgrade is in progress ... please wait</p>
+          </div>
+          <div style={{ display: (this.state.UpgradeIntStat === 'Complete') ? "block" : "none" }}>
+            <p>Upgrade complete</p>
+          </div>
           <textarea ref={this.upgradeTextContainer} readOnly rows="20" cols="60" value={this.state.UpgradeStatus}></textarea>
         </div>
         

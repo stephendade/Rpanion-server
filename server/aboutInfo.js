@@ -54,23 +54,27 @@ function updateRS (io) {
   // update Rpanion-server
   console.log('Upgrading')
   winston.info('Upgrading')
+  io.sockets.emit('upgradeStatus', 'InProgress')
   const ug = spawn('bash', ['./deploy/upgrade.sh'], { shell: true })
   ug.stdout.on('data', function (data) {
     console.log('stdout: ' + data.toString())
     winston.info('stdout: ' + data.toString())
     io.sockets.emit('upgradeText', data.toString())
+    io.sockets.emit('upgradeStatus', 'InProgress')
   })
 
   ug.stderr.on('data', function (data) {
     console.log('Upgrade fail: ' + data.toString())
     winston.info('Upgrade fail: ' + data.toString())
     io.sockets.emit('upgradeText', data.toString())
+    io.sockets.emit('upgradeStatus', 'InProgress')
   })
 
   ug.on('exit', function (code) {
     console.log('Upgrade complete: ' + code.toString())
     winston.info('Upgrade complete: ' + code.toString())
     io.sockets.emit('upgradeText', '---Upgrade Complete (' + code.toString() + ')---')
+    io.sockets.emit('upgradeStatus', 'Complete')
   })
 }
 
