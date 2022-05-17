@@ -45,7 +45,6 @@ sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkMa
 
 ## GStreamer raspi
 cd ../modules/gst-rpicamsrc
-#sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' ./src/RaspiCapture.c
 perl -pe 's/(encoded_buffer_q, 500)/encoded_buffer_q, 5000/' -i ./src/RaspiCapture.c
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
 make
