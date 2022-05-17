@@ -51,6 +51,7 @@
     "lint": "eslint .",
     "eject": "react-scripts eject",
     "server": "node-env-run server --exec nodemon | pino-colada",
+    "service": "node-env-run server",
     "dev": "run-p server start",
     "version": "auto-changelog -p --commit-limit false && git add CHANGELOG.md"
   },
