@@ -23,4 +23,5 @@ cd ./deploy
 ./build.sh
 
 ## and restart service
+echo "---Upgrade Complete---"
 sudo systemctl restart rpanion.service

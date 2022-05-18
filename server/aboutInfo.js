@@ -61,6 +61,9 @@ function updateRS (io) {
     winston.info('stdout: ' + data.toString())
     io.sockets.emit('upgradeText', data.toString())
     io.sockets.emit('upgradeStatus', 'InProgress')
+    if (data.toString().trim() === '---Upgrade Complete---') {
+      io.sockets.emit('upgradeStatus', 'Complete')
+    }
   })
 
   ug.stderr.on('data', function (data) {
@@ -68,6 +71,9 @@ function updateRS (io) {
     winston.info('Upgrade fail: ' + data.toString())
     io.sockets.emit('upgradeText', data.toString())
     io.sockets.emit('upgradeStatus', 'InProgress')
+    if (data.toString().trim() === '---Upgrade Complete---') {
+      io.sockets.emit('upgradeStatus', 'Complete')
+    }
   })
 
   ug.on('exit', function (code) {
