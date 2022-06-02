@@ -14,7 +14,7 @@
     "long": "file:local_modules/long",
     "microtime": "^3.0.0",
     "moment": "^2.29.1",
-    "npm": "^7.24.2",
+    "npm": "^8.11.0",
     "ntrip-client": "^1.0.3",
     "nyc": "^15.1.0",
     "prop-types": "^15.7.2",
