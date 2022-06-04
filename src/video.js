@@ -66,7 +66,7 @@ class VideoPage extends basePage {
 
   handleUseUDPChange = (event) => {
     //bitrate spinner new value
-    this.setState({ UDPChecked: event.target.checked });
+    this.setState({ UDPChecked: event.target.value==="rtp" });
   }
 
   handleUDPIPChange = (event) => {
@@ -122,8 +122,22 @@ class VideoPage extends basePage {
 
   renderContent() {
     return (
-      <Form style={{ width: 500 }}>
+      <Form style={{ width: 600 }}>
         <h2>Configuration</h2>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">Streaming Mode</label>
+              <div className="col-sm-8">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="streamtype" value="rtp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={this.state.UDPChecked} />
+                  <label class="form-check-label">RTP (stream to single client)</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="streamtype" value="rtsp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={!this.state.UDPChecked} />
+                  <label class="form-check-label">RTSP (multiple clients can connect to stream)</label>
+                </div>
+              </div>
+            </div>
+
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Device</label>
           <div className="col-sm-8">
@@ -155,13 +169,6 @@ class VideoPage extends basePage {
           </div>
           <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
-          </div>
-        </div>
-
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label"></label>
-          <div className="col-sm-8">
-            <input type="checkbox" checked={this.state.UDPChecked} disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} />Use UDP Stream instead of RTSP Server (Used for QGroundControl)
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
