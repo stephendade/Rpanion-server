@@ -737,8 +737,8 @@ class NetworkConfig extends basePage {
             </Modal.Body>
 
             <Modal.Footer>
-              <Button variant="primary" onClick={this.handleCloseModalAP}>Access Point</Button>
-              <Button variant="primary" onClick={this.handleCloseModalClient}>Client</Button>
+              <Button variant="primary" onClick={this.handleCloseModalAP}>Create new Wifi hotspot</Button>
+              <Button variant="primary" onClick={this.handleCloseModalClient}>Connect to existing WiFi</Button>
               <Button variant="secondary" onClick={this.handleNewNetworkTypeCancel}>Cancel</Button>
             </Modal.Footer>
           </Modal>
