@@ -17,7 +17,8 @@ class CloudConfig extends basePage {
       doBinUpload: false,
       binUploadLink: '',
       binLogStatus: 'N/A',
-      syncDeletions: false
+      syncDeletions: false,
+      pubkey: []
     }
 
     //Socket.io client for reading in analog update values
@@ -95,6 +96,18 @@ class CloudConfig extends basePage {
                     </div>
                     <p>Status: {this.state.binLogStatus}</p>
                 </Form>
+                <h3>Publickeys</h3>
+                  <div style={{ fontFamily: "monospace", width: 600 }}>
+                  <hr/>
+                    {this.state.pubkey.map(item => {
+                      return (
+                          <div>
+                            <p>{ item }</p>
+                            <hr/>
+                          </div>
+                          );
+                    })}
+                  </div>
             </div>
     )
   }
