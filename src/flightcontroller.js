@@ -176,20 +176,14 @@ class FCPage extends basePage {
         </div>
 
         <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label"></label>
-          <div className="col-sm-8">
-            <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
-          </div>
-        </div>
-
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">
             <Button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
           </div>
         </div>
 
         <br />
-        <h2>UDP Outputs</h2>
+        <h2>Telemetry Destinations</h2>
+        <h3>UDP</h3>
         <Table id='UDPOut' striped bordered hover size="sm">
           <thead>
             <tr><th>Destination IP:Port</th><th>Action</th></tr>
@@ -200,11 +194,15 @@ class FCPage extends basePage {
           </tbody>
         </Table>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Add new output</label>
+          <label className="col-sm-4 col-form-label">Add new destination</label>
           <div className="col-sm-8">
             <input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><Button size="sm" onClick={this.addUdpOutput}>Add</Button>
           </div>
         </div>
+        <h3>TCP</h3>
+        <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
+        
+        <br />
         <br />
         <h2>Status</h2>
         <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
