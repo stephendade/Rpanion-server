@@ -127,9 +127,9 @@ app.get('/api/ntripconfig', (req, res) => {
 
 // Serve the cloud info
 app.get('/api/cloudinfo', (req, res) => {
-  cloud.getSettings((doBinUpload, binUploadLink, syncDeletions) => {
+  cloud.getSettings((doBinUpload, binUploadLink, syncDeletions, pubkey) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ doBinUpload: doBinUpload, binUploadLink: binUploadLink, syncDeletions: syncDeletions }))
+    res.send(JSON.stringify({ doBinUpload: doBinUpload, binUploadLink: binUploadLink, syncDeletions: syncDeletions, pubkey: pubkey }))
   })
 })
 

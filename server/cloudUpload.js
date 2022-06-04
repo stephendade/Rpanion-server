@@ -1,6 +1,8 @@
 const Rsync = require('rsync')
 const path = require('path')
 const appRoot = require('app-root-path')
+const fs = require('fs')
+const os = require('os')
 
 class cloudUpload {
   constructor (settings, winston) {
@@ -62,9 +64,18 @@ class cloudUpload {
   }
 
   getSettings (callback) {
-    // get current settings
+    // get current settings and pubkey(s)
+    const pubkey = []
+    if (fs.existsSync(os.homedir() + '/.ssh/')) {
+      const files = fs.readdirSync(os.homedir() + '/.ssh/')
+      files.forEach(file => {
+        if (path.extname(file) === '.pub') {
+          pubkey.push(fs.readFileSync(os.homedir() + '/.ssh/' + file, { encoding: 'utf8', flag: 'r' }))
+        }
+      })
+    }
     return callback(this.options.doBinUpload,
-      this.options.binUploadLink, this.options.syncDeletions)
+      this.options.binUploadLink, this.options.syncDeletions, pubkey)
   }
 
   setSettingsBin (doBinUpload, binUploadLink, syncDeletions) {
