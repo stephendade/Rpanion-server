@@ -22,9 +22,12 @@ class FCDetails {
       { value: 19200, label: '19200' },
       { value: 38400, label: '38400' },
       { value: 57600, label: '57600' },
+      { value: 111100, label: '111100' },
       { value: 115200, label: '115200' },
       { value: 230400, label: '230400' },
+      { value: 256000, label: '256000' },
       { value: 460800, label: '460800' },
+      { value: 500000, label: '500000' },
       { value: 921600, label: '921600' },
       { value: 1500000, label: '1500000' }]
     this.mavlinkVersions = [{ value: 1, label: '1.0' },
