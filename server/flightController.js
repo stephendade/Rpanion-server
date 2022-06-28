@@ -1,4 +1,5 @@
 const SerialPort = require('serialport')
+const { autoDetect } = require('@serialport/bindings-cpp')
 const fs = require('fs')
 const events = require('events')
 const path = require('path')
@@ -355,62 +356,58 @@ class FCDetails {
     }
   }
 
-  getSerialDevices (callback) {
+  async getSerialDevices (callback) {
     // get all serial devices
     this.serialDevices = []
 
-    SerialPort.list().then(
-      async ports => {
-        for (let i = 0, len = ports.length; i < len; i++) {
-          if (ports[i].pnpId !== undefined) {
-            // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
-            // console.log("Port: ", ports[i].pnpID);
-            let namePorts = ''
-            if (ports[i].pnpId.split('_').length > 2) {
-              namePorts = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
-            } else {
-              namePorts = ports[i].manufacturer + ' (' + ports[i].path + ')'
-            }
-            // console.log("Port: ", ports[i].pnpID);
-            this.serialDevices.push({ value: ports[i].path, label: namePorts, pnpId: ports[i].pnpId })
-          }
-        }
-        // for the Ras Pi's inbuilt UART
-        if (fs.existsSync('/dev/serial0') && isPi()) {
-          this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
-        }
-        // rpi uart has different name under Ubuntu
-        const data = await si.osInfo()
-        if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
-          // console.log("Running Ubuntu")
-          this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
-        }
-        // jetson serial ports
-        if (fs.existsSync('/dev/ttyTHS1')) {
-          this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '' })
-        }
+    const Binding = autoDetect()
+    const ports = await Binding.list()
 
-        // has the active device been disconnected?
-        if (this.port) {
-          console.log('Lost active device')
-          this.winston.info('Lost active device')
-          // this.active = false;
-          this.m.close()
-          this.m = null
-        }
-        // set the active device as selected
-        if (this.activeDevice) {
-          return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, this.dialects, this.activeDevice.mavdialect, true, this.enableTCP)
-        } else if (this.serialDevices.length > 0) {
-          return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], this.dialects, this.dialects[0], false, this.enableTCP)
+    for (let i = 0, len = ports.length; i < len; i++) {
+      if (ports[i].pnpId !== undefined) {
+        // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
+        // console.log("Port: ", ports[i].pnpID);
+        let namePorts = ''
+        if (ports[i].pnpId.split('_').length > 2) {
+          namePorts = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
         } else {
-          return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], this.dialects, this.dialects[0], false, this.enableTCP)
+          namePorts = ports[i].manufacturer + ' (' + ports[i].path + ')'
         }
-      },
-      err => console.error(err)
-    ).catch((error) => {
-      console.log(error)
-    })
+        // console.log("Port: ", ports[i].pnpID);
+        this.serialDevices.push({ value: ports[i].path, label: namePorts, pnpId: ports[i].pnpId })
+      }
+    }
+    // for the Ras Pi's inbuilt UART
+    if (fs.existsSync('/dev/serial0') && isPi()) {
+      this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
+    }
+    // rpi uart has different name under Ubuntu
+    const data = await si.osInfo()
+    if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
+      // console.log("Running Ubuntu")
+      this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
+    }
+    // jetson serial ports
+    if (fs.existsSync('/dev/ttyTHS1')) {
+      this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '' })
+    }
+
+    // has the active device been disconnected?
+    if (this.port) {
+      console.log('Lost active device')
+      this.winston.info('Lost active device')
+      // this.active = false;
+      this.m.close()
+      this.m = null
+    }
+    // set the active device as selected
+    if (this.activeDevice) {
+      return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, this.dialects, this.activeDevice.mavdialect, true, this.enableTCP)
+    } else if (this.serialDevices.length > 0) {
+      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], this.dialects, this.dialects[0], false, this.enableTCP)
+    } else {
+      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], this.dialects, this.dialects[0], false, this.enableTCP)
+    }
   }
 
   startInterval () {
