@@ -12,10 +12,10 @@ describe('Flight Controller Functions', function () {
     assert.equal(FC.previousConnection, false)
   })
 
-  it('#fcGetSerialDevices()', function (done) {
+  it('#fcGetSerialDevices()', async () => {
     const FC = new FCManagerClass(settings, winston)
 
-    FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
+    await FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
       assert.equal(err, null)
       assert.equal(devices.length, 0)
       assert.equal(bauds.length, 9)
@@ -27,7 +27,6 @@ describe('Flight Controller Functions', function () {
       assert.equal(seldialect.value, 'ardupilot')
       assert.equal(active, false)
       assert.equal(enableTCP, false)
-      done()
     })
   })
 
