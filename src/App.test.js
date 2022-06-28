@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import About from './about.js';
 import Home from './home.js';
@@ -13,54 +14,63 @@ import CloudConfig from './cloud.js';
 
 it('homepage renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<Home />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<Home />);
+  root.unmount();
 });
 
 it('about page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<About />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<About />);
+  root.unmount();
 });
 
 it('networkconfig page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<NetworkConfig />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<NetworkConfig />);
+  root.unmount();
 });
 
 it('video page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<Video />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<Video />);
+  root.unmount();
 });
 
 it('flightcontroller page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<FCConfig />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<FCConfig />);
+  root.unmount();
 });
 
 it('logging page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<LogBrowser />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<LogBrowser />);
+  root.unmount();
 });
 
 it('ntrip page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<NTRIPPage />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<NTRIPPage />);
+  root.unmount();
 });
 
 it('adhoc page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<AdhocConfig />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<AdhocConfig />);
+  root.unmount();
 });
 
 it('cloud page renders without crashing', () => {
   const div = document.createElement('div');
-  ReactDOM.render(<CloudConfig />, div);
-  ReactDOM.unmountComponentAtNode(div);
+  const root = createRoot(div);
+  root.render(<CloudConfig />);
+  root.unmount();
 });
