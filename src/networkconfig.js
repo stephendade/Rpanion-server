@@ -3,6 +3,7 @@ import Select from 'react-select';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
+import Table from 'react-bootstrap/Table';
 
 import basePage from './basePage.js';
 
@@ -11,6 +12,7 @@ class NetworkConfig extends basePage {
     super(props);
     this.state = {
       loading: true,
+      detWifi: [],
       showModal: false,
       showModalResult: "",
       showModalDelete: false,
@@ -292,9 +294,13 @@ class NetworkConfig extends basePage {
 
   addConnection = (event) => {
     //add new network button clicked
-    this.setState({ newNetworkName: '' });
-    this.setState({ showModalNewNetworkName: true });
-    event.preventDefault();
+    this.setState({ waiting: true }, () => {
+      fetch(`/api/wifiscan`).then(response => response.json())
+                            .then(state => this.setState(state))
+                            .then(state => this.setState({ newNetworkName: '' }))
+                            .then(state => this.setState({ showModalNewNetworkName: true }))
+                            .then(state => this.setState({ waiting: false }))
+    })
   };
 
   activateConnection = (event) => {
@@ -440,14 +446,14 @@ class NetworkConfig extends basePage {
     });
   }
 
-  handleCloseModalClient() {
+  handleCloseModalClient(selssid, selsecurity) {
     // user has selected client new Wifi connection
     this.setState({ showModal: false });
     this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
     var nm = this.state.netConnectionFilteredSelected.label;
     this.setState({
       netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
-      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: 0 }, ssid: { value: "" }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: "wpa-psk" }, password: { value: "" }, attachedIface: { value: '""' } }
+      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: 0 }, ssid: { value: selssid }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: selsecurity === '' ? 'wpa-none' : 'wpa-psk' }, password: { value: "" }, attachedIface: { value: '""' } }
     });
   }
 
@@ -729,16 +735,30 @@ class NetworkConfig extends basePage {
 
           <Modal show={this.state.showModal} onHide={this.handleNewNetworkTypeCancel}>
             <Modal.Header closeButton>
-              <Modal.Title>WiFi Network Type</Modal.Title>
+              <Modal.Title>WiFi Network Selection</Modal.Title>
             </Modal.Header>
 
             <Modal.Body>
-              <p>Please select the WiFi network type for this connection.</p>
+              <p>Please select an existing Wifi network from the below list, or create a hotspot.</p>
+              <Table striped bordered hover>
+                <thead>
+                  <tr>
+                    <th>SSID</th>
+                    <th>Signal Strength</th>
+                    <th>Security</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {this.state.detWifi.map((item, index) => (
+                    <tr><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
+                  ))}
+                </tbody>
+              </Table>
             </Modal.Body>
 
             <Modal.Footer>
               <Button variant="primary" onClick={this.handleCloseModalAP}>Create new Wifi hotspot</Button>
-              <Button variant="primary" onClick={this.handleCloseModalClient}>Connect to existing WiFi</Button>
+              <Button variant="primary" onClick={() => this.handleCloseModalClient('', '')}>Connect to hidden WiFi</Button>
               <Button variant="secondary" onClick={this.handleNewNetworkTypeCancel}>Cancel</Button>
             </Modal.Footer>
           </Modal>
