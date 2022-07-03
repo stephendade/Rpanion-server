@@ -111,6 +111,25 @@ function deactivateConnection (conName, callback) {
   })
 }
 
+function getWifiScan (callback) {
+  exec('nmcli -t -c=no -f=ssid,signal,security device wifi list', (error, stdout, stderr) => {
+    if (stderr) {
+      console.error(`exec error: ${error}`)
+      winston.error('Error in getWifiScan() ', { message: stderr })
+      return callback(stderr, [])
+    } else {
+      const wifiList = []
+      stdout.split('\n').forEach(function (item) {
+        const detnet = item.split(':')
+        if (detnet[0] !== '') {
+          wifiList.push({ ssid: detnet[0], signal: detnet[1], security: detnet[2] })
+        }
+      })
+      return callback(null, wifiList)
+    }
+  })
+}
+
 function addConnection (conNameStr, conType, conAdapter, conSettings, callback) {
   // add a new connection with name conNameStr and settings
   // conSettings
@@ -491,5 +510,6 @@ module.exports = {
   addConnection,
   deactivateConnection,
   getWirelessStatus,
-  setWirelessStatus
+  setWirelessStatus,
+  getWifiScan
 }
