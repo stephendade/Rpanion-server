@@ -475,6 +475,21 @@ app.get('/api/networkadapters', (req, res) => {
   })
 })
 
+app.get('/api/wifiscan', (req, res) => {
+  networkManager.getWifiScan((err, wifiList) => {
+    if (!err) {
+      res.setHeader('Content-Type', 'application/json')
+      const ret = { detWifi: wifiList }
+      res.send(JSON.stringify(ret))
+    } else {
+      res.setHeader('Content-Type', 'application/json')
+      const ret = { detWifi: [] }
+      res.send(JSON.stringify(ret))
+      winston.error('Error in /api/wifiscan ', { message: err })
+    }
+  })
+})
+
 app.get('/api/wirelessstatus', (req, res) => {
   networkManager.getWirelessStatus((err, status) => {
     if (!err) {
