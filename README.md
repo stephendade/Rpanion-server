@@ -56,7 +56,7 @@ cd ./deploy && ./RasPi2-3-4-deploy.sh
 If running Ubuntu 20.04.1 OS, use:
 
 ```
-cd ./deploy && ./RasPi-ubuntu20-deploy.sh
+cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20-deploy.sh
 ```
 
 For the Raspberry Pi Zero W(1), run the below command on a fresh Raspberry Pi OS install
