@@ -232,6 +232,9 @@ app.get('/api/networkclients', (req, res) => {
 // Serve the logfiles
 app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')))
 
+// Serve the logfiles
+app.use('/rplogs', express.static(path.join(__dirname, '..', '/logs')))
+
 app.get('/api/logfiles', (req, res) => {
   logManager.getLogs((err, tlogs, binlogs, activeLogging) => {
     res.setHeader('Content-Type', 'application/json')
