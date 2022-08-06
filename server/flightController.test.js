@@ -61,11 +61,11 @@ describe('Flight Controller Functions', function () {
     const FC = new FCManagerClass(settings, winston)
     FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
 
-    FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, (err, isSuccess) => {
+    FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, false, 0, (err, isSuccess) => {
       assert.equal(err, null)
       assert.equal(isSuccess, true)
 
-      FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, (err, isSuccess) => {
+      FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, false, 0, (err, isSuccess) => {
         assert.equal(err, null)
         assert.equal(isSuccess, false)
         done()
