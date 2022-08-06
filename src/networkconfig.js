@@ -567,7 +567,9 @@ class NetworkConfig extends basePage {
   renderContent() {
     return (
       <div style={{ width: 500 }}>
+        <p><i>Create, view, edit and delete network connections</i></p>
         <h2>Select Connection</h2>
+        <p><i>Show a specific network connection, filtered by network adapter</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Adapter</label>
           <div className="col-sm-8">

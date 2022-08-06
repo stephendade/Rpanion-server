@@ -78,6 +78,7 @@ class NTRIPPage extends basePage {
   renderContent() {
     return (
       <div>
+        <p><i>Stream NTRIP (GPS correction) data from a web service to the flight controller</i></p>
         <h2>Configuration</h2>
         <Form style={{ width: 500 }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>

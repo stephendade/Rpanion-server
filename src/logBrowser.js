@@ -110,6 +110,7 @@ class LoggerPage extends basePage {
   renderContent() {
     return (
       <div>
+        <p><i>Save and download flight logs</i></p>
         <p>Logging Status: {this.state.logStatus}</p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
         <h3>Telemetry Logs</h3>

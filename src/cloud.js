@@ -72,6 +72,7 @@ class CloudConfig extends basePage {
   renderContent () {
     return (
             <div>
+              <p><i>Automatically upload logs from the "Flight Logs" page to a remote (network) location</i></p>
                 <h3>Bin Logs Upload</h3>
                 <p>All bin logs (in Flight Logs -> Bin Logs) will be synchonised to the following rsync destination.</p>
                 <p>Format is username@server:/path/to/remote/dir</p>
@@ -97,6 +98,7 @@ class CloudConfig extends basePage {
                     <p>Status: {this.state.binLogStatus}</p>
                 </Form>
                 <h3>Publickeys</h3>
+                <p><i>All publickeys on this device</i></p>
                   <div style={{ fontFamily: "monospace", width: 600 }}>
                   <hr/>
                     {this.state.pubkey.map(item => {
