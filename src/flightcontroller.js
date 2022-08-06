@@ -162,6 +162,7 @@ class FCPage extends basePage {
     return (
       <div style={{ width: 600 }}>
         <h2>Serial Input</h2>
+        <p><i>Flight Controller connection to this device</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Serial Device</label>
           <div className="col-sm-8">
@@ -196,6 +197,7 @@ class FCPage extends basePage {
         <br />
         <h2>Telemetry Destinations</h2>
         <h3>UDP Client</h3>
+        <p><i>Send telemetry to these specific devices IP:port</i></p>
         <Table id='UDPOut' striped bordered hover size="sm">
           <thead>
             <tr><th>Destination IP:Port</th><th>Action</th></tr>
@@ -212,8 +214,10 @@ class FCPage extends basePage {
           </div>
         </div>
         <h3>UDP Broadcast</h3>
+        <p><i>Broadcast to all devices on all connected networks</i></p>
         <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />Enable UDP broadcast on this port: <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
         <h3>TCP Server</h3>
+        <p><i>Allow devices to connect to this device's IP:port</i></p>
         <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
         
         <br />

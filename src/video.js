@@ -123,6 +123,7 @@ class VideoPage extends basePage {
   renderContent() {
     return (
       <Form style={{ width: 600 }}>
+        <p><i>Stream live video from any connected camera devices. Only 1 camera can be streamed at a time.</i></p>
         <h2>Configuration</h2>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Streaming Mode</label>
