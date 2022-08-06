@@ -28,7 +28,9 @@ class FCPage extends basePage {
       error: null,
       infoMessage: null,
       socketioStatus: false,
-      usedSocketIO: true
+      usedSocketIO: true,
+      enableUDPB: false,
+      UDPBPort: 14550
     }
 
     // Socket.io client for reading in analog update values
@@ -66,6 +68,14 @@ class FCPage extends basePage {
     this.setState({ enableTCP: event.target.checked });
   }
 
+  handleUseUDPBChange = (event) => {
+    this.setState({ enableUDPB: event.target.checked });
+  }
+
+  changeUDPBPort = (event) => {
+    this.setState({ UDPBPort: event.target.value });
+  }
+
   handleSubmit = (event) => {
     //user clicked start/stop telemetry
     fetch('/api/FCModify', {
@@ -79,7 +89,9 @@ class FCPage extends basePage {
         baud: JSON.stringify(this.state.baudRateSelected),
         mavversion: JSON.stringify(this.state.mavVersionSelected),
         mavdialect: JSON.stringify(this.state.mavDialectSelected),
-        enableTCP: this.state.enableTCP
+        enableTCP: this.state.enableTCP,
+        enableUDPB: this.state.enableUDPB,
+        UDPBPort: this.state.UDPBPort
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
   }
@@ -183,7 +195,7 @@ class FCPage extends basePage {
 
         <br />
         <h2>Telemetry Destinations</h2>
-        <h3>UDP</h3>
+        <h3>UDP Client</h3>
         <Table id='UDPOut' striped bordered hover size="sm">
           <thead>
             <tr><th>Destination IP:Port</th><th>Action</th></tr>
@@ -199,7 +211,9 @@ class FCPage extends basePage {
             <input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><Button size="sm" onClick={this.addUdpOutput}>Add</Button>
           </div>
         </div>
-        <h3>TCP</h3>
+        <h3>UDP Broadcast</h3>
+        <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />Enable UDP broadcast on this port: <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
+        <h3>TCP Server</h3>
         <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
         
         <br />
