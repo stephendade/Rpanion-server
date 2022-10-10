@@ -27,3 +27,5 @@ settingsTest.json
 /logs
 /flightlogs
 .nyc_output
+
+/local_modules/long/node_modules
