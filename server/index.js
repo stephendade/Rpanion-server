@@ -1,8 +1,9 @@
 const express = require('express')
+const fileUpload = require('express-fileupload')
 const compression = require('compression')
 const bodyParser = require('body-parser')
 const pino = require('express-pino-logger')()
-const process = require('process');
+const process = require('process')
 
 const networkManager = require('./networkManager')
 const aboutPage = require('./aboutInfo')
@@ -13,11 +14,13 @@ const networkClients = require('./networkClients.js')
 const ntrip = require('./ntrip.js')
 const adhocManager = require('./adhocManager.js')
 const cloudManager = require('./cloudUpload.js')
+const VPNManager = require('./vpn')
 
 const winston = require('./winstonconfig')(module)
 
 const appRoot = require('app-root-path')
 const settings = require('settings-store')
+const { exec, execSync } = require('child_process')
 
 const app = express()
 const http = require('http').Server(app)
@@ -32,6 +35,9 @@ const limiter = RateLimit({
 
 // apply rate limiter to all requests
 app.use(limiter)
+
+// use file uploader for Wireguard profiles
+app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
 
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult, oneOf } = require('express-validator')
@@ -115,6 +121,102 @@ app.use(bodyParser.json())
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, '..', '/build')))
+
+// Serve the vpn zerotier info
+app.get('/api/vpnzerotier', (req, res) => {
+  VPNManager.getVPNStatusZerotier(null, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusZerotier: statusJSON }))
+  })
+})
+
+// Add zerotier network
+app.post('/api/vpnzerotieradd', [check('network').isAlphanumeric()], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /api/vpnzerotieradd', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  }
+  VPNManager.addZerotier(req.body.network, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusZerotier: statusJSON }))
+  })
+})
+
+// Remove zerotier network
+app.post('/api/vpnzerotierdel', [check('network').isAlphanumeric()], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /api/vpnzerotierdel', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  }
+  VPNManager.removeZerotier(req.body.network, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusZerotier: statusJSON }))
+  })
+})
+
+// Serve the vpn wireguard info
+app.get('/api/vpnwireguard', (req, res) => {
+  VPNManager.getVPNStatusWireguard(null, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusWireguard: statusJSON }))
+  })
+})
+
+// Add new wireguard network
+app.post('/api/vpnwireguardprofileadd', (req, res) => {
+  if (!req.files || Object.keys(req.files).length === 0 || req.files.wgprofile.truncated) {
+    console.log("Couldn't upload")
+    return res.redirect('../vpn')
+  }
+
+  VPNManager.addWireguardProfile(req.files.wgprofile.name, req.files.wgprofile.tempFilePath, () => {
+    return res.redirect('../vpn')
+  })
+})
+
+// Activate wireguard network
+app.post('/api/vpnwireguardactivate', [check('network').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim()], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /api/vpnwireguardactivate', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  }
+
+  VPNManager.activateWireguardProfile(req.body.network, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusWireguard: statusJSON }))
+  })
+})
+
+// Deactivate wireguard network
+app.post('/api/vpnwireguarddeactivate', [check('network').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim()], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /api/vpnwireguarddeactivate', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  }
+
+  VPNManager.deactivateWireguardProfile(req.body.network, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusWireguard: statusJSON }))
+  })
+})
+
+// Delete wireguard network
+app.post('/api/vpnwireguardelete', [check('network').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim()], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /api/vpnwireguardelete', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  }
+
+  VPNManager.deleteWireguardProfile(req.body.network, (stderr, statusJSON) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: stderr, statusWireguard: statusJSON }))
+  })
+})
 
 // Serve the ntrip info
 app.get('/api/ntripconfig', (req, res) => {
