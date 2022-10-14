@@ -25,7 +25,7 @@ sudo apt update
 sudo apt upgrade -y
 sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build autoconf libtool
 
-sudo apt purge -y openresolv dhcpcd5 modemmanager
+sudo apt purge -y dhcpcd5 modemmanager
 sudo apt remove -y modemmanager nodejs nodejs-doc
 
 sudo systemctl disable dnsmasq
@@ -50,6 +50,10 @@ perl -pe 's/(encoded_buffer_q, 500)/encoded_buffer_q, 5000/' -i ./src/RaspiCaptu
 make
 sudo make install
 cd ../../deploy
+
+## Zerotier and wireguard
+curl -s https://install.zerotier.com | sudo bash
+sudo apt install wireguard wireguard-tools
 
 ## mavlink-router
 ./build_mavlinkrouter.sh

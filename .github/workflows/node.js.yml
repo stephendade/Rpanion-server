@@ -37,8 +37,12 @@ jobs:
     - name: Build mavlink-router
       run: |
         cd ./deploy && ./build_mavlinkrouter.sh
-        
-        
+
+    - name: Install VPNs
+      run: |
+        curl -s https://install.zerotier.com | sudo bash
+        sudo apt -y install wireguard
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:

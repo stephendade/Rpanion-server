@@ -97,7 +97,7 @@ The required prerequisite packages can be installed via:
 ```
 sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq ninja-build
 
-sudo apt purge openresolv dhcpcd5
+sudo apt purge dhcpcd5
 
 sudo pip3 install meson
 pip3 install netifaces --user
