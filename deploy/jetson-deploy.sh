@@ -31,6 +31,10 @@ echo "[keyfile]" | sudo tee -a /etc/NetworkManager/conf.d/10-globally-managed-de
 echo "unmanaged-devices=*,except:type:wifi,except:type:gsm,except:type:cdma,except:type:wwan,except:type:ethernet,type:vlan" | sudo tee -a /etc/NetworkManager/conf.d/10-globally-managed-devices.conf >/dev/null
 sudo service network-manager restart
 
+## Zerotier and wireguard
+curl -s https://install.zerotier.com | sudo bash
+sudo apt install wireguard wireguard-tools
+
 ## mavlink-router
 ./build_mavlinkrouter.sh
 

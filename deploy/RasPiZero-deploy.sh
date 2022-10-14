@@ -50,6 +50,10 @@ make
 sudo make install
 cd ../../deploy
 
+## Zerotier and wireguard
+curl -s https://install.zerotier.com | sudo bash
+sudo apt install wireguard wireguard-tools
+
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
@@ -62,7 +66,7 @@ cd ../../deploy
 ### Please wait 5min for the configuration to finish, then reboot the Pi
 
 sudo apt install -y network-manager
-sudo apt purge -y openresolv dhcpcd5 modemmanager
+sudo apt purge -y dhcpcd5 modemmanager
 sudo apt remove -y modemmanager
 
 sudo systemctl disable dnsmasq
