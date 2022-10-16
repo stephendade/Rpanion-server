@@ -466,7 +466,7 @@ app.get('/api/FCOutputs', (req, res) => {
 
 app.get('/api/FCDetails', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP, enableUDPB, UDPBPort) => {
+  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP, enableUDPB, UDPBPort) => {
     if (!err) {
       console.log('Sending')
       console.log(devices)
@@ -477,8 +477,6 @@ app.get('/api/FCDetails', (req, res) => {
         serialPortSelected: seldevice,
         mavVersions: mavers,
         mavVersionSelected: selmav,
-        mavDialects: mavdialects,
-        mavDialectSelected: seldialect,
         baudRateSelected: selbaud,
         enableTCP: enableTCP,
         enableUDPB: enableUDPB,
@@ -502,7 +500,7 @@ app.post('/api/updatemaster', function (req, res) {
   aboutPage.updateRS(io)
 })
 
-app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('mavdialect').isJSON(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort()], function (req, res) {
+app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -510,7 +508,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
     return res.status(422).json({ errors: errors.array() })
   }
 
-  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), JSON.parse(req.body.mavdialect), req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, (err, isSuccess) => {
+  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);

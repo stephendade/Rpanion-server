@@ -33,8 +33,6 @@ class FCDetails {
       { value: 1500000, label: '1500000' }]
     this.mavlinkVersions = [{ value: 1, label: '1.0' },
       { value: 2, label: '2.0' }]
-    this.dialects = [{ value: 'ardupilot', label: 'ArduPilot' },
-      { value: 'common', label: 'Common' }]
     // JSON of active device (port and baud and mavversion). User selected
     // null if user selected no link (or no serial port of that name)
     this.activeDevice = null
@@ -76,7 +74,7 @@ class FCDetails {
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
       let found = false
-      this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
+      this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP) => {
         for (let i = 0, len = devices.length; i < len; i++) {
           if (this.activeDevice.serial.value === devices[i].value) {
             found = true
@@ -261,8 +259,8 @@ class FCDetails {
 
   startLink (callback) {
     // start the serial link
-    console.log('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value + ', ' + this.activeDevice.mavdialect.value)
-    this.winston.info('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value + ', ' + this.activeDevice.mavdialect.value)
+    console.log('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value)
+    this.winston.info('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value)
     // this.outputs.push({ IP: newIP, port: newPort })
 
     // build up the commandline for mavlink-router
@@ -330,7 +328,7 @@ class FCDetails {
     // only restart the mavlink processor if it's a new link,
     // not a reconnect attempt
     if (this.m === null) {
-      this.m = new mavManager(this.activeDevice.mavdialect.value, this.activeDevice.mavversion.value, '127.0.0.1', 14540)
+      this.m = new mavManager('common', this.activeDevice.mavversion.value, '127.0.0.1', 14540)
       this.m.eventEmitter.on('gotMessage', (msg) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
@@ -412,11 +410,11 @@ class FCDetails {
     }
     // set the active device as selected
     if (this.activeDevice) {
-      return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, this.dialects, this.activeDevice.mavdialect, true, this.enableTCP, this.enableUDPB, this.UDPBPort)
+      return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort)
     } else if (this.serialDevices.length > 0) {
-      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], this.dialects, this.dialects[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort)
+      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort)
     } else {
-      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], this.dialects, this.dialects[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort)
+      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort)
     }
   }
 
@@ -446,7 +444,7 @@ class FCDetails {
     }, 1000)
   }
 
-  startStopTelemetry (device, baud, mavversion, mavdialect, enableTCP, enableUDPB, UDPBPort, callback) {
+  startStopTelemetry (device, baud, mavversion, enableTCP, enableUDPB, UDPBPort, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
@@ -475,16 +473,10 @@ class FCDetails {
           break
         }
       }
-      for (let i = 0, len = this.dialects.length; i < len; i++) {
-        if (this.dialects[i].value === mavdialect.value) {
-          this.activeDevice.mavdialect = this.dialects[i]
-          break
-        }
-      }
 
-      if (this.activeDevice.serial === null || this.activeDevice.baud.value === null || this.activeDevice.serial.value === null || this.activeDevice.mavversion.value === null || this.activeDevice.mavdialect.value === null || this.enableTCP === null) {
+      if (this.activeDevice.serial === null || this.activeDevice.baud.value === null || this.activeDevice.serial.value === null || this.activeDevice.mavversion.value === null || this.enableTCP === null) {
         this.activeDevice = null
-        return callback('Bad serial device or baud or mavlink version or dialect', false)
+        return callback(new Error('Bad serial device or baud or mavlink version'), false)
       }
 
       // this.activeDevice = {serial: device, baud: baud};
