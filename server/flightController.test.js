@@ -15,7 +15,7 @@ describe('Flight Controller Functions', function () {
   it('#fcGetSerialDevices()', async () => {
     const FC = new FCManagerClass(settings, winston)
 
-    await FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, mavdialects, seldialect, active, enableTCP) => {
+    await FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP) => {
       assert.equal(err, null)
       assert.equal(devices.length, 0)
       assert.equal(bauds.length, 12)
@@ -23,8 +23,6 @@ describe('Flight Controller Functions', function () {
       assert.equal(selbaud.value, 9600)
       assert.equal(mavers.length, 2)
       assert.equal(selmav.value, 1)
-      assert.equal(mavdialects.length, 2)
-      assert.equal(seldialect.value, 'ardupilot')
       assert.equal(active, false)
       assert.equal(enableTCP, false)
     })
@@ -61,11 +59,11 @@ describe('Flight Controller Functions', function () {
     const FC = new FCManagerClass(settings, winston)
     FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
 
-    FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, false, 0, (err, isSuccess) => {
+    FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, true, false, 0, (err, isSuccess) => {
       assert.equal(err, null)
       assert.equal(isSuccess, true)
 
-      FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, { value: 'common' }, true, false, 0, (err, isSuccess) => {
+      FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, true, false, 0, (err, isSuccess) => {
         assert.equal(err, null)
         assert.equal(isSuccess, false)
         done()

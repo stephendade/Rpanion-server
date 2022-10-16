@@ -15,11 +15,9 @@ class FCPage extends basePage {
       serialPorts: [],
       baudRates: [],
       mavVersions: [],
-      mavDialects: [],
       serialPortSelected: null,
       baudRateSelected: null,
       mavVersionSelected: null,
-      mavDialectSelected: null,
       enableTCP: null,
       FCStatus: {},
       UDPoutputs: [],
@@ -60,10 +58,6 @@ class FCPage extends basePage {
     this.setState({ mavVersionSelected: value });
   }
 
-  handleMavDialectChange = (value, action) => {
-    this.setState({ mavDialectSelected: value });
-  }
-
   handleUseTCPChange = (event) => {
     this.setState({ enableTCP: event.target.checked });
   }
@@ -88,7 +82,6 @@ class FCPage extends basePage {
         device: JSON.stringify(this.state.serialPortSelected),
         baud: JSON.stringify(this.state.baudRateSelected),
         mavversion: JSON.stringify(this.state.mavVersionSelected),
-        mavdialect: JSON.stringify(this.state.mavDialectSelected),
         enableTCP: this.state.enableTCP,
         enableUDPB: this.state.enableUDPB,
         UDPBPort: this.state.UDPBPort
@@ -179,12 +172,6 @@ class FCPage extends basePage {
           <label className="col-sm-4 col-form-label">MAVLink Version</label>
           <div className="col-sm-8">
             <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected} />
-          </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">MAVLink Dialect</label>
-          <div className="col-sm-8">
-            <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavDialectChange} options={this.state.mavDialects} value={this.state.mavDialectSelected} />
           </div>
         </div>
 
