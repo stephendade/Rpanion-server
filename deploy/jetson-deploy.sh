@@ -5,6 +5,7 @@ set -x
 
 ## Set permissions
 sudo adduser $USER dialout
+sudo systemctl disable nvgetty.service
 
 ## Packages
 sudo apt update
