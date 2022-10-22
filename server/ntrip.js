@@ -2,6 +2,7 @@
 const { NtripClient } = require('ntrip-client')
 const { geoToEcef } = require('ntrip-client/lib/nmea/ecef')
 const events = require('events')
+const os = require('os')
 
 class ntrip {
   constructor (settings, winston) {
@@ -59,6 +60,7 @@ class ntrip {
   startStopNTRIP () {
     if (this.options.active) {
       this.client = new NtripClient(this.options)
+      this.client.headers.Host = os.hostname()
       this.seq = 0
 
       this.client.on('data', (data) => {
