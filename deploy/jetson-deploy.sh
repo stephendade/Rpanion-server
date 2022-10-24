@@ -40,10 +40,5 @@ sudo apt install wireguard wireguard-tools
 ## and build & run Rpanion
 ./build.sh
 
-## Change user and home dir to ubuntu defaults, then reload service
-sudo perl -pe 's/pi/$ENV{SUDO_USER}/' -i /etc/systemd/system/rpanion.service
-sudo systemctl daemon-reload
-sudo systemctl restart rpanion.service
-
 sudo reboot
 
