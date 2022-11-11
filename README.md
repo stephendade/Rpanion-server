@@ -81,15 +81,15 @@ curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
-Note that the Raspberry Pi Zero is not compatible with version 12 (or later) of node.js. Version 11 
-can instead be installed via:
+Note that the Raspberry Pi Zero (1) requires an unofficial build of nodejs, as Rpanion-server requires
+nodejs version 12 or greater, and official support for the Pi Zero ended with nodejs version 11;
 
 ```
-wget https://nodejs.org/download/release/v11.15.0/node-v11.15.0-linux-armv6l.tar.xz
+wget https://unofficial-builds.nodejs.org/download/release/v12.22.9/node-v12.22.9-linux-armv6l.tar.xz
 sudo mkdir -p /usr/local/lib/nodejs
-sudo tar -xJvf node-v11.15.0-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
-sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/node /usr/local/bin
-sudo ln -s /usr/local/lib/nodejs/node-v11.15.0-linux-armv6l/bin/npm /usr/local/bin
+sudo tar -xJvf node-v12.22.9-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
+sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/node /usr/local/bin
+sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/npm /usr/local/bin
 ```
 
 The required prerequisite packages can be installed via:
@@ -115,6 +115,13 @@ cd ./modules/gst-rpicamsrc
 ./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
 make
 sudo make install
+```
+
+To (optionally) use the Zerotier and/or Wireguard VPN's, install as follows:
+
+```
+curl -s https://install.zerotier.com | sudo bash
+sudo apt install wireguard wireguard-tools
 ```
 
 The mavlink-router (https://github.com/intel/mavlink-router) software is used for
