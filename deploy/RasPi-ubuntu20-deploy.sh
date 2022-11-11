@@ -61,6 +61,11 @@ sudo apt install wireguard wireguard-tools
 ## and build & run Rpanion
 ./build.sh
 
+
+## Pymavlink and gpsbabel to create KMZ.
+sudo DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink
+sudo apt-get install -y gpsbabel
+
 ## Change user and home dir to ubuntu defaults, then reload service
 sudo perl -pe 's/pi/ubuntu/' -i /etc/systemd/system/rpanion.service
 sudo systemctl daemon-reload
@@ -70,4 +75,3 @@ sudo systemctl restart rpanion.service
 sudo systemctl start unattended-upgrades.service
 
 sudo reboot
-

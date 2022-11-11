@@ -14,6 +14,7 @@ class flightLogger {
     this.topfolder = path.join(appRoot.toString(), 'flightlogs')
     this.tlogfolder = path.join(this.topfolder, 'tlogs')
     this.binlogfolder = path.join(this.topfolder, 'binlogs')
+    this.kmzlogfolder = path.join(this.topfolder, 'kmzlogs')
     this.activeFileTlog = null
     this.activeLogging = true
     this.settings = settings
@@ -31,7 +32,9 @@ class flightLogger {
     // mkdir the log folders (both of them)
     fs.mkdirSync(this.tlogfolder, { recursive: true })
     fs.mkdirSync(this.binlogfolder, { recursive: true })
+    fs.mkdirSync(this.kmzlogfolder, { recursive: true })
   }
+
 
   // Start a new tlog
   newtlog () {
@@ -56,7 +59,7 @@ class flightLogger {
     }
   }
 
-  // Delete all logs - tlog or binlog
+  // Delete all logs - tlog or binlog or kmz files
   clearlogs (logtype, curBinLog) {
     if (logtype === 'tlog') {
       const files = fs.readdirSync(this.tlogfolder)
@@ -80,6 +83,14 @@ class flightLogger {
       })
       console.log('Deleted binlogs')
       this.winston.info('Deleted binlogs')
+    } else if (logtype === 'kmzlog') {
+      const files = fs.readdirSync(this.kmzlogfolder)
+      files.forEach((file) => {
+        const filePath = path.join(this.kmzlogfolder, file)
+        fs.unlinkSync(filePath)
+      })
+      console.log('Deleted kmzlogs')
+      this.winston.info('Deleted kmzlogs')
     }
   }
 
@@ -172,7 +183,9 @@ class flightLogger {
   getLogs (callback) {
     const newfilestlog = this.findInDir(this.tlogfolder)
     const newfilesbinlog = this.findInDir(this.binlogfolder)
-    return callback(false, newfilestlog, newfilesbinlog, this.activeLogging)
+    const newfileskmzlog = this.findInDir(this.kmzlogfolder)
+
+    return callback(false, newfilestlog, newfilesbinlog, newfileskmzlog, this.activeLogging)
   };
 }
 

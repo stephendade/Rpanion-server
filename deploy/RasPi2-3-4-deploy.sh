@@ -61,4 +61,8 @@ sudo apt install wireguard wireguard-tools
 ## and build & run Rpanion
 ./build.sh
 
+## Pymavlink and gpsbabel to create KMZ.
+sudo DISABLE_MAVNATIVE=True python -m pip3 install --upgrade pymavlink
+sudo apt-get install -y gpsbabel
+
 sudo reboot

@@ -7,24 +7,51 @@ import basePage from './basePage.js';
 import './css/styles.css';
 
 class LoggerPage extends basePage {
-  constructor(props) {
-    super(props);
+  constructor (props, useSocketIO = true) {
+    super(props, useSocketIO)
     this.state = {
       loading: false,
       waiting: false,
       TlogFiles: [],
       BinlogFiles: [],
+      KMZlogFiles: [],
       logStatus: "",
       enablelogging: false,
       error: null,
       infoMessage: null,
-      diskSpaceStatus: ""
-    };
+      diskSpaceStatus: "",
+      conversionLogStatus: 'N/A',
+      doLogConversion: true
+    }
+
+    //Socket.io client for reading update values
+    this.socket.on('LogConversionStatus', function (msg) {
+      this.setState({ conversionLogStatus: msg })
+    }.bind(this))
+    this.socket.on('reconnect', function () {
+      //refresh state
+      this.componentDidMount()
+    }.bind(this))
   }
 
+
+  handleDoLogConversion = event => {
+    //user clicked enable/disable log conversion
+    fetch('/api/logconversion', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            doLogConversion: !this.state.doLogConversion,
+        })
+      }).then(response => response.json()).then(state => { this.setState(state) });
+  }
   componentDidMount() {
     fetch(`/api/logfiles`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
     fetch(`/api/diskinfo`).then(response => response.json()).then(state => { this.setState(state) });
+    fetch(`/api/logconversioninfo`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
   renderTitle() {
@@ -137,6 +164,27 @@ class LoggerPage extends basePage {
             {this.renderLogTableData(this.state.BinlogFiles)}
           </tbody>
         </Table>
+        <br />
+        <h3>KMZ Files</h3>
+        <p>KMZ files created from the Telemetry Logs every 20 seconds.</p>
+        
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <div className="col-sm-10">
+            <Button onClick={this.handleDoLogConversion} className="btn btn-primary">{this.state.doLogConversion === true ? 'Disable' : 'Enable'}</Button>
+          </div>
+        </div>
+        <p>Status: {this.state.conversionLogStatus}</p>
+
+        <Button size="sm" id='kmzlog' onClick={this.clearLogs}>Clear KMZ files</Button>{' '}
+        <Table id='KMZlogfile' striped bordered hover size="sm">
+          <thead>
+            <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
+          </thead>
+          <tbody>
+            {this.renderLogTableData(this.state.KMZlogFiles)}
+          </tbody>
+        </Table>
+        <br />
       </div>
     );
   }

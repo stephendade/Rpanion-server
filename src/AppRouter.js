@@ -17,7 +17,7 @@ function AppRouter() {
   return (
     <div id="wrapper" className="d-flex">
       <div id="sidebar-wrapper" className="bg-light border-right">
-        <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
+      <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
         <div id="sidebar-items" className="list-group list-group-flush">
           <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>

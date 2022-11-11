@@ -26,7 +26,7 @@ class cloudUpload {
 
     // interval for upload checks
     this.intervalObj = setInterval(() => {
-      //console.log('Upload interval')
+      console.log('Upload interval')
       if (this.options.doBinUpload) {
         console.log('Doing binfile')
         const rsync = new Rsync()

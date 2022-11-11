@@ -65,12 +65,15 @@ describe('Logging Functions', function () {
 
     Lgr.clearlogs('tlog', null)
     Lgr.clearlogs('binlog', null)
+    Lgr.clearlogs('kmzlog', null)
+
 
     // assert all files deleted
     assert.equal(Lgr.activeFileTlog, null)
     assert.equal(Lgr.activeFileBinlog, null)
     assert.equal(fs.readdirSync(Path.join(appRoot.toString(), 'flightlogs', 'tlogs')).length, 0)
     assert.equal(fs.readdirSync(Path.join(appRoot.toString(), 'flightlogs', 'binlogs')).length, 0)
+    assert.equal(fs.readdirSync(Path.join(appRoot.toString(), 'flightlogs', 'kmzlogs')).length, 0)
   })
 
   it('#getlogs()', function (done) {
@@ -79,9 +82,10 @@ describe('Logging Functions', function () {
 
     if (parseInt(process.versions.node) < 12) {
       assert.equal(Lgr.getStatus(), 'Cannot do logging on nodejs version <12')
-      Lgr.getLogs(function (err, tlogs, binlogs, activeLogging) {
+      Lgr.getLogs(function (err, tlogs, binlogs, kmzlogs, activeLogging) {
         assert.equal(tlogs.length, 0)
         assert.equal(binlogs.length, 0)
+        assert.equal(kmzlogs.length, 0)
         assert.equal(activeLogging, false)
         done()
       })
@@ -89,9 +93,10 @@ describe('Logging Functions', function () {
       // log a byte
       assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
 
-      Lgr.getLogs(function (err, tlogs, binlogs, activeLogging) {
+      Lgr.getLogs(function (err, tlogs, binlogs, kmzlogs, activeLogging) {
         assert.equal(tlogs.length, 1)
         assert.equal(binlogs.length, 0)
+        assert.equal(kmzlogs.length, 0)
         assert.equal(activeLogging, true)
         done()
       })

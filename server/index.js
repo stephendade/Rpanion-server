@@ -15,6 +15,8 @@ const ntrip = require('./ntrip.js')
 const adhocManager = require('./adhocManager.js')
 const cloudManager = require('./cloudUpload.js')
 const VPNManager = require('./vpn')
+const logConversionManager = require('./logConverter.js')
+
 
 const winston = require('./winstonconfig')(module)
 
@@ -54,6 +56,8 @@ const fcManager = new fcManagerClass(settings, winston)
 const logManager = new flightLogger(settings, winston)
 const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings, winston)
+const logConversion = new logConversionManager(settings, winston)
+
 
 // cleanup, if needed
 process.on('SIGINT', quitting) // run signal handler when main process exits
@@ -254,6 +258,33 @@ app.post('/api/binlogupload', [check('doBinUpload').isBoolean(),
   }
 })
 
+
+// Serve the logconversion info
+app.get('/api/logconversioninfo', (req, res) => {
+  logConversion.getSettings((doLogConversion) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ doLogConversion: doLogConversion}))
+  })
+})
+
+// activate or deactivate logconversion
+app.post('/api/logconversion', [check('doLogConversion').isBoolean()
+  ], function (req, res) {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    console.log(req.body)
+    winston.error('Bad POST vars in /api/logconversion', { message: errors.array().toString() })
+    return res.status(422).json({ errors: errors.array() })
+  } else {
+    logConversion.setSettingsLog(req.body.doLogConversion)
+    // send back refreshed settings
+    logConversion.getSettings((doLogConversion) => {
+      res.setHeader('Content-Type', 'application/json')
+      res.send(JSON.stringify({ doLogConversion: doLogConversion}))
+    })
+  }
+})
+
 // Serve the adhocwifi info
 app.get('/api/adhocadapters', (req, res) => {
   adhocManager.getAdapters((err, netDeviceList, netDeviceSelected, settings) => {
@@ -338,13 +369,13 @@ app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')
 app.use('/rplogs', express.static(path.join(__dirname, '..', '/logs')))
 
 app.get('/api/logfiles', (req, res) => {
-  logManager.getLogs((err, tlogs, binlogs, activeLogging) => {
+  logManager.getLogs((err, tlogs, binlogs, kmzlogs, activeLogging) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, BinlogFiles: binlogs, url: req.protocol + '://' + req.headers.host, logStatus: logManager.getStatus() }))
+    res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, BinlogFiles: binlogs, KMZlogFiles: kmzlogs, url: req.protocol + '://' + req.headers.host, logStatus: logManager.getStatus() }))
   })
 })
 
-app.post('/api/deletelogfiles', [check('logtype').isIn(['tlog', 'binlog'])], (req, res) => {
+app.post('/api/deletelogfiles', [check('logtype').isIn(['tlog', 'binlog', 'kmzlog'])], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     winston.error('Bad POST vars in /api/deletelogfiles', { message: errors.array() })
@@ -358,8 +389,15 @@ app.post('/api/deletelogfiles', [check('logtype').isIn(['tlog', 'binlog'])], (re
 
 app.get('/api/newlogfile', (req, res) => {
   logManager.newtlog()
+  //console.log(logConversion.tlogfilename)
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({}))
+})
+
+app.get('/api/tlogfilename', (req, res) => {
+  //console.log(logManager.activeFileTlog)
+  res.setHeader('Content-Type', 'application/json')
+  res.send(JSON.stringify({tlogfilename: logManager.activeFileTlog}))
 })
 
 app.post('/api/logenable', [check('enable').isBoolean()], function (req, res) {
@@ -558,12 +596,12 @@ io.on('connection', function (socket) {
   if (FCStatusLoop !== null) {
     return
   }
-
   // send Flight Controller and NTRIP status out 1 per second
   FCStatusLoop = setInterval(function () {
     io.sockets.emit('FCStatus', fcManager.getSystemStatus())
     io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr())
     io.sockets.emit('CloudBinStatus', cloud.conStatusBinStr())
+    io.sockets.emit('LogConversionStatus', logConversion.conStatusLogStr())
   }, 1000)
 })
 
