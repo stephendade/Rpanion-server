@@ -84,7 +84,7 @@ function addWireguardProfile (filename, tmpfilepath, callback) {
 function activateWireguardProfile (filename, callback) {
   // activate a wireguard profile
   const profile = path.parse(filename).name
-  exec('sudo wg-quick up ' + profile, (error, stdout, stderr) => {
+  exec('sudo wg-quick up ' + profile + ' && sudo systemctl enable wg-quick@' + profile, (error, stdout, stderr) => {
     if (error !== null) {
       console.error(`exec error: ${error}`)
       winston.error('Error in activateWireguardProfile() ', { message: error })
@@ -109,7 +109,7 @@ function deactivateWireguardProfile (filename, callback) {
   // deactivate a wireguard profile
 
   const profile = path.parse(filename).name
-  exec('sudo wg-quick down ' + profile, (error, stdout, stderr) => {
+  exec('sudo systemctl disable wg-quick@' + profile + '&& sudo wg-quick down ' + profile, (error, stdout, stderr) => {
     if (error !== null) {
       console.error(`exec error: ${error}`)
       winston.error('Error in deactivateWireguardProfile() ', { message: error })
