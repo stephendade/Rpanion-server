@@ -105,6 +105,7 @@ class GstServer():
         name = ''.join(filter(str.isalnum, device))
         m.add_factory("/" + name, f)
         
+
         print("Added " + "rtsp://<IP>:8554/" + name)
         print("Use: gst-launch-1.0 rtspsrc is-live=True location=rtsp://<IP>:8554/" + name + " latency=0 ! queue ! decodebin ! autovideosink")
 
@@ -177,4 +178,3 @@ if __name__ == '__main__':
             print("Exiting UDP Server")
             pipeline.set_state(Gst.State.NULL)
             loop.quit()
-

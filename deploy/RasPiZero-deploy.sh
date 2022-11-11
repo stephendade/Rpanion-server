@@ -34,6 +34,10 @@ sudo tar -xJvf node-v12.22.9-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
 sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/node /usr/local/bin
 sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/npm /usr/local/bin
 
+## Pymavlink and gpsbabel to create KMZ.
+sudo DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink
+sudo apt-get install -y gpsbabel
+
 ## Ensure the ~/.local/bin is on the system path
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
@@ -59,6 +63,10 @@ sudo apt install wireguard wireguard-tools
 
 ## and build & run Rpanion
 ./build.sh
+
+## Pymavlink and gpsbabel to create KMZ
+sudo DISABLE_MAVNATIVE=True python -m pip3 install --upgrade pymavlink
+sudo apt-get install -y gpsbabel
 
 ## Setup networking (needs to be last, as it disconnects from Wifi)
 ### Configuring network...
