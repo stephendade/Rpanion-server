@@ -99,7 +99,6 @@ class mavManager {
         this.targetComponent = msg._header.srcComponent
 
         // send off initial messages
-        this.sendDSRequest()
         this.sendVersionRequest()
       } else if (this.targetSystem !== msg._header.srcSystem) {
         // don't use packets from other systems or components in Rpanion-server
