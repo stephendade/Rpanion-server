@@ -21,12 +21,12 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
-      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, thisps, selUDP, selUDPIP, selUDPPort) => {
+      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, thisps, selUDP, selUDPIP, selUDPPort, useTimestamp) => {
         if (!error) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
             this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP,
-            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort,
+            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp,
             (err, status, addresses) => {
               if (err) {
                 // failed setup, reset settings
@@ -64,7 +64,7 @@ class videoStream {
         this.devices = JSON.parse(stdout)
         // and return current settings
         if (!this.active) {
-          return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
+          return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400, false)
         } else {
           // format saved settings
           const seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
@@ -73,17 +73,17 @@ class videoStream {
             console.error('Bad video settings. Resetting')
             this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
+            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400, false)
           }
           const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString())
           if (seldevice.length === 1 && selRes.length === 1) {
-            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort)
+            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp)
           } else {
             // bad settings
             console.error('Bad video settings. Resetting')
             this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400)
+            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400, false)
           }
         }
       }
@@ -128,7 +128,7 @@ class videoStream {
     return iface
   }
 
-  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, callback) {
+  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, useTimestamp, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -148,7 +148,7 @@ class videoStream {
         if (!found) {
           console.log('No video device: ' + device)
           this.winston.info('No video device: ' + device)
-          return callback('No video device: ' + device)
+          return callback(new Error('No video device: ' + device))
         }
       }
 
@@ -163,7 +163,8 @@ class videoStream {
         rotation: rotation,
         useUDP: useUDP,
         useUDPIP: useUDPIP,
-        useUDPPort: useUDPPort
+        useUDPPort: useUDPPort,
+        useTimestamp: useTimestamp
       }
 
       // note that video device URL's are the alphanumeric characters only. So /dev/video0 -> devvideo0
@@ -175,7 +176,7 @@ class videoStream {
         format = 'video/x-raw'
       }
 
-      this.deviceStream = spawn('python3', ['./python/rtsp-server.py',
+      const args = ['./python/rtsp-server.py',
         '--video=' + device,
         '--height=' + height,
         '--width=' + width,
@@ -184,7 +185,13 @@ class videoStream {
         '--rotation=' + rotation,
         '--fps=' + fps,
         '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString())
-      ])
+      ]
+
+      if (useTimestamp) {
+        args.push('--timestamp')
+      }
+
+      this.deviceStream = spawn('python3', args)
 
       try {
         if (this.deviceStream === null) {

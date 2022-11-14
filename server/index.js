@@ -390,7 +390,7 @@ app.get('/api/softwareinfo', (req, res) => {
 
 app.get('/api/videodevices', (req, res) => {
   vManager.populateAddresses()
-  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort) => {
+  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       if (!active) {
@@ -406,6 +406,7 @@ app.get('/api/videodevices', (req, res) => {
           UDPChecked: SeluseUDP,
           useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
+          timestamp: timestamp,
           errors: null
         }))
       } else {
@@ -422,6 +423,7 @@ app.get('/api/videodevices', (req, res) => {
           UDPChecked: SeluseUDP,
           useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
+          timestamp: timestamp,
           errors: null
         }))
       }
@@ -651,6 +653,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
   check('height').isInt({ min: 1 }),
   check('width').isInt({ min: 1 }),
   check('useUDP').isBoolean(),
+  check('useTimestamp').isBoolean(),
   check('useUDPPort').isPort(),
   check('useUDPIP').isIP(),
   check('bitrate').isInt({ min: 50, max: 10000 }),
@@ -663,7 +666,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
     return res.status(422).json({ errors: errors.array() })
   }
   // user wants to start/stop video streaming
-  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, (err, status, addresses) => {
+  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, req.body.useTimestamp, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       const ret = { streamingStatus: status, streamAddresses: addresses }

@@ -25,7 +25,7 @@ def ip4_addresses():
                        ip_list.append(link['addr'])
        return ip_list
 
-def getPipeline(device, height, width, bitrate, format, rotation, framerate):
+def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp):
     #rotation
     if device == "rpicam":
         devrotation = rotation
@@ -43,35 +43,40 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate):
         framestr = ""
     else:
         framestr = ",framerate={0}/1".format(framerate)
-        
+
+    # include timestamp?
+    ts = ""
+    if timestamp:
+        ts = "! clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\" "
+
     if device == "testsrc":
             s_src = "videotestsrc ! video/x-raw,width={0},height={1}{2}".format(width, height, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
-            pipeline_str = "( {s_src} ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} {ts} ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif device == "rpicam":
             # Old (Buster and earlier) can use the rpicamsrc interface
             s_src = "rpicamsrc bitrate={0} rotation={3} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())      
+            pipeline_str = "( {s_src} {ts} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())      
     elif device == "rpicam-uni":
             # Bullseye uses the new unicam interface ... so need a different pipeline
             s_src = "libcamerasrc ! video/x-raw,width={1},height={2},format=NV12,colorimetry=bt601,interlace-mode=progressive ! {3} ! videorate ! video/x-raw{4} ! v4l2convert ! v4l2h264enc output-io-mode=2 extra-controls=\"controls,repeat_sequence_header=1,video_bitrate_mode=1,h264_profile=3,video_bitrate={0}\" ! video/x-h264,profile=main,level=(string)4".format(bitrate*1000, width, height, devrotation, framestr)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} {ts} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-raw":
             s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} {ts} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "video/x-h264":
             s_src = "v4l2src device={0} ! {3},width={1},height={2}{5} ! {4}".format(device, width, height, format, devrotation, framestr)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} {ts} ! queue max-size-buffers=1 name=q_enc ! h264parse ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif format == "image/jpeg":
             s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! jpegdec ! {4}".format(device, width, height, format, devrotation, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
-            pipeline_str = "( {s_src} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
+            pipeline_str = "( {s_src} {ts} ! queue max-size-buffers=1 name=q_enc ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     print(pipeline_str)
     return pipeline_str
                         
 class MyFactory(GstRtspServer.RTSPMediaFactory):
-    def __init__(self, device, h, w, bitrate, format, rotation, framerate):
+    def __init__(self, device, h, w, bitrate, format, rotation, framerate, timestamp):
         GstRtspServer.RTSPMediaFactory.__init__(self)
         self.device = device
         self.height = h
@@ -80,9 +85,10 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.format = format
         self.rotation = rotation
         self.framerate = framerate
+        self.timestamp = timestamp
 
     def do_create_element(self, url):
-        pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation, self.framerate)
+        pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation, self.framerate, self.timestamp)
         return Gst.parse_launch(pipeline_str)
 
 class GstServer():
@@ -92,8 +98,8 @@ class GstServer():
         print("Server available on rtsp://<IP>:8554")
         print("Where IP is {0}".format(ip4_addresses()))
         
-    def addStream(self, device,h, w, bitrate, format, rotation, framerate):
-        f = MyFactory(device, h, w, bitrate, format, rotation, framerate)
+    def addStream(self, device,h, w, bitrate, format, rotation, framerate, timestamp):
+        f = MyFactory(device, h, w, bitrate, format, rotation, framerate, timestamp)
         f.set_shared(True)
         m = self.server.get_mount_points()
         name = ''.join(filter(str.isalnum, device))
@@ -113,6 +119,7 @@ if __name__ == '__main__':
     parser.add_argument("--rotation", help="rotation angle", default=0, type=int, choices=[0, 90, 180, 270])
     parser.add_argument("--udp", help="use UDP sink (dest IP:port) instead of RTSP", default="0:5600", type=str)
     parser.add_argument("--multirtsp", help="CSV of multi-camera setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
+    parser.add_argument("--timestamp", help="add timestamp", default=False, action='store_true')
     args = parser.parse_args()
 
     loop = GLib.MainLoop()
@@ -132,14 +139,14 @@ if __name__ == '__main__':
         # Add each camera
         for cam in cams:
             try:
-                (videosource, height, width, bitrate, formatstr, rotation, fps) = cam.split(',')
+                (videosource, height, width, bitrate, formatstr, rotation, fps, timestamp) = cam.split(',')
             except:
                 print("Bad format: " + cam)
                 break
             if not (height.isdigit() and width.isdigit() and bitrate.isdigit() and rotation.isdigit() and fps.isdigit()):
                 print("Bad format: " + cam)
                 break
-            s.addStream(videosource, height, width, bitrate, formatstr, rotation, fps)
+            s.addStream(videosource, height, width, bitrate, formatstr, rotation, fps, timestamp)
 
         try:
             loop.run()
@@ -148,7 +155,7 @@ if __name__ == '__main__':
             loop.quit()        
     elif args.udp.split(':')[0] == "0":
         s = GstServer()
-        s.addStream(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps)
+        s.addStream(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
 
         try:
             loop.run()
@@ -156,7 +163,7 @@ if __name__ == '__main__':
             print("Exiting RTSP Server")
             loop.quit()
     else:
-        pipeline_str = getPipeline(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps)
+        pipeline_str = getPipeline(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
         pipeline_str += " ! udpsink host={0} port={1}".format(args.udp.split(':')[0], args.udp.split(':')[1])
         pipeline = Gst.parse_launch(pipeline_str)
         pipeline.set_state(Gst.State.PLAYING)
