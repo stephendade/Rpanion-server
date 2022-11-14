@@ -30,12 +30,13 @@ class VideoPage extends basePage {
       fpsSelected: 1,
       loading: true,
       error: null,
-      infoMessage: null
+      infoMessage: null,
+      timestamp: false
     }
   }
 
   componentDidMount() {
-    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.loadDone(); this.handleVideoChange(this.state.vidDeviceSelected, "") });
+    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.loadDone(); this.handleVideoChange(state.vidDeviceSelected, "") });
   }
 
   handleVideoChange = (value, action) => {
@@ -89,6 +90,11 @@ class VideoPage extends basePage {
     this.setState({ fpsSelected: value });
   }
 
+  handleTimestampChange = (event) => {
+    //use timestamp new value
+    this.setState({ timestamp: !this.state.timestamp });
+  }
+
   handleStreaming = (event) => {
     //user clicked start/stop streaming
     this.setState({ waiting: true }, () => {
@@ -110,7 +116,8 @@ class VideoPage extends basePage {
           bitrate: this.state.bitrate,
           useUDP: this.state.UDPChecked,
           useUDPIP: this.state.useUDPIP,
-          useUDPPort: this.state.useUDPPort
+          useUDPPort: this.state.useUDPPort,
+          useTimestamp: this.state.timestamp,
         })
       }).then(response => response.json()).then(state => { this.setState(state); this.setState({ waiting: false }) });
     });
@@ -128,13 +135,13 @@ class VideoPage extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Streaming Mode</label>
               <div className="col-sm-8">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="streamtype" value="rtp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={this.state.UDPChecked} />
-                  <label class="form-check-label">RTP (stream to single client)</label>
+                <div className="form-check">
+                  <input className="form-check-input" type="radio" name="streamtype" value="rtp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={this.state.UDPChecked} />
+                  <label className="form-check-label">RTP (stream to single client)</label>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="streamtype" value="rtsp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={!this.state.UDPChecked} />
-                  <label class="form-check-label">RTSP (multiple clients can connect to stream)</label>
+                <div className="form-check">
+                  <input className="form-check-input" type="radio" name="streamtype" value="rtsp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={!this.state.UDPChecked} />
+                  <label className="form-check-label">RTSP (multiple clients can connect to stream)</label>
                 </div>
               </div>
             </div>
@@ -170,6 +177,12 @@ class VideoPage extends basePage {
           </div>
           <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
+          </div>
+        </div>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
+          <div className="col-sm-8">
+            <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
