@@ -344,7 +344,6 @@ class FCDetails {
       this.eventEmitter.emit('disarmed')
     })
     this.eventEmitter.emit('newLink')
-    this.m.sendDSRequest()
 
     return callback(null, true)
   }
@@ -421,12 +420,6 @@ class FCDetails {
   startInterval () {
     // start the 1-sec loop checking for disconnects
     this.intervalObj = setInterval(() => {
-      if (this.m && (this.m.statusNumRxPackets === 0 || this.m.conStatusInt() === -1)) {
-        // waiting for initial connection
-        console.log('Initial or RS DS Request')
-        this.winston.info('Initial or RS DS Request')
-        this.m.sendDSRequest()
-      }
       // check for timeouts in serial link (ie disconnected cable or reboot)
       if (this.m && this.m.conStatusInt() === -1) {
         console.log('Trying to reconnect FC...')
