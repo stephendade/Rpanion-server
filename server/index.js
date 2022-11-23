@@ -64,6 +64,7 @@ process.on('SIGINT', quitting) // run signal handler when main process exits
 
 function quitting () {
   cloud.quitting()
+  logConversion.quitting()
   console.log('---Shutdown Rpanion---')
   winston.info('---Shutdown Rpanion---')
   process.exit()
