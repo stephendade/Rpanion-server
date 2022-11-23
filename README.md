@@ -20,7 +20,7 @@ This is a node.js based server for companion computers used in Mavlink-based veh
 It presents a web-based interface (running on the companion computer), where system settings such as network,
 telemetry and video streaming can be configured from.
 
-On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and Ubuntu 20.04.1 LTS.
+On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and Ubuntu 20.04 LTS.
 
 On the Nvidia Jetson, Rpanion-server is compatible with Ubuntu 18.04 LTS.
 
@@ -53,7 +53,9 @@ an initial Wifi hotspot.
 cd ./deploy && ./RasPi2-3-4-deploy.sh
 ```
 
-If running Ubuntu 20.04.1 OS, use:
+Note the "Legacy" camera option must be enabled to use cameras on the Pi's CSI port.
+
+If running Ubuntu 20.04 OS, use:
 
 ```
 cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20-deploy.sh
@@ -61,7 +63,6 @@ cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20-deploy.sh
 
 For the Raspberry Pi Zero W(1), run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server. Note this does configure an initial Wifi hotspot.
-
 
 ```
 cd ./deploy && ./RasPiZero-deploy.sh
@@ -95,9 +96,7 @@ sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/npm /usr/local/b
 The required prerequisite packages can be installed via:
 
 ```
-sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq ninja-build
-
-sudo apt purge dhcpcd5
+sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev gstreamer1.0-plugins-ugly libgstrtspserver-1.0-dev gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq ninja-build
 
 sudo pip3 install meson
 pip3 install netifaces --user
