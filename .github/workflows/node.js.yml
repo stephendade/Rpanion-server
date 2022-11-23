@@ -12,7 +12,7 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
@@ -27,9 +27,10 @@ jobs:
         sudo apt -y install libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev
         sudo apt -y install gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps
         sudo apt -y install python3-gst-1.0 network-manager ninja-build
+        sudo apt -y install python3-lxml gpsbabel
         pip3 --version
         sudo pip3 install meson
-        pip3 install netifaces --user
+        pip3 install netifaces pymavlink --user
 
     - name: Update submodules
       run: git submodule update --init --recursive
