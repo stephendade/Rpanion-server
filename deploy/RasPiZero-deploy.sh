@@ -3,9 +3,13 @@
 set -e
 set -x
 
-## Raspi-Config - camera, serial port, ssh
-sudo raspi-config nonint do_expand_rootfs
+git submodule update --init --recursive
+
+## Raspi-Config - camera, serial port
+## Note we need legacy camera support here
+#sudo raspi-config nonint do_expand_rootfs
 sudo raspi-config nonint do_camera 0
+sudo raspi-config nonint do_legacy 0
 sudo raspi-config nonint do_ssh 0
 # Enable serial, disable console
 sudo raspi-config nonint do_serial 2
@@ -23,8 +27,8 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad
-sudo apt install -y gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps 
+sudo apt install -y libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
+sudo apt install -y gstreamer1.0-plugins-base-apps 
 sudo apt install -y python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
 
 ## node.js for the RPi Zero needs the "armv61" build
@@ -33,10 +37,6 @@ sudo mkdir -p /usr/local/lib/nodejs
 sudo tar -xJvf node-v12.22.9-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
 sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/node /usr/local/bin
 sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/npm /usr/local/bin
-
-## Pymavlink and gpsbabel to create KMZ.
-sudo DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink
-sudo apt-get install -y gpsbabel
 
 ## Ensure the ~/.local/bin is on the system path
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
@@ -64,8 +64,8 @@ sudo apt install wireguard wireguard-tools
 ## and build & run Rpanion
 ./build.sh
 
-## Pymavlink and gpsbabel to create KMZ
-sudo DISABLE_MAVNATIVE=True python -m pip3 install --upgrade pymavlink
+## Pymavlink and gpsbabel to create KMZ.
+DISABLE_MAVNATIVE=True python3 -m pip install --upgrade pymavlink --user
 sudo apt-get install -y gpsbabel
 
 ## Setup networking (needs to be last, as it disconnects from Wifi)
@@ -74,10 +74,10 @@ sudo apt-get install -y gpsbabel
 ### Please wait 5min for the configuration to finish, then reboot the Pi
 
 sudo apt install -y network-manager
-sudo apt purge -y dhcpcd5 modemmanager
-sudo apt remove -y modemmanager
+sudo apt purge -y modemmanager
 
 sudo systemctl disable dnsmasq
+sudo systemctl enable NetworkManager
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf

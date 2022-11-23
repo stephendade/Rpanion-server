@@ -3,9 +3,13 @@
 set -e
 set -x
 
+git submodule update --init --recursive
+
 ## Raspi-Config - camera, serial port, ssh
-sudo raspi-config nonint do_expand_rootfs
+## Note we need legacy camera support here
+#sudo raspi-config nonint do_expand_rootfs
 sudo raspi-config nonint do_camera 0
+sudo raspi-config nonint do_legacy 0
 sudo raspi-config nonint do_ssh 0
 # Enable serial, disable console
 sudo raspi-config nonint do_serial 2
@@ -23,12 +27,14 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libgstreamer-plugins-base1.0* libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build autoconf libtool
+sudo apt install -y libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly
+sudo apt install -y network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build autoconf libtool
 
-sudo apt purge -y dhcpcd5 modemmanager
-sudo apt remove -y modemmanager nodejs nodejs-doc
+sudo apt purge -y modemmanager
+sudo apt remove -y nodejs nodejs-doc
 
 sudo systemctl disable dnsmasq
+sudo systemctl enable NetworkManager
 
 curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
@@ -62,7 +68,7 @@ sudo apt install wireguard wireguard-tools
 ./build.sh
 
 ## Pymavlink and gpsbabel to create KMZ.
-sudo DISABLE_MAVNATIVE=True python -m pip3 install --upgrade pymavlink
+DISABLE_MAVNATIVE=True python3 -m pip install --upgrade pymavlink --user
 sudo apt-get install -y gpsbabel
 
 sudo reboot
