@@ -58,16 +58,18 @@ const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings, winston)
 const logConversion = new logConversionManager(settings, winston)
 
-
 // cleanup, if needed
 process.on('SIGINT', quitting) // run signal handler when main process exits
+process.on('SIGTERM', quitting) // run signal handler when service exits
 
 function quitting () {
   cloud.quitting()
   logConversion.quitting()
   console.log('---Shutdown Rpanion---')
   winston.info('---Shutdown Rpanion---')
-  process.exit()
+  http.close(() => {
+    process.exit(0)
+  })
 }
 
 // Got an RTCM message, send to flight controller
