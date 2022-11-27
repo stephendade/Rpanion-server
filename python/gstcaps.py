@@ -8,6 +8,7 @@ import sys
 import json
 import gi
 import math
+import platform
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst, GLib
 
@@ -35,14 +36,24 @@ for device in devices:
     #if "unicam" in name or "mmal service" in name:
     if "mmal service" in name:
         caps = []
-        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
-        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
-        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
-        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
-        
-        # If using the "unicam" interface in Bullseye, label the path
-        path = "rpicam"  # + ("-uni" if ("unicam" in name) else "")
-        name = "Raspberry Pi Camera (V2)"
+        if "Ubuntu" in platform.uname().version:
+            # Ubuntu needs to use the v4l2 driver
+            caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+            caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+            caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+            caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
+
+            path = "/dev/video0"
+            name = "Raspberry Pi Camera (V2)"
+        else:
+            caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
+            caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
+            caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
+            caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
+
+            # If using the "unicam" interface in Bullseye, label the path
+            path = "rpicam"  # + ("-uni" if ("unicam" in name) else "")
+            name = "Raspberry Pi Camera (V2)"
 
     elif "bcm2835-isp" in name:
         continue
