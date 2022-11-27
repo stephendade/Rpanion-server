@@ -58,7 +58,7 @@ sudo service network-manager restart
 
 ## Zerotier and wireguard
 curl -s https://install.zerotier.com | sudo bash
-sudo apt install wireguard wireguard-tools
+sudo apt install wireguard wireguard-tools resolvconf
 
 ## mavlink-router
 ./build_mavlinkrouter.sh
@@ -69,7 +69,7 @@ sudo apt install wireguard wireguard-tools
 ## Pymavlink and gpsbabel to create KMZ.
 sudo apt install -y libxml2-dev libxslt1-dev
 DISABLE_MAVNATIVE=True python3 -m pip install --upgrade pymavlink --user
-sudo apt-get install -y gpsbabel
+sudo apt-get install -y gpsbabel zip
 
 ## And re-enable
 sudo systemctl start unattended-upgrades.service
