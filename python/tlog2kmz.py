@@ -8,6 +8,7 @@ import glob
 import os
 import subprocess
 import timeit
+from os.path import exists
 
 from datetime import datetime
 from pymavlink import mavutil
@@ -35,8 +36,8 @@ def run_cmd(cmd, directory=".", show=True, output=False, checkfail=True):
 
 def mavtogpx_filepath():
     """Get mavtogpx script path."""
-    if (os.uname()[4][:3] == 'arm'):      # check if its RPi
-        return "/usr/local/bin/mavtogpx.py" 
+    if exists("/usr/local/bin/mavtogpx.py"):
+        return "/usr/local/bin/mavtogpx.py"
     else:
         return "~/.local/bin/mavtogpx.py"  # relies on pymavlink instalation and path in ubuntu
 
