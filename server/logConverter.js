@@ -63,7 +63,7 @@ class logConverter {
     this.options.doLogConversion = doLogConversion
     // and save to file
     try {
-      this.settings.setValue('logConversion.doLogConversion', this.options.doLogConversion)
+      this.settings.setValue('logConverter.doLogConversion', this.options.doLogConversion)
       console.log('Saved Log Converter settings')
       this.winston.info('Saved Log Converter settings')
     } catch (e) {
