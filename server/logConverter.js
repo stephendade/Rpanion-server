@@ -48,7 +48,7 @@ class logConverter {
   }
 
   quitting () {
-    if (this.converterPid !== null && this.converterPid.connected()) {
+    if (this.converterPid) {
       this.converterPid.kill()
     }
   }
