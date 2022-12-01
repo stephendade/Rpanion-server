@@ -16,10 +16,6 @@ class logConverter {
     this.converterPid = null
     this.tlogfilename = null
 
-    process.on('SIGINT', this.quitting) // run signal handler on CTRL-C
-    process.on('SIGTERM', this.quitting) // run signal handler on SIGTERM
-    process.on('exit', this.quitting) // run signal handler when main process exits
-
     // load settings
     this.settings = settings
     this.options.doLogConversion = this.settings.value('logConverter.doLogConversion', true)
@@ -51,6 +47,7 @@ class logConverter {
     if (this.converterPid) {
       this.converterPid.kill()
     }
+    clearInterval(this.intervalObj)
   }
 
   getSettings (callback) {

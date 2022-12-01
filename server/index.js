@@ -60,14 +60,14 @@ const logConversion = new logConversionManager(settings, winston)
 
 // cleanup, if needed
 process.on('SIGINT', quitting) // run signal handler when main process exits
-process.on('SIGTERM', quitting) // run signal handler when service exits
+// process.on('SIGTERM', quitting) // run signal handler when service exits. Need for Ubuntu??
 
 function quitting () {
-  cloud.quitting()
-  logConversion.quitting()
-  console.log('---Shutdown Rpanion---')
-  winston.info('---Shutdown Rpanion---')
   http.close(() => {
+    cloud.quitting()
+    logConversion.quitting()
+    console.log('---Shutdown Rpanion---')
+    winston.info('---Shutdown Rpanion---')
     process.exit(0)
   })
 }
