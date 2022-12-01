@@ -58,7 +58,7 @@ sudo service network-manager restart
 
 ## Zerotier and wireguard
 curl -s https://install.zerotier.com | sudo bash
-sudo apt install wireguard wireguard-tools resolvconf
+sudo apt install -y wireguard wireguard-tools resolvconf
 
 ## mavlink-router
 ./build_mavlinkrouter.sh
