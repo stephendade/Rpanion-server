@@ -61,6 +61,7 @@ class cloudUpload {
     if (this.rsyncPid) {
       this.rsyncPid.kill()
     }
+    clearInterval(this.intervalObj)
   }
 
   getSettings (callback) {
