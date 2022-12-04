@@ -53,7 +53,7 @@ for device in devices:
 
             # If using the "unicam" interface in Bullseye, label the path
             path = "rpicam"  # + ("-uni" if ("unicam" in name) else "")
-            name = "Raspberry Pi Camera (V2)"
+            name = "CSI Port Camera"
 
     elif "bcm2835-isp" in name:
         continue
