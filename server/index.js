@@ -55,8 +55,8 @@ const vManager = new videoStream(settings, winston)
 const fcManager = new fcManagerClass(settings, winston)
 const logManager = new flightLogger(settings, winston)
 const ntripClient = new ntrip(settings, winston)
-const cloud = new cloudManager(settings, winston)
-const logConversion = new logConversionManager(settings, winston)
+const cloud = new cloudManager(settings)
+const logConversion = new logConversionManager(settings)
 
 // cleanup, if needed
 process.on('SIGINT', quitting) // run signal handler when main process exits

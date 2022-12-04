@@ -3,15 +3,14 @@ const path = require('path')
 const appRoot = require('app-root-path')
 const fs = require('fs')
 const os = require('os')
+const winston = require('./winstonconfig')(module)
 
 class cloudUpload {
-  constructor (settings, winston) {
+  constructor (settings) {
     this.options = {
       // the interval of sync, every 20 sec
       interval: 20
     }
-
-    this.winston = winston
 
     this.topfolder = path.join(appRoot.toString(), 'flightlogs')
     this.binlogfolder = path.join(this.topfolder, 'binlogs')
@@ -30,7 +29,7 @@ class cloudUpload {
       if (this.options.doBinUpload) {
         console.log('Doing binfile')
         const rsync = new Rsync()
-          .shell('ssh')
+          .shell('ssh -o StrictHostKeyChecking=no')
           .flags('avzP')
           .source(this.binlogfolder + '/')
           .destination(this.options.binUploadLink)
@@ -46,10 +45,15 @@ class cloudUpload {
         }
 
         this.rsyncPid = rsync.execute(function (error, code, cmd) {
-        // we're done
-        // this.rsyncPid = null
+          // we're done
+          // this.rsyncPid = null
           if (error) {
-            console.log(error.stack)
+            console.log(error)
+            console.log(code)
+            console.log(cmd)
+            winston.info(error)
+            winston.info(code)
+            winston.info(cmd)
           }
         })
       }
@@ -57,7 +61,7 @@ class cloudUpload {
   }
 
   quitting () {
-    this.winston.info('---Shutdown Cloud---')
+    winston.info('---Shutdown Cloud---')
     if (this.rsyncPid) {
       this.rsyncPid.kill()
     }
@@ -91,10 +95,10 @@ class cloudUpload {
       this.settings.setValue('cloud.binUploadLink', this.options.binUploadLink)
       this.settings.setValue('cloud.syncDeletions', this.options.syncDeletions)
       console.log('Saved Cloud Bin settings')
-      this.winston.info('Saved Cloud Bin settings')
+      winston.info('Saved Cloud Bin settings')
     } catch (e) {
       console.log(e)
-      this.winston.info(e)
+      winston.info(e)
     }
   }
 
