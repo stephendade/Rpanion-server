@@ -72,13 +72,14 @@ class CloudConfig extends basePage {
   renderContent () {
     return (
             <div>
-              <p><i>Automatically upload logs from the "Flight Logs" page to a remote (network) location</i></p>
+              <p><i>Automatically upload binlogs from the "Flight Logs" page to a remote (network) destination over an ssh connection</i></p>
                 <h3>Bin Logs Upload</h3>
-                <p>All bin logs (in Flight Logs -> Bin Logs) will be synchonised to the following rsync destination.</p>
-                <p>Format is username@server:/path/to/remote/dir</p>
-                <Form style={{ width: 600 }}>
+                <p>All bin logs (in Flight Logs -> Bin Logs) will be synchonised to the following remote destination using rsync.</p>
+                <p>The synchonisation runs every 20 seconds.</p>
+                <p>Format is <code>username@server:/path/to/remote/dir</code>, where <code>username</code> has an ssh publickey on the remote server.</p>
+                <Form style={{ width: 700 }}>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
-                        <label className="col-sm-3 col-form-label">AP:Cloud Rsync</label>
+                        <label className="col-sm-3 col-form-label">AP:Cloud Rsync Dest</label>
                         <div className="col-sm-7">
                             <input type="text" className="form-control" name="binUploadLink" disabled={this.state.doBinUpload === true ? true : false} onChange={this.changeHandler} value={this.state.binUploadLink}/>
                         </div>
@@ -99,7 +100,8 @@ class CloudConfig extends basePage {
                 </Form>
                 <h3>Publickeys</h3>
                 <p><i>All publickeys on this device</i></p>
-                  <div style={{ fontFamily: "monospace", width: 600 }}>
+                <p>One of the below keys must be added to <code>~/.ssh/authorized_keys</code> on the remote server</p>
+                  <div style={{ fontFamily: "monospace", width: 700, wordWrap: 'break-word' }}>
                   <hr/>
                     {this.state.pubkey.map(item => {
                       return (
