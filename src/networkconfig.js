@@ -156,6 +156,16 @@ class NetworkConfig extends basePage {
 
       }
     }
+    // Need to do this twice to ensure props get set corectly ... I don't know why either :(
+    this.setState((state, props) => {
+      //no active connection
+      if (activeCon === null && netConnection.length > 0) {
+        activeCon = netConnection[0];
+      }
+      this.handleConnectionChange(activeCon, { action: "select-option" });
+
+      return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
+    });
     this.setState((state, props) => {
       //no active connection
       if (activeCon === null && netConnection.length > 0) {
@@ -591,17 +601,17 @@ class NetworkConfig extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-8">
-            <Button size="sm" variant="primary" onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} nameclass="deleteConnection">Delete</Button>{' '}
-            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} nameclass="addConnection">Add new</Button>{' '}
-            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} nameclass="activateConnection">Activate</Button>{' '}
-            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} nameclass="deactivateConnection">Deactivate</Button>{' '}
+            <Button size="sm" variant="primary" onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} className="deleteConnection">Delete</Button>{' '}
+            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} className="addConnection">Add new</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} className="activateConnection">Activate</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} className="deactivateConnection">Deactivate</Button>{' '}
           </div>
         </div>
 
         <br />
         <h2>Edit Connection</h2>
         <Form onSubmit={this.handleNetworkSubmit} style={{ display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none" }}>
-          <div nameclass="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block" }}>
+          <div className="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block" }}>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Attach to Specific Adapter</label>
               <div className="col-sm-8">
@@ -614,18 +624,18 @@ class NetworkConfig extends basePage {
             </div>
           </div>
 
-          <div nameclass="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
+          <div className="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">IP Address Type</label>
               <div className="col-sm-8">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "auto"} />
-                  <label class="form-check-label">DHCP</label>
+                <div className="form-check">
+                  <input className="form-check-input" type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "auto"} />
+                  <label className="form-check-label">DHCP</label>
                 </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "manual"} />
-                  <label class="form-check-label">Static IP</label>
+                <div className="form-check">
+                  <input className="form-check-input" type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "manual"} />
+                  <label className="form-check-label">Static IP</label>
                 </div>
               </div>
             </div>
@@ -643,7 +653,7 @@ class NetworkConfig extends basePage {
             </div>
 
           </div>
-          <div nameclass="wificlientconfig" style={{ display: this.state.curSettings.mode.value === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
+          <div className="wificlientconfig" style={{ display: this.state.curSettings.mode.value === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">SSID Name</label>
               <div className="col-sm-8">
@@ -670,7 +680,7 @@ class NetworkConfig extends basePage {
 
           </div>
 
-          <div nameclass="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap" || this.state.curSettings.mode.value === "adhoc") ? "block" : "none" }}><h3>Wifi Access Point</h3>
+          <div className="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap" || this.state.curSettings.mode.value === "adhoc") ? "block" : "none" }}><h3>Wifi Access Point</h3>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">SSID Name</label>
               <div className="col-sm-8">
