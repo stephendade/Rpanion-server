@@ -64,6 +64,9 @@ sudo apt install -y wireguard wireguard-tools resolvconf
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
+## Create ssh key in ~/.ssh/id_rsa if it doesn't exist already
+< /dev/zero ssh-keygen -q -N ""
+
 ## and build & run Rpanion
 ./build.sh
 
