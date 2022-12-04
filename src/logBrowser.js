@@ -154,7 +154,7 @@ class LoggerPage extends basePage {
         </Table>
         <br />
         <h3>Bin Logs</h3>
-        <p>This requires the LOG_BACKEND_TYPE parameter in ArduPilot set to "Mavlink".</p>
+        <p>This requires the <code>LOG_BACKEND_TYPE</code> parameter in ArduPilot set to <code>Mavlink</code>. A high baudrate to the flight controller (921500 or greater) is required.</p>
         <Button size="sm" id='binlog' onClick={this.clearLogs}>Clear inactive logs</Button>{' '}
         <Table id='Binlogfile' striped bordered hover size="sm">
           <thead>
