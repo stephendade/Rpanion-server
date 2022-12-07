@@ -18,7 +18,7 @@ class logConverter {
 
     // load settings
     this.settings = settings
-    this.options.doLogConversion = this.settings.value('logConverter.doLogConversion', true)
+    this.options.doLogConversion = this.settings.value('logConverter.doLogConversion', false)
 
     // interval for conversion checks
     this.intervalObj = setInterval(() => {
