@@ -225,7 +225,7 @@ npm run lint
 
 ## Releasing
 
-Use ``npm version minor`` to create a new release. This will also update ``CHANGELOG.md``.
+Use ``npm version minor`` to create a new release.
 
 To produce a disk image from a SD card, insert the card and run ``./deploy/create_image.sh``.
 
