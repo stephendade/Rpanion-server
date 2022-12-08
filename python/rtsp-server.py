@@ -52,7 +52,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             ts = "annotation-mode=12 annotation-text-colour=0"
 
     if device == "testsrc":
-            s_src = "videotestsrc ! video/x-raw,width={0},height={1}{2}".format(width, height, framestr)
+            s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2}".format(width, height, framestr)
             s_h264 = "x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
             pipeline_str = "( {s_src} {ts} ! {s_h264} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(**locals())
     elif device == "rpicam":
