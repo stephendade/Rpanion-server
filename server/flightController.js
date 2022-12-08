@@ -265,14 +265,10 @@ class FCDetails {
 
     // build up the commandline for mavlink-router
     const cmd = ['-e', '127.0.0.1:14540', '--tcp-port']
-    if (this.enableTCP == true) {
+    if (this.enableTCP === true) {
       cmd.push('5760')
     } else {
       cmd.push('0')
-    }
-    if (this.enableUDPB === true) {
-      cmd.push('-e')
-      cmd.push('255.255.255.255:' + this.UDPBPort)
     }
     for (let i = 0, len = this.UDPoutputs.length; i < len; i++) {
       cmd.push('-e')
@@ -280,6 +276,9 @@ class FCDetails {
     }
     cmd.push('--log')
     cmd.push('./flightlogs/binlogs')
+    if (this.enableUDPB === true) {
+      cmd.push('0.0.0.0:' + this.UDPBPort)
+    }
     cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud.value)
     console.log(cmd)
 

@@ -200,8 +200,8 @@ class FCPage extends basePage {
             <input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><Button size="sm" onClick={this.addUdpOutput}>Add</Button>
           </div>
         </div>
-        <h3>UDP Broadcast</h3>
-        <p><i>Broadcast to all devices on all connected networks</i></p>
+        <h3>UDP Server</h3>
+        <p><i>Allow devices to connect to this device's IP:port</i></p>
         <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />Enable UDP broadcast on this port: <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
         <h3>TCP Server</h3>
         <p><i>Allow devices to connect to this device's IP:port</i></p>
