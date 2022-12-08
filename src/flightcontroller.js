@@ -202,7 +202,7 @@ class FCPage extends basePage {
         </div>
         <h3>UDP Server</h3>
         <p><i>Allow devices to connect to this device's IP:port</i></p>
-        <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />Enable UDP broadcast on this port: <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
+        <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />Enable UDP Server on this port: <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
         <h3>TCP Server</h3>
         <p><i>Allow devices to connect to this device's IP:port</i></p>
         <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
