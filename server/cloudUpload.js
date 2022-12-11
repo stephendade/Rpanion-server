@@ -4,6 +4,7 @@ const appRoot = require('app-root-path')
 const fs = require('fs')
 const os = require('os')
 const winston = require('./winstonconfig')(module)
+const { execSync } = require('child_process')
 
 class cloudUpload {
   constructor (settings) {
@@ -22,6 +23,14 @@ class cloudUpload {
     this.options.doBinUpload = this.settings.value('cloud.doBinUpload', false)
     this.options.binUploadLink = this.settings.value('cloud.binUploadLink', '')
     this.options.syncDeletions = this.settings.value('cloud.syncDeletions', false)
+
+    // create ssh key if none already
+    if (fs.existsSync(os.homedir() + '/.ssh/')) {
+      const files = fs.readdirSync(os.homedir() + '/.ssh/')
+      if (files.length === 0) {
+        execSync('< /dev/zero ssh-keygen -q -N ""')
+      }
+    }
 
     // interval for upload checks
     this.intervalObj = setInterval(() => {
