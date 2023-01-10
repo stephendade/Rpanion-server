@@ -79,6 +79,7 @@ class NTRIPPage extends basePage {
     return (
       <div>
         <p><i>Stream NTRIP (GPS correction) data from a web service to the flight controller</i></p>
+        <p>TLS NTRIP connections (usually port 443) are not supported at this time</p>
         <h2>Configuration</h2>
         <Form style={{ width: 500 }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
