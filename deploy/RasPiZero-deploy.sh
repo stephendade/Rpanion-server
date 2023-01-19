@@ -32,11 +32,11 @@ sudo apt install -y gstreamer1.0-plugins-base-apps
 sudo apt install -y python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
 
 ## node.js for the RPi Zero needs the "armv61" build
-wget https://unofficial-builds.nodejs.org/download/release/v12.22.9/node-v12.22.9-linux-armv6l.tar.xz
+wget https://unofficial-builds.nodejs.org/download/release/v14.21.2/node-v14.21.2-linux-armv6l.tar.xz
 sudo mkdir -p /usr/local/lib/nodejs
-sudo tar -xJvf node-v12.22.9-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
-sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/node /usr/local/bin
-sudo ln -s /usr/local/lib/nodejs/node-v12.22.9-linux-armv6l/bin/npm /usr/local/bin
+sudo tar -xJvf node-v14.21.2-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
+sudo ln -s /usr/local/lib/nodejs/node-v14.21.2-linux-armv6l/bin/node /usr/local/bin
+sudo ln -s /usr/local/lib/nodejs/node-v14.21.2-linux-armv6l/bin/npm /usr/local/bin
 
 ## Ensure the ~/.local/bin is on the system path
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
