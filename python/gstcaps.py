@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Find device caps
-Requires gst
+Requires gst and picamera2
 """
 
 import sys
@@ -10,12 +10,13 @@ import gi
 import math
 import platform
 gi.require_version('Gst', '1.0')
-from gi.repository import Gst, GLib
+from gi.repository import Gst
 
 Gst.init(sys.argv)
 
 device_provider = Gst.DeviceProviderFactory.get_by_name("v4l2deviceprovider")
 devices = device_provider.get_devices()
+
 
 # Get list of vals in cap
 def getcapval(caps):
@@ -24,41 +25,63 @@ def getcapval(caps):
         allval.append(cap['value'])      
     return allval
 
+
 retDevices = []
+
+# Libcamera check, if installed
+try:
+    from picamera2 import Picamera2
+    for cam in Picamera2.global_camera_info():
+        caps = []
+        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
+        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
+        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
+        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
+        name = "CSI Port Camera ({0})".format(cam['Model'])
+        path = cam['Id']
+        if path.startswith("/base/soc/i2c"):
+            retDevices.append({'value': path, 'label': name, 'caps': caps})
+except:
+    pass
+
 
 for device in devices:
     path = device.get_properties().get_string("device.path")
     name = device.get_properties().get_string("v4l2.device.card")
     caps = []
 
-    # Check if it's a Rpi Cam V2, if so manually add modes for hardware encoding
-    # Also change path to tell rtsp-server to use specific ras pi cam driver
-    #if "unicam" in name or "mmal service" in name:
-    if "mmal service" in name:
-        caps = []
-        if "Ubuntu" in platform.uname().version:
-            # Ubuntu needs to use the v4l2 driver
-            caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
-            caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
-            caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
-            caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
+    # If Ubuntu and Rpi camera
+    if "Ubuntu" in platform.uname().version and ("mmal service" in name or name == "unicam"):
+        # Ubuntu needs to use the v4l2 driver
+        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
 
-            path = "/dev/video0"
-            name = "Raspberry Pi Camera (V2)"
+        path = "/dev/video0"
+        name = "Raspberry Pi Camera (V2)"
+    # If legacy camera stack on RasPiOS
+    elif "mmal service" in name:
+        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
+        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
+        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
+        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
+
+        # Cope with dual CSI too
+        if path == "/dev/video0":
+            path = "0rpicam"
+            name = "CSI Port Camera (0)"
+        elif path == "/dev/video1":
+            path = "1rpicam"
+            name = "CSI Port Camera (1)"
         else:
-            caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
-            caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
-            caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
-            caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
-
-            # If using the "unicam" interface in Bullseye, label the path
-            path = "rpicam"  # + ("-uni" if ("unicam" in name) else "")
-            name = "CSI Port Camera"
-
+            continue
+    elif name == "unicam":
+        continue
     elif "bcm2835-isp" in name:
         continue
     else:
-        #Get better name for camera
+        # USB camera
         if "UVC Camera (" in name:
             vendorproduct = name.split("(")[1].split(")")[0]
             import subprocess
@@ -112,5 +135,3 @@ capsTest.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width':
 retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
 print(json.dumps(retDevices))
-
-
