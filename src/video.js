@@ -253,7 +253,7 @@ class VideoPage extends basePage {
               + GStreamer
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
           <Accordion.Item eventKey="2">

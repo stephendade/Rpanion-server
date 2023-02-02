@@ -176,7 +176,7 @@ if __name__ == '__main__':
         pipeline.set_state(Gst.State.PLAYING)
 
         print("Server sending UDP stream to " + args.udp)
-        print("Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! autovideosink fps-update-interval=1000 sync=false".format(args.udp.split(':')[1]))
+        print("Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
 
         try:
             loop.run()
