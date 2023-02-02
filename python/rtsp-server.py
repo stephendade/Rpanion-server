@@ -60,8 +60,8 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         s_h264 = ""
     elif device.startswith("/base/soc/i2c"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
-        s_src = "libcamerasrc camera-name={4} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{3} ! v4l2convert ! {2} !".format(width, height, devrotation, framestr, device)
-        s_h264 = "! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,video_bitrate_mode=1,h264_profile=0,video_bitrate={0}\" ! 'video/x-h264,profile=baseline,level=(string)4' ! h264parse".format(bitrate*1000)
+        s_src = "libcamerasrc camera-name={4} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{3} ! v4l2convert ! {2}".format(width, height, devrotation, framestr, device)
+        s_h264 = "! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,video_bitrate_mode=1,h264_profile=0,video_bitrate={0}\" ! video/x-h264,profile=baseline,level=(string)4 ! h264parse".format(bitrate*1000)
     elif format == "video/x-raw":
         s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
         s_h264 = "! x264enc tune=zerolatency bitrate={0} speed-preset=superfast ! h264parse".format(bitrate)
