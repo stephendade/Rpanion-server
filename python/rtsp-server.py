@@ -6,6 +6,7 @@
 
 import gi
 import argparse
+import os
 from netifaces import interfaces, ifaddresses, AF_INET
 
 gi.require_version("Gst", "1.0")
@@ -44,6 +45,14 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
     else:
         framestr = ",framerate={0}/1".format(framerate)
 
+    # If on Pi or Jetson (arm architecture), use the hardware x264 encoder
+    if 'arm' in os.uname().machine:
+        # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
+        # Using the main profile for compatiblity
+        s_h264 = "! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(bitrate*1000)
+    else:
+        s_h264 = "! x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
+
     # include timestamp?
     ts = ""
     if timestamp:
@@ -52,35 +61,30 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             ts = "annotation-mode=12 annotation-text-colour=0"
 
     if device == "testsrc":
-        s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2}".format(width, height, framestr)
-        s_h264 = "! x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
+        s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2} ! videoconvert".format(width, height, framestr)
     elif device in ["0rpicam", "1rpicam"]:
         # Old (Buster and earlier) can use the rpicamsrc interface
         s_src = "rpicamsrc {5} bitrate={0} rotation={3} camera-number={6} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr, ts, device[0])
         s_h264 = ""
     elif device.startswith("/base/soc/i2c"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
-        # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
-        s_src = "libcamerasrc camera-name={4} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{3} ! v4l2convert ! {2}".format(width, height, devrotation, framestr, device)
-        s_h264 = "! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,video_bitrate_mode=1,h264_profile=2,video_bitrate={0}\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(bitrate*1000)
+        s_src = "libcamerasrc camera-name={4} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{3} ! videoconvert ! {2}".format(width, height, devrotation, framestr, device)
     elif format == "video/x-raw":
         s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
-        s_h264 = "! x264enc tune=zerolatency bitrate={0} speed-preset=superfast ! h264parse".format(bitrate)
     elif format == "video/x-h264":
         s_src = "v4l2src device={0} ! {3},width={1},height={2}{5} ! {4}".format(device, width, height, format, devrotation, framestr)
         s_h264 = ""
     elif format == "image/jpeg":
         s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! jpegdec ! {4}".format(device, width, height, format, devrotation, framestr)
-        s_h264 = "! x264enc tune=zerolatency bitrate={0} speed-preset=superfast ! h264parse".format(bitrate)
     else:
         print("Bad camera")
         return ""
 
-    pipeline_str = "( {0} {1} ! queue max-size-buffers=1 name=q_enc {2} ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(s_src, ts if device not in ["0rpicam", "1rpicam"] else "", s_h264)
+    pipeline_str = "( {0} {1} {2} ! queue max-size-buffers=1 name=q_enc ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(s_src, ts if device not in ["0rpicam", "1rpicam"] else "", s_h264)
     print(pipeline_str)
     return pipeline_str
 
-                     
+
 class MyFactory(GstRtspServer.RTSPMediaFactory):
     def __init__(self, device, h, w, bitrate, format, rotation, framerate, timestamp):
         GstRtspServer.RTSPMediaFactory.__init__(self)
@@ -122,7 +126,7 @@ if __name__ == '__main__':
     parser.add_argument("--height", help="Height", default=480, type=int)
     parser.add_argument("--width", help="Width", default=640, type=int)
     parser.add_argument("--fps", help="Framerate", default=10, type=int)
-    parser.add_argument("--bitrate", help="bitrate (kbps)", default=2000, type=int)
+    parser.add_argument("--bitrate", help="Max bitrate (kbps)", default=2000, type=int)
     parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
     parser.add_argument("--rotation", help="rotation angle", default=0, type=int, choices=[0, 90, 180, 270])
     parser.add_argument("--udp", help="use UDP sink (dest IP:port) instead of RTSP", default="0:5600", type=str)
