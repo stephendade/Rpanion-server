@@ -44,6 +44,7 @@ try:
 except:
     pass
 
+legacycamint = 0
 
 for device in devices:
     path = device.get_properties().get_string("device.path")
@@ -68,12 +69,14 @@ for device in devices:
         caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
 
         # Cope with dual CSI too
-        if path == "/dev/video0":
-            path = "0rpicam"
-            name = "CSI Port Camera (0)"
-        elif path == "/dev/video1":
-            path = "1rpicam"
-            name = "CSI Port Camera (1)"
+        if "/dev/video" in path:
+            if legacycamint == 0:
+                path = "0rpicam"
+                name = "CSI Port Camera (0)"
+            else:
+                path = "1rpicam"
+                name = "CSI Port Camera (1)"
+            legacycamint = legacycamint + 1
         else:
             continue
     elif name == "unicam":
