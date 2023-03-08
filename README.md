@@ -55,7 +55,7 @@ cd ./deploy && ./RasPi2-3-4-deploy.sh
 
 Note the "Legacy" camera option must be enabled to use cameras on the Pi's CSI port.
 
-If running Ubuntu 20.04 OS, use:
+If running Ubuntu 20.04 OS on the Pi, use:
 
 ```
 cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20-deploy.sh
@@ -136,6 +136,16 @@ configure an initial Wifi hotspot.
 
 ```
 cd ./deploy && ./jetson-deploy.sh
+```
+
+### Automatic (x86 boards and laptops)
+
+For any x86 based modules or laptops, run the following script
+to configure and install Rpanion-server and all required dependencies. Note this does not
+configure an initial Wifi hotspot.
+
+```
+cd ./deploy && ./x86-ubuntu20-deploy.sh
 ```
 
 ### Updating
