@@ -105,16 +105,8 @@ pip3 install netifaces --user
 For some systems (such as the Raspberry Pi), additional permissions may be requires to run ``nmcli`` from the
 default user. In ``/etc/NetworkManager/NetworkManager.conf`` add ``auth-polkit=false`` in the ``main`` section.
 
-If the Raspberry Pi Camera is intended to be used, the specific Gstreamer element (credit to 
-https://github.com/thaytan/gst-rpicamsrc) must be installed:
-
-```
-git submodule init && git submodule update
-cd ./modules/gst-rpicamsrc
-./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
-make
-sudo make install
-```
+If an older version of the Raspberry Pi OS is used (Buster, V10 or below), the ``gst-rpicamsrc`` Gstreamer element
+must be installed. See https://github.com/thaytan/gst-rpicamsrc for install instructions.
 
 To (optionally) use the Zerotier and/or Wireguard VPN's, install as follows:
 
