@@ -27,8 +27,8 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libgstreamer1.0-dev libgstrtspserver-1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly
-sudo apt install -y network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build autoconf libtool
+sudo apt install -y gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly
+sudo apt install -y network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
 
 sudo apt purge -y modemmanager
 sudo apt remove -y nodejs nodejs-doc
@@ -44,18 +44,10 @@ echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
 sudo pip3 install meson
-pip3 install netifaces --user
+pip3 install netifaces picamera2 --user
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
-
-## GStreamer raspi
-cd ../modules/gst-rpicamsrc
-perl -pe 's/(encoded_buffer_q, 500)/encoded_buffer_q, 5000/' -i ./src/RaspiCapture.c
-./autogen.sh --prefix=/usr --libdir=/usr/lib/arm-linux-gnueabihf/
-make
-sudo make install
-cd ../../deploy
 
 ## Zerotier and wireguard
 curl -s https://install.zerotier.com | sudo bash
