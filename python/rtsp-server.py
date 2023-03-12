@@ -6,7 +6,7 @@
 
 import gi
 import argparse
-import os
+import platform
 from netifaces import interfaces, ifaddresses, AF_INET
 
 gi.require_version("Gst", "1.0")
@@ -46,10 +46,15 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         framestr = ",framerate={0}/1".format(framerate)
 
     # If on Pi or Jetson (arm architecture), use the hardware x264 encoder
-    if 'arm' in os.uname().machine:
+    if 'arm' in platform.uname().machine or 'aarch64' in platform.uname().machine:
         # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
         # Using the main profile for compatiblity
-        s_h264 = "! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(bitrate*1000)
+        if 'tegra' in platform.uname().release:
+            # Jetson
+            s_h264 = "! nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true ! h264parse".format(bitrate*1000)
+        else:
+            # Assume Pi
+            s_h264 = "! v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(bitrate*1000)
     else:
         s_h264 = "! x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate)
 
@@ -62,6 +67,17 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
 
     if device == "testsrc":
         s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2} ! videoconvert".format(width, height, framestr)
+    elif device in ["argus0", "argus1"]:
+        # Jetson CSI cameras
+        if rotation == 90:
+            devrotation = "flip-method=3"
+        elif rotation == 180:
+            devrotation = "flip-method=2"
+        elif rotation == 270:
+            devrotation = "flip-method=1"
+        else:
+            devrotation = ""
+        s_src = "nvarguscamerasrc sensor-id={0} ! video/x-raw(memory:NVMM),width={1},height={2},format=NV12{3} ! nvvidconv {4}".format(device[-1], width, height, framestr, devrotation)
     elif device in ["0rpicam", "1rpicam"]:
         # Old (Buster and earlier) can use the rpicamsrc interface
         s_src = "rpicamsrc {5} bitrate={0} rotation={3} camera-number={6} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr, ts, device[0])
@@ -70,7 +86,18 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         # Bullseye uses the new libcamera interface ... so need a different pipeline
         s_src = "libcamerasrc camera-name={4} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{3} ! videoconvert ! {2}".format(width, height, devrotation, framestr, device)
     elif format == "video/x-raw":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
+        if 'nvv4l2h264enc' in s_h264:
+            if rotation == 90:
+                devrotation = "flip-method=3"
+            elif rotation == 180:
+                devrotation = "flip-method=2"
+            elif rotation == 270:
+                devrotation = "flip-method=1"
+            else:
+                devrotation = ""
+            s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! nvvidconv {4}".format(device, width, height, format, devrotation, framestr)
+        else:
+            s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{5} ! {4} ! videoconvert ! video/x-raw,format=I420".format(device, width, height, format, devrotation, framestr)
     elif format == "video/x-h264":
         s_src = "v4l2src device={0} ! {3},width={1},height={2}{5} ! {4}".format(device, width, height, format, devrotation, framestr)
         s_h264 = ""

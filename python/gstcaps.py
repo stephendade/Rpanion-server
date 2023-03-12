@@ -9,6 +9,7 @@ import json
 import gi
 import math
 import platform
+import os
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
@@ -129,6 +130,18 @@ for device in devices:
                     caps.append({'value': "{0}x{1}".format(width, height), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name(), 'fpsmax': FPSMax, 'fps': fps})
 
     retDevices.append({'value': path, 'label': name, 'caps': caps})
+
+# If we're on a Jetson and /dev/video0 or /dev/video0 exist but not listed, add as CSI ports
+if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release:
+    caps = []
+    caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+    caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+    caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+    caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
+    if os.path.exists('/dev/video0') and '/dev/video0' not in [i['value'] for i in retDevices]:
+        retDevices.append({'value': 'argus0', 'label': 'CSI0', 'caps': caps})
+    if os.path.exists('/dev/video1') and '/dev/video1' not in [i['value'] for i in retDevices]:
+        retDevices.append({'value': 'argus1', 'label': 'CSI1', 'caps': caps})
 
 # Include testsrc
 capsTest = []
