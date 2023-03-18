@@ -6,10 +6,8 @@ set -x
 git submodule update --init --recursive
 
 ## Raspi-Config - camera, serial port
-## Note we need legacy camera support here
 #sudo raspi-config nonint do_expand_rootfs
 sudo raspi-config nonint do_camera 0
-sudo raspi-config nonint do_legacy 0
 sudo raspi-config nonint do_ssh 0
 # Enable serial, disable console
 sudo raspi-config nonint do_serial 2
