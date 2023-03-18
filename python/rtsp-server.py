@@ -4,6 +4,7 @@
 # Taken from https://github.com/tamaggo/gstreamer-examples/blob/master/test_gst_rtsp_server.py
 # gst-launch-1.0 rtspsrc location=rtsp://127.0.0.1:8554/video latency=0 ! decodebin ! autovideosink
 
+
 import gi
 import argparse
 import platform
@@ -14,11 +15,9 @@ gi.require_version("GstRtsp", "1.0")
 gi.require_version("GstRtspServer", "1.0")
 from gi.repository import Gst, GstRtspServer, GLib
 
-
 def ip4_addresses():
     ip_list = []
     for interface in interfaces():
-        #print(ifaddresses(interface)[AF_INET])
         if AF_INET in ifaddresses(interface).keys():
             for link in ifaddresses(interface)[AF_INET]:
                 if 'addr' in link.keys():
@@ -68,32 +67,42 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
         if 'tegra' in platform.uname().release:
             # Jetson
-            s_h264 = "nvvidconv {1} ! {2}nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true ! h264parse".format(bitrate*1000, devrotation, ts)
+            s_h264 = "nvvidconv {1} ! {2} nvvidconv ! nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true ! h264parse".format(
+                bitrate*1000, devrotation, ts)
         else:
             # Pi or similar arm platforms
-            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(bitrate*1000, devrotation, ts)
+            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(
+                bitrate*1000, devrotation, ts)
     else:
         # s/w encoder - x86, etc
-        s_h264 = "videoconvert  ! video/x-raw,format=I420 ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate, devrotation, ts)
+        s_h264 = "videoconvert  ! video/x-raw,format=I420 ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
+            bitrate, devrotation, ts)
 
     if device == "testsrc":
-        s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2}".format(width, height, framestr)
+        s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2}".format(
+            width, height, framestr)
     elif device in ["argus0", "argus1"]:
-        s_src = "nvarguscamerasrc sensor-id={0} ! video/x-raw(memory:NVMM),width={1},height={2},format=NV12{3}".format(device[-1], width, height, framestr)
+        s_src = "nvarguscamerasrc sensor-id={0} ! video/x-raw(memory:NVMM),width={1},height={2},format=NV12{3}".format(
+            device[-1], width, height, framestr)
     elif device in ["0rpicam", "1rpicam"]:
         # Old (Buster and earlier) can use the rpicamsrc interface
-        s_src = "rpicamsrc {5} bitrate={0} rotation={3} camera-number={6} preview=false ! video/x-h264,width={1},height={2}{4}".format(bitrate*1000, width, height, devrotation, framestr, ts, device[0])
-        s_h264 = ""
+        s_src = "rpicamsrc {5} bitrate={0} rotation={3} camera-number={6} preview=false ! video/x-h264,width={1},height={2}{4}".format(
+            bitrate*1000, width, height, devrotation, framestr, ts, device[0])
+        s_h264 = "identity"
     elif device.startswith("/base/soc/i2c"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
-        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{2}".format(width, height, framestr, device)
+        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{2}".format(
+            width, height, framestr, device)
     elif format == "video/x-raw":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4}".format(device, width, height, format, framestr)
+        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4}".format(
+            device, width, height, format, framestr)
     elif format == "video/x-h264":
-        s_src = "v4l2src device={0} ! {3},width={1},height={2}{4}".format(device, width, height, format, framestr)
-        s_h264 = ""
+        s_src = "v4l2src device={0} ! {3},width={1},height={2}{4}".format(
+            device, width, height, format, framestr)
+        s_h264 = "identity"
     elif format == "image/jpeg":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! jpegdec".format(device, width, height, format, framestr)
+        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! jpegdec".format(
+            device, width, height, format, framestr)
     else:
         print("Bad camera")
         return ""
@@ -116,7 +125,8 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.timestamp = timestamp
 
     def do_create_element(self, url):
-        pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation, self.framerate, self.timestamp)
+        pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation,
+                                   self.framerate, self.timestamp)
         return Gst.parse_launch(pipeline_str)
 
 
@@ -126,30 +136,39 @@ class GstServer():
         self.sourceID = self.server.attach(None)
         print("Server available on rtsp://<IP>:8554")
         print("Where IP is {0}".format(ip4_addresses()))
-        
-    def addStream(self, device,h, w, bitrate, format, rotation, framerate, timestamp):
-        f = MyFactory(device, h, w, bitrate, format, rotation, framerate, timestamp)
+
+    def addStream(self, device, h, w, bitrate, format, rotation, framerate, timestamp):
+        f = MyFactory(device, h, w, bitrate, format,
+                      rotation, framerate, timestamp)
         f.set_shared(True)
         m = self.server.get_mount_points()
         name = ''.join(filter(str.isalnum, device))
         m.add_factory("/" + name, f)
-        
+
         print("Added " + "rtsp://<IP>:8554/" + name)
-        print("Use: gst-launch-1.0 rtspsrc is-live=True location=rtsp://<IP>:8554/" + name + " latency=0 ! queue ! decodebin ! autovideosink")
+        print("Use: gst-launch-1.0 rtspsrc is-live=True location=rtsp://<IP>:8554/" +
+              name + " latency=0 ! queue ! decodebin ! autovideosink")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RTSP Server using Gstreamer")
-    parser.add_argument("--videosource", help="Video Device", default="/dev/video0", type=str)
+    parser.add_argument("--videosource", help="Video Device",
+                        default="/dev/video0", type=str)
     parser.add_argument("--height", help="Height", default=480, type=int)
     parser.add_argument("--width", help="Width", default=640, type=int)
     parser.add_argument("--fps", help="Framerate", default=10, type=int)
-    parser.add_argument("--bitrate", help="Max bitrate (kbps)", default=2000, type=int)
-    parser.add_argument("--format", help="Video format", default="video/x-raw", type=str)
-    parser.add_argument("--rotation", help="rotation angle", default=0, type=int, choices=[0, 90, 180, 270])
-    parser.add_argument("--udp", help="use UDP sink (dest IP:port) instead of RTSP", default="0:5600", type=str)
-    parser.add_argument("--multirtsp", help="CSV of multi-camera setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
-    parser.add_argument("--timestamp", help="add timestamp", default=False, action='store_true')
+    parser.add_argument(
+        "--bitrate", help="Max bitrate (kbps)", default=2000, type=int)
+    parser.add_argument("--format", help="Video format",
+                        default="video/x-raw", type=str)
+    parser.add_argument("--rotation", help="rotation angle",
+                        default=0, type=int, choices=[0, 90, 180, 270])
+    parser.add_argument(
+        "--udp", help="use UDP sink (dest IP:port) instead of RTSP", default="0:5600", type=str)
+    parser.add_argument(
+        "--multirtsp", help="CSV of multi-camera setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
+    parser.add_argument("--timestamp", help="add timestamp",
+                        default=False, action='store_true')
     args = parser.parse_args()
 
     loop = GLib.MainLoop()
@@ -169,23 +188,26 @@ if __name__ == '__main__':
         # Add each camera
         for cam in cams:
             try:
-                (videosource, height, width, bitrate, formatstr, rotation, fps, timestamp) = cam.split(',')
+                (videosource, height, width, bitrate, formatstr,
+                 rotation, fps, timestamp) = cam.split(',')
             except:
                 print("Bad format: " + cam)
                 break
             if not (height.isdigit() and width.isdigit() and bitrate.isdigit() and rotation.isdigit() and fps.isdigit()):
                 print("Bad format: " + cam)
                 break
-            s.addStream(videosource, height, width, bitrate, formatstr, rotation, fps, timestamp)
+            s.addStream(videosource, height, width, bitrate,
+                        formatstr, rotation, fps, timestamp)
 
         try:
             loop.run()
         except:
             print("Exiting RTSP Server")
-            loop.quit()        
+            loop.quit()
     elif args.udp.split(':')[0] == "0":
         s = GstServer()
-        s.addStream(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
+        s.addStream(args.videosource, args.height, args.width, args.bitrate,
+                    args.format, args.rotation, args.fps, args.timestamp)
 
         try:
             loop.run()
@@ -193,13 +215,16 @@ if __name__ == '__main__':
             print("Exiting RTSP Server")
             loop.quit()
     else:
-        pipeline_str = getPipeline(args.videosource, args.height, args.width, args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
-        pipeline_str += " ! udpsink host={0} port={1}".format(args.udp.split(':')[0], args.udp.split(':')[1])
+        pipeline_str = getPipeline(args.videosource, args.height, args.width,
+                                   args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
+        pipeline_str += " ! udpsink host={0} port={1}".format(
+            args.udp.split(':')[0], args.udp.split(':')[1])
         pipeline = Gst.parse_launch(pipeline_str)
         pipeline.set_state(Gst.State.PLAYING)
 
         print("Server sending UDP stream to " + args.udp)
-        print("Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
+        print(
+            "Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
 
         try:
             loop.run()
