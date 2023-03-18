@@ -27,7 +27,7 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 ## Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y gstreamer1.0-plugins-good gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly
+sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-dev gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly
 sudo apt install -y network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
 
 sudo apt purge -y modemmanager
