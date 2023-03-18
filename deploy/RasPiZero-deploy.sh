@@ -22,12 +22,7 @@ echo "# Power switch" | sudo tee -a /boot/config.txt >/dev/null
 echo "dtoverlay=gpio-shutdown" | sudo tee -a /boot/config.txt >/dev/null
 echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 
-## Packages
-sudo apt update
-sudo apt upgrade -y
-sudo apt install -y gstreamer1.0-plugins-good gstreamer1.0-plugins-ugly
-sudo apt install -y gstreamer1.0-plugins-base-apps libgstrtspserver-1.0-dev
-sudo apt install -y python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build
+./install_common_libraries.sh
 
 ## node.js for the RPi Zero needs the "armv61" build
 wget https://unofficial-builds.nodejs.org/download/release/v14.21.2/node-v14.21.2-linux-armv6l.tar.xz
@@ -36,26 +31,11 @@ sudo tar -xJvf node-v14.21.2-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
 sudo ln -s /usr/local/lib/nodejs/node-v14.21.2-linux-armv6l/bin/node /usr/local/bin
 sudo ln -s /usr/local/lib/nodejs/node-v14.21.2-linux-armv6l/bin/npm /usr/local/bin
 
-## Ensure the ~/.local/bin is on the system path
-echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
-source ~/.profile
-
-sudo pip3 install meson
-pip3 install netifaces picamera2 --user
-
-## Zerotier and wireguard
-curl -s https://install.zerotier.com | sudo bash
-sudo apt install -y wireguard wireguard-tools resolvconf
-
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
 ## and build & run Rpanion
-./build.sh
-
-## Pymavlink and gpsbabel to create KMZ.
-DISABLE_MAVNATIVE=True python3 -m pip install --upgrade pymavlink --user
-sudo apt-get install -y gpsbabel zip
+./build_rpanion.sh
 
 ## Setup networking (needs to be last, as it disconnects from Wifi)
 ### Configuring network...
