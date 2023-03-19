@@ -227,6 +227,8 @@ npm run lint
 
 ## Releasing
 
+Use ``npx npm-check-updates -u`` to update nodejs libraries.
+
 Use ``npm version minor`` to create a new release.
 
 To produce a disk image from a SD card, insert the card and run ``./deploy/create_image.sh``.
