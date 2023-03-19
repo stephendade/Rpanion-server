@@ -910,3 +910,6 @@ http.listen(port, () => {
   console.log('Express server is running on localhost:' + port)
   winston.info('Express server is running on localhost:' + port)
 })
+
+// Export the app instance for testing purposes
+module.exports = app
