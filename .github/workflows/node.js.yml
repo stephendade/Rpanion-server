@@ -41,6 +41,7 @@ jobs:
     - run: npm run build --if-present
     - run: npm run testback
     - run: npm run testfront
+    - run: rm -f settings.json
     - run: npm run test-cov
     
     - name: Coveralls
