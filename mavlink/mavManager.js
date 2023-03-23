@@ -2,35 +2,21 @@
 const events = require('events')
 const udp = require('dgram')
 const winston = require('../server/winstonconfig')(module)
+const { MavLinkPacketSplitter, MavLinkPacketParser, MavLinkProtocolV2, minimal, common, ardupilotmega, MavLinkProtocolV1 } = require('node-mavlink')
+const { PassThrough } = require('stream')
+
+// create a registry of mappings between a message id and a data class
+const REGISTRY = {
+  ...minimal.REGISTRY,
+  ...common.REGISTRY,
+  ...ardupilotmega.REGISTRY
+}
 
 class mavManager {
-  constructor (dialect, version, inudpIP, inudpPort) {
+  constructor (version, inudpIP, inudpPort) {
     this.mav = null
     this.mavmsg = null
     this.version = version
-    this.dialect = dialect
-
-    // load the correct MAVLink definitions
-    if (version === 1 && dialect === 'common') {
-      var { mavlink10, MAVLink10Processor } = require('./mavlink_common_v1')
-      this.mav = new MAVLink10Processor(null, 255, 0)
-      this.mavmsg = mavlink10
-    } else if (version === 2 && dialect === 'common') {
-      var { mavlink20, MAVLink20Processor } = require('./mavlink_common_v2')
-      this.mav = new MAVLink20Processor(null, 255, 0)
-      this.mavmsg = mavlink20
-    } else if (version === 1 && dialect === 'ardupilot') {
-      var { mavlink10, MAVLink10Processor } = require('./mavlink_ardupilot_v1')
-      this.mav = new MAVLink10Processor(null, 255, 0)
-      this.mavmsg = mavlink10
-    } else if (version === 2 && dialect === 'ardupilot') {
-      var { mavlink20, MAVLink20Processor } = require('./mavlink_ardupilot_v2')
-      this.mav = new MAVLink20Processor(null, 255, 0)
-      this.mavmsg = mavlink20
-    } else {
-      console.log('Error - no valid MAVLink version or dialect')
-      winston.error('Error - no valid MAVLink version or dialect: ', { message: version })
-    }
 
     this.eventEmitter = new events.EventEmitter()
 
@@ -46,6 +32,7 @@ class mavManager {
     this.timeofLastPacket = 0
     this.statusText = ''
     this.statusArmed = 0
+    this.seq = 0
 
     // the vehicle
     this.targetSystem = null
@@ -57,6 +44,7 @@ class mavManager {
     this.inudpIP = inudpIP
     this.RinudpPort = null
     this.RinudpIP = null
+    this.inStream = new PassThrough()
 
     this.udpStream.on('message', (msg, rinfo) => {
       // calculate bytes/sec rate (once per 2 sec)
@@ -67,72 +55,78 @@ class mavManager {
       } else {
         this.statusBytesPerSec.bytes += msg.length
       }
-      this.mav.parseBuffer(msg)
+
       // lock onto server port
       if (this.RinudpPort === null || this.RinudpIP === null) {
         this.RinudpPort = rinfo.port
         this.RinudpIP = rinfo.address
+        console.log(this.RinudpPort)
         this.eventEmitter.emit('linkready', true)
       }
+
+      this.inStream.write(msg)
     })
 
     this.udpStream.bind(inudpPort, inudpIP)
 
-    this.mav.on('error', function (e) {
-      // console.log(e);
-    })
+    this.mav = this.inStream.pipe(new MavLinkPacketSplitter()).pipe(new MavLinkPacketParser())
 
     // what to do when we get a message
-    this.mav.on('message', (msg) => {
-      if (msg._id === -1) {
+    this.mav.on('data', packet => {
+      const clazz = REGISTRY[packet.header.msgid]
+      if (!clazz) {
         // bad message - can't process here any further
+        // console.log("Generic: ", packet)
+        this.eventEmitter.emit('gotMessage', packet, null)
         return
       }
+      const data = packet.protocol.data(packet.payload, clazz)
+      // console.log(packet)
 
       // set the target system/comp ID if needed
       // ensure it's NOT a GCS, as mavlink-router will sometimes route
       // messages from connected GCS's
-      if (this.targetSystem === null && msg._name === 'HEARTBEAT' && msg.type !== 6) {
-        console.log('Vehicle is S/C: ' + msg._header.srcSystem + '/' + msg._header.srcComponent)
-        winston.info('Vehicle is S/C: ' + msg._header.srcSystem + '/' + msg._header.srcComponent)
-        this.targetSystem = msg._header.srcSystem
-        this.targetComponent = msg._header.srcComponent
+      if (this.targetSystem === null && packet.header.msgid === minimal.Heartbeat.MSG_ID && data.type !== 6) {
+        console.log('Vehicle is S/C: ' + packet.header.sysid + '/' + packet.header.compid)
+        winston.info('Vehicle is S/C: ' + packet.header.sysid + '/' + packet.header.compid)
+        this.targetSystem = packet.header.sysid
+        this.targetComponent = packet.header.compid
 
         // send off initial messages
         this.sendVersionRequest()
-      } else if (this.targetSystem !== msg._header.srcSystem) {
+      } else if (this.targetSystem !== packet.header.sysid) {
         // don't use packets from other systems or components in Rpanion-server
         return
       }
 
       // raise event for external objects
-      this.eventEmitter.emit('gotMessage', msg)
+      this.eventEmitter.emit('gotMessage', packet, data)
 
       this.statusNumRxPackets += 1
       this.timeofLastPacket = (Date.now().valueOf())
-      if (msg._name === 'HEARTBEAT') {
+      if (packet.header.msgid === minimal.Heartbeat.MSG_ID) {
         // System status
-        this.statusFWName = msg.autopilot
-        this.statusVehType = msg.type
+        this.statusFWName = data.autopilot
+        this.statusVehType = data.type
 
         // arming status
-        if ((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) !== 0 && this.statusArmed === 0) {
+        if ((data.base_mode & 128) !== 0 && this.statusArmed === 0) {
           console.log('Vehicle ARMED')
           winston.info('Vehicle ARMED')
           this.statusArmed = 1
           this.eventEmitter.emit('armed')
-        } else if ((msg.base_mode & this.mavmsg.MAV_MODE_FLAG_SAFETY_ARMED) === 0 && this.statusArmed === 1) {
+        } else if ((data.base_mode & 128) === 0 && this.statusArmed === 1) {
           console.log('Vehicle DISARMED')
           winston.info('Vehicle DISARMED')
           this.statusArmed = 0
           this.eventEmitter.emit('disarmed')
         }
-      } else if (msg._name === 'STATUSTEXT') {
+      } else if (packet.header.msgid === common.StatusText.MSG_ID) {
         // Remove whitespace
-        this.statusText += msg.text.trim().replace(/[^ -~]+/g, '') + '\n'
-      } else if (msg._name === 'AUTOPILOT_VERSION') {
+        this.statusText += data.text.trim().replace(/[^ -~]+/g, '') + '\n'
+      } else if (packet.header.msgid === common.AutopilotVersion.MSG_ID) {
         // decode Ardupilot version
-        this.fcVersion = this.decodeFlightSwVersion(msg.flight_sw_version)
+        this.fcVersion = this.decodeFlightSwVersion(data.flightSwVersion)
         console.log(this.fcVersion)
         winston.info(this.fcVersion)
       }
@@ -202,21 +196,30 @@ class mavManager {
         } else {
           this.statusBytesPerSec.bytes += msg.length
         }
-        this.mav.parseBuffer(msg)
+        this.inStream.write(msg)
       }
     })
 
     this.udpStream.bind(this.inudpPort, this.inudpIP)
   }
 
-  sendData (msgbuf) {
+  sendData (msg) {
     // msgbuf outgoing data
     if (this.RinudpPort === null || this.RinudpIP === null) {
       return
     }
 
-    const buf = Buffer.from(msgbuf)
-    this.udpStream.send(buf, this.RinudpPort, this.RinudpIP, function (error) {
+    let protocol = null
+    if (this.version === 2) {
+      protocol = new MavLinkProtocolV2(255, 1)
+    } else {
+      protocol = new MavLinkProtocolV1(255, 1)
+    }
+
+    const buffer = protocol.serialize(msg, this.seq++)
+    this.seq &= 255
+
+    this.udpStream.send(buffer, this.RinudpPort, this.RinudpIP, function (error) {
       if (error) {
         this.udpStream.close()
         console.log(error)
@@ -229,25 +232,19 @@ class mavManager {
 
   sendReboot () {
     // create a reboot packet
-    const msg = new this.mavmsg.messages.command_long(this.targetSystem, this.targetComponent, this.mavmsg.MAV_CMD_PREFLIGHT_REBOOT_SHUTDOWN, 0,
-      1, 0, 0, 0, 0, 0, 0)
+    const command = new common.PreflightRebootShutdownCommand(this.targetSystem, this.targetComponent)
+    command.confirmation = 1
+    command.autopilot = 1
     this.isRebooting = true
-    // this.eventEmitter.emit('sendData', msg.pack(this.mav))
-    this.sendData(msg.pack(this.mav))
+    this.sendData(command)
   }
 
   sendVersionRequest () {
     // request ArduPilot version
-    const msg = new this.mavmsg.messages.command_long(this.targetSystem, this.targetComponent, this.mavmsg.MAV_CMD_REQUEST_AUTOPILOT_CAPABILITIES, 1,
-      1, 0, 0, 0, 0, 0, 0)
-    this.sendData(msg.pack(this.mav))
-  }
-
-  sendDSRequest () {
-    // create a datastream request packet
-    // console.log("Sent DS");
-    const msg = new this.mavmsg.messages.request_data_stream(this.targetSystem, this.targetComponent, this.mavmsg.MAV_DATA_STREAM_ALL, 1, 1)
-    this.sendData(msg.pack(this.mav))
+    const command = new common.RequestMessageCommand(this.targetSystem, this.targetComponent)
+    command.messageId = common.AutopilotVersion.MSG_ID
+    command.confirmation = 1
+    this.sendData(command)
   }
 
   sendRTCMMessage (gpmessage, seq) {
@@ -281,8 +278,11 @@ class mavManager {
     }
 
     for (let i = 0, len = msgset.length; i < len; i++) {
-      const msg = new this.mavmsg.messages.gps_rtcm_data(flags | (i << 1), msgset[i].length, msgset[i])
-      this.sendData(msg.pack(this.mav))
+      const msg = new common.GpsRtcmData()
+      msg.flags = flags | (i << 1)
+      msg.len = msgset[i].length
+      msg.data = msgset[i]
+      this.sendData(msg)
     }
   }
 
