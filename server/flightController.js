@@ -142,11 +142,6 @@ class FCDetails {
       this.closeLink((err) => {
         this.startLink((err) => {
           if (err) {
-          } else {
-            // resend DS request to init link
-            // console.log('New UDP Link DS Request')
-            // this.winston.info('New UDP Link DS Request')
-            // this.m.sendDSRequest()
           }
         })
       })
@@ -182,11 +177,6 @@ class FCDetails {
           this.closeLink((err) => {
             this.startLink((err) => {
               if (err) {
-              } else {
-                // resend DS request to init link
-                // console.log('New UDP Link DS Request')
-                // this.winston.info('New UDP Link DS Request')
-                // this.m.sendDSRequest()
               }
             })
           })
@@ -327,11 +317,11 @@ class FCDetails {
     // only restart the mavlink processor if it's a new link,
     // not a reconnect attempt
     if (this.m === null) {
-      this.m = new mavManager('common', this.activeDevice.mavversion.value, '127.0.0.1', 14540)
-      this.m.eventEmitter.on('gotMessage', (msg) => {
+      this.m = new mavManager(this.activeDevice.mavversion.value, '127.0.0.1', 14540)
+      this.m.eventEmitter.on('gotMessage', (packet, data) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
-        this.eventEmitter.emit('gotMessage', msg)
+        this.eventEmitter.emit('gotMessage', packet, data)
       })
     }
 
