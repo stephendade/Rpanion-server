@@ -86,10 +86,10 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
 
 // Connecting the flight controller datastream to the logger
 // and ntrip
-fcManager.eventEmitter.on('gotMessage', (msg) => {
+fcManager.eventEmitter.on('gotMessage', (packet, data) => {
   try {
-    logManager.writetlog(msg)
-    ntripClient.onMavPacket(msg)
+    logManager.writetlog(packet, data)
+    ntripClient.onMavPacket(packet, data)
   } catch (err) {
     console.log(err)
   }

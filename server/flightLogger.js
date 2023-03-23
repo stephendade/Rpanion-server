@@ -35,7 +35,6 @@ class flightLogger {
     fs.mkdirSync(this.kmzlogfolder, { recursive: true })
   }
 
-
   // Start a new tlog
   newtlog () {
     if (parseInt(process.versions.node) < 12) {
@@ -97,7 +96,7 @@ class flightLogger {
   // write data to active log(s)
   // takes in a mavlink message
   // needs to be synchonous to ensure logfile isn't opened in parallel
-  writetlog (msg) {
+  writetlog (packet, data) {
     if (!this.activeLogging) {
       return false
     }
@@ -114,8 +113,7 @@ class flightLogger {
 
       // use this instead of jspack.Pack('>Q', [microSeconds]);
       timebits.writeBigInt64BE(microSeconds)
-
-      const toWrite = Buffer.concat([timebits, msg._msgbuf])
+      const toWrite = Buffer.concat([timebits, packet.buffer])
       fs.appendFileSync(this.activeFileTlog, toWrite, 'binary')
       return true
     } catch (err) {

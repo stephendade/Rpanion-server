@@ -3,6 +3,7 @@ const { NtripClient } = require('ntrip-client')
 const { geoToEcef } = require('ntrip-client/lib/nmea/ecef')
 const events = require('events')
 const os = require('os')
+const { common } = require('node-mavlink')
 
 class ntrip {
   constructor (settings, winston) {
@@ -95,14 +96,12 @@ class ntrip {
       this.status = 1
     } else {
       // stop the client
-      if (this.client != null) {
+      if (this.client) {
         if (this.client.client) {
           this.client.client.removeAllListeners()
           this.client.client.destroy()
           this.client.client = null
         }
-        this.client.close()
-        this.client = null
       }
 
       this.status = 0
@@ -138,7 +137,7 @@ class ntrip {
     this.startStopNTRIP()
   }
 
-  onMavPacket (msg) {
+  onMavPacket (packet, data) {
     // FC is active
     if (!this.options.active) {
       return
@@ -149,9 +148,9 @@ class ntrip {
     }
 
     // new MAVLink packet recieved - get the lat/lon
-    if (msg._name === 'GPS_RAW_INT' && msg.fix_type >= 2) {
+    if (packet.header.msgid === common.GpsRawInt.MSG_ID && data.fixType >= 2) {
       // note conversion from lat/lon/alt to ECEF
-      this.options.xyz = geoToEcef([msg.lat / 1E7, msg.lon / 1E7, msg.alt / 1E3])
+      this.options.xyz = geoToEcef([data.lat / 1E7, data.lon / 1E7, data.alt / 1E3])
 
       if (this.client) {
         this.client.xyz = this.options.xyz
