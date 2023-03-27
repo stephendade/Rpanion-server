@@ -26,4 +26,4 @@ sudo apt-get install -y gpsbabel zip
 
 ## Zerotier and wireguard
 curl -s https://install.zerotier.com | sudo bash
-sudo apt install -y wireguard wireguard-tools resolvconf
+sudo apt install -y wireguard wireguard-tools

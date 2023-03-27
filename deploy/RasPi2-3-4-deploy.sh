@@ -39,4 +39,7 @@ sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkMa
 ## and build & run Rpanion
 ./build_rpanion.sh
 
+## For wireguard. Must be installed last as it messes the DNS resolutions
+sudo apt install -y resolvconf
+
 sudo reboot

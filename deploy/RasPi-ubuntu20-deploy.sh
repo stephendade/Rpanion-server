@@ -50,7 +50,6 @@ echo "[keyfile]" | sudo tee -a /etc/NetworkManager/conf.d/10-globally-managed-de
 echo "unmanaged-devices=*,except:type:wifi,except:type:gsm,except:type:cdma,except:type:wwan,except:type:ethernet,type:vlan" | sudo tee -a /etc/NetworkManager/conf.d/10-globally-managed-devices.conf >/dev/null
 sudo service network-manager restart
 
-
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
@@ -59,5 +58,8 @@ sudo service network-manager restart
 
 ## And re-enable
 sudo systemctl start unattended-upgrades.service
+
+## For wireguard. Must be installed last as it messes the DNS resolutions
+sudo apt install -y resolvconf
 
 sudo reboot
