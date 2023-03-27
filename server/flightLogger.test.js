@@ -27,6 +27,7 @@ describe('Logging Functions', function () {
   }
 
   it('#loggerinit()', function () {
+    settings.clear()
     const Lgr = new Logger(settings, winston)
 
     // assert folders were created
@@ -42,23 +43,25 @@ describe('Logging Functions', function () {
   })
 
   it('#newlogfile()', function () {
+    settings.clear()
     const Lgr = new Logger(settings, winston)
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) >= 12) {
       // log a byte
-      assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.writetlog({ buffer: Buffer.from('tést') }, null), true)
       assert.ok(fs.existsSync(Lgr.activeFileTlog))
     }
   })
 
   it('#clearlogfiles()', function () {
+    settings.clear()
     const Lgr = new Logger(settings, winston)
     Lgr.newtlog()
 
     if (parseInt(process.versions.node) > 12) {
       // log a byte
-      assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.writetlog({ buffer: Buffer.from('tést') }, null), true)
     }
 
     Lgr.stoptlog()
@@ -77,6 +80,7 @@ describe('Logging Functions', function () {
   })
 
   it('#getlogs()', function (done) {
+    settings.clear()
     const Lgr = new Logger(settings, winston)
     Lgr.newtlog()
 
@@ -91,7 +95,7 @@ describe('Logging Functions', function () {
       })
     } else {
       // log a byte
-      assert.equal(Lgr.writetlog({ _msgbuf: Buffer.from('tést') }), true)
+      assert.equal(Lgr.writetlog({ buffer: Buffer.from('tést') }), true)
 
       Lgr.getLogs(function (err, tlogs, binlogs, kmzlogs, activeLogging) {
         assert.equal(tlogs.length, 1)
@@ -104,6 +108,7 @@ describe('Logging Functions', function () {
   })
 
   it('#getstatus()', function () {
+    settings.clear()
     const Lgr = new Logger(settings, winston)
 
     if (parseInt(process.versions.node) < 12) {
