@@ -5,7 +5,8 @@ const winston = require('./winstonconfig')(module)
 
 describe('Flight Controller Functions', function () {
   it('#fcinit()', function () {
-    var FC = new FCManagerClass(settings, winston)
+    settings.clear()
+    const FC = new FCManagerClass(settings, winston)
 
     // check initial status
     assert.equal(FC.getSystemStatus().conStatus, 'Not connected')
@@ -13,6 +14,7 @@ describe('Flight Controller Functions', function () {
   })
 
   it('#fcGetSerialDevices()', async () => {
+    settings.clear()
     const FC = new FCManagerClass(settings, winston)
 
     await FC.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP) => {
@@ -29,6 +31,7 @@ describe('Flight Controller Functions', function () {
   })
 
   it('#fcUDPadderemove()', function () {
+    settings.clear()
     const FC = new FCManagerClass(settings, winston)
 
     // check initial status
@@ -56,6 +59,7 @@ describe('Flight Controller Functions', function () {
   })
 
   it('#fcStartStop()', function (done) {
+    settings.clear()
     const FC = new FCManagerClass(settings, winston)
     FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
 

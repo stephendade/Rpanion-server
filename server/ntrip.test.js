@@ -5,6 +5,7 @@ const winston = require('./winstonconfig')(module)
 
 describe('NTRIP Functions', function () {
   it('#ntripinit()', function () {
+    settings.clear()
     const ntripClient = new Ntrip(settings, winston)
 
     // check initial status
@@ -13,6 +14,7 @@ describe('NTRIP Functions', function () {
 
   it('#ntriptryconnect()', function () {
     // Getting starting client with bad details
+    settings.clear()
     const ntripClient = new Ntrip(settings, winston)
 
     // ntripClient.setSettings ("auscors.ga.gov.au", 2101, "MNT", "name", "pwd", true)

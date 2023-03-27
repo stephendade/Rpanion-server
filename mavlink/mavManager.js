@@ -110,12 +110,12 @@ class mavManager {
         this.statusVehType = data.type
 
         // arming status
-        if ((data.base_mode & 128) !== 0 && this.statusArmed === 0) {
+        if ((data.baseMode & 128) !== 0 && this.statusArmed === 0) {
           console.log('Vehicle ARMED')
           winston.info('Vehicle ARMED')
           this.statusArmed = 1
           this.eventEmitter.emit('armed')
-        } else if ((data.base_mode & 128) === 0 && this.statusArmed === 1) {
+        } else if ((data.baseMode & 128) === 0 && this.statusArmed === 1) {
           console.log('Vehicle DISARMED')
           winston.info('Vehicle DISARMED')
           this.statusArmed = 0

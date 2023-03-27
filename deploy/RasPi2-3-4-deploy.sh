@@ -27,7 +27,7 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
 
-curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+curl -skL https://deb.nodesource.com/setup_16.x | sudo -E bash -
 sudo apt install -y nodejs
 
 ## Configure nmcli to not need sudo

@@ -15,8 +15,8 @@ describe('MAVLink Functions', function () {
     var m = new mavManager(2, '127.0.0.1', 15000)
     var packets = []
 
-    m.eventEmitter.on('gotMessage', (msg) => {
-      packets.push(msg)
+    m.eventEmitter.on('gotMessage', (packet, data) => {
+      packets.push(packet.buffer)
     })
 
     m.eventEmitter.on('armed', () => {
@@ -81,7 +81,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg, rinfo) => {
-      msg.should.eql(Buffer.from([253, 29, 0, 0, 0, 255, 0, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 51, 134]))
+      msg.should.eql(Buffer.from([253, 33, 0, 0, 0, 255, 1, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 0, 0, 0, 1, 135, 241]))
       m.close()
       udpStream.close()
       done()

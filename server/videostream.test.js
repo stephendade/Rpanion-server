@@ -5,6 +5,7 @@ const winston = require('./winstonconfig')(module)
 
 describe('Video Functions', function () {
   it('#videomanagerinit()', function () {
+    settings.clear()
     const vManager = new VideoStream(settings, winston)
 
     // check initial status
@@ -13,6 +14,7 @@ describe('Video Functions', function () {
 
   it('#videomanagerpopulateaddresses()', function () {
     // Getting a list of valid IP addresses
+    settings.clear()
     const vManager = new VideoStream(settings, winston)
 
     vManager.populateAddresses()
@@ -25,6 +27,7 @@ describe('Video Functions', function () {
   it('#videomanagerscan()', function (done) {
     // Scanning for video devices capable of streaming
     // in a CI environment, no devices will be returned
+    settings.clear()
     const vManager = new VideoStream(settings, winston)
 
     vManager.populateAddresses()
@@ -45,6 +48,7 @@ describe('Video Functions', function () {
   }).timeout(5000)
 
   it('#videomanagerisUbuntu()', async function () {
+    settings.clear()
     const vManager = new VideoStream(settings, winston)
 
     const res = await vManager.isUbuntu()
@@ -52,6 +56,7 @@ describe('Video Functions', function () {
   })
 
   it('#videomanagerstartStopStreaming()', function (done) {
+    settings.clear()
     const vManager = new VideoStream(settings, winston)
 
     vManager.startStopStreaming(true, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, function (err, status, addresses) {
