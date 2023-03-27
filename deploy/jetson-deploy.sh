@@ -32,5 +32,8 @@ sudo service network-manager restart
 ## and build & run Rpanion
 ./build_rpanion.sh
 
+## For wireguard. Must be installed last as it messes the DNS resolutions
+sudo apt install -y resolvconf
+
 sudo reboot
 
