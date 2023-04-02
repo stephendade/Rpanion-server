@@ -20,7 +20,7 @@ cd ./deploy
 ./build_mavlinkrouter.sh
 
 ## and build & run Rpanion
-./build.sh
+./build_rpanion.sh
 
 ## and restart service
 echo "---Upgrade Complete---"
