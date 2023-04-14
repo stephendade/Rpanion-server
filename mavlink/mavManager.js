@@ -13,7 +13,7 @@ const REGISTRY = {
 }
 
 class mavManager {
-  constructor (version, inudpIP, inudpPort) {
+  constructor (version, inudpIP, inudpPort, enableDSRequest) {
     this.mav = null
     this.mavmsg = null
     this.version = version
@@ -38,6 +38,8 @@ class mavManager {
     this.targetSystem = null
     this.targetComponent = null
 
+    this.enableDSRequest = enableDSRequest
+
     // udp input
     this.udpStream = udp.createSocket('udp4')
     this.inudpPort = inudpPort
@@ -47,11 +49,15 @@ class mavManager {
     this.inStream = new PassThrough()
 
     this.udpStream.on('message', (msg, rinfo) => {
-      // calculate bytes/sec rate (once per 2 sec)
+      // calculate bytes/sec rate (once per 2 sec) and do DS requests
       if ((this.statusBytesPerSec.lastTime + 2000) < Date.now().valueOf()) {
         this.statusBytesPerSec.avgBytesSec = Math.round(1000 * this.statusBytesPerSec.bytes / (Date.now().valueOf() - this.statusBytesPerSec.lastTime))
         this.statusBytesPerSec.bytes = 0
         this.statusBytesPerSec.lastTime = Date.now().valueOf()
+
+        if (this.enableDSRequest && this.targetSystem != null && this.targetComponent != null) {
+          this.sendDSRequest()
+        }
       } else {
         this.statusBytesPerSec.bytes += msg.length
       }
@@ -188,11 +194,15 @@ class mavManager {
         this.RinudpPort = rinfo.port
         this.RinudpIP = rinfo.address
       } else {
-        // calculate bytes/sec rate (once per 2 sec)
+        // calculate bytes/sec rate (once per 2 sec) and do DS requests
         if ((this.statusBytesPerSec.lastTime + 2000) < Date.now().valueOf()) {
           this.statusBytesPerSec.avgBytesSec = Math.round(1000 * this.statusBytesPerSec.bytes / (Date.now().valueOf() - this.statusBytesPerSec.lastTime))
           this.statusBytesPerSec.bytes = 0
           this.statusBytesPerSec.lastTime = Date.now().valueOf()
+
+          if (this.enableDSRequest && this.targetSystem != null && this.targetComponent != null) {
+            this.sendDSRequest()
+          }
         } else {
           this.statusBytesPerSec.bytes += msg.length
         }
@@ -237,6 +247,17 @@ class mavManager {
     command.autopilot = 1
     this.isRebooting = true
     this.sendData(command)
+  }
+
+  sendDSRequest () {
+    // send datastream request
+    const msg = new common.RequestDataStream()
+    msg.targetSystem = this.targetSystem
+    msg.targetComponent = this.targetComponent
+    msg.reqStreamId = common.MavDataStream.ALL
+    msg.reqMessageRate = 4
+    msg.startStop = 1
+    this.sendData(msg)
   }
 
   sendVersionRequest () {

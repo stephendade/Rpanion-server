@@ -71,6 +71,27 @@ describe('MAVLink Functions', function () {
     })
   })
 
+  it('#dsSend()', function (done) {
+    var m = new mavManager(2, '127.0.0.1', 15000)
+    var udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendDSRequest()
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([253, 6, 0, 0, 0, 255, 1, 66, 0, 0, 4, 0, 0, 0, 0, 1, 30, 219]))
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
 
   it('#rebootSend()', function (done) {
     var m = new mavManager(2, '127.0.0.1', 15000)

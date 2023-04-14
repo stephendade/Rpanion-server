@@ -60,6 +60,9 @@ class FCDetails {
     this.enableUDPB = true
     this.UDPBPort = 14550
 
+    // Send datastream requests to flight controller?
+    this.enableDSRequest = false
+
     // Current binlog via mavlink-router
     this.binlog = null
 
@@ -70,6 +73,7 @@ class FCDetails {
     this.enableTCP = this.settings.value('flightcontroller.enableTCP', false)
     this.enableUDPB = this.settings.value('flightcontroller.enableUDPB', true)
     this.UDPBPort = this.settings.value('flightcontroller.UDPBPort', 14550)
+    this.enableDSRequest = this.settings.value('flightcontroller.enableDSRequest', false)
 
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
@@ -317,7 +321,7 @@ class FCDetails {
     // only restart the mavlink processor if it's a new link,
     // not a reconnect attempt
     if (this.m === null) {
-      this.m = new mavManager(this.activeDevice.mavversion.value, '127.0.0.1', 14540)
+      this.m = new mavManager(this.activeDevice.mavversion.value, '127.0.0.1', 14540, this.enableDSRequest)
       this.m.eventEmitter.on('gotMessage', (packet, data) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
@@ -398,11 +402,11 @@ class FCDetails {
     }
     // set the active device as selected
     if (this.activeDevice) {
-      return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort)
+      return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else if (this.serialDevices.length > 0) {
-      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort)
+      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else {
-      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort)
+      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     }
   }
 
@@ -426,13 +430,18 @@ class FCDetails {
     }, 1000)
   }
 
-  startStopTelemetry (device, baud, mavversion, enableTCP, enableUDPB, UDPBPort, callback) {
+  startStopTelemetry (device, baud, mavversion, enableTCP, enableUDPB, UDPBPort, enableDSRequest, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
     this.enableTCP = enableTCP
     this.enableUDPB = enableUDPB
     this.UDPBPort = UDPBPort
+    this.enableDSRequest = enableDSRequest
+
+    if (this.m) {
+      this.m.enableDSRequest = enableDSRequest
+    }
 
     // check port, mavversion and baud are valid (if starting telem)
     if (!this.activeDevice) {
@@ -496,6 +505,7 @@ class FCDetails {
       this.settings.setValue('flightcontroller.enableTCP', this.enableTCP)
       this.settings.setValue('flightcontroller.enableUDPB', this.enableUDPB)
       this.settings.setValue('flightcontroller.UDPBPort', this.UDPBPort)
+      this.settings.setValue('flightcontroller.enableDSRequest', this.enableDSRequest)
       console.log('Saved FC settings')
       this.winston.info('Saved FC settings')
     } catch (e) {

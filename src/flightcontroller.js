@@ -28,7 +28,8 @@ class FCPage extends basePage {
       socketioStatus: false,
       usedSocketIO: true,
       enableUDPB: false,
-      UDPBPort: 14550
+      UDPBPort: 14550,
+      enableDSRequest: false
     }
 
     // Socket.io client for reading in analog update values
@@ -62,6 +63,10 @@ class FCPage extends basePage {
     this.setState({ enableTCP: event.target.checked });
   }
 
+  handleDSRequest = (event) => {
+    this.setState({ enableDSRequest: event.target.checked });
+  }
+
   handleUseUDPBChange = (event) => {
     this.setState({ enableUDPB: event.target.checked });
   }
@@ -84,7 +89,8 @@ class FCPage extends basePage {
         mavversion: JSON.stringify(this.state.mavVersionSelected),
         enableTCP: this.state.enableTCP,
         enableUDPB: this.state.enableUDPB,
-        UDPBPort: this.state.UDPBPort
+        UDPBPort: this.state.UDPBPort,
+        enableDSRequest: this.state.enableDSRequest
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
   }
@@ -206,8 +212,10 @@ class FCPage extends basePage {
         <h3>TCP Server</h3>
         <p><i>Allow devices to connect to this device's IP:port</i></p>
         <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
-        
         <br />
+        <h2>Other Options</h2>
+        <p><i>Allow Rpanion-server to send datastream requests. Required if a GCS is not connected</i></p>
+        <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />Enable datastream requests
         <br />
         <h2>Status</h2>
         <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
