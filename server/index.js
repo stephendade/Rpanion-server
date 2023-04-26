@@ -16,13 +16,10 @@ const adhocManager = require('./adhocManager.js')
 const cloudManager = require('./cloudUpload.js')
 const VPNManager = require('./vpn')
 const logConversionManager = require('./logConverter.js')
-
-
 const winston = require('./winstonconfig')(module)
 
 const appRoot = require('app-root-path')
 const settings = require('settings-store')
-const { exec, execSync } = require('child_process')
 
 const app = express()
 const http = require('http').Server(app)
@@ -63,13 +60,11 @@ process.on('SIGINT', quitting) // run signal handler when main process exits
 // process.on('SIGTERM', quitting) // run signal handler when service exits. Need for Ubuntu??
 
 function quitting () {
-  http.close(() => {
-    cloud.quitting()
-    logConversion.quitting()
-    console.log('---Shutdown Rpanion---')
-    winston.info('---Shutdown Rpanion---')
-    process.exit(0)
-  })
+  cloud.quitting()
+  logConversion.quitting()
+  console.log('---Shutdown Rpanion---')
+  winston.info('---Shutdown Rpanion---')
+  process.exit(0)
 }
 
 // Got an RTCM message, send to flight controller
