@@ -206,16 +206,39 @@ class FCPage extends basePage {
             <input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><Button size="sm" onClick={this.addUdpOutput}>Add</Button>
           </div>
         </div>
+        <br />
         <h3>UDP Server</h3>
         <p><i>Allow devices to connect to this device's IP:port</i></p>
-        <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />Enable UDP Server on this port: <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label">Enable UDP Server</label>
+          <div className="col-sm-8">
+            <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />
+            </div>
+        </div>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label">UDP Server Port</label>
+          <div className="col-sm-8">
+            <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
+          </div>
+        </div>
+        <br />
         <h3>TCP Server</h3>
         <p><i>Allow devices to connect to this device's IP:port</i></p>
-        <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />Enable TCP Server at port 5760
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-5 col-form-label">Enable TCP Server at port 5760</label>
+          <div className="col-sm-7">
+          <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />
+          </div>
+        </div>
         <br />
         <h2>Other Options</h2>
         <p><i>Allow Rpanion-server to send datastream requests. Required if a GCS is not connected</i></p>
-        <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />Enable datastream requests
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-5 col-form-label">Enable datastream requests</label>
+          <div className="col-sm-7">
+          <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
+          </div>
+        </div>
         <br />
         <h2>Status</h2>
         <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>

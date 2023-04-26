@@ -76,10 +76,10 @@ class CloudConfig extends basePage {
                 <h3>Bin Logs Upload</h3>
                 <p>All bin logs (in Flight Logs -> Bin Logs) will be synchonised to the following remote destination using rsync.</p>
                 <p>The synchonisation runs every 20 seconds.</p>
-                <p>Format is <code>username@server:/path/to/remote/dir</code>, where <code>username</code> has an ssh publickey on the remote server.</p>
+                <p>Destination format is <code>username@server:/path/to/remote/dir</code>, where <code>username</code> has an ssh publickey on the remote server.</p>
                 <Form style={{ width: 700 }}>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
-                        <label className="col-sm-3 col-form-label">AP:Cloud Rsync Dest</label>
+                        <label className="col-sm-3 col-form-label">Rsync Destination</label>
                         <div className="col-sm-7">
                             <input type="text" className="form-control" name="binUploadLink" disabled={this.state.doBinUpload === true ? true : false} onChange={this.changeHandler} value={this.state.binUploadLink}/>
                         </div>

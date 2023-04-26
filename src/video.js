@@ -158,16 +158,24 @@ class VideoPage extends basePage {
             <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected} />
           </div>
         </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Rotation</label>
-          <div className="col-sm-8">
-            <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected} />
+        <div style={{ display: (typeof this.state.vidResSelected !== 'undefined' && this.state.vidResSelected.format !== "video/x-h264") ? "block" : "none" }}>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+            <label className="col-sm-4 col-form-label">Rotation</label>
+            <div className="col-sm-8">
+              <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected} />
+            </div>
           </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Maximum Bitrate</label>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+            <label className="col-sm-4 col-form-label">Maximum Bitrate</label>
+            <div className="col-sm-8">
+              <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="10000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+            </div>
+          </div>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
           <div className="col-sm-8">
-            <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="10000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+            <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
+          </div>
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
@@ -179,22 +187,18 @@ class VideoPage extends basePage {
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
           </div>
         </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
-          <div className="col-sm-8">
-            <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
+        <div style={{ display: (this.state.UDPChecked) ? "block" : "none" }}>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+            <label className="col-sm-4 col-form-label ">Destination IP</label>
+            <div className="col-sm-8">
+              <input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange} />
+            </div>
           </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label ">Destination IP</label>
-          <div className="col-sm-8">
-            <input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange} />
-          </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Destination Port</label>
-          <div className="col-sm-8">
-            <input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+            <label className="col-sm-4 col-form-label">Destination Port</label>
+            <div className="col-sm-8">
+              <input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
+            </div>
           </div>
         </div>
 
