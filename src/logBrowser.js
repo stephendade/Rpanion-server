@@ -136,14 +136,23 @@ class LoggerPage extends basePage {
 
   renderContent() {
     return (
-      <div>
+      <div style={{ width: 600 }}>
         <p><i>Save and download flight logs</i></p>
         <p>Logging Status: {this.state.logStatus}</p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
         <h3>Telemetry Logs</h3>
-        <label><input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />Enable Telemetry Logging</label>
-        <Button size="sm" onClick={this.startLog}>Start new telemetry log</Button>{' '}
-        <Button size="sm" id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>{' '}
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-5 col-form-label">Enable Telemetry Logging</label>
+          <div className="col-sm-7">
+          <input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />
+          </div>
+        </div>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <div className="col-sm-8">
+          <Button onClick={this.startLog}>Start new telemetry log</Button>{'   '}
+          <Button id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>
+          </div>
+        </div>
         <Table id='Tlogfile' striped bordered hover size="sm">
           <thead>
             <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
@@ -155,7 +164,11 @@ class LoggerPage extends basePage {
         <br />
         <h3>Bin Logs</h3>
         <p>This requires the <code>LOG_BACKEND_TYPE</code> parameter in ArduPilot set to <code>Mavlink</code>. A high baudrate to the flight controller (921500 or greater) is required.</p>
-        <Button size="sm" id='binlog' onClick={this.clearLogs}>Clear inactive logs</Button>{' '}
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <div className="col-sm-8">
+          <Button id='binlog' onClick={this.clearLogs}>Clear inactive logs</Button>
+          </div>
+        </div>
         <Table id='Binlogfile' striped bordered hover size="sm">
           <thead>
             <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
@@ -169,13 +182,16 @@ class LoggerPage extends basePage {
         <p>KMZ files created from the Telemetry Logs every 20 seconds.</p>
         
         <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <div className="col-sm-10">
+          <div className="col-sm-8">
             <Button onClick={this.handleDoLogConversion} className="btn btn-primary">{this.state.doLogConversion === true ? 'Disable' : 'Enable'}</Button>
           </div>
         </div>
         <p>Status: {this.state.conversionLogStatus}</p>
-
-        <Button size="sm" id='kmzlog' onClick={this.clearLogs}>Clear KMZ files</Button>{' '}
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <div className="col-sm-8">
+          <Button id='kmzlog' onClick={this.clearLogs}>Clear KMZ files</Button>
+          </div>
+        </div>
         <Table id='KMZlogfile' striped bordered hover size="sm">
           <thead>
             <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
