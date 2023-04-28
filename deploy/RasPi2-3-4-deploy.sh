@@ -24,6 +24,9 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 
 ./install_common_libraries.sh
 
+## Only install picamera2 on RaspiOS
+pip3 install picamera2 --user
+
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
 

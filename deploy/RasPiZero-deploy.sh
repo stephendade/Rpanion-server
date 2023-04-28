@@ -24,6 +24,9 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 
 ./install_common_libraries.sh
 
+## Only install picamera2 on RaspiOS
+pip3 install picamera2 --user
+
 ## node.js for the RPi Zero needs the "armv61" build
 wget https://unofficial-builds.nodejs.org/download/release/v14.21.2/node-v14.21.2-linux-armv6l.tar.xz
 sudo mkdir -p /usr/local/lib/nodejs
