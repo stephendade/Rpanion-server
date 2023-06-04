@@ -307,7 +307,8 @@ app.post('/api/adhocadaptermodify', [check('settings.isActive').isBoolean(),
   check('settings.password').if(check('settings.wpaType').isIn(['wep'])).isAlphanumeric(),
   check('settings.ssid').if(check('toState').isIn([true])).isAlphanumeric(),
   check('settings.band').isIn(['a', 'bg']),
-  check('settings.channel').if(check('toState').isIn([true])).isInt()], function (req, res) {
+  check('settings.channel').if(check('toState').isIn([true])).isInt(),
+  check('settings.gateway').optional({ checkFalsy: true }).if(check('toState').isIn([true])).isIP()], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
