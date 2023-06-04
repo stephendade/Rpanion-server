@@ -12,7 +12,7 @@ const fcManagerClass = require('./flightController')
 const flightLogger = require('./flightLogger.js')
 const networkClients = require('./networkClients.js')
 const ntrip = require('./ntrip.js')
-const adhocManager = require('./adhocManager.js')
+const Adhoc = require('./adhocManager.js')
 const cloudManager = require('./cloudUpload.js')
 const VPNManager = require('./vpn')
 const logConversionManager = require('./logConverter.js')
@@ -54,6 +54,7 @@ const logManager = new flightLogger(settings, winston)
 const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings)
 const logConversion = new logConversionManager(settings)
+const adhocManager = new Adhoc(settings, winston)
 
 // cleanup, if needed
 process.on('SIGINT', quitting) // run signal handler when main process exits
