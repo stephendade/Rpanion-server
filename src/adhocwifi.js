@@ -32,7 +32,8 @@ class AdhocConfig extends basePage {
         ssid: '',
         band: 'bg',
         channel: 0,
-        isActive: false
+        isActive: false,
+        gateway: ''
       }
     };
 
@@ -64,6 +65,12 @@ class AdhocConfig extends basePage {
   IPHandler = event => {
     let items = this.state.curSettings;
     items.ipaddress = event.target.value;
+    this.setState({ curSettings: items });
+  }
+
+  GatewayHandler = event => {
+    let items = this.state.curSettings;
+    items.gateway = event.target.value;
     this.setState({ curSettings: items });
   }
 
@@ -146,7 +153,7 @@ class AdhocConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Adapter</label>
               <div className="col-sm-10">
-                <Select disabled={this.state.curSettings.isActive} onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected} />
+                <Select isDisabled={this.state.curSettings.isActive} onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected} />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
@@ -188,8 +195,8 @@ class AdhocConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Password</label>
               <div className="col-sm-10">
-                <input disabled={this.state.curSettings.isActive || this.state.wpaType === "none"} name="password" type={this.state.showPW === true ? "text" : "password"} value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} onChange={this.passwordhandler} />
-                <label><input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType === "wpa-none"} onChange={this.togglePasswordVisible} />Show Password</label>
+                <input disabled={this.state.curSettings.isActive || this.state.curSettings.wpaType === "none"} name="password" type={this.state.showPW === true ? "text" : "password"} value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} onChange={this.passwordhandler} />
+                <label><input disabled={this.state.curSettings.wpaType === "none"} name="showpassword" type="checkbox" checked={this.state.showPW} onChange={this.togglePasswordVisible} />Show Password</label>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
@@ -197,6 +204,13 @@ class AdhocConfig extends basePage {
               <div className="col-sm-10">
                 {/* <IPut className="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} defaultValue={this.state.curSettings.ipaddress} value={this.state.curSettings.ipaddress} /> */}
                 <input name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} value={this.state.curSettings.ipaddress} type="text" />
+              </div>
+            </div>
+            <div className="form-group row" style={{ marginBottom: '0px' }}>
+              <label className="col-sm-5 col-form-label">Gateway IP Address (Optional)</label>
+              <div className="col-sm-7">
+                {/* <IPut className="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} defaultValue={this.state.curSettings.ipaddress} value={this.state.curSettings.ipaddress} /> */}
+                <input name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.GatewayHandler} value={this.state.curSettings.gateway} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>

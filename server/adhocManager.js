@@ -19,7 +19,8 @@ function getAdapters (callback) {
       ssid: '',
       band: 'bg',
       channel: 0,
-      isActive: false
+      isActive: false,
+      gateway: ''
     }
     let activeDevice = false
 
@@ -50,6 +51,7 @@ function getAdapters (callback) {
             // get adapter status
             const outputcfg = execSync('iwconfig ' + device[0])
             const ipcfg = execSync('ip -4 -j addr show ' + device[0])
+            const gateway = execSync('ip route show | grep ' + device[0] + ' | grep default | awk \'{ print $3 }\'')
             const pwdLine = execSync('sudo iwlist ' + device[0] + ' key')
             if (outputcfg.toString().includes('Mode:Ad-Hoc')) {
               // adapter is acive in adhoc mopde, grab settings
@@ -87,6 +89,7 @@ function getAdapters (callback) {
                 // nee to convert from hex
                 settings.password = Buffer.from(allpw[1].replace(/-/gi, ''), 'hex').toString()
               }
+              settings.gateway = gateway.toString()
             }
           } catch (e) {
             console.error('exec error: ' + e)
@@ -127,7 +130,8 @@ function setAdapter (toState, device, settings, callback) {
     (settings.wpaType === 'none' ? '' : '&& sudo iwconfig ' + device + ' key s:' + settings.password) +
     ' && sudo ip addr flush ' + device +
     ' && sudo ip addr add ' + settings.ipaddress + '/16 dev ' + device +
-    ' && sudo ip link set ' + device + ' up', (error, stdout, stderr) => {
+    ' && sudo ip link set ' + device + ' up' +
+    (settings.gateway === '' ? '' : '&& sudo route add default gw ' + settings.gateway + ' ' + device), (error, stdout, stderr) => {
       if (stderr) {
         console.log(`exec error: ${error}`)
         winston.error('Error in setAdapter() ', { message: stderr })
