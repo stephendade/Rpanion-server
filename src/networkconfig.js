@@ -304,13 +304,19 @@ class NetworkConfig extends basePage {
 
   addConnection = (event) => {
     //add new network button clicked
-    this.setState({ waiting: true }, () => {
-      fetch(`/api/wifiscan`).then(response => response.json())
-                            .then(state => this.setState(state))
-                            .then(state => this.setState({ newNetworkName: '' }))
-                            .then(state => this.setState({ showModalNewNetworkName: true }))
-                            .then(state => this.setState({ waiting: false }))
-    })
+    if(this.state.netDeviceSelected.type === "wifi") {
+      this.setState({ waiting: true }, () => {
+        fetch(`/api/wifiscan`).then(response => response.json())
+                              .then(state => this.setState(state))
+                              .then(state => this.setState({ newNetworkName: '' }))
+                              .then(state => this.setState({ showModalNewNetworkName: true }))
+                              .then(state => this.setState({ waiting: false }))
+      })
+    }
+    else {
+      this.setState({ newNetworkName: '' })
+      this.setState({ showModalNewNetworkName: true })
+    }
   };
 
   activateConnection = (event) => {
@@ -518,9 +524,9 @@ class NetworkConfig extends basePage {
     this.setState({ showModalNewNetworkName: false });
     if (this.state.newNetworkName !== '' && this.state.newNetworkName !== null) {
       this.setState({ netConnectionFilteredSelected: { value: 'new', label: this.state.newNetworkName, type: this.state.netDeviceSelected.type, state: "" } });
-      // ask the user if this is a AP of client connection
-      // modal events take it from here
-      this.setState({ showModal: true });
+      if(this.state.netDeviceSelected.type === "wifi") {
+        this.setState({ showModal: true });
+      }
     }
     else {
     }
@@ -530,6 +536,14 @@ class NetworkConfig extends basePage {
     const value = event.target.value;
     this.setState({ newNetworkName: value });
 
+  }
+
+  refreshWifi = (event) => {
+    this.setState({ waiting: false }, () => {
+      fetch(`/api/wifiscan`).then(response => response.json())
+                            .then(state => this.setState(state))
+                            .then(state => this.setState({ waiting: false }))
+    })
   }
 
   handleNewNetworkTypeCancel = (event) => {
@@ -752,25 +766,28 @@ class NetworkConfig extends basePage {
 
             <Modal.Body>
               <p>Please select an existing Wifi network from the below list, or create a hotspot.</p>
-              <Table striped bordered hover>
-                <thead>
-                  <tr>
-                    <th>SSID</th>
-                    <th>Signal Strength</th>
-                    <th>Security</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {this.state.detWifi.map((item, index) => (
-                    <tr><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
-                  ))}
-                </tbody>
-              </Table>
+              <div style={{ maxHeight: '400px', overflow: 'scroll' }}>
+                <Table striped bordered hover>
+                  <thead>
+                    <tr>
+                      <th>SSID</th>
+                      <th>Signal Strength</th>
+                      <th>Security</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {this.state.detWifi.map((item, index) => (
+                      <tr><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
+                    ))}
+                  </tbody>
+                </Table>
+              </div>
             </Modal.Body>
 
             <Modal.Footer>
               <Button variant="primary" onClick={this.handleCloseModalAP}>Create new Wifi hotspot</Button>
               <Button variant="primary" onClick={() => this.handleCloseModalClient('', '')}>Connect to hidden WiFi</Button>
+              <Button bsSize="small" onClick={this.refreshWifi}>Refresh Wifi list</Button>
               <Button variant="secondary" onClick={this.handleNewNetworkTypeCancel}>Cancel</Button>
             </Modal.Footer>
           </Modal>
