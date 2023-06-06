@@ -25,7 +25,8 @@ for file in files:
     status = "disabled"
     for link in links:
         if link['ifname'] == str(os.path.basename(file).rsplit('.', 1)[0]):
-            status = link['operstate']
+            # Wireguard doesn't have an up/down state. So just tell the user that it's enabled
+            status = "enabled"
             break
 
     retDevices.append({'profile': str(os.path.basename(file)), 'peer': peerIP, 'server': serverIP, 'status': status, 'interface': ""})
