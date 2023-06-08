@@ -156,16 +156,7 @@ class NetworkConfig extends basePage {
 
       }
     }
-    // Need to do this twice to ensure props get set corectly ... I don't know why either :(
-    this.setState((state, props) => {
-      //no active connection
-      if (activeCon === null && netConnection.length > 0) {
-        activeCon = netConnection[0];
-      }
-      this.handleConnectionChange(activeCon, { action: "select-option" });
 
-      return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
-    });
     this.setState((state, props) => {
       //no active connection
       if (activeCon === null && netConnection.length > 0) {
@@ -196,22 +187,23 @@ class NetworkConfig extends basePage {
           conName: value.value
         })
       }).then(response => response.json())
-        .then(state => this.setState(state))
-        .then(state => this.setState({ netConnectionFilteredSelected: value }))
-        .then(state => this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() }))
-        .then(state => this.setState({
-          curSettings: {
-            ipaddresstype: { value: this.state.netConnectionDetails.DHCP },
-            ipaddress: { value: this.state.netConnectionDetails.IP },
-            subnet: { value: this.state.netConnectionDetails.subnet },
-            wpaType: { value: this.state.netConnectionDetails.wpaType },
-            password: { value: this.state.netConnectionDetails.password },
-            ssid: { value: this.state.netConnectionDetails.ssid },
-            band: { value: this.state.netConnectionDetails.band },
-            channel: { value: this.state.netConnectionDetails.channel },
-            mode: { value: this.state.netConnectionDetails.mode },
-            attachedIface: { value: this.state.netConnectionDetails.attachedIface }
-          }
+        .then(state => this.setState(state, () => { 
+          this.setState({
+            curSettings: {
+              ipaddresstype: { value: this.state.netConnectionDetails.DHCP },
+              ipaddress: { value: this.state.netConnectionDetails.IP },
+              subnet: { value: this.state.netConnectionDetails.subnet },
+              wpaType: { value: this.state.netConnectionDetails.wpaType },
+              password: { value: this.state.netConnectionDetails.password },
+              ssid: { value: this.state.netConnectionDetails.ssid },
+              band: { value: this.state.netConnectionDetails.band },
+              channel: { value: this.state.netConnectionDetails.channel },
+              mode: { value: this.state.netConnectionDetails.mode },
+              attachedIface: { value: this.state.netConnectionDetails.attachedIface }
+            }
+          }, () => {
+            this.setState({ netConnectionFilteredSelected: value, netConnectionSimilarIfaces: this.getSameAdapter() })
+          })
         }));
     }
   };
@@ -308,9 +300,9 @@ class NetworkConfig extends basePage {
       this.setState({ waiting: true }, () => {
         fetch(`/api/wifiscan`).then(response => response.json())
                               .then(state => this.setState(state))
-                              .then(state => this.setState({ newNetworkName: '' }))
-                              .then(state => this.setState({ showModalNewNetworkName: true }))
-                              .then(state => this.setState({ waiting: false }))
+                              .then(this.setState({ newNetworkName: '' }))
+                              .then(this.setState({ showModalNewNetworkName: true }))
+                              .then(this.setState({ waiting: false }))
       })
     }
     else {
@@ -542,7 +534,7 @@ class NetworkConfig extends basePage {
     this.setState({ waiting: false }, () => {
       fetch(`/api/wifiscan`).then(response => response.json())
                             .then(state => this.setState(state))
-                            .then(state => this.setState({ waiting: false }))
+                            .then(this.setState({ waiting: false }))
     })
   }
 
@@ -550,12 +542,12 @@ class NetworkConfig extends basePage {
     this.setState({ waiting: false }, () => {
       fetch(`/api/networkconnections`).then(response => response.json())
                                       .then(state => this.setState(state))
-                                      .then(state => this.setState({ waiting: false }))
+                                      .then(this.setState({ waiting: false }))
     })
   }
 
   refreshInfoList = (event) => {
-    this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
+    this.handleConnectionChange(this.state.netConnectionFilteredSelected, { action: "select-option" });
   }
 
   handleNewNetworkTypeCancel = (event) => {
