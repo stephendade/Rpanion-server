@@ -546,6 +546,18 @@ class NetworkConfig extends basePage {
     })
   }
 
+  refreshConList = (event) => {
+    this.setState({ waiting: false }, () => {
+      fetch(`/api/networkconnections`).then(response => response.json())
+                                      .then(state => this.setState(state))
+                                      .then(state => this.setState({ waiting: false }))
+    })
+  }
+
+  refreshInfoList = (event) => {
+    this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
+  }
+
   handleNewNetworkTypeCancel = (event) => {
     // user does not want to add a new network
     this.setState({ showModal: false });
@@ -619,6 +631,18 @@ class NetworkConfig extends basePage {
             <Button size="sm" variant="primary" onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} className="addConnection">Add new</Button>{' '}
             <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} className="activateConnection">Activate</Button>{' '}
             <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} className="deactivateConnection">Deactivate</Button>{' '}
+          </div>
+        </div>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label"></label>
+          <div className="col-sm-7">
+            <Button size="sm" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} onClick={this.refreshConList}>Refresh Connection List</Button>{' '}
+          </div>
+        </div>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label"></label>
+          <div className="col-sm-7">
+            <Button size="sm" disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} onClick={this.refreshInfoList}>Refresh Connection Information</Button>
           </div>
         </div>
 
