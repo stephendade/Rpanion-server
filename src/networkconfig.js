@@ -677,18 +677,20 @@ class NetworkConfig extends basePage {
                 </div>
               </div>
             </div>
-            <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">IP Address</label>
-              <div className="col-sm-8">
-                <input type="text" name="ipaddress" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} />
+            <div style={{ display: (this.state.curSettings.ipaddresstype.value !== "auto") ? "block" : "none" }}>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">IP Address</label>
+                <div className="col-sm-8">
+                  <input type="text" name="ipaddress" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} />
+                </div>
               </div>
-            </div>
-            <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">Subnet Mask</label>
-              <div className="col-sm-8">
-                <input type="text" name="subnet" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.subnet.value} />
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Subnet Mask</label>
+                <div className="col-sm-8">
+                  <input type="text" name="subnet" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.subnet.value} />
+                </div>
               </div>
-            </div>
+              </div>
 
           </div>
           <div className="wificlientconfig" style={{ display: this.state.curSettings.mode.value === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
@@ -708,11 +710,13 @@ class NetworkConfig extends basePage {
                 </select>
               </div>
             </div>
-            <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">Password</label>
-              <div className="col-sm-8">
-                <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+            <div style={{ display: (this.state.curSettings.wpaType.value !== "wpa-none") ? "block" : "none" }}>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Password</label>
+                <div className="col-sm-8">
+                  <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
+                  <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                </div>
               </div>
             </div>
 
