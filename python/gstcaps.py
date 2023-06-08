@@ -34,10 +34,10 @@ try:
     from picamera2 import Picamera2
     for cam in Picamera2.global_camera_info():
         caps = []
-        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
-        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
-        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
-        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
+        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
         name = "CSI Port Camera ({0})".format(cam['Model'])
         path = cam['Id']
         if path.startswith("/base/soc/i2c"):
@@ -64,10 +64,10 @@ for device in devices:
         name = "Raspberry Pi Camera (V2)"
     # If legacy camera stack on RasPiOS
     elif "mmal service" in name:
-        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
-        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-h264', 'fpsmax': '40'})
-        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '60'})
-        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '90'})
+        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
 
         # Cope with dual CSI too
         if "/dev/video" in path:
@@ -145,9 +145,9 @@ if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release
 
 # Include testsrc
 capsTest = []
-capsTest.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-h264', 'fpsmax': '30'})
-capsTest.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-h264', 'fpsmax': '30'})
-capsTest.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-h264', 'fpsmax': '30'})
+capsTest.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+capsTest.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '30'})
+capsTest.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '30'})
 retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
 print(json.dumps(retDevices))
