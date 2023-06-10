@@ -450,7 +450,7 @@ class NetworkConfig extends basePage {
     var nm = this.state.netConnectionFilteredSelected.label;
     this.setState({
       netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
-      curSettings: { mode: { value: "ap" }, ipaddresstype: { value: "shared" }, band: { value: "bg" }, channel: { value: 0 }, ssid: { value: "" }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: "wpa-psk" }, password: { value: "" }, attachedIface: { value: '""' } }
+      curSettings: { mode: { value: "ap" }, ipaddresstype: { value: "shared" }, band: { value: "bg" }, channel: { value: '0' }, ssid: { value: "" }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: "wpa-psk" }, password: { value: "" }, attachedIface: { value: '""' } }
     });
   }
 
@@ -461,7 +461,7 @@ class NetworkConfig extends basePage {
     var nm = this.state.netConnectionFilteredSelected.label;
     this.setState({
       netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
-      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: 0 }, ssid: { value: selssid }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: selsecurity === '' ? 'wpa-none' : 'wpa-psk' }, password: { value: "" }, attachedIface: { value: '""' } }
+      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: '0' }, ssid: { value: selssid }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: selsecurity === '' ? 'wpa-none' : 'wpa-psk' }, password: { value: "" }, attachedIface: { value: '""' } }
     });
   }
 
