@@ -168,7 +168,7 @@ class NetworkConfig extends basePage {
         this.handleConnectionChange(null, { action: "select-option" });
         return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: null };
       }
-
+      console.log(activeCon)
       this.handleConnectionChange(activeCon, { action: "select-option" });
 
       return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
@@ -504,8 +504,11 @@ class NetworkConfig extends basePage {
             else {
               this.setState({ waiting: false, error: "Error deleting network: " + data.error });
             }
-            //and refresh connections list
-            this.handleStart();
+            // and refresh connections list after 500millisec. Sometimes the Rpi doesn't delete the network fast enough
+            // that it's still there when we grab a new conneciton list!
+            setTimeout(() => {
+              this.refreshConList();
+            }, 500);
           })
           .catch(error => {
             this.setState({ waiting: false, error: "Error deleting network: " + error });
@@ -549,7 +552,7 @@ class NetworkConfig extends basePage {
   refreshConList = (event) => {
     this.setState({ waiting: false }, () => {
       fetch(`/api/networkconnections`).then(response => response.json())
-                                      .then(state => this.setState(state))
+                                      .then(state => this.setState(state, () => { this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" }) }))
                                       .then(this.setState({ waiting: false }))
     })
   }
