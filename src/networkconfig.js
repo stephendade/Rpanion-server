@@ -162,6 +162,13 @@ class NetworkConfig extends basePage {
       if (activeCon === null && netConnection.length > 0) {
         activeCon = netConnection[0];
       }
+      // no connections in list at all. Blank settings
+      else if (netConnection.length === 0)
+      {
+        this.handleConnectionChange(null, { action: "select-option" });
+        return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: null };
+      }
+
       this.handleConnectionChange(activeCon, { action: "select-option" });
 
       return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
@@ -172,6 +179,7 @@ class NetworkConfig extends basePage {
     //on a device selection change, re-fill the connections dialog
     //and open up the applicable divs
     if (value === null) {
+      // no selected connection. Blank fields
       this.setState({ showIP: false });
       return;
     }
