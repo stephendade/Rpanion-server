@@ -61,7 +61,7 @@ for device in devices:
         caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
 
         path = "/dev/video0"
-        name = "Raspberry Pi Camera (V2)"
+        name = "CSI Port Camera"
     # If legacy camera stack on RasPiOS
     elif "mmal service" in name:
         caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
