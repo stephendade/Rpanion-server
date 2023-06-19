@@ -53,13 +53,19 @@ an initial Wifi hotspot.
 cd ./deploy && ./RasPi2-3-4-deploy.sh
 ```
 
-Note the "Legacy" camera option must be enabled to use cameras on the Pi's CSI port.
-
 If running Ubuntu 20.04 OS on the Pi, use:
 
 ```
 cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20-deploy.sh
 ```
+
+If running Ubuntu 22.04 OS on the Pi, use:
+
+```
+cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu22-deploy.sh
+```
+
+Note the CSI camera does not currently work on Ubuntu 22.04, due to incompatibilities with the Raspberry Pi.
 
 For the Raspberry Pi Zero W(1), run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server. Note this does configure an initial Wifi hotspot.
