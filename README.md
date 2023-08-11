@@ -24,6 +24,8 @@ On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and U
 
 On the Nvidia Jetson, Rpanion-server is compatible with Ubuntu 18.04 LTS.
 
+On the [Libre Computer Le Potato](https://libre.computer/products/aml-s905x-cc/), Rpanion-server is compatible with their flavor of [Raspberry Pi OS](https://distro.libre.computer/ci/raspbian/).
+
 ## Features
 
 Rpanion-server allows the user to configure:
@@ -143,6 +145,29 @@ configure an initial Wifi hotspot.
 ```
 cd ./deploy && ./jetson-deploy.sh
 ```
+
+### Automatic (Libre Computer AML-S905X-CC aka 'Le Potato')
+
+For the Le Potato run the below command on a fresh OS install
+to configure and install Rpanion-server and all required dependencies. Note this does not
+configure an initial Wifi hotspot.
+
+```
+cd ./deploy && ./RasPi2-3-4-deploy.sh
+```
+
+If using a usb to serial converter, you might need to modify permissions of the device.
+
+**Temporary device permission update**
+
+```
+sudo chmod 666 /dev/ttyACM0
+```
+
+**Persistent device permission update**
+
+Follow the steps on this site for your specific device:
+https://www.xmodulo.com/change-usb-device-permission-linux.html
 
 ### Automatic (x86 boards and laptops)
 
