@@ -375,11 +375,24 @@ class FCDetails {
         }
         // console.log("Port: ", ports[i].pnpID);
         this.serialDevices.push({ value: ports[i].path, label: namePorts, pnpId: ports[i].pnpId })
+      } else if (ports[i].manufacturer !== undefined) {
+        // on recent RasPiOS, the pnpID is undefined :(
+        const nameports = ports[i].manufacturer + ' (' + ports[i].path + ')'
+        this.serialDevices.push({ value: ports[i].path, label: nameports, pnpId: nameports })
       }
     }
     // for the Ras Pi's inbuilt UART
     if (fs.existsSync('/dev/serial0') && isPi()) {
       this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
+    }
+    if (fs.existsSync('/dev/ttyAMA2') && isPi()) {
+      this.serialDevices.push({ value: '/dev/ttyAMA2', label: '/dev/ttyAMA2', pnpId: '' })
+    }
+    if (fs.existsSync('/dev/ttyAMA3') && isPi()) {
+      this.serialDevices.push({ value: '/dev/ttyAMA3', label: '/dev/ttyAMA3', pnpId: '' })
+    }
+    if (fs.existsSync('/dev/ttyAMA4') && isPi()) {
+      this.serialDevices.push({ value: '/dev/ttyAMA4', label: '/dev/ttyAMA4', pnpId: '' })
     }
     // rpi uart has different name under Ubuntu
     const data = await si.osInfo()
