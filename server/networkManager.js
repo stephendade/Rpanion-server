@@ -137,7 +137,7 @@ function addConnection (conNameStr, conType, conAdapter, conSettings, callback) 
   // due to the multiple edits, we need to set autoconnect to "no"
   if (conType === 'wifi') {
     exec('nmcli connection add type ' + conType + ' ifname ' + conAdapter +
-             ' con-name ' + conNameStr + ' ssid ' + conSettings.ssid.value + ' 802-11-wireless.mode ' +
+             ' con-name ' + conNameStr + ' ssid \'' + conSettings.ssid.value + '\' 802-11-wireless.mode ' +
              conSettings.mode.value + (conSettings.band === {} ? (' 802-11-wireless.band ' + conSettings.band.value) : '') +
              (conSettings.channel === {} ? (' 802-11-wireless.channel ' + (conSettings.channel.value === '0' ? '\'\'' : conSettings.channel.value)) : '') +
              ' ipv4.method ' + conSettings.ipaddresstype.value + ' connection.autoconnect no ' + ' && ' +
