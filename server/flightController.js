@@ -417,9 +417,9 @@ class FCDetails {
     if (this.activeDevice) {
       return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else if (this.serialDevices.length > 0) {
-      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else {
-      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[0], this.mavlinkVersions, this.mavlinkVersions[0], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     }
   }
 
