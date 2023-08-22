@@ -385,6 +385,9 @@ class FCDetails {
     if (fs.existsSync('/dev/serial0') && isPi()) {
       this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
     }
+    if (fs.existsSync('/dev/ttyAMA1') && isPi()) {
+      this.serialDevices.push({ value: '/dev/ttyAMA1', label: '/dev/ttyAMA1', pnpId: '' })
+    }
     if (fs.existsSync('/dev/ttyAMA2') && isPi()) {
       this.serialDevices.push({ value: '/dev/ttyAMA2', label: '/dev/ttyAMA2', pnpId: '' })
     }
