@@ -505,6 +505,7 @@ app.get('/api/FCOutputs', (req, res) => {
 app.get('/api/FCDetails', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP, enableUDPB, UDPBPort, enableDSRequest) => {
+    // hacky way to pass through the 
     if (!err) {
       console.log('Sending')
       console.log(devices)
@@ -522,8 +523,21 @@ app.get('/api/FCDetails', (req, res) => {
         enableDSRequest: enableDSRequest
       }))
     } else {
-      res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ serialPortSelected: err, baudRateSelected: err }))
+      console.log(devices)
+      res.send(JSON.stringify({
+        error: err.toString(),
+        telemetryStatus: active,
+        serialPorts: devices,
+        baudRates: bauds,
+        serialPortSelected: seldevice,
+        mavVersions: mavers,
+        mavVersionSelected: selmav,
+        baudRateSelected: selbaud,
+        enableTCP: enableTCP,
+        enableUDPB: enableUDPB,
+        UDPBPort: UDPBPort,
+        enableDSRequest: enableDSRequest
+      }))
       winston.error('Error in /api/FCDetails ', { message: err })
     }
   })
