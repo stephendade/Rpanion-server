@@ -4,7 +4,7 @@ const fs = require('fs')
 const events = require('events')
 const path = require('path')
 const appRoot = require('app-root-path')
-const { spawn, spawnSync } = require('child_process')
+const { spawn, spawnSync, exec } = require('child_process')
 const si = require('systeminformation')
 const isPi = require('detect-rpi')
 
@@ -110,6 +110,17 @@ class FCDetails {
       return false
     } else {
       return true
+    }
+  }
+
+  isModemManagerInstalled () {
+    // check ModemManager is installed
+    const ls = spawnSync('which', ['ModemManager'])
+    console.log(ls.stdout.toString())
+    if (ls.stdout.toString().includes('ModemManager')) {
+      return true
+    } else {
+      return false
     }
   }
 
@@ -359,6 +370,7 @@ class FCDetails {
   async getSerialDevices (callback) {
     // get all serial devices
     this.serialDevices = []
+    let retError = null
 
     const Binding = autoDetect()
     const ports = await Binding.list()
@@ -379,6 +391,16 @@ class FCDetails {
         // on recent RasPiOS, the pnpID is undefined :(
         const nameports = ports[i].manufacturer + ' (' + ports[i].path + ')'
         this.serialDevices.push({ value: ports[i].path, label: nameports, pnpId: nameports })
+      }
+    }
+    // if the serial console or modemmanager are active on the Pi, return error
+    if (this.isModemManagerInstalled()) {
+      retError = Error('The ModemManager package is installed. This must be uninstalled (via sudo apt remove modemmanager), due to conflicts with serial ports')
+    }
+    if (isPi()) {
+      const data = fs.readFileSync('/boot/cmdline.txt', { encoding: 'utf8', flag: 'r' })
+      if (data.includes('console=serial0')) {
+        retError = Error('Serial console is active on /dev/serial0. Use raspi-config to deactivate it')
       }
     }
     // for the Ras Pi's inbuilt UART
@@ -418,11 +440,11 @@ class FCDetails {
     }
     // set the active device as selected
     if (this.activeDevice) {
-      return callback(null, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else if (this.serialDevices.length > 0) {
-      return callback(null, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else {
-      return callback(null, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     }
   }
 
