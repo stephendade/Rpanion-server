@@ -35,7 +35,7 @@ sudo service network-manager restart
 ./build_mavlinkrouter.sh
 
 ## and build & run Rpanion
-./build.sh
+./build_rpanion.sh
 
 ## For wireguard. Must be installed last as it messes the DNS resolutions
 sudo apt install -y resolvconf
