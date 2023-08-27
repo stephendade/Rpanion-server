@@ -38,7 +38,7 @@ sudo apt install -y wireless-tools
 
 sudo systemctl disable dnsmasq
 
-curl -sL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 ## Configure nmcli to not need sudo
