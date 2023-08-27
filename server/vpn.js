@@ -160,7 +160,7 @@ function deleteWireguardProfile (filename, callback) {
 function getVPNStatusWireguard (errpass, callback) {
   // get status of VPN
   exec('which wg-quick', (errorwg, stdoutwg, stderrwg) => {
-    //check if installed
+    // check if installed
     if (errorwg !== null) {
       console.error(`exec error: ${stderrwg}`)
       winston.error('Error in getVPNStatusWireguard() ', { message: stderrwg })

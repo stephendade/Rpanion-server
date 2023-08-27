@@ -154,17 +154,17 @@ class videoStream {
 
       this.active = true
       this.savedDevice = {
-        device: device,
-        height: height,
-        width: width,
-        format: format,
-        bitrate: bitrate,
-        fps: fps,
-        rotation: rotation,
-        useUDP: useUDP,
-        useUDPIP: useUDPIP,
-        useUDPPort: useUDPPort,
-        useTimestamp: useTimestamp
+        device,
+        height,
+        width,
+        format,
+        bitrate,
+        fps,
+        rotation,
+        useUDP,
+        useUDPIP,
+        useUDPPort,
+        useTimestamp
       }
 
       // note that video device URL's are the alphanumeric characters only. So /dev/video0 -> devvideo0

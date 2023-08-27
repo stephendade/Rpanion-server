@@ -70,7 +70,6 @@ describe('Logging Functions', function () {
     Lgr.clearlogs('binlog', null)
     Lgr.clearlogs('kmzlog', null)
 
-
     // assert all files deleted
     assert.equal(Lgr.activeFileTlog, null)
     assert.equal(Lgr.activeFileBinlog, null)

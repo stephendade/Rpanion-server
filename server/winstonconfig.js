@@ -1,9 +1,9 @@
-var winston = require('winston')
+const winston = require('winston')
 const path = require('path')
-var appRoot = require('app-root-path')
+const appRoot = require('app-root-path')
 
 // define the custom settings for each transport (file, console)
-var options = {
+const options = {
   file: {
     level: 'info',
     filename: `${appRoot}/logs/app.log`,
