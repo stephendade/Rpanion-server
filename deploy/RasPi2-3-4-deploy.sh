@@ -30,7 +30,7 @@ pip3 install picamera2 --user
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
 
-curl -skL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+curl -skL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 
 ## Configure nmcli to not need sudo
