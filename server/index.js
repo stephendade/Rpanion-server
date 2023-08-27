@@ -225,7 +225,7 @@ app.get('/api/ntripconfig', (req, res) => {
   ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
-    res.send(JSON.stringify({ host: host, port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
+    res.send(JSON.stringify({ host, port, mountpoint, username, password, active }))
   })
 })
 
@@ -233,7 +233,7 @@ app.get('/api/ntripconfig', (req, res) => {
 app.get('/api/cloudinfo', (req, res) => {
   cloud.getSettings((doBinUpload, binUploadLink, syncDeletions, pubkey) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ doBinUpload: doBinUpload, binUploadLink: binUploadLink, syncDeletions: syncDeletions, pubkey: pubkey }))
+    res.send(JSON.stringify({ doBinUpload, binUploadLink, syncDeletions, pubkey }))
   })
 })
 
@@ -251,23 +251,22 @@ app.post('/api/binlogupload', [check('doBinUpload').isBoolean(),
     // send back refreshed settings
     cloud.getSettings((doBinUpload, binUploadLink, syncDeletions) => {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ doBinUpload: doBinUpload, binUploadLink: binUploadLink, syncDeletions: syncDeletions }))
+      res.send(JSON.stringify({ doBinUpload, binUploadLink, syncDeletions }))
     })
   }
 })
-
 
 // Serve the logconversion info
 app.get('/api/logconversioninfo', (req, res) => {
   logConversion.getSettings((doLogConversion) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ doLogConversion: doLogConversion}))
+    res.send(JSON.stringify({ doLogConversion }))
   })
 })
 
 // activate or deactivate logconversion
 app.post('/api/logconversion', [check('doLogConversion').isBoolean()
-  ], function (req, res) {
+], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
@@ -278,7 +277,7 @@ app.post('/api/logconversion', [check('doLogConversion').isBoolean()
     // send back refreshed settings
     logConversion.getSettings((doLogConversion) => {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ doLogConversion: doLogConversion}))
+      res.send(JSON.stringify({ doLogConversion }))
     })
   }
 })
@@ -288,7 +287,7 @@ app.get('/api/adhocadapters', (req, res) => {
   adhocManager.getAdapters((err, netDeviceList, netDeviceSelected, settings) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      const ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
+      const ret = { netDevice: netDeviceList, netDeviceSelected, curSettings: settings }
       res.send(JSON.stringify(ret))
     } else {
       res.setHeader('Content-Type', 'application/json')
@@ -318,11 +317,11 @@ app.post('/api/adhocadaptermodify', [check('settings.isActive').isBoolean(),
     adhocManager.setAdapter(req.body.toState, req.body.netDeviceSelected, req.body.settings, (err, netDeviceList, netDeviceSelected, settings) => {
       if (!err) {
         res.setHeader('Content-Type', 'application/json')
-        const ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings }
+        const ret = { netDevice: netDeviceList, netDeviceSelected, curSettings: settings }
         res.send(JSON.stringify(ret))
       } else {
         res.setHeader('Content-Type', 'application/json')
-        const ret = { netDevice: netDeviceList, netDeviceSelected: netDeviceSelected, curSettings: settings, error: err }
+        const ret = { netDevice: netDeviceList, netDeviceSelected, curSettings: settings, error: err }
         res.send(JSON.stringify(ret))
         winston.error('Error in /api/adhocadapters ', { message: err })
       }
@@ -348,7 +347,7 @@ app.post('/api/ntripmodify', [check('active').isBoolean(),
   ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
-    res.send(JSON.stringify({ host: host, port: port, mountpoint: mountpoint, username: username, password: password, active: active }))
+    res.send(JSON.stringify({ host, port, mountpoint, username, password, active }))
   })
 })
 
@@ -387,15 +386,15 @@ app.post('/api/deletelogfiles', [check('logtype').isIn(['tlog', 'binlog', 'kmzlo
 
 app.get('/api/newlogfile', (req, res) => {
   logManager.newtlog()
-  //console.log(logConversion.tlogfilename)
+  // console.log(logConversion.tlogfilename)
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({}))
 })
 
 app.get('/api/tlogfilename', (req, res) => {
-  //console.log(logManager.activeFileTlog)
+  // console.log(logManager.activeFileTlog)
   res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({tlogfilename: logManager.activeFileTlog}))
+  res.send(JSON.stringify({ tlogfilename: logManager.activeFileTlog }))
 })
 
 app.post('/api/logenable', [check('enable').isBoolean()], function (req, res) {
@@ -414,7 +413,7 @@ app.get('/api/softwareinfo', (req, res) => {
   aboutPage.getSoftwareInfo((OSV, NodeV, RpanionV, hostname, err) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ OSVersion: OSV, Nodejsversion: NodeV, rpanionversion: RpanionV, hostname: hostname}))
+      res.send(JSON.stringify({ OSVersion: OSV, Nodejsversion: NodeV, rpanionversion: RpanionV, hostname }))
       winston.info('/api/softwareinfo OS:' + OSV + ' Node:' + NodeV + ' Rpanion:' + RpanionV + ' Hostname: ' + hostname)
     } else {
       res.setHeader('Content-Type', 'application/json')
@@ -442,7 +441,7 @@ app.get('/api/videodevices', (req, res) => {
           UDPChecked: SeluseUDP,
           useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
-          timestamp: timestamp,
+          timestamp,
           errors: null
         }))
       } else {
@@ -459,7 +458,7 @@ app.get('/api/videodevices', (req, res) => {
           UDPChecked: SeluseUDP,
           useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
-          timestamp: timestamp,
+          timestamp,
           errors: null
         }))
       }
@@ -505,7 +504,7 @@ app.get('/api/FCOutputs', (req, res) => {
 app.get('/api/FCDetails', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP, enableUDPB, UDPBPort, enableDSRequest) => {
-    // hacky way to pass through the 
+    // hacky way to pass through the
     if (!err) {
       console.log('Sending')
       console.log(devices)
@@ -517,10 +516,10 @@ app.get('/api/FCDetails', (req, res) => {
         mavVersions: mavers,
         mavVersionSelected: selmav,
         baudRateSelected: selbaud,
-        enableTCP: enableTCP,
-        enableUDPB: enableUDPB,
-        UDPBPort: UDPBPort,
-        enableDSRequest: enableDSRequest
+        enableTCP,
+        enableUDPB,
+        UDPBPort,
+        enableDSRequest
       }))
     } else {
       console.log(devices)
@@ -533,10 +532,10 @@ app.get('/api/FCDetails', (req, res) => {
         mavVersions: mavers,
         mavVersionSelected: selmav,
         baudRateSelected: selbaud,
-        enableTCP: enableTCP,
-        enableUDPB: enableUDPB,
-        UDPBPort: UDPBPort,
-        enableDSRequest: enableDSRequest
+        enableTCP,
+        enableUDPB,
+        UDPBPort,
+        enableDSRequest
       }))
       winston.error('Error in /api/FCDetails ', { message: err })
     }

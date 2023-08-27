@@ -10,8 +10,8 @@ chai.should()
 
 describe('Express server', function () {
   // Test the GET / endpoint
-  describe('GET /', function() {
-    it('should return a 200 status code', function(done) {
+  describe('GET /', function () {
+    it('should return a 200 status code', function (done) {
       chai.request(app)
         .get('/')
         .set('Accept', 'application/json')

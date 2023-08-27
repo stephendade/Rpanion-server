@@ -1,19 +1,19 @@
-var assert = require('assert')
-var should = require('should')
+const assert = require('assert')
+const should = require('should')
 const mavManager = require('./mavManager')
-var udp = require('dgram')
+const udp = require('dgram')
 
 describe('MAVLink Functions', function () {
   it('#startup()', function () {
-    var m = new mavManager(1, '127.0.0.1', 15000)
+    const m = new mavManager(1, '127.0.0.1', 15000)
 
     assert.notEqual(m.mav, null)
     m.close()
   })
 
   it('#receivepacket()', function (done) {
-    var m = new mavManager(2, '127.0.0.1', 15000)
-    var packets = []
+    const m = new mavManager(2, '127.0.0.1', 15000)
+    const packets = []
 
     m.eventEmitter.on('gotMessage', (packet, data) => {
       packets.push(packet.buffer)
@@ -45,8 +45,8 @@ describe('MAVLink Functions', function () {
   })
 
   it('#versionSend()', function (done) {
-    var m = new mavManager(2, '127.0.0.1', 16000)
-    var udpStream = udp.createSocket('udp4')
+    const m = new mavManager(2, '127.0.0.1', 16000)
+    const udpStream = udp.createSocket('udp4')
 
     assert.equal(m.statusBytesPerSec.avgBytesSec, 0)
 
@@ -72,8 +72,8 @@ describe('MAVLink Functions', function () {
   })
 
   it('#dsSend()', function (done) {
-    var m = new mavManager(2, '127.0.0.1', 15000)
-    var udpStream = udp.createSocket('udp4')
+    const m = new mavManager(2, '127.0.0.1', 15000)
+    const udpStream = udp.createSocket('udp4')
 
     m.eventEmitter.on('linkready', (info) => {
       m.sendDSRequest()
@@ -94,8 +94,8 @@ describe('MAVLink Functions', function () {
   })
 
   it('#rebootSend()', function (done) {
-    var m = new mavManager(2, '127.0.0.1', 15000)
-    var udpStream = udp.createSocket('udp4')
+    const m = new mavManager(2, '127.0.0.1', 15000)
+    const udpStream = udp.createSocket('udp4')
 
     m.eventEmitter.on('linkready', (info) => {
       m.sendReboot()
@@ -117,16 +117,16 @@ describe('MAVLink Functions', function () {
 
   it('#perfTest()', function () {
     // how fast can we process packets and send out over udp?
-    var m = new mavManager(2, '127.0.0.1', 15000)
+    const m = new mavManager(2, '127.0.0.1', 15000)
 
     // time how long 255 HB packets takes
-    var starttime = Date.now().valueOf()
-    for (var i = 0; i < 255; i++) {
-      var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, i, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
+    const starttime = Date.now().valueOf()
+    for (let i = 0; i < 255; i++) {
+      const hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, i, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
       m.inStream.write(hb)
     }
-    var delta = Date.now().valueOf() - starttime
-    var packetsPerSec = 1000 * (255 / delta)
+    const delta = Date.now().valueOf() - starttime
+    const packetsPerSec = 1000 * (255 / delta)
 
     console.log('MAVLink performance is ' + parseInt(packetsPerSec) + ' packets/sec')
     m.close()

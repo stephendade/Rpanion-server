@@ -13,7 +13,7 @@ import AdhocConfig from './adhocwifi.js'
 import CloudConfig from './cloud.js'
 import VPN from './vpnconfig'
 
-function AppRouter() {
+function AppRouter () {
   return (
     <div id="wrapper" className="d-flex">
       <div id="sidebar-wrapper" className="bg-light border-right">
@@ -55,7 +55,7 @@ function AppRouter() {
   )
 }
 
-function NoMatch({ location }) {
+function NoMatch ({ location }) {
   return (
     <div>
       <h3>

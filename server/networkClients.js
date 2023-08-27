@@ -38,7 +38,7 @@ function getClients (callback) {
                   const ip = details[2]
                   const mac = details[1]
                   const hostname = details[3]
-                  allclients.push({ ip: ip, mac: mac, hostname: hostname })
+                  allclients.push({ ip, mac, hostname })
                 }
               }
               const ssidOut = execSync('nmcli -s -t -f 802-11-wireless.ssid connection show ' + connection[1])

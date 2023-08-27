@@ -1,4 +1,4 @@
-var assert = require('assert')
+const assert = require('assert')
 const settings = require('settings-store')
 const FCManagerClass = require('./flightController')
 const winston = require('./winstonconfig')(module)
