@@ -28,11 +28,11 @@ echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
 pip3 install picamera2 --user
 
 ## node.js for the RPi Zero needs the "armv61" build
-wget https://unofficial-builds.nodejs.org/download/release/v14.21.2/node-v14.21.2-linux-armv6l.tar.xz
+wget https://unofficial-builds.nodejs.org/download/release/v16.19.1/node-v16.19.1-linux-armv6l.tar.xz
 sudo mkdir -p /usr/local/lib/nodejs
-sudo tar -xJvf node-v14.21.2-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
-sudo ln -s /usr/local/lib/nodejs/node-v14.21.2-linux-armv6l/bin/node /usr/local/bin
-sudo ln -s /usr/local/lib/nodejs/node-v14.21.2-linux-armv6l/bin/npm /usr/local/bin
+sudo tar -xJvf node-v16.19.1-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
+sudo ln -s /usr/local/lib/nodejs/node-v16.19.1-linux-armv6l/bin/node /usr/local/bin
+sudo ln -s /usr/local/lib/nodejs/node-v16.19.1-linux-armv6l/bin/npm /usr/local/bin
 
 ## mavlink-router
 ./build_mavlinkrouter.sh
