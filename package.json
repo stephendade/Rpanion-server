@@ -32,7 +32,7 @@
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",
     "startbootstrap-simple-sidebar": "^6.0.6",
-    "systeminformation": "^5.20.0",
+    "systeminformation": "^5.21.7",
     "underscore": "^1.13.6",
     "winston": "^3.10.0"
   },
