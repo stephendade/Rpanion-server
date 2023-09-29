@@ -13,13 +13,6 @@ sudo perl -pe 's/console=serial0,115200//' -i /boot/firmware/cmdline.txt
 
 echo "export PATH=$PATH:$HOME/.local/bin" >> ~/.bashrc
 
-## Power switch config for Pi-Connect
-echo "" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-echo "# Power switch" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-echo "dtoverlay=gpio-shutdown" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/firmware/usercfg.txt >/dev/null
-sudo perl -pe 's/dtparam=i2c_arm=on/dtparam=i2c_arm=off/' -i /boot/firmware/syscfg.txt 
-
 ## Camera
 echo "" | sudo tee -a /boot/firmware/config.txt >/dev/null
 echo "# Enable Camera" | sudo tee -a /boot/firmware/config.txt >/dev/null
