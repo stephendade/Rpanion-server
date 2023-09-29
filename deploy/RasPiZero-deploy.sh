@@ -16,12 +16,6 @@ sudo raspi-config nonint do_serial 2
 sudo raspi-config nonint do_hostname rpanion
 sudo perl -pe 's/raspberrypi/rpanion/' -i /etc/hosts
 
-## Power switch config for Pi-Connect
-echo "" | sudo tee -a /boot/config.txt >/dev/null
-echo "# Power switch" | sudo tee -a /boot/config.txt >/dev/null
-echo "dtoverlay=gpio-shutdown" | sudo tee -a /boot/config.txt >/dev/null
-echo "dtoverlay=gpio-poweroff" | sudo tee -a /boot/config.txt >/dev/null
-
 ./install_common_libraries.sh
 
 ## Only install picamera2 on RaspiOS
