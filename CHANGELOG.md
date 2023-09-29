@@ -1,5 +1,21 @@
 ### Changelog
 
+#### [v0.10.0](https://github.com/stephendade/Rpanion-server/compare/v0.9.0...v0.10.0)
+ - Add support for nodejs 18 and 20
+ - Video: Use libcamera on Raspberry Pi
+ - Video: Add support for 2nd CSI port on Raspberry Pi
+ - Video: Hardware x264 encoding for USB cameras
+ - Video: Reduce x264 latency
+ - Video: Add support for Jetson CSI cameras
+ - FlightController: Add option to send datastream requests
+ - UI: More consistency
+ - Network: Better Wireguard status
+ - Network: Add refresh button to Wifi network list
+ - Network: Various bug fixes in showing connection details
+ - Add (limited) support for Ubuntu22 on Raspberry Pi. Video not supported.
+ - Added support for Le Potato SBC
+ - FlightController: Added support for alterntate serial ports on Raspberry Pi 4
+
 #### [v0.9.0](https://github.com/stephendade/Rpanion-server/compare/v0.8.0...v0.9.0)
 
 - Upgrade from nodejs v14 to v16
