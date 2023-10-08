@@ -125,9 +125,9 @@ for device in devices:
                         fps.append({'value': "-1", 'label': "N/A"})
                 
                 #Only append if it's a unique value
-                if "{0}x{1}".format(width, height) not in getcapval(caps):
-                    form = structure.get_name().split('/')[1]
-                    caps.append({'value': "{0}x{1}".format(width, height), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name(), 'fpsmax': FPSMax, 'fps': fps})
+                form = structure.get_name().split('/')[1]
+                if "{0}x{1}x{2}".format(width, height, form) not in getcapval(caps):
+                    caps.append({'value': "{0}x{1}x{2}".format(width, height, form), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name(), 'fpsmax': FPSMax, 'fps': fps})
 
     retDevices.append({'value': path, 'label': name, 'caps': caps})
 
