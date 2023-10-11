@@ -53,6 +53,9 @@ class FCDetails {
     // UDP Outputs
     this.UDPoutputs = []
 
+    // Send out MAVLink heartbeat packets?
+    this.enableHeartbeat = false
+  
     // Use TCP output?
     this.enableTCP = false
 
@@ -70,6 +73,7 @@ class FCDetails {
     this.settings = settings
     this.activeDevice = this.settings.value('flightcontroller.activeDevice', null)
     this.UDPoutputs = this.settings.value('flightcontroller.outputs', [])
+    this.enableHeartbeat = this.settings.value('flightcontroller.enableHeartbeat', false)
     this.enableTCP = this.settings.value('flightcontroller.enableTCP', false)
     this.enableUDPB = this.settings.value('flightcontroller.enableUDPB', true)
     this.UDPBPort = this.settings.value('flightcontroller.UDPBPort', 14550)
@@ -78,7 +82,7 @@ class FCDetails {
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
       let found = false
-      this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP) => {
+      this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableHeartbeat, enableTCP) => {
         for (let i = 0, len = devices.length; i < len; i++) {
           if (this.activeDevice.serial.value === devices[i].value) {
             found = true
@@ -440,17 +444,22 @@ class FCDetails {
     }
     // set the active device as selected
     if (this.activeDevice) {
-      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else if (this.serialDevices.length > 0) {
-      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     } else {
-      return callback(retError, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
     }
   }
 
   startInterval () {
     // start the 1-sec loop checking for disconnects
     this.intervalObj = setInterval(() => {
+    
+    // Send heartbeats, if they are enabled
+    if(this.enableHeartbeat){
+      this.m.sendHeartbeat()
+    }
       // check for timeouts in serial link (ie disconnected cable or reboot)
       if (this.m && this.m.conStatusInt() === -1) {
         console.log('Trying to reconnect FC...')
@@ -468,10 +477,11 @@ class FCDetails {
     }, 1000)
   }
 
-  startStopTelemetry (device, baud, mavversion, enableTCP, enableUDPB, UDPBPort, enableDSRequest, callback) {
+  startStopTelemetry (device, baud, mavversion, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
+  this.enableHeartbeat = enableHeartbeat
     this.enableTCP = enableTCP
     this.enableUDPB = enableUDPB
     this.UDPBPort = UDPBPort
@@ -540,6 +550,7 @@ class FCDetails {
     try {
       this.settings.setValue('flightcontroller.activeDevice', this.activeDevice)
       this.settings.setValue('flightcontroller.outputs', this.UDPoutputs)
+      this.settings.setValue('flightcontroller.enableHeartbeat', this.enableHeartbeat)
       this.settings.setValue('flightcontroller.enableTCP', this.enableTCP)
       this.settings.setValue('flightcontroller.enableUDPB', this.enableUDPB)
       this.settings.setValue('flightcontroller.UDPBPort', this.UDPBPort)
