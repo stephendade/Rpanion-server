@@ -505,7 +505,7 @@ app.get('/api/FCOutputs', (req, res) => {
 
 app.get('/api/FCDetails', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableTCP, enableUDPB, UDPBPort, enableDSRequest) => {
+  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest) => {
     // hacky way to pass through the
     if (!err) {
       console.log('Sending')
@@ -518,6 +518,7 @@ app.get('/api/FCDetails', (req, res) => {
         mavVersions: mavers,
         mavVersionSelected: selmav,
         baudRateSelected: selbaud,
+        enableHeartbeat,
         enableTCP,
         enableUDPB,
         UDPBPort,
@@ -534,6 +535,7 @@ app.get('/api/FCDetails', (req, res) => {
         mavVersions: mavers,
         mavVersionSelected: selmav,
         baudRateSelected: selbaud,
+        enableHeartbeat,
         enableTCP,
         enableUDPB,
         UDPBPort,
@@ -554,7 +556,7 @@ app.post('/api/updatemaster', function (req, res) {
   aboutPage.updateRS(io)
 })
 
-app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean()], function (req, res) {
+app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -562,7 +564,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
     return res.status(422).json({ errors: errors.array() })
   }
 
-  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest, (err, isSuccess) => {
+  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat, req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);

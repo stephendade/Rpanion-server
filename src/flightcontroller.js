@@ -18,6 +18,7 @@ class FCPage extends basePage {
       serialPortSelected: null,
       baudRateSelected: null,
       mavVersionSelected: null,
+      enableHeartbeat: null,
       enableTCP: null,
       FCStatus: {},
       UDPoutputs: [],
@@ -59,6 +60,10 @@ class FCPage extends basePage {
     this.setState({ mavVersionSelected: value });
   }
 
+  handleUseHeartbeatChange = (event) => {
+    this.setState({ enableHeartbeat: event.target.checked });
+  }
+
   handleUseTCPChange = (event) => {
     this.setState({ enableTCP: event.target.checked });
   }
@@ -87,6 +92,7 @@ class FCPage extends basePage {
         device: JSON.stringify(this.state.serialPortSelected),
         baud: JSON.stringify(this.state.baudRateSelected),
         mavversion: JSON.stringify(this.state.mavVersionSelected),
+        enableHeartbeat: this.state.enableHeartbeat,
         enableTCP: this.state.enableTCP,
         enableUDPB: this.state.enableUDPB,
         UDPBPort: this.state.UDPBPort,
@@ -238,10 +244,19 @@ class FCPage extends basePage {
           <div className="col-sm-7">
           <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
           </div>
+        <br /> <br />
+        <p><i>Advertise RPanion as an onboard companion computer on the MAVLink network</i></p>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-5 col-form-label">Enable MAVLink heartbeats</label>
+          <div className="col-sm-7">
+          <input type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
+          </div>
+        </div>
+
         </div>
         <br />
         <h2>Status</h2>
-        <p>Packets Recieved: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
+        <p>Packets Received: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
         <p>Connection Status: {this.state.FCStatus.conStatus}</p>
         <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
         <p>Vehicle Firmware: {this.state.FCStatus.FW}{this.state.FCStatus.fcVersion === '' ? '' : (', Version: ' + this.state.FCStatus.fcVersion)}</p>

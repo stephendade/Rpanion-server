@@ -213,7 +213,12 @@ class mavManager {
     this.udpStream.bind(this.inudpPort, this.inudpIP)
   }
 
-  sendData (msg) {
+  sendData (msg, component) {
+    // Set the default target component if it wasn't specified
+    if (component === null || component === undefined) {
+      component = minimal.MavComponent.ONBOARD_COMPUTER
+    }
+
     // msgbuf outgoing data
     if (this.RinudpPort === null || this.RinudpIP === null) {
       return
@@ -221,9 +226,9 @@ class mavManager {
 
     let protocol = null
     if (this.version === 2) {
-      protocol = new MavLinkProtocolV2(255, 1)
+      protocol = new MavLinkProtocolV2(this.targetSystem, component)
     } else {
-      protocol = new MavLinkProtocolV1(255, 1)
+      protocol = new MavLinkProtocolV1(this.targetSystem, component)
     }
 
     const buffer = protocol.serialize(msg, this.seq++)
@@ -240,6 +245,27 @@ class mavManager {
     })
   }
 
+  sendHeartbeat ( mavType = minimal.MavType.ONBOARD_CONTROLLER,
+                  autopilot = minimal.MavAutopilot.INVALID,
+                  baseMode = 0,
+                  customMode = 0,
+                  systemStatus = 0,
+                  component = minimal.MavComponent.ONBOARD_COMPUTER 
+                ) {
+    
+  // create a heartbeat packet
+    const heartbeatMessage = new minimal.Heartbeat()
+
+    heartbeatMessage.type = mavType
+    heartbeatMessage.autopilot = autopilot
+    heartbeatMessage.baseMode = baseMode
+    heartbeatMessage.customMode = customMode
+    heartbeatMessage.systemStatus = systemStatus
+    heartbeatMessage.mavlinkVersion = this.version
+
+    this.sendData(heartbeatMessage, component)
+  }
+  
   sendReboot () {
     // create a reboot packet
     const command = new common.PreflightRebootShutdownCommand(this.targetSystem, this.targetComponent)
