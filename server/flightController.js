@@ -397,7 +397,7 @@ class FCDetails {
     if (this.isModemManagerInstalled()) {
       retError = Error('The ModemManager package is installed. This must be uninstalled (via sudo apt remove modemmanager), due to conflicts with serial ports')
     }
-    if (isPi()) {
+    if (fs.existsSync('/boot/cmdline.txt') && isPi()) {
       const data = fs.readFileSync('/boot/cmdline.txt', { encoding: 'utf8', flag: 'r' })
       if (data.includes('console=serial0')) {
         retError = Error('Serial console is active on /dev/serial0. Use raspi-config to deactivate it')
