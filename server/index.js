@@ -444,7 +444,7 @@ app.get('/api/videodevices', (req, res) => {
           useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
           timestamp,
-          errors: null
+          error: null
         }))
       } else {
         res.send(JSON.stringify({
@@ -461,12 +461,12 @@ app.get('/api/videodevices', (req, res) => {
           useUDPIP: SeluseUDPIP,
           useUDPPort: SeluseUDPPort,
           timestamp,
-          errors: null
+          error: null
         }))
       }
     } else {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ errors: err }))
+      res.send(JSON.stringify({ error: err }))
       winston.error('Error in /api/videodevices ', { message: err })
     }
   })

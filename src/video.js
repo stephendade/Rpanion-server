@@ -12,7 +12,6 @@ class VideoPage extends basePage {
   constructor(props) {
     super(props);
     this.state = {
-      errors: "",
       dev: [],
       vidDeviceSelected: this.props.vidDeviceSelected,
       vidres: [],
