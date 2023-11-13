@@ -9,7 +9,6 @@ class NetworkClientsPage extends basePage {
   constructor (props) {
     super(props)
     this.state = {
-      errors: '',
       loading: true,
       error: null,
       infoMessage: null,
