@@ -56,8 +56,8 @@ class videoStream {
   getVideoDevices (callback) {
     // get all video device details
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
-      if (stderr && !stderr.includes('DeprecationWarning') && !stderr.includes('gst_element_message_full_with_details' &&
-          !stderr.includes('camera_manager.cpp') && !stderr.includes('Unsupported V4L2 pixel format'))) {
+      const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
+      if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
         console.error(`exec error: ${error}`)
         this.winston.error('Error in getVideoDevices() ', { message: stderr })
         return callback(stderr)
