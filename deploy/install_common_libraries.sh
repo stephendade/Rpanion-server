@@ -20,12 +20,19 @@ sudo apt remove -y nodejs nodejs-doc
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
-sudo python3 -m pip install --upgrade pip
-sudo pip3 install meson
-pip3 install netifaces --user
+# Debian Bookdown does not like pip install wthout a virtualenv, so do apt installs instead
+# Also need gstreamer1.0-libcamera, as the libcamerasrc gst element has moved
+source /etc/os-release
+if [ "$ID" == "debian" ] && [ "$VERSION_CODENAME" == "bookworm" ]; then
+    sudo apt install -y meson python3-netifaces gstreamer1.0-libcamera
+else
+    sudo python3 -m pip install --upgrade pip
+    sudo pip3 install meson
+    pip3 install netifaces --user
+fi
 
 ## Pymavlink and gpsbabel to create KMZ.
-DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user
+DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user --break-system-packages
 sudo apt-get install -y gpsbabel zip
 
 ## Zerotier and wireguard
