@@ -19,7 +19,7 @@ sudo perl -pe 's/raspberrypi/rpanion/' -i /etc/hosts
 ./install_common_libraries.sh
 
 ## Only install picamera2 on RaspiOS
-pip3 install picamera2 --user
+sudo apt install python3-picamera2 python3-libcamera python3-kms++
 
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
