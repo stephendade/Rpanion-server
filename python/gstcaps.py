@@ -27,23 +27,34 @@ def getcapval(caps):
     return allval
 
 
+# Return true if running on RPi
+def is_raspberry_pi():
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            cpuinfo = f.read()
+        return 'Raspberry Pi' in cpuinfo
+    except FileNotFoundError:
+        return False
+
+
 retDevices = []
 
 # Libcamera check, if installed
-try:
-    from picamera2 import Picamera2
-    for cam in Picamera2.global_camera_info():
-        caps = []
-        caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
-        caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
-        caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
-        caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
-        name = "CSI Port Camera ({0})".format(cam['Model'])
-        path = cam['Id']
-        if path.startswith("/base/soc/i2c"):
-            retDevices.append({'value': path, 'label': name, 'caps': caps})
-except:
-    pass
+if is_raspberry_pi():
+    try:
+        from picamera2 import Picamera2
+        for cam in Picamera2.global_camera_info():
+            caps = []
+            caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+            caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+            caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+            caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
+            name = "CSI Port Camera ({0})".format(cam['Model'])
+            path = cam['Id']
+            if path.startswith("/base/soc/i2c"):
+                retDevices.append({'value': path, 'label': name, 'caps': caps})
+    except:
+        pass
 
 legacycamint = 0
 
@@ -103,6 +114,11 @@ for device in devices:
             if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg'] :
                 width = structure.get_int('width').value
                 height = structure.get_int('height').value
+
+                # if on Rpi, don't return anything greater than 1080p on raw or jpg, as
+                # Rpi's x264 hardware encoder doesn't support >1080p
+                if is_raspberry_pi() and (height > 1080 or width > 1920) and structure.get_name() in ['video/x-raw', 'image/jpeg']:
+                    continue
                 #print(structure.get_list('framerate')[1].get_nth(0).fps_numerator)
                 #(_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
                 #single fpsmax, or list of available fps'
