@@ -19,12 +19,12 @@ sudo perl -pe 's/raspberrypi/rpanion/' -i /etc/hosts
 ./install_common_libraries.sh
 
 ## Only install picamera2 on RaspiOS
-sudo apt install python3-picamera2 python3-libcamera python3-kms++
+sudo apt -y install python3-picamera2 python3-libcamera python3-kms++
 
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
 
-sudo apt-get install -y ca-certificates curl gnupg
+sudo apt install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
