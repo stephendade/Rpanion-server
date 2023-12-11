@@ -94,6 +94,19 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
     if device == "testsrc":
         s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2}".format(
             width, height, framestr)
+    elif device in ["qti-0", "qti-1"]:
+        # RB5 board
+        s_src = "qtiqmmfsrc camera={3} ! video/x-raw,format=NV12,width={0},height={1}{2}".format(
+                width, height, framestr, int(device[-1]))
+        if rotation == 90:
+            s_src += " ! qtivtransform rotate=1"
+        if rotation == 180:
+            s_src += " ! qtivtransform rotate=3"
+        if rotation == 270:
+            s_src += " ! qtivtransform rotate=2"
+        # qtic2venc (hardware enc) won't work on rtsp. Also can't get qtioverlay to show timestamp
+        # So, going to software encoding here :(
+        s_h264 = "{1}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate, ts)
     elif device in ["argus0", "argus1"]:
         s_src = "nvarguscamerasrc sensor-id={0} ! video/x-raw(memory:NVMM),width={1},height={2},format=NV12{3}".format(
             device[-1], width, height, framestr)
