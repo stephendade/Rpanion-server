@@ -32,7 +32,12 @@ else
 fi
 
 ## Pymavlink and gpsbabel to create KMZ.
-DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user --break-system-packages
+#Ubuntu 18 (Jetson) doesn't like the --break-system-packages option
+if [ "$ID" == "ubuntu" ] && [ "$VERSION_CODENAME" == "bionic" ]; then
+    DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user --break-system-packages
+else
+    DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user
+fi
 sudo apt-get install -y gpsbabel zip
 
 ## Zerotier and wireguard
