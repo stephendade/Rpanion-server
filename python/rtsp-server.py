@@ -102,7 +102,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         s_src = "rpicamsrc {5} bitrate={0} rotation={3} camera-number={6} preview=false ! video/x-h264,width={1},height={2}{4}".format(
             bitrate*1000, width, height, devrotation, framestr, ts, device[0])
         s_h264 = "identity"
-    elif device.startswith("/base/soc/i2c"):
+    elif device.startswith("/base/soc/i2c") or device.startswith("/base/axi/pcie"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
         s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format=NV12{2}".format(
             width, height, framestr, device)
