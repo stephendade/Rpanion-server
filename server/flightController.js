@@ -6,9 +6,29 @@ const path = require('path')
 const appRoot = require('app-root-path')
 const { spawn, spawnSync, exec } = require('child_process')
 const si = require('systeminformation')
-const isPi = require('detect-rpi')
+//const isPi = require('detect-rpi')
 
 const mavManager = require('../mavlink/mavManager.js')
+
+function isPi () {
+  let cpuInfo = ''
+  try {
+    cpuInfo = fs.readFileSync('/proc/device-tree/compatible', { encoding: 'utf8' })
+  } catch (e) {
+    // if this fails, this is probably not a pi
+    return false
+  }
+
+  const model = cpuInfo
+    .split(',')
+    .filter(line => line.length > 0)
+
+  if (!model || model.length === 0) {
+    return false
+  }
+
+  return model[0] === 'raspberrypi'
+}
 
 class FCDetails {
   constructor (settings, winston) {
