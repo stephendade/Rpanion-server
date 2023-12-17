@@ -45,13 +45,18 @@ if is_raspberry_pi():
         from picamera2 import Picamera2
         for cam in Picamera2.global_camera_info():
             caps = []
-            caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
-            caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
-            caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
-            caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
+            if cam['Model'] == 'imx296':
+                # Raspi global shutter camera has specific modes
+                # https://www.raspberrypi.com/documentation/accessories/camera.html
+                caps.append({'value': "1456x1088", 'label': "1456x1088", 'height': 1088, 'width': 1456, 'format': 'video/x-raw', 'fpsmax': '30'})
+            else:
+                caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+                caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+                caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
             name = "CSI Port Camera ({0})".format(cam['Model'])
             path = cam['Id']
-            if path.startswith("/base/soc/i2c"):
+            if path.startswith("/base/soc/i2c") or path.startswith("/base/axi/pcie"):
                 retDevices.append({'value': path, 'label': name, 'caps': caps})
     except:
         pass
@@ -62,6 +67,10 @@ for device in devices:
     path = device.get_properties().get_string("device.path")
     name = device.get_properties().get_string("v4l2.device.card")
     caps = []
+
+    # Don't show Pi5 CSI here
+    if name in ['pispbe', 'rp1-cfe']:
+        continue
 
     # If Ubuntu and Rpi camera
     if "Ubuntu" in platform.uname().version and ("mmal service" in name or name == "unicam"):
