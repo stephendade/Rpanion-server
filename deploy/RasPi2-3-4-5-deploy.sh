@@ -9,8 +9,17 @@ git submodule update --init --recursive
 #sudo raspi-config nonint do_expand_rootfs
 sudo raspi-config nonint do_camera 0
 sudo raspi-config nonint do_ssh 0
-# Enable serial, disable console
-sudo raspi-config nonint do_serial 2
+
+## Pi5 uses a different UART for the 40-pin header (/dev/ttyAMA0)
+# See https://forums.raspberrypi.com/viewtopic.php?t=359132
+if [ -e "/proc/device-tree/compatible" ]; then
+    if grep -q "5-model-bbrcm" "/proc/device-tree/compatible"; then
+        echo "dtparam=uart0=on" | sudo tee -a /boot/config.txt >/dev/null
+    else
+        # Enable serial, disable console
+        sudo raspi-config nonint do_serial 2
+    fi
+fi
 
 ## Change hostname
 sudo raspi-config nonint do_hostname rpanion
