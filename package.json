@@ -6,7 +6,6 @@
   "dependencies": {
     "app-root-path": "^3.1.0",
     "bootstrap": "^5.3.1",
-    "detect-rpi": "^1.4.0",
     "express-fileupload": "^1.4.0",
     "express-rate-limit": "^6.9.0",
     "express-validator": "^7.0.1",

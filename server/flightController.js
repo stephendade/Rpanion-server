@@ -6,7 +6,6 @@ const path = require('path')
 const appRoot = require('app-root-path')
 const { spawn, spawnSync, exec } = require('child_process')
 const si = require('systeminformation')
-//const isPi = require('detect-rpi')
 
 const mavManager = require('../mavlink/mavManager.js')
 
@@ -430,6 +429,10 @@ class FCDetails {
     // for the Ras Pi's inbuilt UART
     if (fs.existsSync('/dev/serial0') && isPi()) {
       this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
+    }
+    if (fs.existsSync('/dev/ttyAMA0') && isPi()) {
+      //Pi5 uses a different UART name. See https://forums.raspberrypi.com/viewtopic.php?t=359132
+      this.serialDevices.push({ value: '/dev/ttyAMA0', label: '/dev/ttyAMA0', pnpId: '' })
     }
     if (fs.existsSync('/dev/ttyAMA1') && isPi()) {
       this.serialDevices.push({ value: '/dev/ttyAMA1', label: '/dev/ttyAMA1', pnpId: '' })
