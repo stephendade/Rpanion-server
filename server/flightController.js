@@ -428,33 +428,33 @@ class FCDetails {
     }
     // for the Ras Pi's inbuilt UART
     if (fs.existsSync('/dev/serial0') && isPi()) {
-      this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '/dev/serial0' })
     }
     if (fs.existsSync('/dev/ttyAMA0') && isPi()) {
       //Pi5 uses a different UART name. See https://forums.raspberrypi.com/viewtopic.php?t=359132
-      this.serialDevices.push({ value: '/dev/ttyAMA0', label: '/dev/ttyAMA0', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyAMA0', label: '/dev/ttyAMA0', pnpId: '/dev/ttyAMA0' })
     }
     if (fs.existsSync('/dev/ttyAMA1') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA1', label: '/dev/ttyAMA1', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyAMA1', label: '/dev/ttyAMA1', pnpId: '/dev/ttyAMA1' })
     }
     if (fs.existsSync('/dev/ttyAMA2') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA2', label: '/dev/ttyAMA2', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyAMA2', label: '/dev/ttyAMA2', pnpId: '/dev/ttyAMA2' })
     }
     if (fs.existsSync('/dev/ttyAMA3') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA3', label: '/dev/ttyAMA3', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyAMA3', label: '/dev/ttyAMA3', pnpId: '/dev/ttyAMA3' })
     }
     if (fs.existsSync('/dev/ttyAMA4') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA4', label: '/dev/ttyAMA4', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyAMA4', label: '/dev/ttyAMA4', pnpId: '/dev/ttyAMA4' })
     }
     // rpi uart has different name under Ubuntu
     const data = await si.osInfo()
     if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
       // console.log("Running Ubuntu")
-      this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '/dev/ttyS0' })
     }
     // jetson serial ports
     if (fs.existsSync('/dev/ttyTHS1')) {
-      this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '' })
+      this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '/dev/ttyTHS1' })
     }
 
     // has the active device been disconnected?
