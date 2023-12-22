@@ -48,7 +48,16 @@ if is_raspberry_pi():
             if cam['Model'] == 'imx296':
                 # Raspi global shutter camera has specific modes
                 # https://www.raspberrypi.com/documentation/accessories/camera.html
-                caps.append({'value': "1456x1088", 'label': "1456x1088", 'height': 1088, 'width': 1456, 'format': 'video/x-raw', 'fpsmax': '30'})
+                caps.append({'value': "1456x1088", 'label': "1456x1088", 'height': 1088, 'width': 1456, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "1440x900", 'label': "1440x900", 'height': 900, 'width': 1440, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '60'})
+            elif cam['Model'] == 'imx708':
+                caps.append({'value': "1920x1200", 'label': "1920x1200", 'height': 1200, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '60'})
+                caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '120'})
+                caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '120'})
             else:
                 caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
                 caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
