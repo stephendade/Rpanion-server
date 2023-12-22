@@ -47,12 +47,12 @@ cd ~/ && git clone --recursive https://github.com/stephendade/Rpanion-server.git
 
 ### Automatic (Raspberry Pi)
 
-For the Raspberry Pi 2, 3, 4 and Zero(2) run the below command on a fresh Raspberry Pi OS install
+For the Raspberry Pi 2, 3, 4,5 and Zero(2) run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server with all required dependencies. Note this does not configure
 an initial Wifi hotspot.
 
 ```
-cd ./deploy && ./RasPi2-3-4-deploy.sh
+cd ./deploy && ./RasPi2-3-4-5-deploy.sh
 ```
 
 If running Ubuntu 20.04 OS on the Pi, use:
