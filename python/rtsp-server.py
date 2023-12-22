@@ -79,16 +79,16 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             s_h264 = "nvvidconv {1} ! {2} nvvidconv ! nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true ! h264parse".format(
                 bitrate*1000, devrotation, ts)
         elif "Ubuntu" not in platform.uname().version and not is_debian_bookworm():
-            # Pi or similar arm platforms running on RasPiOS. Note Bookworm's hardware encoding doesn't work atm :(
+            # Pi or similar arm platforms running on RasPiOS. Note that bookworm (and Pi5) onwards don't support hardware encoding
             s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(
                 bitrate*1000, devrotation, ts)
         else:
             # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
-            s_h264 = "videoconvert  ! video/x-raw,format=I420 ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
+            s_h264 = "videoconvert  ! video/x-raw,format=I420 ! queue ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
                 bitrate, devrotation, ts)
     else:
         # s/w encoder - x86, etc
-        s_h264 = "videoconvert  ! video/x-raw,format=I420 ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
+        s_h264 = "videoconvert  ! video/x-raw,format=I420 ! queue ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
             bitrate, devrotation, ts)
 
     if device == "testsrc":
@@ -104,23 +104,23 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         s_h264 = "identity"
     elif device.startswith("/base/soc/i2c") or device.startswith("/base/axi/pcie"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
-        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format=RGBx{2}".format(
+        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format=RGBx{2} ! queue".format(
             width, height, framestr, device)
     elif format == "video/x-raw":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4}".format(
+        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! queue".format(
             device, width, height, format, framestr)
     elif format == "video/x-h264":
         s_src = "v4l2src device={0} ! {3},width={1},height={2}{4}".format(
             device, width, height, format, framestr)
         s_h264 = "identity"
     elif format == "image/jpeg":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! jpegdec".format(
+        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! queue ! jpegdec".format(
             device, width, height, format, framestr)
     else:
         print("Bad camera")
         return ""
 
-    pipeline_str = "( {0} ! {1} ! queue max-size-buffers=1 name=q_enc ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(s_src, s_h264)
+    pipeline_str = "( {0} ! {1} ! queue ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(s_src, s_h264)
     print(pipeline_str)
     return pipeline_str
 
