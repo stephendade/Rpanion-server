@@ -44,6 +44,7 @@ sudo apt purge -y modemmanager
 
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
+sudo systemctl start NetworkManager
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
