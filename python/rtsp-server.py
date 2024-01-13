@@ -104,8 +104,13 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         s_h264 = "identity"
     elif device.startswith("/base/soc/i2c") or device.startswith("/base/axi/pcie"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
-        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format=RGBx{2} ! queue".format(
-            width, height, framestr, device)
+        # Note that Bullseye and Bookworm need different formats
+        if is_debian_bookworm():
+            format = "RGBx"
+        else:
+            format = "NV12"
+        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format={4}{2} ! queue".format(
+            width, height, framestr, device, format)
     elif format == "video/x-raw":
         s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! queue".format(
             device, width, height, format, framestr)
