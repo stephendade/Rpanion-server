@@ -47,6 +47,8 @@ cd ~/ && git clone --recursive https://github.com/stephendade/Rpanion-server.git
 
 ### Automatic (Raspberry Pi)
 
+The Raspberry Pi Zero W(1) is not supported from version 0.10.0 onwards.
+
 For the Raspberry Pi 2, 3, 4,5 and Zero(2) run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server with all required dependencies. Note this does not configure
 an initial Wifi hotspot.
@@ -68,13 +70,6 @@ cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu22-deploy.sh
 ```
 
 Note the CSI camera does not currently work on Ubuntu 22.04, due to incompatibilities with the Raspberry Pi.
-
-For the Raspberry Pi Zero W(1), run the below command on a fresh Raspberry Pi OS install
-to configure and install Rpanion-server. Note this does configure an initial Wifi hotspot.
-
-```
-cd ./deploy && ./RasPiZero-deploy.sh
-```
 
 If not already configured for an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script.
 The hotspot has the SSID "rpanion" and password "rpanion123". The Pi's IP address will be 10.0.2.100,
