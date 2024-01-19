@@ -710,7 +710,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
   check('useTimestamp').isBoolean(),
   check('useUDPPort').isPort(),
   check('useUDPIP').isIP(),
-  check('bitrate').isInt({ min: 50, max: 60000 }),
+  check('bitrate').isInt({ min: 50, max: 20000 }),
   check('format').isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
   check('fps').isInt({ min: -1, max: 100 }),
   check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
