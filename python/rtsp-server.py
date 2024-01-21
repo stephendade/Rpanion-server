@@ -80,7 +80,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 bitrate*1000, devrotation, ts)
         elif "Ubuntu" not in platform.uname().version and not is_debian_bookworm():
             # Pi or similar arm platforms running on RasPiOS. Note that bookworm (and Pi5) onwards don't support hardware encoding
-            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=2,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=main,level=(string)4 ! h264parse".format(
+            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=high,level=(string)4.1 ! h264parse".format(
                 bitrate*1000, devrotation, ts)
         else:
             # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
