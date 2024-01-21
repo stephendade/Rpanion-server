@@ -167,7 +167,7 @@ class VideoPage extends basePage {
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label">Maximum Bitrate</label>
             <div className="col-sm-8">
-              <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="20000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+              <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="50000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
             </div>
           </div>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
