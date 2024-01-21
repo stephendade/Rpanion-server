@@ -80,11 +80,16 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 bitrate*1000, devrotation, ts)
         elif "Ubuntu" not in platform.uname().version and not is_debian_bookworm():
             # Pi or similar arm platforms running on RasPiOS. Note that bookworm (and Pi5) onwards don't support hardware encoding
-            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=high,level=(string)4.1 ! h264parse".format(
-                bitrate*1000, devrotation, ts)
+            # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little crashy sometimes.
+            if bitrate > 20000:
+                level = "4.1"
+            else:
+                level = "4"
+            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=high,level=(string){3} ! h264parse".format(
+                bitrate*1000, devrotation, ts, level)
         else:
             # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
-            s_h264 = "videoconvert  ! video/x-raw,format=I420 ! queue ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
+            s_h264 = "videoconvert  ! video/x-raw,format=NV12 ! queue ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
                 bitrate, devrotation, ts)
     else:
         # s/w encoder - x86, etc
