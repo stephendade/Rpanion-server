@@ -35,7 +35,7 @@ class VideoPage extends basePage {
   }
 
   componentDidMount() {
-    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.loadDone(); this.handleVideoChange(state.vidDeviceSelected, "") });
+    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
   }
 
   handleVideoChange = (value, action) => {

@@ -427,43 +427,27 @@ app.get('/api/softwareinfo', (req, res) => {
 
 app.get('/api/videodevices', (req, res) => {
   vManager.populateAddresses()
-  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp) => {
+  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      if (!active) {
-        res.send(JSON.stringify({
-          dev: devices,
-          vidDeviceSelected: ((devices.length > 0) ? devices[0] : []),
-          vidres: ((devices.length > 0) ? devices[0].caps : []),
-          vidResSelected: ((devices.length > 0) ? devices[0].caps[0] : []),
-          // fpsSelected:  ((devices.length > 0) ? devices[0].caps[0].fpsmax : 1),
-          fpsSelected: ((devices.length > 0) ? (devices[0].caps[0].fpsmax === 0 ? devices[0].caps[0].fps[0] : devices[0].caps[0].fpsmax) : 1),
-          streamingStatus: active,
-          streamAddresses: vManager.deviceAddresses,
-          UDPChecked: SeluseUDP,
-          useUDPIP: SeluseUDPIP,
-          useUDPPort: SeluseUDPPort,
-          timestamp,
-          error: null
-        }))
-      } else {
-        res.send(JSON.stringify({
-          dev: devices,
-          vidDeviceSelected: seldevice,
-          vidres: seldevice.caps,
-          vidResSelected: selRes,
-          streamingStatus: active,
-          streamAddresses: vManager.deviceAddresses,
-          rotSelected: selRot,
-          bitrate: selbitrate,
-          fpsSelected: selfps,
-          UDPChecked: SeluseUDP,
-          useUDPIP: SeluseUDPIP,
-          useUDPPort: SeluseUDPPort,
-          timestamp,
-          error: null
-        }))
-      }
+      res.send(JSON.stringify({
+        dev: devices,
+        vidDeviceSelected: seldevice,
+        vidres: vidres,
+        vidResSelected: selRes,
+        streamingStatus: active,
+        streamAddresses: vManager.deviceAddresses,
+        rotSelected: selRot,
+        bitrate: selbitrate,
+        fpsSelected: selfps,
+        UDPChecked: SeluseUDP,
+        useUDPIP: SeluseUDPIP,
+        useUDPPort: SeluseUDPPort,
+        timestamp,
+        error: null,
+        fps: fps,
+        FPSMax: FPSMax
+      }))
     } else {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({ error: err }))
@@ -703,17 +687,17 @@ app.get('/api/networkconnections', (req, res) => {
 })
 
 app.post('/api/startstopvideo', [check('active').isBoolean(),
-  check('device').isLength({ min: 2 }),
-  check('height').isInt({ min: 1 }),
-  check('width').isInt({ min: 1 }),
-  check('useUDP').isBoolean(),
-  check('useTimestamp').isBoolean(),
-  check('useUDPPort').isPort(),
-  check('useUDPIP').isIP(),
-  check('bitrate').isInt({ min: 50, max: 50000 }),
-  check('format').isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
-  check('fps').isInt({ min: -1, max: 100 }),
-  check('rotation').isInt().isIn([0, 90, 180, 270])], (req, res) => {
+  check('device').if(check('active').isIn([true])).isLength({ min: 2 }),
+  check('height').if(check('active').isIn([true])).isInt({ min: 1 }),
+  check('width').if(check('active').isIn([true])).isInt({ min: 1 }),
+  check('useUDP').if(check('active').isIn([true])).isBoolean(),
+  check('useTimestamp').if(check('active').isIn([true])).isBoolean(),
+  check('useUDPPort').if(check('active').isIn([true])).isPort(),
+  check('useUDPIP').if(check('active').isIn([true])).isIP(),
+  check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
+  check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
+  check('fps').if(check('active').isIn([true])).isInt({ min: -1, max: 100 }),
+  check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     winston.error('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
