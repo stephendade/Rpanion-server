@@ -30,11 +30,13 @@ class videoStream {
             (err, status, addresses) => {
               if (err) {
                 // failed setup, reset settings
+                console.log('Reset video4')
                 this.resetVideo()
               }
             })
         } else {
           // failed setup, reset settings
+          console.log('Reset video3')
           this.resetVideo()
           console.log(error)
         }
@@ -55,6 +57,7 @@ class videoStream {
   // video streaming
   getVideoDevices (callback) {
     // get all video device details
+    // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
       if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
@@ -67,28 +70,45 @@ class videoStream {
         this.devices = JSON.parse(stdout)
         console.log(this.devices)
         this.winston.info(this.devices)
+        const fpsSelected = ((this.devices.length > 0) ? (this.devices[0].caps[0].fpsmax === 0 ? this.devices[0].caps[0].fps[0] : this.devices[0].caps[0].fpsmax) : 1)
         // and return current settings
         if (!this.active) {
-          return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400, false)
+          return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
+            { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
+            this.devices[0].caps[0].fps, this.devices[0].caps[0].fpsmax, this.devices[0].caps)
         } else {
           // format saved settings
           const seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
           if (seldevice.length !== 1) {
             // bad settings
-            console.error('Bad video settings. Resetting')
+            console.error('Bad video settings1 Resetting')
             this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400, false)
+            return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
+              { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
+              this.devices[0].caps[0].fps, this.devices[0].caps[0].fpsmax, this.devices[0].caps)
           }
-          const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString())
+          const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])
+          let selFPS = this.savedDevice.fps
+          if (selRes[0].fpsmax === 0) {
+            selFPS = selRes[0].fps.filter(it => parseInt(it.value) === this.savedDevice.fps)[0]
+          }
           if (seldevice.length === 1 && selRes.length === 1) {
-            return callback(null, this.devices, this.active, seldevice[0], selRes[0], { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation }, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP, this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp)
+            this.populateAddresses(seldevice[0].value.replace(/\W/g, ''))
+            console.log(seldevice[0])
+            return callback(null, this.devices, this.active, seldevice[0], selRes[0],
+              { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation },
+              this.savedDevice.bitrate, selFPS, this.savedDevice.useUDP, this.savedDevice.useUDPIP,
+              this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, selRes[0].fps,
+              selRes[0].fpsmax, seldevice[0].caps)
           } else {
             // bad settings
-            console.error('Bad video settings. Resetting')
+            console.error('Bad video settings. Resetting' + seldevice + ', ' + selRes)
             this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
-            return callback(null, this.devices, this.active, null, null, null, null, null, false, '127.0.0.1', 5400, false)
+            return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
+              { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
+              this.devices[0].caps[0].fps, this.devices[0].caps[0].fpsmax, this.devices[0].caps)
           }
         }
       }
@@ -155,6 +175,9 @@ class videoStream {
           this.winston.info('No video device: ' + device)
           return callback(new Error('No video device: ' + device))
         }
+      } else {
+        console.log('No video devices in list')
+        this.winston.info('No video devices in list')
       }
 
       this.active = true
@@ -235,6 +258,7 @@ class videoStream {
 
       return callback(null, this.active, this.deviceAddresses)
     } else {
+      // stop streaming
       this.deviceStream.stdin.pause()
       this.deviceStream.kill()
       this.resetVideo()
