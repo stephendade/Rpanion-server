@@ -168,10 +168,10 @@ for device in devices:
 # If we're on a Jetson and /dev/video0 or /dev/video0 exist but not listed, add as CSI ports
 if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release:
     caps = []
-    caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
-    caps.append({'value': "1640x922", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
-    caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
-    caps.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
+    caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
+    caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40'})
+    caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+    caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90'})
     if os.path.exists('/dev/video0') and '/dev/video0' not in [i['value'] for i in retDevices]:
         retDevices.append({'value': 'argus0', 'label': 'CSI0', 'caps': caps})
     if os.path.exists('/dev/video1') and '/dev/video1' not in [i['value'] for i in retDevices]:
@@ -179,9 +179,9 @@ if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release
 
 # Include testsrc
 capsTest = []
-capsTest.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30'})
-capsTest.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '30'})
-capsTest.append({'value': "640x480", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '30'})
+capsTest.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsTest.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsTest.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
 retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
 print(json.dumps(retDevices))
