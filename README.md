@@ -90,17 +90,6 @@ sudo apt update
 sudo apt install -y nodejs
 ```
 
-Note that the Raspberry Pi Zero (1) requires an unofficial build of nodejs, as Rpanion-server requires
-nodejs version 12 or greater, and official support for the Pi Zero ended with nodejs version 11;
-
-```
-wget https://unofficial-builds.nodejs.org/download/release/v16.19.1/node-v16.19.1-linux-armv6l.tar.xz
-sudo mkdir -p /usr/local/lib/nodejs
-sudo tar -xJvf node-v16.19.1-linux-armv6l.tar.xz -C /usr/local/lib/nodejs
-sudo ln -s /usr/local/lib/nodejs/node-v16.19.1-linux-armv6l/bin/node /usr/local/bin
-sudo ln -s /usr/local/lib/nodejs/node-v16.19.1-linux-armv6l/bin/npm /usr/local/bin
-```
-
 The required prerequisite packages can be installed via:
 
 ```
