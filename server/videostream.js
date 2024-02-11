@@ -92,7 +92,7 @@ class videoStream {
           }
           const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])
           let selFPS = this.savedDevice.fps
-          if (selRes[0].fpsmax === 0) {
+          if (selRes.length === 1 && selRes[0].fpsmax !== undefined && selRes[0].fpsmax === 0) {
             selFPS = selRes[0].fps.filter(it => parseInt(it.value) === this.savedDevice.fps)[0]
           }
           if (seldevice.length === 1 && selRes.length === 1) {
@@ -106,7 +106,7 @@ class videoStream {
           } else {
             // bad settings
             console.error('Bad video settings. Resetting' + seldevice + ', ' + selRes)
-            this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
+            this.winston.error('Bad video settings. Resetting ', { message: JSON.stringify(this.savedDevice) })
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
