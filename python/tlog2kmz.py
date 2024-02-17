@@ -44,7 +44,7 @@ def mavtogpx_filepath():
 
 def convert_tlog_files():
     """Convert any tlog files to GPX,  KML, KMZ and PNG."""
-    mavlog = glob.glob("flightlogs/tlogs/*.tlog")
+    mavlog = glob.glob("flightlogs/*.tlog")
     latest_file = max(mavlog, key=os.path.getctime)
     kmzlogs = glob.glob("flightlogs/kmzlogs/*.kmz")
     passed = True
