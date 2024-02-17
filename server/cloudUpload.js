@@ -14,7 +14,6 @@ class cloudUpload {
     }
 
     this.topfolder = path.join(appRoot.toString(), 'flightlogs')
-    this.binlogfolder = path.join(this.topfolder, 'binlogs')
 
     this.rsyncPid = null
 
@@ -40,7 +39,7 @@ class cloudUpload {
         const rsync = new Rsync()
           .shell('ssh -o StrictHostKeyChecking=no')
           .flags('avzP')
-          .source(this.binlogfolder + '/')
+          .source(this.topfolder + '/')
           .destination(this.options.binUploadLink)
           .include('*.bin')
 

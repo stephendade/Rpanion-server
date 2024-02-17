@@ -84,7 +84,6 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
 // and ntrip
 fcManager.eventEmitter.on('gotMessage', (packet, data) => {
   try {
-    logManager.writetlog(packet, data)
     ntripClient.onMavPacket(packet, data)
   } catch (err) {
     console.log(err)
@@ -92,19 +91,9 @@ fcManager.eventEmitter.on('gotMessage', (packet, data) => {
 })
 
 fcManager.eventEmitter.on('newLink', () => {
-  try {
-    logManager.newtlog()
-  } catch (err) {
-    console.log(err)
-  }
 })
 
 fcManager.eventEmitter.on('stopLink', () => {
-  try {
-    logManager.stoptlog()
-  } catch (err) {
-    console.log(err)
-  }
 })
 
 fcManager.eventEmitter.on('armed', () => {
@@ -368,9 +357,9 @@ app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')
 app.use('/rplogs', express.static(path.join(__dirname, '..', '/logs')))
 
 app.get('/api/logfiles', (req, res) => {
-  logManager.getLogs((err, tlogs, binlogs, kmzlogs, activeLogging) => {
+  logManager.getLogs((err, tlogs, binlogs, kmzlogs) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ enablelogging: activeLogging, TlogFiles: tlogs, BinlogFiles: binlogs, KMZlogFiles: kmzlogs, url: req.protocol + '://' + req.headers.host, logStatus: logManager.getStatus() }))
+    res.send(JSON.stringify({ TlogFiles: tlogs, BinlogFiles: binlogs, KMZlogFiles: kmzlogs, url: req.protocol + '://' + req.headers.host }))
   })
 })
 
@@ -384,31 +373,6 @@ app.post('/api/deletelogfiles', [check('logtype').isIn(['tlog', 'binlog', 'kmzlo
   logManager.clearlogs(req.body.logtype, fcManager.binlog)
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({}))
-})
-
-app.get('/api/newlogfile', (req, res) => {
-  logManager.newtlog()
-  // console.log(logConversion.tlogfilename)
-  res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({}))
-})
-
-app.get('/api/tlogfilename', (req, res) => {
-  // console.log(logManager.activeFileTlog)
-  res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({ tlogfilename: logManager.activeFileTlog }))
-})
-
-app.post('/api/logenable', [check('enable').isBoolean()], function (req, res) {
-  // User wants to enable/disable logging
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/logenable', { message: JSON.stringify(errors.array()) })
-    return res.status(422).json({ error: JSON.stringify(errors.array()) })
-  }
-
-  res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({ enablelogging: logManager.setLogging(req.body.enable) }))
 })
 
 app.get('/api/softwareinfo', (req, res) => {

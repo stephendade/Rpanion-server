@@ -15,8 +15,6 @@ class LoggerPage extends basePage {
       TlogFiles: [],
       BinlogFiles: [],
       KMZlogFiles: [],
-      logStatus: "",
-      enablelogging: false,
       error: null,
       infoMessage: null,
       diskSpaceStatus: "",
@@ -96,60 +94,15 @@ class LoggerPage extends basePage {
     event.preventDefault();
   }
 
-  startLog = (event) => {
-    this.setState({ waiting: true }, () => {
-      fetch('/api/newlogfile').then(response => response.json())
-        .then(result => {
-          this.componentDidMount();
-          this.setState({ waiting: false });
-        })
-        .catch(error => {
-          this.setState({ waiting: false, error: "Error creating logfile: " + error });
-        });
-    });
-    event.preventDefault();
-  }
-
-  handleCheckboxChange = event => {
-    //this.setState({enablelogging: !this.state.enablelogging});
-    this.setState({ waiting: true }, () => {
-      fetch('/api/logenable', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          enable: !this.state.enablelogging,
-        })
-      }).then(response => response.json())
-        .then(result => {
-          this.componentDidMount();
-          this.setState({ waiting: false });
-        })
-        .catch(error => {
-          this.setState({ waiting: false, error: "Error setting logging: " + error });
-        });
-    });
-    event.preventDefault();
-  }
-
   renderContent() {
     return (
       <div style={{ width: 600 }}>
         <p><i>Save and download flight logs</i></p>
-        <p>Logging Status: {this.state.logStatus}</p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
         <h3>Telemetry Logs</h3>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-5 col-form-label">Enable Telemetry Logging</label>
-          <div className="col-sm-7">
-          <input type="checkbox" checked={this.state.enablelogging} onChange={this.handleCheckboxChange} />
-          </div>
-        </div>
+        <p>Telemetry Logging can be enabled or disabled in the "Flight Controller" page.</p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">
-          <Button onClick={this.startLog}>Start new telemetry log</Button>{'   '}
           <Button id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>
           </div>
         </div>

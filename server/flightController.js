@@ -303,7 +303,8 @@ class FCDetails {
       cmd.push(this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port)
     }
     cmd.push('--log')
-    cmd.push('./flightlogs/binlogs')
+    cmd.push('./flightlogs')
+    cmd.push('--telemetry-log')
     if (this.enableUDPB === true) {
       cmd.push('0.0.0.0:' + this.UDPBPort)
     }
@@ -325,7 +326,7 @@ class FCDetails {
 
     this.router.stderr.on('data', (data) => {
       console.error(`stderr: ${data}`)
-      if (data.toString().includes('Logging target')) {
+      if (data.toString().includes('Logging target') && data.toString().includes('.bin')) {
         // remove old log, if it exists and is >60kB
         try {
           if (this.binlog !== null) {
