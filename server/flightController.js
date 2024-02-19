@@ -510,7 +510,7 @@ class FCDetails {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
-  this.enableHeartbeat = enableHeartbeat
+    this.enableHeartbeat = enableHeartbeat
     this.enableTCP = enableTCP
     this.enableUDPB = enableUDPB
     this.UDPBPort = UDPBPort
