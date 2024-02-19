@@ -50,7 +50,7 @@ settings.init({
 
 const vManager = new videoStream(settings, winston)
 const fcManager = new fcManagerClass(settings, winston)
-const logManager = new flightLogger(settings, winston)
+const logManager = new flightLogger(winston)
 const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings)
 const logConversion = new logConversionManager(settings)
