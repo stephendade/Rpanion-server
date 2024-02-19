@@ -30,7 +30,8 @@ class FCPage extends basePage {
       usedSocketIO: true,
       enableUDPB: false,
       UDPBPort: 14550,
-      enableDSRequest: false
+      enableDSRequest: false,
+      tlogging: false
     }
 
     // Socket.io client for reading in analog update values
@@ -68,6 +69,10 @@ class FCPage extends basePage {
     this.setState({ enableTCP: event.target.checked });
   }
 
+  handleTloggingChange = (event) => {
+    this.setState({ tlogging: event.target.checked });
+  }
+
   handleDSRequest = (event) => {
     this.setState({ enableDSRequest: event.target.checked });
   }
@@ -96,7 +101,8 @@ class FCPage extends basePage {
         enableTCP: this.state.enableTCP,
         enableUDPB: this.state.enableUDPB,
         UDPBPort: this.state.UDPBPort,
-        enableDSRequest: this.state.enableDSRequest
+        enableDSRequest: this.state.enableDSRequest,
+        tlogging: this.state.tlogging
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
   }
@@ -244,7 +250,8 @@ class FCPage extends basePage {
           <div className="col-sm-7">
           <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
           </div>
-        <br /> <br />
+        </div>
+        <br />
         <p><i>Advertise RPanion as an onboard companion computer on the MAVLink network</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-5 col-form-label">Enable MAVLink heartbeats</label>
@@ -252,7 +259,13 @@ class FCPage extends basePage {
           <input type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
           </div>
         </div>
-
+        <br />
+        <p><i>Record MAVLink telemetry stream to logfile</i></p>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-5 col-form-label">Enable telemetry logging (tlogs)</label>
+          <div className="col-sm-7">
+          <input type="checkbox" checked={this.state.tlogging} disabled={this.state.telemetryStatus} onChange={this.handleTloggingChange} />
+          </div>
         </div>
         <br />
         <h2>Status</h2>

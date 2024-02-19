@@ -88,6 +88,8 @@ class FCDetails {
     // Current binlog via mavlink-router
     this.binlog = null
 
+    this.tlogging = false
+
     // load settings
     this.settings = settings
     this.activeDevice = this.settings.value('flightcontroller.activeDevice', null)
@@ -97,6 +99,7 @@ class FCDetails {
     this.enableUDPB = this.settings.value('flightcontroller.enableUDPB', true)
     this.UDPBPort = this.settings.value('flightcontroller.UDPBPort', 14550)
     this.enableDSRequest = this.settings.value('flightcontroller.enableDSRequest', false)
+    this.tlogging = this.settings.value('flightcontroller.tlogging', false)
 
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
@@ -304,7 +307,9 @@ class FCDetails {
     }
     cmd.push('--log')
     cmd.push('./flightlogs')
-    cmd.push('--telemetry-log')
+    if (this.tlogging === true) {
+      cmd.push('--telemetry-log')
+    }
     if (this.enableUDPB === true) {
       cmd.push('0.0.0.0:' + this.UDPBPort)
     }
@@ -468,11 +473,11 @@ class FCDetails {
     }
     // set the active device as selected
     if (this.activeDevice) {
-      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial, this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion, true, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging)
     } else if (this.serialDevices.length > 0) {
-      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices[0], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging)
     } else {
-      return callback(retError, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest)
+      return callback(retError, this.serialDevices, this.baudRates, [], this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], false, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging)
     }
   }
 
@@ -501,7 +506,7 @@ class FCDetails {
     }, 1000)
   }
 
-  startStopTelemetry (device, baud, mavversion, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, callback) {
+  startStopTelemetry (device, baud, mavversion, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, tlogging, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
@@ -510,6 +515,7 @@ class FCDetails {
     this.enableUDPB = enableUDPB
     this.UDPBPort = UDPBPort
     this.enableDSRequest = enableDSRequest
+    this.tlogging = tlogging
 
     if (this.m) {
       this.m.enableDSRequest = enableDSRequest
@@ -579,6 +585,7 @@ class FCDetails {
       this.settings.setValue('flightcontroller.enableUDPB', this.enableUDPB)
       this.settings.setValue('flightcontroller.UDPBPort', this.UDPBPort)
       this.settings.setValue('flightcontroller.enableDSRequest', this.enableDSRequest)
+      this.settings.setValue('flightcontroller.tlogging', this.tlogging)
       console.log('Saved FC settings')
       this.winston.info('Saved FC settings')
     } catch (e) {

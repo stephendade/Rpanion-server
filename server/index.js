@@ -453,7 +453,7 @@ app.get('/api/FCOutputs', (req, res) => {
 
 app.get('/api/FCDetails', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest) => {
+  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, tlogging) => {
     // hacky way to pass through the
     if (!err) {
       console.log('Sending')
@@ -470,7 +470,8 @@ app.get('/api/FCDetails', (req, res) => {
         enableTCP,
         enableUDPB,
         UDPBPort,
-        enableDSRequest
+        enableDSRequest,
+        tlogging
       }))
     } else {
       console.log(devices)
@@ -487,7 +488,8 @@ app.get('/api/FCDetails', (req, res) => {
         enableTCP,
         enableUDPB,
         UDPBPort,
-        enableDSRequest
+        enableDSRequest,
+        tlogging
       }))
       winston.error('Error in /api/FCDetails ', { message: err })
     }
@@ -504,7 +506,7 @@ app.post('/api/updatemaster', function (req, res) {
   aboutPage.updateRS(io)
 })
 
-app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean()], function (req, res) {
+app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -512,7 +514,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
-  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat, req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest, (err, isSuccess) => {
+  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat, req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest, req.body.tlogging, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);
