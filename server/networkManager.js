@@ -292,7 +292,7 @@ function editConnectionPSK (conName, conSettings, callback) {
   // now sort out Wifi client/ap settings - password and security type
   if (conSettings.mode.value === 'infrastructure' || conSettings.mode.value === 'ap') {
     // psk network
-    if (conSettings.wpaType.value !== 'wpa-none' &&
+    if (conSettings.wpaType.value !== 'none' &&
             Object.keys(conSettings.ssid).length !== 0 &&
             Object.keys(conSettings.password).length !== 0) {
       exec('nmcli connection mod ' + conName + ' 802-11-wireless-security.key-mgmt ' + conSettings.wpaType.value + ' &&' +
@@ -308,7 +308,7 @@ function editConnectionPSK (conName, conSettings, callback) {
       })
     }
     // no psk. Note the dirty hack to remove psk
-    else if (conSettings.wpaType.value === 'wpa-none' &&
+    else if (conSettings.wpaType.value === 'none' &&
                  Object.keys(conSettings.ssid).length !== 0) {
       exec('nmcli connection mod ' + conName + ' 802-11-wireless-security.key-mgmt ' + conSettings.wpaType.value + ' &&' +
             'nmcli -s connection mod ' + conName + ' 802-11-wireless-security.psk 00000000', (error, stdout, stderr) => {
