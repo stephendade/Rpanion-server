@@ -30,7 +30,7 @@ class NetworkConfig extends basePage {
       netConnectionDetails: {},
       netConnectionSimilarIfaces: [],
       showIP: false,
-      wpaTypes: [{ value: 'wpa-none', text: 'None' }, { value: 'wpa-psk', text: 'WPA (PSK)' }],
+      wpaTypes: [{ value: 'none', text: 'None' }, { value: 'wpa-psk', text: 'WPA (PSK)' }],
       bandTypes: [{ value: 'a', text: '5 GHz' }, { value: 'bg', text: '2.4 GHz' }],
       availChannels: [],
       curSettings: {
@@ -469,7 +469,7 @@ class NetworkConfig extends basePage {
     var nm = this.state.netConnectionFilteredSelected.label;
     this.setState({
       netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
-      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: '0' }, ssid: { value: selssid }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: selsecurity === '' ? 'wpa-none' : 'wpa-psk' }, password: { value: "" }, attachedIface: { value: '""' } }
+      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: '0' }, ssid: { value: selssid }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: selsecurity === '' ? 'none' : 'wpa-psk' }, password: { value: "" }, attachedIface: { value: '""' } }
     });
   }
 
@@ -713,12 +713,12 @@ class NetworkConfig extends basePage {
                 </select>
               </div>
             </div>
-            <div style={{ display: (this.state.curSettings.wpaType.value !== "wpa-none") ? "block" : "none" }}>
+            <div style={{ display: (this.state.curSettings.wpaType.value !== "none") ? "block" : "none" }}>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">Password</label>
                 <div className="col-sm-8">
-                  <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                  <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                  <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
+                  <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
                 </div>
               </div>
             </div>
@@ -768,8 +768,8 @@ class NetworkConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Password</label>
               <div className="col-sm-8">
-                <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "wpa-none"} value={this.state.curSettings.wpaType.value === "wpa-none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "wpa-none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
+                <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
               </div>
             </div>
 
