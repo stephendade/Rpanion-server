@@ -81,7 +81,7 @@ function setWirelessStatus (status, callback) {
 function activateConnection (conName, callback) {
   // activate the connection (by id)
   // assumed that conName is a valid UUID
-  exec('nmcli connection mod ' + conName + ' connection.autoconnect yes ' + ' && ' + 'nmcli connection up ' + conName, (error, stdout, stderr) => {
+  exec('nmcli connection mod ' + conName + ' connection.autoconnect yes ' + ' && ' + 'sudo nmcli connection up ' + conName, (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
       winston.error('Error in getAdapters() ', { message: stderr })
