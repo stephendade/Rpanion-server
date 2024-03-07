@@ -137,6 +137,28 @@ describe('MAVLink Functions', function () {
     })
   })
 
+  it('#commandAckSend()', function (done) {
+    const m = new mavManager(2, '127.0.0.1', 15000)
+    const udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', (info) => {
+      m.sendCommandAck()
+    })
+
+    udpStream.on('message', (msg, rinfo) => {
+      msg.should.eql(Buffer.from([253, 09, 00, 00, 00, 00, 191, 77, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 255, 197, 27 ]))
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15000, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
   it('#perfTest()', function () {
     // how fast can we process packets and send out over udp?
     const m = new mavManager(2, '127.0.0.1', 15000)

@@ -4,6 +4,7 @@ const compression = require('compression')
 const bodyParser = require('body-parser')
 const pino = require('express-pino-logger')()
 const process = require('process')
+const { common } = require('node-mavlink')
 
 const networkManager = require('./networkManager')
 const aboutPage = require('./aboutInfo')
@@ -80,11 +81,25 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
   }
 })
 
+// Got a VIDEO_STREAM_INFORMATION message, send to flight controller
+// to do: get target system and component from vManager
+vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId) => {
+  try {
+    if (fcManager.m) {
+      fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId)
+      fcManager.m.sendData(msg)
+    }
+  } catch (err) {
+    console.log(err)
+  }
+})
+
 // Connecting the flight controller datastream to the logger
-// and ntrip
+// and ntrip and video
 fcManager.eventEmitter.on('gotMessage', (packet, data) => {
   try {
     ntripClient.onMavPacket(packet, data)
+    vManager.onMavPacket(packet, data)
   } catch (err) {
     console.log(err)
   }
@@ -391,10 +406,11 @@ app.get('/api/softwareinfo', (req, res) => {
 
 app.get('/api/videodevices', (req, res) => {
   vManager.populateAddresses()
-  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres) => {
+  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, selMavURI) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({
+        ifaces: vManager.ifaces,
         dev: devices,
         vidDeviceSelected: seldevice,
         vidres: vidres,
@@ -410,7 +426,8 @@ app.get('/api/videodevices', (req, res) => {
         timestamp,
         error: null,
         fps: fps,
-        FPSMax: FPSMax
+        FPSMax: FPSMax,
+        mavStreamSelected: vManager.selMavURI
       }))
     } else {
       res.setHeader('Content-Type', 'application/json')
@@ -671,7 +688,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
     return res.status(422).json(ret)
   }
   // user wants to start/stop video streaming
-  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, req.body.useTimestamp, (err, status, addresses) => {
+  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, req.body.useTimestamp, req.body.mavStreamSelected, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       const ret = { streamingStatus: status, streamAddresses: addresses }

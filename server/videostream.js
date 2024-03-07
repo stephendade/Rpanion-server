@@ -1,6 +1,8 @@
 const { exec, spawn } = require('child_process')
 const os = require('os')
 const si = require('systeminformation')
+const events = require('events')
+const { common } = require('node-mavlink')
 
 class videoStream {
   constructor (settings, winston) {
@@ -13,6 +15,9 @@ class videoStream {
 
     this.winston = winston
 
+    // For sending events outside of object
+    this.eventEmitter = new events.EventEmitter()
+
     // load settings. savedDevice is a json object storing all settings
     this.active = this.settings.value('videostream.active', false)
     this.savedDevice = this.settings.value('videostream.savedDevice', null)
@@ -21,12 +26,12 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
-      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, thisps, selUDP, selUDPIP, selUDPPort, useTimestamp) => {
+      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, selfps, selUDP, selUDPIP, selUDPPort, useTimestamp, selMavURI) => {
         if (!error) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
             this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP,
-            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp,
+            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, this.savedDevice.mavStreamSelected,
             (err, status, addresses) => {
               if (err) {
                 // failed setup, reset settings
@@ -57,7 +62,7 @@ class videoStream {
   // video streaming
   getVideoDevices (callback) {
     // get all video device details
-    // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres
+    // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, selMavURI
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
       if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
@@ -76,7 +81,7 @@ class videoStream {
           return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
             { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
             (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-            this.devices[0].caps[0].fpsmax, this.devices[0].caps)
+            this.devices[0].caps[0].fpsmax, this.devices[0].caps, { label: '127.0.0.1', value: 0 })
         } else {
           // format saved settings
           const seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
@@ -88,7 +93,7 @@ class videoStream {
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
               (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-              this.devices[0].caps[0].fpsmax, this.devices[0].caps)
+              this.devices[0].caps[0].fpsmax, this.devices[0].caps, { label: '127.0.0.1', value: 0 })
           }
           const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])
           let selFPS = this.savedDevice.fps
@@ -102,7 +107,7 @@ class videoStream {
               { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation },
               this.savedDevice.bitrate, selFPS, this.savedDevice.useUDP, this.savedDevice.useUDPIP,
               this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, (selRes[0].fps !== undefined) ? selRes[0].fps : [],
-              selRes[0].fpsmax, seldevice[0].caps)
+              selRes[0].fpsmax, seldevice[0].caps, this.savedDevice.mavStreamSelected)
           } else {
             // bad settings
             console.error('Bad video settings. Resetting' + seldevice + ', ' + selRes)
@@ -111,7 +116,7 @@ class videoStream {
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
               (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-              this.devices[0].caps[0].fpsmax, this.devices[0].caps)
+              this.devices[0].caps[0].fpsmax, this.devices[0].caps, { label: '127.0.0.1', value: 0 })
           }
         }
       }
@@ -156,7 +161,7 @@ class videoStream {
     return iface
   }
 
-  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, useTimestamp, callback) {
+  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, useTimestamp, mavStreamSelected, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -195,7 +200,8 @@ class videoStream {
         useUDP,
         useUDPIP,
         useUDPPort,
-        useTimestamp
+        useTimestamp,
+        mavStreamSelected
       }
 
       // note that video device URL's are the alphanumeric characters only. So /dev/video0 -> devvideo0
@@ -281,6 +287,53 @@ class videoStream {
       ret = false
     }
     return ret
+  }
+
+  onMavPacket (packet, data) {
+    // FC is active
+    if (!this.active) {
+      return
+    }
+
+    if (packet.header.msgid === common.CommandLong.MSG_ID & data._param1 === common.VideoStreamInformation.MSG_ID) {
+      console.log('Responding to MAVLink request for VideoStreamInformation')
+      this.winston.info('Responding to MAVLink request for VideoStreamInformation')
+
+      const senderSysId = packet.header.sysid
+      const senderCompId = packet.header.compid
+
+      // build a VIDEO_STREAM_INFORMATION packet
+      const msg = new common.VideoStreamInformation()
+
+      // rpanion only supports a single stream, so streamId and count will always be 1
+      msg.streamId = 1
+      msg.count = 1
+
+      // 0 = VIDEO_STREAM_TYPE_RTSP
+      // 1 = VIDEO_STREAM_TYPE_RTPUDP
+      if (this.savedDevice.useUDP === 'rtp') {
+        msg.type = 1
+      } else {
+        msg.type = 0
+      }
+
+      // 1 = VIDEO_STREAM_STATUS_FLAGS_RUNNING
+      // 2 = VIDEO_STREAM_STATUS_FLAGS_THERMAL
+      msg.flags = 1
+      msg.framerate = this.savedDevice.fps
+      msg.resolutionH = this.savedDevice.width
+      msg.resolutionV = this.savedDevice.height
+      msg.bitrate = this.savedDevice.bitrate
+      msg.rotation = this.savedDevice.rotation
+      // Rpanion doesn't collect field of view values, so just set to zero
+      msg.hfov = 0
+      msg.name = this.savedDevice.device
+      // To do: add a UI option to select which interface's URI to send
+      msg.uri = this.deviceAddresses[this.savedDevice.mavStreamSelected]
+
+      // console.log("mavStreamSelected: " + this.savedDevice.mavStreamSelected)
+      this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId)
+    }
   }
 }
 
