@@ -12,6 +12,7 @@ class VideoPage extends basePage {
   constructor(props) {
     super(props);
     this.state = {
+      ifaces: [],
       dev: [],
       vidDeviceSelected: this.props.vidDeviceSelected,
       vidres: [],
@@ -30,7 +31,8 @@ class VideoPage extends basePage {
       loading: true,
       error: null,
       infoMessage: null,
-      timestamp: false
+      timestamp: false,
+      mavStreamSelected: { label: "127.0.0.1", value: 0 }
     }
   }
 
@@ -94,6 +96,11 @@ class VideoPage extends basePage {
     this.setState({ timestamp: !this.state.timestamp });
   }
 
+  handleMavStreamChange = (value) => {
+    //new value for selected stream IP
+    this.setState({ mavStreamSelected: value });
+  }
+
   handleStreaming = (event) => {
     //user clicked start/stop streaming
     this.setState({ waiting: true }, () => {
@@ -117,6 +124,7 @@ class VideoPage extends basePage {
           useUDPIP: this.state.useUDPIP,
           useUDPPort: this.state.useUDPPort,
           useTimestamp: this.state.timestamp,
+          mavStreamSelected: this.state.mavStreamSelected.value,
         })
       }).then(response => response.json()).then(state => { this.setState(state); this.setState({ waiting: false }) });
     });
@@ -186,6 +194,15 @@ class VideoPage extends basePage {
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
           </div>
         </div>
+        <br />
+    <h3>MAVLink Video Streaming Service</h3>
+    <p><i>Configuration for advertising the video stream via MAVLink. See <a href='https://mavlink.io/en/services/camera.html#video_streaming'>here</a> for details.</i></p>
+    <div className="form-group row" style={{ marginBottom: '5px' }}>
+      <label className="col-sm-4 col-form-label">Video source IP Address</label>
+      <div className="col-sm-8">
+        <Select isDisabled={this.state.streamingStatus} onChange={this.handleMavStreamChange} options={this.state.ifaces.map((item, index) => ({ value: index, label: item}))} value={this.state.mavStreamSelected} />
+      </div>
+    </div>
         <div style={{ display: (this.state.UDPChecked) ? "block" : "none" }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label ">Destination IP</label>

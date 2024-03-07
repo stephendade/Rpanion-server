@@ -31,7 +31,7 @@ describe('Video Functions', function () {
     const vManager = new VideoStream(settings, winston)
 
     vManager.populateAddresses()
-    vManager.getVideoDevices(function (err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres) {
+    vManager.getVideoDevices(function (err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, selMavURI) {
       assert.equal(err, null)
       assert.equal(active, false)
       assert.notEqual(seldevice, null)
@@ -46,6 +46,7 @@ describe('Video Functions', function () {
       assert.notEqual(fps, null)
       assert.notEqual(FPSMax, null)
       assert.notEqual(vidres, null)
+      assert.notEqual(selMavURI, null)
       done()
     })
   }).timeout(5000)
@@ -62,11 +63,11 @@ describe('Video Functions', function () {
     settings.clear()
     const vManager = new VideoStream(settings, winston)
 
-    vManager.startStopStreaming(true, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, function (err, status, addresses) {
+    vManager.startStopStreaming(true, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, '0', function (err, status, addresses) {
       assert.equal(err, null)
       assert.equal(status, true)
       assert.notEqual(vManager.deviceStream.pid, null)
-      vManager.startStopStreaming(false, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, function (err, status, addresses) {
+      vManager.startStopStreaming(false, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, '0', function (err, status, addresses) {
         assert.equal(err, null)
         assert.equal(status, false)
         done()

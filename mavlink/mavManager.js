@@ -100,6 +100,12 @@ class mavManager {
 
         // send off initial messages
         this.sendVersionRequest()
+
+        // Respond to MavLink commands that are targeted to the companion computer
+      } else if (data.targetSystem === this.targetSystem &&
+        data.targetComponent === minimal.MavComponent.ONBOARD_COMPUTER &&
+        packet.header.msgid === common.CommandLong.MSG_ID) {
+        console.log('Received CommandLong addressed to onboard computer')
       } else if (this.targetSystem !== packet.header.sysid) {
         // don't use packets from other systems or components in Rpanion-server
         return
@@ -245,14 +251,12 @@ class mavManager {
     })
   }
 
-  sendHeartbeat ( mavType = minimal.MavType.ONBOARD_CONTROLLER,
-                  autopilot = minimal.MavAutopilot.INVALID,
-                  baseMode = 0,
-                  customMode = 0,
-                  systemStatus = 0,
-                  component = minimal.MavComponent.ONBOARD_COMPUTER 
-                ) {
-    
+  sendHeartbeat (mavType = minimal.MavType.ONBOARD_CONTROLLER,
+    autopilot = minimal.MavAutopilot.INVALID,
+    baseMode = 0,
+    customMode = 0,
+    systemStatus = 0,
+    component = minimal.MavComponent.ONBOARD_COMPUTER) {
   // create a heartbeat packet
     const heartbeatMessage = new minimal.Heartbeat()
 
@@ -265,7 +269,21 @@ class mavManager {
 
     this.sendData(heartbeatMessage, component)
   }
-  
+
+  sendCommandAck (commandReceived, commandResult = 0, targetSystem = 255, targetComponent = minimal.MavComponent.MISSION_PLANNER) {
+    // create a CommandAck packet
+    const commandAck = new common.CommandAck()
+    commandAck.command = commandReceived
+    // result = 0 for "accepted and executed"
+    commandAck.result = commandResult
+    // resultParam2 is for optional additional result information. Not currently used by rpanion.
+    commandAck.resultParam2 = 0
+    commandAck.targetSystem = targetSystem
+    commandAck.targetComponent = targetComponent
+
+    this.sendData(commandAck)
+  }
+
   sendReboot () {
     // create a reboot packet
     const command = new common.PreflightRebootShutdownCommand(this.targetSystem, this.targetComponent)
