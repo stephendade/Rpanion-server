@@ -81,13 +81,35 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
   }
 })
 
-// Got a VIDEO_STREAM_INFORMATION message, send to flight controller
-// to do: get target system and component from vManager
-vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId) => {
+// Got a camera heartbeat event, send to flight controller
+vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
   try {
     if (fcManager.m) {
-      fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId)
-      fcManager.m.sendData(msg)
+      fcManager.m.sendHeartbeat(mavType, autopilot, component)
+    }
+  } catch (err) {
+    console.log(err)
+  }
+})
+
+// Got a CAMERA_INFORMATION event, send to flight controller
+vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      fcManager.m.sendCommandAck(common.CameraInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log(err)
+  }
+})
+
+// Got a VIDEO_STREAM_INFORMATION event, send to flight controller
+vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
     console.log(err)
@@ -406,7 +428,7 @@ app.get('/api/softwareinfo', (req, res) => {
 
 app.get('/api/videodevices', (req, res) => {
   vManager.populateAddresses()
-  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, selMavURI) => {
+  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, useCameraHeartbeat, selMavURI) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({
@@ -427,7 +449,8 @@ app.get('/api/videodevices', (req, res) => {
         error: null,
         fps: fps,
         FPSMax: FPSMax,
-        mavStreamSelected: vManager.selMavURI
+        enableCameraHeartbeat: useCameraHeartbeat,
+        mavStreamSelected: selMavURI
       }))
     } else {
       res.setHeader('Content-Type', 'application/json')
@@ -675,6 +698,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
   check('width').if(check('active').isIn([true])).isInt({ min: 1 }),
   check('useUDP').if(check('active').isIn([true])).isBoolean(),
   check('useTimestamp').if(check('active').isIn([true])).isBoolean(),
+  check('useCameraHeartbeat').if(check('active').isIn([true])).isBoolean(),
   check('useUDPPort').if(check('active').isIn([true])).isPort(),
   check('useUDPIP').if(check('active').isIn([true])).isIP(),
   check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
@@ -688,7 +712,7 @@ app.post('/api/startstopvideo', [check('active').isBoolean(),
     return res.status(422).json(ret)
   }
   // user wants to start/stop video streaming
-  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, req.body.useTimestamp, req.body.mavStreamSelected, (err, status, addresses) => {
+  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       const ret = { streamingStatus: status, streamAddresses: addresses }
