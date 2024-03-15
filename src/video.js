@@ -32,7 +32,8 @@ class VideoPage extends basePage {
       error: null,
       infoMessage: null,
       timestamp: false,
-      mavStreamSelected: { label: "127.0.0.1", value: 0 }
+      enableCameraHeartbeat: false,
+      mavStreamSelected: this.props.mavStreamSelected
     }
   }
 
@@ -96,6 +97,11 @@ class VideoPage extends basePage {
     this.setState({ timestamp: !this.state.timestamp });
   }
 
+  handleUseCameraHeartbeatChange = (event) => {
+    // Toggle camera heartbeat events
+    this.setState({ enableCameraHeartbeat: !this.state.enableCameraHeartbeat });
+  }
+
   handleMavStreamChange = (value) => {
     //new value for selected stream IP
     this.setState({ mavStreamSelected: value });
@@ -124,6 +130,7 @@ class VideoPage extends basePage {
           useUDPIP: this.state.useUDPIP,
           useUDPPort: this.state.useUDPPort,
           useTimestamp: this.state.timestamp,
+          useCameraHeartbeat: this.state.enableCameraHeartbeat,
           mavStreamSelected: this.state.mavStreamSelected.value,
         })
       }).then(response => response.json()).then(state => { this.setState(state); this.setState({ waiting: false }) });
@@ -194,15 +201,6 @@ class VideoPage extends basePage {
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
           </div>
         </div>
-        <br />
-    <h3>MAVLink Video Streaming Service</h3>
-    <p><i>Configuration for advertising the video stream via MAVLink. See <a href='https://mavlink.io/en/services/camera.html#video_streaming'>here</a> for details.</i></p>
-    <div className="form-group row" style={{ marginBottom: '5px' }}>
-      <label className="col-sm-4 col-form-label">Video source IP Address</label>
-      <div className="col-sm-8">
-        <Select isDisabled={this.state.streamingStatus} onChange={this.handleMavStreamChange} options={this.state.ifaces.map((item, index) => ({ value: index, label: item}))} value={this.state.mavStreamSelected} />
-      </div>
-    </div>
         <div style={{ display: (this.state.UDPChecked) ? "block" : "none" }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label ">Destination IP</label>
@@ -217,11 +215,30 @@ class VideoPage extends basePage {
             </div>
           </div>
         </div>
+        <br/>
+        <h3>MAVLink Video Streaming Service</h3>
+        <p><i>Configuration for advertising the camera and associated video stream via MAVLink. See <a href='https://mavlink.io/en/services/camera.html#video_streaming'>here</a> for details.</i></p>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label">Enable camera heartbeats</label>
+          <div className="col-sm-7">
+          <input type="checkbox" disabled={this.state.streamingStatus} checked={this.state.enableCameraHeartbeat} onChange={this.handleUseCameraHeartbeatChange} />
+          </div>
+        </div>
+        <div style={{ display: (this.state.enableCameraHeartbeat && (!this.state.UDPChecked)) ? "block" : "none" }}>
+          <div className="form-group row" style={{ marginBottom: '5px' } }>
+              <label className="col-sm-4 col-form-label">Video source IP Address</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.streamingStatus} onChange={this.handleMavStreamChange} options={this.state.ifaces.map((item) => ({ value: item, label: item}))} value={this.state.mavStreamSelected} />
+              </div>
+          </div>
+        </div>
+        <br/>
 
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">
             <Button onClick={this.handleStreaming} className="btn btn-primary">{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</Button>
           </div>
+          <br/>
         </div>
 
         <br />

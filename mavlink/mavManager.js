@@ -106,6 +106,13 @@ class mavManager {
         data.targetComponent === minimal.MavComponent.ONBOARD_COMPUTER &&
         packet.header.msgid === common.CommandLong.MSG_ID) {
         console.log('Received CommandLong addressed to onboard computer')
+
+      // Or the attached camera
+      } else if (data.targetSystem === this.targetSystem &&
+        data.targetComponent === minimal.MavComponent.CAMERA &&
+        packet.header.msgid === common.CommandLong.MSG_ID) {
+        console.log('Received CommandLong addressed to attached camera')
+
       } else if (this.targetSystem !== packet.header.sysid) {
         // don't use packets from other systems or components in Rpanion-server
         return
@@ -251,26 +258,49 @@ class mavManager {
     })
   }
 
-  sendHeartbeat (mavType = minimal.MavType.ONBOARD_CONTROLLER,
-    autopilot = minimal.MavAutopilot.INVALID,
-    baseMode = 0,
-    customMode = 0,
-    systemStatus = 0,
-    component = minimal.MavComponent.ONBOARD_COMPUTER) {
-  // create a heartbeat packet
+  sendHeartbeat (mavType, autopilot, component) {
+
+    // Set defaults if parameters are not provided
+    if (mavType === null || mavType === undefined) {
+      mavType = minimal.MavType.ONBOARD_CONTROLLER
+    }
+
+    if (autopilot === null || autopilot === undefined) {
+      autopilot = minimal.MavAutopilot.INVALID
+    }
+
+    if (component === null || component === undefined) {
+      component = minimal.MavComponent.ONBOARD_COMPUTER
+    }
+
+      // create a heartbeat packet
     const heartbeatMessage = new minimal.Heartbeat()
 
     heartbeatMessage.type = mavType
     heartbeatMessage.autopilot = autopilot
-    heartbeatMessage.baseMode = baseMode
-    heartbeatMessage.customMode = customMode
-    heartbeatMessage.systemStatus = systemStatus
     heartbeatMessage.mavlinkVersion = this.version
+    // Set these to zero since we aren't currently using them
+    heartbeatMessage.baseMode = 0
+    heartbeatMessage.customMode = 0
+    heartbeatMessage.systemStatus = 0
 
     this.sendData(heartbeatMessage, component)
   }
 
-  sendCommandAck (commandReceived, commandResult = 0, targetSystem = 255, targetComponent = minimal.MavComponent.MISSION_PLANNER) {
+  sendCommandAck (commandReceived, commandResult, senderSysId, senderCompId, targetComponent) {
+    // Set defaults if parameters are not provided
+    if (commandResult === null || commandResult === undefined) {
+      commandResult = 0
+    }
+
+    if (senderSysId === null || senderSysId === undefined) {
+      senderSysId = 255
+    }
+
+    if (senderCompId === null || senderCompId === undefined) {
+      senderCompId = minimal.MavComponent.MISSION_PLANNER
+    }
+
     // create a CommandAck packet
     const commandAck = new common.CommandAck()
     commandAck.command = commandReceived
@@ -278,10 +308,10 @@ class mavManager {
     commandAck.result = commandResult
     // resultParam2 is for optional additional result information. Not currently used by rpanion.
     commandAck.resultParam2 = 0
-    commandAck.targetSystem = targetSystem
+    commandAck.targetSystem = senderSysId
     commandAck.targetComponent = targetComponent
 
-    this.sendData(commandAck)
+    this.sendData(commandAck, senderCompId)
   }
 
   sendReboot () {
