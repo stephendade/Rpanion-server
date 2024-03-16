@@ -81,7 +81,7 @@ function setWirelessStatus (status, callback) {
 function activateConnection (conName, callback) {
   // activate the connection (by id)
   // assumed that conName is a valid UUID
-  exec('nmcli connection mod ' + conName + ' connection.autoconnect yes ' + ' && ' + 'sudo nmcli connection up ' + conName, (error, stdout, stderr) => {
+  exec('nmcli connection mod ' + conName + ' connection.autoconnect yes ' + ' && ' + 'nmcli connection up ' + conName, (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
       winston.error('Error in getAdapters() ', { message: stderr })
@@ -307,11 +307,9 @@ function editConnectionPSK (conName, conSettings, callback) {
         }
       })
     }
-    // no psk. Note the dirty hack to remove psk
     else if (conSettings.wpaType.value === 'none' &&
                  Object.keys(conSettings.ssid).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' 802-11-wireless-security.key-mgmt ' + conSettings.wpaType.value + ' &&' +
-            'nmcli -s connection mod ' + conName + ' 802-11-wireless-security.psk 00000000', (error, stdout, stderr) => {
+      exec('nmcli connection mod ' + conName + ' remove 802-11-wireless-security', (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
@@ -338,8 +336,7 @@ function editConnectionAPClient (conName, conSettings, callback) {
       exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid \'' + conSettings.ssid.value +
             '\' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + '/24' +
             ' 802-11-wireless.channel ' + (conSettings.channel.value === '0' ? '\'\'' : conSettings.channel.value) +
-            ' 802-11-wireless-security.group ccmp ' +
-            ' 802-11-wireless-security.wps-method 1 ', (error, stdout, stderr) => {
+            (conSettings.wpaType.value === 'none' ? '' : ' 802-11-wireless-security.group ccmp 802-11-wireless-security.wps-method 1'), (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           winston.error('Error in editConnectionAPClient() ', { message: stderr })
@@ -436,7 +433,7 @@ function getConnectionDetails (conName, callback) {
       winston.error('Error in getConnectionDetails() ', { message: stderr })
       return callback(stderr)
     } else {
-      const ret = { DHCP: 'auto', IP: '', subnet: '', mode: '', wpaType: '', password: '' }
+      const ret = { DHCP: 'auto', IP: '', subnet: '', mode: '', wpaType: 'none', password: '' }
       stdout.split('\n').forEach(function (item) {
         if (item.split(':')[0] === '802-11-wireless.ssid') {
           ret.ssid = item.split(':')[1]
