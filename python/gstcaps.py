@@ -17,7 +17,7 @@ Gst.init(sys.argv)
 
 device_provider = Gst.DeviceProviderFactory.get_by_name("v4l2deviceprovider")
 devices = device_provider.get_devices()
-
+registry = Gst.Registry.get()
 
 # Get list of vals in cap
 def getcapval(caps):
@@ -35,6 +35,12 @@ def is_raspberry_pi():
         return 'Raspberry Pi' in cpuinfo
     except FileNotFoundError:
         return False
+
+
+# Return true if running on RB5
+def is_qualcomm_rb5():
+    element = registry.find_plugin("qtiqmmfsrc")
+    return element is not None
 
 
 retDevices = []
@@ -69,6 +75,26 @@ if is_raspberry_pi():
                 retDevices.append({'value': path, 'label': name, 'caps': caps})
     except:
         pass
+
+if is_qualcomm_rb5():
+    # manually add cameras. 4K main:
+    caps = []
+    caps.append({'value': "3840x2160", 'label': "3840x2160", 'height': 2160, 'width': 3840, 'format': 'video/x-raw', 'fpsmax': '30'})
+    caps.append({'value': "2560x1440", 'label': "2560x1440", 'height': 1440, 'width': 2560, 'format': 'video/x-raw', 'fpsmax': '30'})
+    caps.append({'value': "1920x1080", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '60'})
+    caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+    name = "Main Camera (IMX577)"
+    path = "qti-0"
+    retDevices.append({'value': path, 'label': name, 'caps': caps})
+
+    # tracking camera
+    caps = []
+    caps.append({'value': "1280x800", 'label': "1280x800", 'height': 800, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+    caps.append({'value': "1280x720", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60'})
+    caps.append({'value': "640x400", 'label': "640x400", 'height': 400, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '120'})
+    name = "Tracking Camera (OV9282)"
+    path = "qti-1"
+    retDevices.append({'value': path, 'label': name, 'caps': caps})
 
 legacycamint = 0
 

@@ -463,6 +463,11 @@ class FCDetails {
       this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '/dev/ttyTHS1' })
     }
 
+    // Qualcomm RB5
+    if (fs.existsSync('/dev/ttyHS5')) {
+      this.serialDevices.push({ value: '/dev/ttyHS5', label: '/dev/ttyHS5', pnpId: '' })
+    }
+
     // has the active device been disconnected?
     if (this.port) {
       console.log('Lost active device')
