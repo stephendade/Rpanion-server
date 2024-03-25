@@ -8,8 +8,17 @@ cd ../
 # If less than 500Mb RAM, need to tell NodeJS to reduce memory usage during build
 if [ $(free -m | awk '/^Mem:/{print $2}') -le 500 ]; then
     export NODE_OPTIONS="--max-old-space-size=256"
+
+    # Also increase swap size to 1024MB if it is currently less than 1000MB
+    if [ $(stat -c%s "/var/swap") -le 1000000000  ]; then
+        echo "Swap file is less than 1000MB. Increasing to 1024MB"
+        sudo dphys-swapfile swapoff
+        sudo sed -i '/CONF_SWAPSIZE=.*/c\CONF_SWAPSIZE=1024' /etc/dphys-swapfile
+        sudo dphys-swapfile setup
+        sudo dphys-swapfile swapon
+    fi
 fi
-    
+
 # Run npm install with 3 re-tries, because I have dns issues sometimes
 # Define the maximum number of retries
 MAX_RETRIES=3
