@@ -10,6 +10,18 @@ git submodule update --init --recursive
 sudo raspi-config nonint do_camera 0
 sudo raspi-config nonint do_ssh 0
 
+# Increase swap size to 1024MB if it is currently less than 1000MB
+# Allows the NPM build to complete successfully on systems with 500MB of RAM
+if [ $(stat -c%s "/var/swap") -le 1000000000 ]; then
+    echo "Swap file is less than 1000MB. Increasing to 1024MB."
+    sudo dphys-swapfile swapoff
+    sudo sed -i '/CONF_SWAPSIZE=.*/c\CONF_SWAPSIZE=1024' /etc/dphys-swapfile
+    sudo dphys-swapfile setup
+    sudo dphys-swapfile swapon
+else
+    echo "Swapfile is already >1000MB"
+fi
+
 ## Pi5 uses a different UART for the 40-pin header (/dev/ttyAMA0)
 # See https://forums.raspberrypi.com/viewtopic.php?t=359132
 if [ -e "/proc/device-tree/compatible" ]; then
