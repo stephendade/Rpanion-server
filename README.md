@@ -54,7 +54,7 @@ to configure and install Rpanion-server with all required dependencies. Note thi
 an initial Wifi hotspot.
 
 ```
-cd ./deploy && ./RasPi2-3-4-5-deploy.sh
+cd .~/Rpanion-server/deploy && ./RasPi2-3-4-5-deploy.sh
 ```
 
 If running Ubuntu 20.04 OS on the Pi, use:
