@@ -69,7 +69,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-react": "^7.33.2",
-    "express": "^4.18.2",
+    "express": "^4.19.2",
     "express-pino-logger": "^7.0.0",
     "mocha": "^10.2.0",
     "mocha-lcov-reporter": "^1.3.0",
