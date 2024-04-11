@@ -11,7 +11,7 @@
     "express-validator": "^7.0.1",
     "moment": "^2.29.4",
     "node-mavlink": "^2.0.5",
-    "npm": "^9.8.1",
+    "npm": "^10.5.2",
     "ntrip-client": "^1.1.1",
     "nyc": "^15.1.0",
     "prop-types": "^15.8.1",
