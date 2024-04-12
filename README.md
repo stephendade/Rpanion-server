@@ -26,6 +26,9 @@ On the Nvidia Jetson, Rpanion-server is compatible with Ubuntu 18.04 LTS.
 
 On the [Libre Computer Le Potato](https://libre.computer/products/aml-s905x-cc/), Rpanion-server is compatible with their flavor of [Raspberry Pi OS](https://distro.libre.computer/ci/raspbian/).
 
+> [!NOTE]
+> Some users may have issues connecting to the UART on the Raspberry Pi 3B+. Further details and configuration fixes are at https://github.com/stephendade/Rpanion-server/issues/215#issuecomment-2049058406.
+
 ## Features
 
 Rpanion-server allows the user to configure:
