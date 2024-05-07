@@ -19,7 +19,7 @@ function getVPNStatusZerotier (errpass, callback) {
       } else {
         const infoout = stdout.slice(0, stdout.indexOf('[\n]'))
         const networkout = stdout.slice(stdout.indexOf('\n') + 1)
-        const isOnline = infoout.search('ONLINE') > -1
+        const isOnline = infoout.search('ONLINE') > -1 || infoout.search('TUNNELED') > -1
         return callback(errpass, { installed: true, status: isOnline, text: JSON.parse(networkout) })
       }
     }
