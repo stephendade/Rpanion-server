@@ -10,6 +10,7 @@ import argparse
 import os
 import platform
 from netifaces import interfaces, ifaddresses, AF_INET
+import ipaddress
 
 gi.require_version("Gst", "1.0")
 gi.require_version("GstRtsp", "1.0")
@@ -31,6 +32,16 @@ def is_debian_bookworm():
         # Check if the system is running Debian and has the codename "bookworm"
         return platform.system() == 'Linux' and os.path.exists('/etc/os-release') and 'bookworm' in open('/etc/os-release').read()
     except:
+        return False
+
+
+def is_multicast(ip: str) -> bool:
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        # Multicast addresses are in the range 224.0.0.0 to 239.255.255.255
+        return ip_obj.is_multicast
+    except ValueError:
+        # If the IP address is not valid, return False
         return False
 
 
@@ -228,6 +239,7 @@ if __name__ == '__main__':
             print("Exiting RTSP Server")
             loop.quit()
     elif args.udp.split(':')[0] == "0":
+        # RTSP
         s = GstServer()
         s.addStream(args.videosource, args.height, args.width, args.bitrate,
                     args.format, args.rotation, args.fps, args.timestamp)
@@ -238,10 +250,13 @@ if __name__ == '__main__':
             print("Exiting RTSP Server")
             loop.quit()
     else:
+        # RTP
         pipeline_str = getPipeline(args.videosource, args.height, args.width,
                                    args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
         pipeline_str += " ! udpsink host={0} port={1}".format(
             args.udp.split(':')[0], args.udp.split(':')[1])
+        if is_multicast(args.udp.split(':')[0]):
+            pipeline_str += " auto-multicast=true"
         pipeline = Gst.parse_launch(pipeline_str)
         pipeline.set_state(Gst.State.PLAYING)
 
