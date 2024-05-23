@@ -33,12 +33,13 @@ class VideoPage extends basePage {
       infoMessage: null,
       timestamp: false,
       enableCameraHeartbeat: false,
-      mavStreamSelected: this.props.mavStreamSelected
+      mavStreamSelected: this.props.mavStreamSelected,
+      multicastString: " "
     }
   }
 
   componentDidMount() {
-    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
+    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.isMulticastUpdateIP(state.useUDPIP); this.loadDone() });
   }
 
   handleVideoChange = (value, action) => {
@@ -72,9 +73,28 @@ class VideoPage extends basePage {
     this.setState({ UDPChecked: event.target.value==="rtp" });
   }
 
+  isMulticastUpdateIP(ip) {
+    // Split the IP address into its four octets
+    const octets = ip.split('.').map(Number);
+    let udpmult = " ";
+
+    // Check if the IP address has 4 octets and all are within the valid range
+    if (octets.length !== 4 || octets.some(octet => isNaN(octet) || octet < 0 || octet > 255)) {
+      udpmult = "multicast-group=" + ip + " ";
+    }
+
+    // Check if the first octet is within the multicast range (224-239)
+    if (octets[0] >= 224 && octets[0] <= 239) {
+      udpmult = "multicast-group=" + ip + " ";
+    }
+
+    this.setState({multicastString: udpmult});
+  }
+
   handleUDPIPChange = (event) => {
-    //bitrate spinner new value
-    this.setState({ useUDPIP: event.target.value });
+    //IP address new value
+    this.isMulticastUpdateIP(event.target.value);
+    this.setState({ useUDPIP: event.target.value,});
   }
 
   handleUDPPortChange = (event) => {
@@ -144,7 +164,7 @@ class VideoPage extends basePage {
   renderContent() {
     return (
       <Form style={{ width: 600 }}>
-        <p><i>Stream live video from any connected camera devices. Only 1 camera can be streamed at a time.</i></p>
+        <p><i>Stream live video from any connected camera devices. Only 1 camera can be streamed at a time. Multicast IP addresses are supported in RTP mode.</i></p>
         <h2>Configuration</h2>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Streaming Mode</label>
@@ -290,7 +310,7 @@ class VideoPage extends basePage {
               + GStreamer
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc {this.state.multicastString}port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
           <Accordion.Item eventKey="2">
@@ -298,7 +318,7 @@ class VideoPage extends basePage {
               + Mission Planner Connection Strings
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>udpsrc port={this.state.useUDPPort} buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>udpsrc {this.state.multicastString}port={this.state.useUDPPort} buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
