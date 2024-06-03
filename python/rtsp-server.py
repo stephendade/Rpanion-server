@@ -11,14 +11,16 @@ import os
 import platform
 from netifaces import interfaces, ifaddresses, AF_INET
 import ipaddress
+from typing import List
 
 gi.require_version("Gst", "1.0")
 gi.require_version("GstRtsp", "1.0")
 gi.require_version("GstRtspServer", "1.0")
 from gi.repository import Gst, GstRtspServer, GLib
 
-def ip4_addresses():
-    ip_list = []
+
+def ip4_addresses() -> List[str]:
+    ip_list: List[str] = []
     for interface in interfaces():
         if AF_INET in ifaddresses(interface).keys():
             for link in ifaddresses(interface)[AF_INET]:
@@ -27,7 +29,7 @@ def ip4_addresses():
     return ip_list
 
 
-def is_debian_bookworm():
+def is_debian_bookworm() -> bool:
     try:
         # Check if the system is running Debian and has the codename "bookworm"
         return platform.system() == 'Linux' and os.path.exists('/etc/os-release') and 'bookworm' in open('/etc/os-release').read()
@@ -45,28 +47,8 @@ def is_multicast(ip: str) -> bool:
         return False
 
 
-def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp):
-    # rotation
-    if device in ["0rpicam", "1rpicam"]:
-        devrotation = rotation
-    elif 'tegra' in platform.uname().release:
-        # Jetson
-        if rotation == 90:
-            devrotation = "flip-method=3"
-        elif rotation == 180:
-            devrotation = "flip-method=2"
-        elif rotation == 270:
-            devrotation = "flip-method=1"
-        else:
-            devrotation = ""
-    else:
-        devrotation = "videoflip video-direction=identity"
-        if rotation == 90:
-            devrotation = "videoflip video-direction=90r"
-        elif rotation == 180:
-            devrotation = "videoflip video-direction=180"
-        elif rotation == 270:
-            devrotation = "videoflip video-direction=90l"
+def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp) -> str:
+    pipeline: List[str] = []
 
     # -1 is no framerate specified
     if framerate == -1:
@@ -74,50 +56,22 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
     else:
         framestr = ",framerate={0}/1".format(framerate)
 
-    # include timestamp?
-    ts = ""
-    if timestamp:
-        ts = "clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\" ! "
-        if device in ["0rpicam", "1rpicam"]:
-            ts = "annotation-mode=12 annotation-text-colour=0"
-
-    # Video format conversion, rotation, timestamp and x264 compression
-    # 3 options: Rpi hardware compression, Jetson hardware compression or software compression
-    if 'arm' in platform.uname().machine or 'aarch64' in platform.uname().machine:
-        # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
-        if 'tegra' in platform.uname().release:
-            # Jetson
-            s_h264 = "nvvidconv {1} ! {2} nvvidconv ! nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true ! h264parse".format(
-                bitrate*1000, devrotation, ts)
-        elif "Ubuntu" not in platform.uname().version and not is_debian_bookworm():
-            # Pi or similar arm platforms running on RasPiOS. Note that bookworm (and Pi5) onwards don't support hardware encoding
-            # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little crashy sometimes.
-            if bitrate > 20000:
-                level = "4.1"
-            else:
-                level = "4"
-            s_h264 = "videoconvert ! {1} ! {2}v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\" ! video/x-h264,profile=high,level=(string){3} ! h264parse".format(
-                bitrate*1000, devrotation, ts, level)
-        else:
-            # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
-            s_h264 = "videoconvert  ! video/x-raw,format=NV12 ! queue ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
-                bitrate, devrotation, ts)
-    else:
-        # s/w encoder - x86, etc
-        s_h264 = "videoconvert  ! video/x-raw,format=I420 ! queue ! {1} ! {2}x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(
-            bitrate, devrotation, ts)
-
+    # start with device
     if device == "testsrc":
-        s_src = "videotestsrc pattern=ball ! video/x-raw,width={0},height={1}{2}".format(
-            width, height, framestr)
+        pipeline.append("videotestsrc pattern=ball")
+        pipeline.append("video/x-raw,width={0},height={1}{2}".format(width, height, framestr))
     elif device in ["argus0", "argus1"]:
-        s_src = "nvarguscamerasrc sensor-id={0} ! video/x-raw(memory:NVMM),width={1},height={2},format=NV12{3}".format(
-            device[-1], width, height, framestr)
+        pipeline.append("nvarguscamerasrc sensor-id={0}".format(device[-1]))
+        pipeline.append("video/x-raw(memory:NVMM),width={0},height={1},format=NV12{2}".format(width, height, framestr))
     elif device in ["0rpicam", "1rpicam"]:
         # Old (Buster and earlier) can use the rpicamsrc interface
-        s_src = "rpicamsrc {5} bitrate={0} rotation={3} camera-number={6} preview=false ! video/x-h264,width={1},height={2}{4}".format(
-            bitrate*1000, width, height, devrotation, framestr, ts, device[0])
-        s_h264 = "identity"
+        ts = ""
+        if timestamp:
+            ts = "annotation-mode=12 annotation-text-colour=0"
+        pipeline.append("rpicamsrc {2} bitrate={0} rotation={1} camera-number={3} preview=false".format(
+            bitrate*1000, rotation, ts, device[0]))
+        pipeline.append("video/x-h264,width={0},height={1}{2}".format(
+            width, height, framestr))
     elif device.startswith("/base/soc/i2c") or device.startswith("/base/axi/pcie"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
         # Note that Bullseye and Bookworm need different formats
@@ -125,25 +79,95 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             format = "RGBx"
         else:
             format = "NV12"
-        s_src = "libcamerasrc camera-name={3} ! capsfilter caps=video/x-raw,width={0},height={1},format={4}{2} ! queue".format(
-            width, height, framestr, device, format)
+        pipeline.append("libcamerasrc camera-name={0}".format(device))
+        pipeline.append("capsfilter caps=video/x-raw,width={0},height={1},format={3}{2}".format(width, height, framestr, format))
+        pipeline.append("queue")
     elif format == "video/x-raw":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! queue".format(
-            device, width, height, format, framestr)
+        pipeline.append("v4l2src device={0}".format(device))
+        pipeline.append("videorate")
+        pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
+        pipeline.append("queue")
     elif format == "video/x-h264":
-        s_src = "v4l2src device={0} ! {3},width={1},height={2}{4}".format(
-            device, width, height, format, framestr)
-        s_h264 = "identity"
+        pipeline.append("v4l2src device={0}".format(device))
+        pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
     elif format == "image/jpeg":
-        s_src = "v4l2src device={0} ! videorate ! {3},width={1},height={2}{4} ! queue ! jpegdec".format(
-            device, width, height, format, framestr)
+        pipeline.append("v4l2src device={0}".format(device))
+        pipeline.append("videorate")
+        pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
+        pipeline.append("queue")
+        pipeline.append("jpegdec")
     else:
         print("Bad camera")
         return ""
 
-    pipeline_str = "( {0} ! {1} ! queue ! rtph264pay config-interval=1 name=pay0 pt=96 )".format(s_src, s_h264)
-    print(pipeline_str)
-    return pipeline_str
+    # now for rotations, overlays and compression, if required. Note we can't modify an x264 source stream
+    if format != "video/x-h264":
+        # now add rotations for not-jetson and not-legacy-pi-camera
+        if device not in ["0rpicam", "1rpicam"] and 'tegra' not in platform.uname().release:
+            if rotation == 90:
+                pipeline.append("videoflip video-direction=90r")
+            elif rotation == 180:
+                pipeline.append("videoflip video-direction=180")
+            elif rotation == 270:
+                pipeline.append("videoflip video-direction=90l")
+
+        # and then timestamps
+        if timestamp and device not in ["0rpicam", "1rpicam"] and 'tegra' not in platform.uname().release:
+            pipeline.append("videoconvert")
+            pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
+
+        # 3 options: Rpi hardware compression, Jetson hardware compression or software compression
+        if 'arm' in platform.uname().machine or 'aarch64' in platform.uname().machine:
+            # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
+            if 'tegra' in platform.uname().release:
+                # Jetson, with h/w rotation
+                if rotation == 90:
+                    devrotation = "flip-method=3"
+                elif rotation == 180:
+                    devrotation = "flip-method=2"
+                elif rotation == 270:
+                    devrotation = "flip-method=1"
+                else:
+                    devrotation = ""
+                pipeline.append("nvvidconv {0}".format(devrotation))
+                if timestamp:
+                    pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
+                    pipeline.append("nvvidconv")
+                pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
+                pipeline.append("h264parse")
+            elif "Ubuntu" not in platform.uname().version and not is_debian_bookworm():
+                # Pi or similar arm platforms running on RasPiOS. Note that bookworm (and Pi5) onwards don't support
+                # hardware encoding
+                # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
+                # crashy sometimes.
+                if bitrate > 20000:
+                    level = "4.1"
+                else:
+                    level = "4"
+                pipeline.append("videoconvert")
+                pipeline.append("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\"".format(bitrate*1000))
+                pipeline.append("video/x-h264,profile=high,level=(string){0}".format(level))
+                pipeline.append("h264parse")
+            else:
+                # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
+                pipeline.append("videoconvert")
+                pipeline.append("video/x-raw,format=NV12")
+                pipeline.append("queue")
+                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
+        else:
+            # s/w encoder - x86, etc
+            pipeline.append("videoconvert")
+            pipeline.append("video/x-raw,format=I420")
+            pipeline.append("queue")
+            pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
+
+    # final rtp formatting
+    pipeline.append("queue")
+    pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
+
+    # return as full string
+    print(" ! ".join(pipeline))
+    return " ! ".join(pipeline)
 
 
 class MyFactory(GstRtspServer.RTSPMediaFactory):
