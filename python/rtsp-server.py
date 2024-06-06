@@ -78,7 +78,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         if is_debian_bookworm():
             format = "RGBx"
         else:
-            format = "NV12"
+            format = "I420"  # https://forums.raspberrypi.com/viewtopic.php?t=93560
         pipeline.append("libcamerasrc camera-name={0}".format(device))
         pipeline.append("capsfilter caps=video/x-raw,width={0},height={1},format={3}{2}".format(width, height, framestr, format))
         pipeline.append("queue")
