@@ -81,12 +81,12 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             format = "I420"  # https://forums.raspberrypi.com/viewtopic.php?t=93560
         pipeline.append("libcamerasrc camera-name={0}".format(device))
         pipeline.append("capsfilter caps=video/x-raw,width={0},height={1},format={3}{2}".format(width, height, framestr, format))
-        pipeline.append("queue")
+        pipeline.append("queue max-size-buffers=1 leaky=downstream")
     elif format == "video/x-raw":
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("videorate")
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
-        pipeline.append("queue")
+        pipeline.append("queue max-size-buffers=1 leaky=downstream")
     elif format == "video/x-h264":
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
@@ -94,7 +94,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("videorate")
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
-        pipeline.append("queue")
+        pipeline.append("queue max-size-buffers=1 leaky=downstream")
         pipeline.append("jpegdec")
     else:
         print("Bad camera")
@@ -152,13 +152,13 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
                 pipeline.append("videoconvert")
                 pipeline.append("video/x-raw,format=NV12")
-                pipeline.append("queue")
+                pipeline.append("queue max-size-buffers=1 leaky=downstream")
                 pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
         else:
             # s/w encoder - x86, etc
             pipeline.append("videoconvert")
             pipeline.append("video/x-raw,format=I420")
-            pipeline.append("queue")
+            pipeline.append("queue max-size-buffers=1 leaky=downstream")
             pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
 
     # final rtp formatting
