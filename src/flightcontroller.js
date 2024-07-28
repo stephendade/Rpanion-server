@@ -201,8 +201,9 @@ class FCPage extends basePage {
 
         <br />
         <h2>Telemetry Destinations</h2>
+        <p><i>Telemetry must be stopped before the below options can be edited.</i></p>
         <h3>UDP Client</h3>
-        <p><i>Send telemetry to these specific devices IP:port</i></p>
+        <p><i>Send telemetry to a specific IP:port. Use "UDP" option in Mission Planner.</i></p>
         <Table id='UDPOut' striped bordered hover size="sm">
           <thead>
             <tr><th>Destination IP:Port</th><th>Action</th></tr>
@@ -215,12 +216,12 @@ class FCPage extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Add new destination</label>
           <div className="col-sm-8">
-            <input type="text" onChange={this.changeaddrow} value={this.state.addrow} /><Button size="sm" onClick={this.addUdpOutput}>Add</Button>
+            <input type="text" onChange={this.changeaddrow} disabled={this.state.telemetryStatus} value={this.state.addrow} /><Button size="sm" disabled={this.state.telemetryStatus} onClick={this.addUdpOutput}>Add</Button>
           </div>
         </div>
         <br />
         <h3>UDP Server</h3>
-        <p><i>Allow devices to connect to this device's IP:port</i></p>
+        <p><i>Allow a single GCS to connect to this device's IP:port. Multiple GCS's cannot be connected here. Use "UDPCI" option in Mission Planner.</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Enable UDP Server</label>
           <div className="col-sm-8">
@@ -235,7 +236,7 @@ class FCPage extends basePage {
         </div>
         <br />
         <h3>TCP Server</h3>
-        <p><i>Allow devices to connect to this device's IP:port</i></p>
+        <p><i>Allow multiple GCS's to connect to this device's IP:port. Use "TCP" option in Mission Planner.</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-5 col-form-label">Enable TCP Server at port 5760</label>
           <div className="col-sm-7">
