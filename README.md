@@ -98,8 +98,12 @@ The required prerequisite packages can be installed via:
 ```
 sudo apt install libgstreamer-plugins-base1.0* libgstreamer1.0-dev gstreamer1.0-plugins-ugly libgstrtspserver-1.0-dev gstreamer1.0-plugins-base-apps network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq ninja-build
 
+#If not using Debian Bookworm:
 sudo pip3 install meson
 pip3 install netifaces --user
+
+#If using Debian Bookworm:
+sudo apt install -y meson python3-netifaces gstreamer1.0-libcamera
 ```
 
 For some systems (such as the Raspberry Pi), additional permissions may be requires to run ``nmcli`` from the
@@ -119,6 +123,7 @@ The mavlink-router (https://github.com/intel/mavlink-router) software is used fo
 backend routing and is required to be installed:
 
 ```
+cd ~/Rpanion-server
 git submodule init && git submodule update
 cd ./modules/mavlink-router
 meson setup build . --buildtype=release
@@ -126,7 +131,23 @@ ninja -C build
 sudo ninja -C build install
 ```
 
-The node.js packages need to be installed using ``npm install`` in the Rpanion-server folder.
+The node.js packages need to be installed using ``npm install`` in the Rpanion-server folder:
+
+```
+cd ~/Rpanion-server
+npm install
+npm run build
+```
+
+Then to run (in production mode):
+```
+cd ~/Rpanion-server
+npm run service
+```
+
+Otherwise, a systemd service can be installed (see ``rpanion.service``) to automatically start
+Rpanion-server when the Pi starts up.
+
 
 ### Automatic (Nvidia Jetson)
 
