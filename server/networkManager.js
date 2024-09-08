@@ -1,4 +1,4 @@
-const { exec, execSync } = require('child_process')
+const { exec, execSync, execFile } = require('child_process')
 const winston = require('./winstonconfig')(module)
 
 function getAdapters (callback) {
@@ -243,7 +243,7 @@ function editConnectionAttached (conName, conSettings, callback) {
     conSettings.attachedIface.value = '""'
   }
 
-  exec('nmcli connection mod ' + conName + ' connection.interface-name ' + conSettings.attachedIface.value, (error, stdout, stderr) => {
+  execFile('nmcli', ['connection', 'mod', conName, 'connection.interface-name', conSettings.attachedIface.value], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
       return callback(stderr)
@@ -259,7 +259,7 @@ function editConnectionIP (conName, conSettings, callback) {
   // first sort out the IP Addressing (DHCP/static) for LAN and Wifi Client
   if (Object.keys(conSettings.ssid).length === 0 || conSettings.mode.value === 'infrastructure') {
     if (conSettings.ipaddresstype.value === 'auto') {
-      exec('nmcli connection mod ' + conName + ' ipv4.method auto ' + 'ipv4.addresses \'\'', (error, stdout, stderr) => {
+      execFile('nmcli', ['connection', 'mod', conName, 'ipv4.method', 'auto', 'ipv4.addresses', ''], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
@@ -270,8 +270,8 @@ function editConnectionIP (conName, conSettings, callback) {
         }
       })
     } else if (Object.keys(conSettings.ipaddress).length !== 0 && Object.keys(conSettings.subnet).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' ipv4.addresses ' + conSettings.ipaddress.value + '/' +
-                 netmask2CIDR(conSettings.subnet.value) + ' ipv4.method ' + conSettings.ipaddresstype.value, (error, stdout, stderr) => {
+      execFile('nmcli', ['connection', 'mod', conName, 'ipv4.addresses', conSettings.ipaddress.value + '/' +
+        netmask2CIDR(conSettings.subnet.value), 'ipv4.method', conSettings.ipaddresstype.value], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
@@ -290,6 +290,9 @@ function editConnectionIP (conName, conSettings, callback) {
 
 function editConnectionPSK (conName, conSettings, callback) {
   // now sort out Wifi client/ap settings - password and security type
+  if (Object.keys(conSettings.mode).length === 0) {
+    return callback(null, 'EditNotRequired')
+  }
   if (conSettings.mode.value === 'infrastructure' || conSettings.mode.value === 'ap') {
     // psk network
     if (conSettings.wpaType.value !== 'none' &&
@@ -309,7 +312,7 @@ function editConnectionPSK (conName, conSettings, callback) {
     }
     else if (conSettings.wpaType.value === 'none' &&
                  Object.keys(conSettings.ssid).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' remove 802-11-wireless-security', (error, stdout, stderr) => {
+      execFile('nmcli', ['connection', 'mod', conName, 'remove', '802-11-wireless-security'], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
@@ -328,15 +331,23 @@ function editConnectionPSK (conName, conSettings, callback) {
 
 function editConnectionAPClient (conName, conSettings, callback) {
   // now sort out Wifi ap or client settings - ssid, band, starting ip
+  if (Object.keys(conSettings.mode).length === 0) {
+    return callback(null, 'EditNotRequired')
+  }
   if (conSettings.mode.value === 'ap') {
     if (Object.keys(conSettings.ssid).length !== 0 &&
             Object.keys(conSettings.band).length !== 0 &&
             Object.keys(conSettings.channel).length !== 0 &&
             Object.keys(conSettings.ipaddress).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid \'' + conSettings.ssid.value +
-            '\' 802-11-wireless.band ' + conSettings.band.value + ' ipv4.addresses ' + conSettings.ipaddress.value + '/24' +
-            ' 802-11-wireless.channel ' + (conSettings.channel.value === '0' ? '\'\'' : conSettings.channel.value) +
-            (conSettings.wpaType.value === 'none' ? '' : ' 802-11-wireless-security.group ccmp 802-11-wireless-security.wps-method 1'), (error, stdout, stderr) => {
+      const cmds = ['connection', 'mod', conName, '802-11-wireless.ssid', conSettings.ssid.value,
+        '802-11-wireless.band', conSettings.band.value, 'ipv4.addresses', conSettings.ipaddress.value + '/24']
+      if (conSettings.channel.value !== '0') {
+        cmds.push('802-11-wireless.channel', conSettings.channel.value)
+      }
+      if (conSettings.wpaType.value !== 'none') {
+        cmds.push('802-11-wireless-security.group', 'ccmp', '802-11-wireless-security.wps-method', '1')
+      }
+      execFile('nmcli', cmds, (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           winston.error('Error in editConnectionAPClient() ', { message: stderr })
@@ -347,11 +358,17 @@ function editConnectionAPClient (conName, conSettings, callback) {
           return callback(null, 'OK')
         }
       })
+    } else {
+      console.log('Badsettings in editConnectionAPClient')
+      console.log(conSettings)
+      winston.info('Badsettings in editConnectionAPClient')
+      winston.info(conSettings)
+      return callback(null, 'BADARGS')
     }
   } else {
     // client connection - edit ssid if required
     if (Object.keys(conSettings.ssid).length !== 0) {
-      exec('nmcli connection mod ' + conName + ' 802-11-wireless.ssid \'' + conSettings.ssid.value + '\'', (error, stdout, stderr) => {
+      execFile('nmcli', ['connection', 'mod', conName, '802-11-wireless.ssid', conSettings.ssid.value], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           winston.error('Error in editConnectionAPClient() ', { message: stderr })
@@ -362,6 +379,12 @@ function editConnectionAPClient (conName, conSettings, callback) {
           return callback(null, 'OK')
         }
       })
+    } else {
+      console.log('Badsettings in editConnectionAPClient')
+      console.log(conSettings)
+      winston.info('Badsettings in editConnectionAPClient')
+      winston.info(conSettings)
+      return callback(null, 'BADARGS')
     }
   }
 }
@@ -369,7 +392,7 @@ function editConnectionAPClient (conName, conSettings, callback) {
 function deleteConnection (conName, callback) {
   // delete the connection (by id)
   // assumed that conName is a valid UUID
-  exec('nmcli connection delete ' + conName, (error, stdout, stderr) => {
+  execFile('nmcli', ['connection', 'delete', conName], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
       winston.error('Error in deleteConnection() ', { message: stderr })
@@ -426,7 +449,7 @@ function getConnections (callback) {
 }
 
 function getConnectionDetails (conName, callback) {
-  exec('nmcli -s -t -f ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.interface-name,802-11-wireless.channel connection show ' + conName, (error, stdout, stderr) => {
+  execFile('nmcli', ['-s', '-t', '-f', 'ipv4.addresses,802-11-wireless.band,ipv4.method,IP4.ADDRESS,802-11-wireless.ssid,802-11-wireless.mode,802-11-wireless-security.key-mgmt,802-11-wireless-security.psk,connection.interface-name,802-11-wireless.channel', 'connection', 'show', conName], (error, stdout, stderr) => {
     if (stderr) {
       // no connection with that name
       console.error(`exec error: ${error}`)
@@ -438,7 +461,11 @@ function getConnectionDetails (conName, callback) {
         if (item.split(':')[0] === '802-11-wireless.ssid') {
           ret.ssid = item.split(':')[1]
         } else if (item.split(':')[0] === '802-11-wireless.band') {
-          ret.band = item.split(':')[1]
+          if (item.split(':')[1] === '') {
+            ret.band = 'bg'
+          } else {
+            ret.band = item.split(':')[1]
+          }
         } else if (item.split(':')[0] === 'ipv4.method') {
           ret.DHCP = item.split(':')[1]
         }
