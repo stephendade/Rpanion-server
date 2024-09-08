@@ -2,7 +2,7 @@
  VPN management. Currently supports Zerotier and Wireguard
 */
 const path = require('path')
-const { exec } = require('child_process')
+const { exec, execFile } = require('child_process')
 const winston = require('./winstonconfig')(module)
 
 function getVPNStatusZerotier (errpass, callback) {
@@ -28,7 +28,7 @@ function getVPNStatusZerotier (errpass, callback) {
 
 function addZerotier (network, callback) {
   console.log('Adding: ' + network)
-  exec('sudo zerotier-cli join ' + network, (error, stdout, stderr) => {
+  execFile('sudo', ['zerotier-cli', 'join', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
       winston.error('Error in addZerotier() ', { message: stderr })
@@ -45,7 +45,7 @@ function addZerotier (network, callback) {
 
 function removeZerotier (network, callback) {
   console.log('Removing: ' + network)
-  exec('sudo zerotier-cli leave ' + network, (error, stdout, stderr) => {
+  execFile('sudo', ['zerotier-cli', 'leave', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
       winston.error('Error in removeZerotier() ', { message: stderr })
@@ -146,7 +146,7 @@ function deleteWireguardProfile (filename, callback) {
     })
   }
 
-  exec('sudo rm /etc/wireguard/' + wgprofile, (error, stdout, stderr) => {
+  execFile('sudo', ['rm', '/etc/wireguard/' + wgprofile], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
       winston.error('Error in vpnwireguardelete() ', { message: stderr })
@@ -159,7 +159,7 @@ function deleteWireguardProfile (filename, callback) {
 
 function getVPNStatusWireguard (errpass, callback) {
   // get status of VPN
-  exec('which wg-quick', (errorwg, stdoutwg, stderrwg) => {
+  execFile('which', ['wg-quick'], (errorwg, stdoutwg, stderrwg) => {
     // check if installed
     if (errorwg !== null) {
       console.error(`exec error: ${stderrwg}`)
@@ -169,7 +169,7 @@ function getVPNStatusWireguard (errpass, callback) {
     if (stdoutwg.toString().trim() === '') {
       return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
     } else {
-      exec('sudo ./python/wireguardconfig.py', (error, stdout, stderr) => {
+      execFile('sudo', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
         if (error !== null) {
           console.error(`exec error: ${error}`)
           winston.error('Error in getVPNStatusWireguard() ', { message: stderr })
