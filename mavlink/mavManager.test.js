@@ -29,7 +29,7 @@ describe('MAVLink Functions', function () {
     assert.equal(m.conStatusInt(), 0)
     assert.equal(m.statusArmed, 0)
 
-    var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
+    const hb = new Buffer.from([0xfd, 0x09, 0x00, 0x00, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x2d, 0x0d, 0x02, 0x7e, 0xfd])
     m.inStream.write(hb)
 
     assert.equal(m.conStatusStr(), 'Connected')
@@ -40,8 +40,8 @@ describe('MAVLink Functions', function () {
     assert.equal(packets.length, 1)
 
     // check arming
-    var hb = new Buffer.from([0xfd, 0x09, 0x00, 0x01, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x8d, 0x0d, 0x02, 0x4c, 0x4f])
-    m.inStream.write(hb)
+    const hbb = new Buffer.from([0xfd, 0x09, 0x00, 0x01, 0x07, 0x2a, 0x96, 0x00, 0x00, 0x00, 0x44, 0x00, 0x00, 0x00, 0x05, 0x03, 0x8d, 0x0d, 0x02, 0x4c, 0x4f])
+    m.inStream.write(hbb)
   })
 
   it('#versionSend()', function (done) {
@@ -124,7 +124,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg, rinfo) => {
-      msg.should.eql(Buffer.from([253, 09, 00, 00, 00, 00, 191, 00, 00, 00, 00, 00, 00, 00, 18, 08, 00, 00, 02, 61, 244 ]))
+      msg.should.eql(Buffer.from([253, 9, 0, 0, 0, 0, 191, 0, 0, 0, 0, 0, 0, 0, 18, 8, 0, 0, 2, 61, 244 ]))
       m.close()
       udpStream.close()
       done()
@@ -146,7 +146,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg, rinfo) => {
-      msg.should.eql(Buffer.from([253, 09, 00, 00, 00, 00, 191, 77, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 255, 197, 27 ]))
+      msg.should.eql(Buffer.from([253, 9, 0, 0, 0, 0, 191, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 197, 27]))
       m.close()
       udpStream.close()
       done()
