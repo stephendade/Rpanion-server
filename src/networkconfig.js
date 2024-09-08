@@ -121,7 +121,8 @@ class NetworkConfig extends basePage {
         });
         //filter the connections
         this.state.netConnection.forEach(function (item) {
-          if (item.type === "802-11-wireless" && (item.attachedIface === "" || item.attachedIface === "undefined" || item.attachedIface === value.value)) {
+          if (item.type === "802-11-wireless" && (item.attachedIface === '\"\"' || item.attachedIface === '' ||
+            item.attachedIface === "undefined" || item.attachedIface === value.value)) {
             if (item.state === value.value) {
               item.label = item.labelPre + " (Active)";
               netConnection.push(item);
