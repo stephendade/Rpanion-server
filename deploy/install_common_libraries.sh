@@ -23,7 +23,7 @@ source ~/.profile
 # Debian Bookdown does not like pip install wthout a virtualenv, so do apt installs instead
 # Also need gstreamer1.0-libcamera, as the libcamerasrc gst element has moved
 source /etc/os-release
-if [ "$ID" == "debian" ] && [ "$VERSION_CODENAME" == "bookworm" ]; then
+if [[ "$ID" == "debian" || "$ID" == "raspbian" ]] && [ "$VERSION_CODENAME" == "bookworm" ]; then
     sudo apt install -y meson python3-netifaces gstreamer1.0-libcamera
 else
     sudo python3 -m pip install --upgrade pip
