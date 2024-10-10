@@ -12,6 +12,7 @@ import platform
 from netifaces import interfaces, ifaddresses, AF_INET
 import ipaddress
 from typing import List
+import subprocess
 
 gi.require_version("Gst", "1.0")
 gi.require_version("GstRtsp", "1.0")
@@ -29,10 +30,25 @@ def ip4_addresses() -> List[str]:
     return ip_list
 
 
-def is_debian_bookworm() -> bool:
+# Returns true if this is a Raspi5 or later
+# https://www.raspberrypi.com/documentation/computers/raspberry-pi.html#raspberry-pi-revision-codes
+def is_pi_5_or_later() -> bool:
+    cmd = "cat /proc/cpuinfo | awk '/Revision/ {print $3}'"
+    revcode = subprocess.check_output(cmd, shell=True)
+
+    if revcode == "":
+        return False
+
     try:
-        # Check if the system is running Debian and has the codename "bookworm"
-        return platform.system() == 'Linux' and os.path.exists('/etc/os-release') and 'bookworm' in open('/etc/os-release').read()
+        code = int(revcode, 16)
+        new = (code >> 23) & 0x1
+        model = (code >> 4) & 0xff
+        # mem = (code >> 20) & 0x7
+
+        if new and model >= 0x17:
+            return True
+        else:
+            return False
     except:
         return False
 
@@ -74,8 +90,8 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             width, height, framestr))
     elif device.startswith("/base/soc/i2c") or device.startswith("/base/axi/pcie"):
         # Bullseye uses the new libcamera interface ... so need a different pipeline
-        # Note that Bullseye and Bookworm need different formats
-        if is_debian_bookworm():
+        # Note that the Pi5 uses a different format
+        if is_pi_5_or_later():
             format = "RGBx"
         else:
             format = "I420"  # https://forums.raspberrypi.com/viewtopic.php?t=93560
@@ -135,9 +151,8 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                     pipeline.append("nvvidconv")
                 pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
                 pipeline.append("h264parse")
-            elif "Ubuntu" not in platform.uname().version and not is_debian_bookworm():
-                # Pi or similar arm platforms running on RasPiOS. Note that bookworm (and Pi5) onwards don't support
-                # hardware encoding
+            elif "Ubuntu" not in platform.uname().version and not is_pi_5_or_later():
+                # Pi or similar arm platforms running on RasPiOS. Note that Pi5 onwards don't support hardware encoding
                 # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
                 # crashy sometimes.
                 if bitrate > 20000:
@@ -149,7 +164,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 pipeline.append("video/x-h264,profile=high,level=(string){0}".format(level))
                 pipeline.append("h264parse")
             else:
-                # s/w encoder - Pi-on-ubuntu, or RasPiOS Bookworm, due to ...sigh ... incompatibility issues
+                # s/w encoder - Pi-on-ubuntu, or Pi5 (or later)
                 pipeline.append("videoconvert")
                 pipeline.append("video/x-raw,format=NV12")
                 pipeline.append("queue max-size-buffers=1 leaky=downstream")
