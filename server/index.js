@@ -2,7 +2,7 @@ const express = require('express')
 const fileUpload = require('express-fileupload')
 const compression = require('compression')
 const bodyParser = require('body-parser')
-const pino = require('express-pino-logger')()
+const pino = require('pino-http')()
 const process = require('process')
 const { common } = require('node-mavlink')
 
