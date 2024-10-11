@@ -13,6 +13,7 @@ class AboutPage extends basePage {
       rpanionversion: '',
       CPUName: '',
       RAMName: '',
+      SYSName: '',
       HATName: {},
       diskSpaceStatus: '',
       loading: true,
@@ -95,6 +96,7 @@ class AboutPage extends basePage {
     return (
       <div>
         <h2>About Hardware</h2>
+        <p>System: {this.state.SYSName}</p>
         <p>CPU: {this.state.CPUName}</p>
         <p>RAM: {this.state.RAMName} GB</p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
