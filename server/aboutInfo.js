@@ -1,12 +1,13 @@
 const process = require('process')
-const { exec, spawn } = require('child_process')
+const { exec, spawn, execSync } = require('child_process')
 const si = require('systeminformation')
 const winston = require('./winstonconfig')(module)
 
 function getSoftwareInfo (callback) {
   // get the OS, Node.js and Rpanion-server versions
   si.osInfo(function (data) {
-    return callback('' + data.distro + ' - ' + data.release, process.version, process.env.npm_package_version, data.hostname, null)
+    const swstring = '' + data.distro + ' - ' + data.release + ' (' + data.codename + ')'
+    return callback(swstring, process.version, process.env.npm_package_version, data.hostname, null)
   })
 }
 
@@ -85,25 +86,33 @@ function updateRS (io) {
 }
 
 function getHardwareInfo (callback) {
+  // define all values, you want to get back
+  const valueObject = {
+    cpu: '*',
+    system: 'model, manufacturer',
+    mem: '*'
+  }
   // get the CPU, RAM info
-  si.cpu(function (CPUdata) {
-    // console.log(CPUdata);
-    si.mem(function (MEMdata) {
-      const CPUString = CPUdata.manufacturer + ' ' + CPUdata.brand +
-                      ' (' + CPUdata.speed + 'GHz x ' + CPUdata.cores + ')'
-      const hatData = { product: '', vendor: '', version: '' }
-      // get Pi HAT data, if it exists
-      exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver', (error, stdout, stderr) => {
-        if (!error && stdout.split('\n').length === 3) {
-          const items = stdout.split('\n')
-          hatData.product = items[0]
-          hatData.vendor = items[1]
-          hatData.version = items[2]
-        } else {
-          console.log(error)
-        }
-        return callback((MEMdata.total / (1024 * 1024 * 1024)).toFixed(2), CPUString, hatData, null)
-      })
+  si.get(valueObject).then(data => {
+    const CPUString = data.cpu.manufacturer + ' ' + data.cpu.brand +
+                    ' (' + data.cpu.speed + 'GHz x ' + data.cpu.cores + ')'
+    const hatData = { product: '', vendor: '', version: '' }
+    let sysData = '' + data.system.model + '(' + data.system.manufacturer + ')'
+    if (sysData === '()') {
+      // probably a RasPi
+      sysData = execSync('cat /proc/cpuinfo | awk \'/Model/ {print substr($0, index($0,$3))}\'').toString()
+    }
+    // get Pi HAT data, if it exists
+    exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver', (error, stdout, stderr) => {
+      if (!error && stdout.split('\n').length === 3) {
+        const items = stdout.split('\n')
+        hatData.product = items[0]
+        hatData.vendor = items[1]
+        hatData.version = items[2]
+      } else {
+        console.log(error)
+      }
+      return callback((data.mem.total / (1024 * 1024 * 1024)).toFixed(2), CPUString, hatData, sysData, null)
     })
   })
 }

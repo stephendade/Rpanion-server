@@ -29,9 +29,10 @@ describe('About Functions', function () {
 
   describe('#getHardwareInfo()', function () {
     it('should get hardware info', function (done) {
-      aboutPage.getHardwareInfo(function (RAM, CPU, HAT, err) {
+      aboutPage.getHardwareInfo(function (RAM, CPU, HAT, sysData, err) {
         assert.notEqual(RAM, '')
         assert.notEqual(CPU, '')
+        assert.notEqual(sysData, '')
         assert.equal(HAT.product, '')
         assert.equal(HAT.vendor, '')
         assert.equal(HAT.version, '')

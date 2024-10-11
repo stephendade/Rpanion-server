@@ -461,13 +461,13 @@ app.get('/api/videodevices', (req, res) => {
 })
 
 app.get('/api/hardwareinfo', (req, res) => {
-  aboutPage.getHardwareInfo((RAM, CPU, hatData, err) => {
+  aboutPage.getHardwareInfo((RAM, CPU, hatData, sysData, err) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ CPUName: CPU, RAMName: RAM, HATName: hatData }))
+      res.send(JSON.stringify({ CPUName: CPU, RAMName: RAM, HATName: hatData, SYSName: sysData }))
     } else {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ CPUName: err, RAMName: err, HATName: err }))
+      res.send(JSON.stringify({ CPUName: err, RAMName: err, HATName: err, SYSName: err }))
       winston.error('Error in /api/hardwareinfo ', { message: err })
     }
   })
