@@ -1,5 +1,3 @@
-import React from 'react'
-import Modal from 'react-bootstrap/Modal'
 import Button from 'react-bootstrap/Button'
 import Select from 'react-select'
 import Table from 'react-bootstrap/Table';
@@ -33,7 +31,7 @@ class VPNPage extends basePage {
     ]).then(this.loadDone());
   }
 
-  handleVPNChange = (value, action) => {
+  handleVPNChange = (value) => {
     this.setState({ selectedVPN: value });
     if (value.value == 'zerotier') {
       this.setState({ selVPNInstalled: this.state.statusZerotier.installed });
@@ -67,7 +65,7 @@ class VPNPage extends basePage {
       this.setState({ waiting: false, error: "Error removing network: " + error }) });
   }
 
-  addZerotierNetwork = (val) => {
+  addZerotierNetwork = () => {
     //add a zerotier network
     fetch('/api/vpnzerotieradd', {
       method: 'POST',
@@ -162,7 +160,7 @@ class VPNPage extends basePage {
               </tr>
             </thead>
             <tbody>
-              {this.state.statusZerotier.text.map((item, index) => (
+              {this.state.statusZerotier.text.map((item) => (
                 <tr key={item.nwid}><td>{item.nwid}</td><td>{item.name}</td><td>{item.assignedAddresses}</td><td>{item.status}</td><td>{item.type}</td><td><Button size="sm" id={item.nwid} onClick={() => this.removeZerotierNetwork(item.nwid)}>Delete</Button></td></tr>
               ))}
             </tbody>
@@ -187,7 +185,7 @@ class VPNPage extends basePage {
                 </tr>
               </thead>
               <tbody>
-              {this.state.statusWireguard.text.map((item, index) => (
+              {this.state.statusWireguard.text.map((item) => (
                 <tr key={item.profile}>
                   <td>{item.profile}</td>
                   <td>{item.peer}</td>
@@ -209,8 +207,7 @@ class VPNPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label ">Add new Wireguard profile</label>
               <div className="col-sm-6">
-                <Form ref='uploadForm' 
-                  id='uploadForm' 
+                <Form id='uploadForm' 
                   action='/api/vpnwireguardprofileadd' 
                   method='post' 
                   encType="multipart/form-data">

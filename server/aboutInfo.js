@@ -23,7 +23,7 @@ function getDiskInfo (callback) {
   })
 }
 
-function rebootCC () {
+/*function rebootCC () {
   // reboot the companion computer
   console.log('Reboot now')
   winston.info('Reboot now')
@@ -35,13 +35,13 @@ function rebootCC () {
     console.log(stdout)
     winston.info(stdout)
   })
-}
+}*/
 
 function shutdownCC () {
   // shutdown the companion computer
   console.log('Shutting down')
   winston.info('Shutting down')
-  exec('sudo shutdown now', function (error, stdout, stderr) {
+  exec('sudo shutdown now', function (error, stdout) {
     if (error) {
       console.log(error)
       winston.info(error)
@@ -103,7 +103,7 @@ function getHardwareInfo (callback) {
       sysData = execSync('cat /proc/cpuinfo | awk \'/Model/ {print substr($0, index($0,$3))}\'').toString()
     }
     // get Pi HAT data, if it exists
-    exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver', (error, stdout, stderr) => {
+    exec('cat /proc/device-tree/hat/product && printf "\n" && cat /proc/device-tree/hat/vendor && printf "\n" && cat /proc/device-tree/hat/product_ver', (error, stdout) => {
       if (!error && stdout.split('\n').length === 3) {
         const items = stdout.split('\n')
         hatData.product = items[0]

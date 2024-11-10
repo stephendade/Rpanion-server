@@ -29,13 +29,13 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
-      this.getVideoDevices((error, devices, active, seldevice, selRes, selRot, selbitrate, selfps, selUDP, selUDPIP, selUDPPort, useTimestamp, useCameraHeartbeat, selMavURI) => {
+      this.getVideoDevices((error) => {
         if (!error) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
             this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP,
             this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, this.savedDevice.useCameraHeartbeat, this.savedDevice.mavStreamSelected,
-            (err, status, addresses) => {
+            (err) => {
               if (err) {
                 // failed setup, reset settings
                 console.log('Reset video4')

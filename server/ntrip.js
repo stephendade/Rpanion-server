@@ -72,6 +72,7 @@ class ntrip {
             this.eventEmitter.emit('rtcmpacket', data, this.seq)
             this.seq = this.seq + 1
           } catch (e) {
+            console.log('Bad ntrip data')
           }
         }
       })

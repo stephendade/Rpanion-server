@@ -1,4 +1,3 @@
-import React from 'react';
 import Select from 'react-select';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
@@ -97,7 +96,7 @@ class NetworkConfig extends basePage {
     var activeCon = null;
     if (action.action === 'select-option') {
       if (value.type === "ethernet") {
-        this.setState((state, props) => {
+        this.setState(() => {
           return { showIP: true };
         });
         //filter the connections
@@ -116,12 +115,12 @@ class NetworkConfig extends basePage {
         });
       }
       else if (value.type === "wifi") {
-        this.setState((state, props) => {
+        this.setState(() => {
           return { showIP: true };
         });
         //filter the connections
         this.state.netConnection.forEach(function (item) {
-          if (item.type === "802-11-wireless" && (item.attachedIface === '\"\"' || item.attachedIface === '' ||
+          if (item.type === "802-11-wireless" && (item.attachedIface === '""' || item.attachedIface === '' ||
             item.attachedIface === "undefined" || item.attachedIface === value.value)) {
             if (item.state === value.value) {
               item.label = item.labelPre + " (Active)";
@@ -137,7 +136,7 @@ class NetworkConfig extends basePage {
       }
       else {
         //tun device
-        this.setState((state, props) => {
+        this.setState(() => {
           return { showIP: true };
         });
         //filter the connections
@@ -158,7 +157,7 @@ class NetworkConfig extends basePage {
       }
     }
 
-    this.setState((state, props) => {
+    this.setState(() => {
       //no active connection
       if (activeCon === null && netConnection.length > 0) {
         activeCon = netConnection[0];
@@ -303,7 +302,7 @@ class NetworkConfig extends basePage {
     event.preventDefault();
   };
 
-  addConnection = (event) => {
+  addConnection = () => {
     //add new network button clicked
     if(this.state.netDeviceSelected.type === "wifi") {
       this.setState({ waiting: true }, () => {
@@ -426,7 +425,7 @@ class NetworkConfig extends basePage {
     this.setState({ showPW: event.target.checked });
   }
 
-  resetForm = (event) => {
+  resetForm = () => {
     //if it's a new connection, go back to old connection
     if (this.state.netConnectionFilteredSelected.value === "new") {
       this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
@@ -474,12 +473,12 @@ class NetworkConfig extends basePage {
     });
   }
 
-  handleCloseModalDelete = (event) => {
+  handleCloseModalDelete = () => {
     // user does not want to delete network
     this.setState({ showModalDelete: false });
   }
 
-  handleDelete = (event) => {
+  handleDelete = () => {
     // user DOES want to delete network
     this.setState({ showModalDelete: false });
     if (this.state.netConnectionFilteredSelected.value === "new") {
@@ -518,12 +517,12 @@ class NetworkConfig extends basePage {
     }
   }
 
-  handleNewNetworkNameCancel = (event) => {
+  handleNewNetworkNameCancel = () => {
     // user does not want to add a new network
     this.setState({ showModalNewNetworkName: false });
   }
 
-  handleCloseModalNewNetworkName = (event) => {
+  handleCloseModalNewNetworkName = () => {
     // user DOES want to add a new network
     this.setState({ showModalNewNetworkName: false });
     if (this.state.newNetworkName !== '' && this.state.newNetworkName !== null) {
@@ -531,8 +530,6 @@ class NetworkConfig extends basePage {
       if(this.state.netDeviceSelected.type === "wifi") {
         this.setState({ showModal: true });
       }
-    }
-    else {
     }
   }
 
@@ -542,7 +539,7 @@ class NetworkConfig extends basePage {
 
   }
 
-  refreshWifi = (event) => {
+  refreshWifi = () => {
     this.setState({ waiting: false }, () => {
       fetch(`/api/wifiscan`).then(response => response.json())
                             .then(state => this.setState(state))
@@ -550,7 +547,7 @@ class NetworkConfig extends basePage {
     })
   }
 
-  refreshConList = (event) => {
+  refreshConList = () => {
     this.setState({ waiting: false }, () => {
       fetch(`/api/networkconnections`).then(response => response.json())
                                       .then(state => this.setState(state, () => { this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" }) }))
@@ -558,11 +555,11 @@ class NetworkConfig extends basePage {
     })
   }
 
-  refreshInfoList = (event) => {
+  refreshInfoList = () => {
     this.handleConnectionChange(this.state.netConnectionFilteredSelected, { action: "select-option" });
   }
 
-  handleNewNetworkTypeCancel = (event) => {
+  handleNewNetworkTypeCancel = () => {
     // user does not want to add a new network
     this.setState({ showModal: false });
     this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
@@ -658,7 +655,7 @@ class NetworkConfig extends basePage {
               <label className="col-sm-4 col-form-label">Attach to Specific Adapter</label>
               <div className="col-sm-8">
                 <select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface.value}>
-                  {this.state.netConnectionSimilarIfaces.map((option, index) => (
+                  {this.state.netConnectionSimilarIfaces.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
                 </select>
@@ -708,7 +705,7 @@ class NetworkConfig extends basePage {
               <label className="col-sm-4 col-form-label">Security</label>
               <div className="col-sm-8">
                 <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
-                  {this.state.wpaTypes.map((option, index) => (
+                  {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
                 </select>
@@ -738,7 +735,7 @@ class NetworkConfig extends basePage {
               <label className="col-sm-4 col-form-label">Band</label>
               <div className="col-sm-8">
                 <select name="band" onChange={this.changeHandler} value={this.state.curSettings.band.value}>
-                  {this.state.bandTypes.map((option, index) => (
+                  {this.state.bandTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
                 </select>
@@ -748,7 +745,7 @@ class NetworkConfig extends basePage {
               <label className="col-sm-4 col-form-label">Channel</label>
               <div className="col-sm-8">
                 <select name="channel" onChange={this.changeHandler} value={this.state.curSettings.channel.value}>
-                  {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option, index) => (
+                  {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   )) : <option></option>}
                 </select>
@@ -759,7 +756,7 @@ class NetworkConfig extends basePage {
               <label className="col-sm-4 col-form-label">Security</label>
               <div className="col-sm-8">
                 <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
-                  {this.state.wpaTypes.map((option, index) => (
+                  {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
                 </select>
@@ -809,7 +806,7 @@ class NetworkConfig extends basePage {
                   </thead>
                   <tbody>
                     {this.state.detWifi.map((item, index) => (
-                      <tr><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
+                      <tr key={index}><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
                     ))}
                   </tbody>
                 </Table>
@@ -830,7 +827,7 @@ class NetworkConfig extends basePage {
             </Modal.Header>
 
             <Modal.Body>
-              <p>Are you sure you want to Delete the '{this.state.netConnectionFilteredSelected === null ? "" : this.state.netConnectionFilteredSelected.label}' network?</p>
+              <p>Are you sure you want to Delete the &apos;{this.state.netConnectionFilteredSelected === null ? "" : this.state.netConnectionFilteredSelected.label}&apos; network?</p>
             </Modal.Body>
 
             <Modal.Footer>

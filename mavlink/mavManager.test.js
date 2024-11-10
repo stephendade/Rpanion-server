@@ -1,5 +1,4 @@
 const assert = require('assert')
-const should = require('should')
 const mavManager = require('./mavManager')
 const udp = require('dgram')
 
@@ -15,7 +14,7 @@ describe('MAVLink Functions', function () {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const packets = []
 
-    m.eventEmitter.on('gotMessage', (packet, data) => {
+    m.eventEmitter.on('gotMessage', (packet,) => {
       packets.push(packet.buffer)
     })
 
@@ -50,11 +49,11 @@ describe('MAVLink Functions', function () {
 
     assert.equal(m.statusBytesPerSec.avgBytesSec, 0)
 
-    m.eventEmitter.on('linkready', (info) => {
+    m.eventEmitter.on('linkready', () => {
       m.sendVersionRequest()
     })
 
-    udpStream.on('message', (msg, rinfo) => {
+    udpStream.on('message', (msg) => {
       msg.should.eql(Buffer.from([0xfd, 0x21, 0x00, 0x00, 0x00, 0x00, 0xBF, 0x4c, 0x00, 0x00, 0x00, 0x00, 0x14, 0x43, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
         0x00, 0x00, 0x01, 0xbf, 0x5b]))
@@ -75,11 +74,11 @@ describe('MAVLink Functions', function () {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const udpStream = udp.createSocket('udp4')
 
-    m.eventEmitter.on('linkready', (info) => {
+    m.eventEmitter.on('linkready', () => {
       m.sendDSRequest()
     })
 
-    udpStream.on('message', (msg, rinfo) => {
+    udpStream.on('message', (msg) => {
       msg.should.eql(Buffer.from([253, 6, 0, 0, 0, 0, 191, 66, 0, 0, 4, 0, 0, 0, 0, 1, 171, 220]))
       m.close()
       udpStream.close()
@@ -97,11 +96,11 @@ describe('MAVLink Functions', function () {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const udpStream = udp.createSocket('udp4')
 
-    m.eventEmitter.on('linkready', (info) => {
+    m.eventEmitter.on('linkready', () => {
       m.sendReboot()
     })
 
-    udpStream.on('message', (msg, rinfo) => {
+    udpStream.on('message', (msg) => {
       msg.should.eql(Buffer.from([253, 33, 0, 0, 0, 0, 191, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 0, 0, 0, 1, 187, 227]))
       m.close()
       udpStream.close()
@@ -119,11 +118,11 @@ describe('MAVLink Functions', function () {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const udpStream = udp.createSocket('udp4')
 
-    m.eventEmitter.on('linkready', (info) => {
+    m.eventEmitter.on('linkready', () => {
       m.sendHeartbeat()
     })
 
-    udpStream.on('message', (msg, rinfo) => {
+    udpStream.on('message', (msg) => {
       msg.should.eql(Buffer.from([253, 9, 0, 0, 0, 0, 191, 0, 0, 0, 0, 0, 0, 0, 18, 8, 0, 0, 2, 61, 244 ]))
       m.close()
       udpStream.close()
@@ -141,11 +140,11 @@ describe('MAVLink Functions', function () {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const udpStream = udp.createSocket('udp4')
 
-    m.eventEmitter.on('linkready', (info) => {
+    m.eventEmitter.on('linkready', () => {
       m.sendCommandAck()
     })
 
-    udpStream.on('message', (msg, rinfo) => {
+    udpStream.on('message', (msg) => {
       msg.should.eql(Buffer.from([253, 9, 0, 0, 0, 0, 191, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 197, 27]))
       m.close()
       udpStream.close()

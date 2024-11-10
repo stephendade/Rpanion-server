@@ -17,7 +17,7 @@ class adhocManager {
     // if Ahoc mode is supposed to be active, then activate it. As OS won't save settings between reboots
     if (this.device !== null) {
       // this.setAdapter(true, this.device, this.devicesettings, null)
-      this.setAdapter(true, this.device, this.devicesettings, (err, netDeviceList, netDeviceSelected, settings) => {
+      this.setAdapter(true, this.device, this.devicesettings, (err) => {
         if (!err) {
           console.log('Adhoc Init ' + this.device.toString())
           this.winston.info('Adhoc Init ' + this.device.toString())

@@ -13,7 +13,7 @@ describe('Flight Controller Functions', function () {
     assert.equal(FC.previousConnection, false)
   })
 
-  it('#fcGetSerialDevices()', async () => {
+  it('#fcGetSerialDevices()', async function () {
     settings.clear()
     const FC = new FCManagerClass(settings, winston)
 

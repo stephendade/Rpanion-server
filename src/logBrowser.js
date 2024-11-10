@@ -1,4 +1,3 @@
-import React from 'react';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 
@@ -33,7 +32,7 @@ class LoggerPage extends basePage {
   }
 
 
-  handleDoLogConversion = event => {
+  handleDoLogConversion = () => {
     //user clicked enable/disable log conversion
     fetch('/api/logconversion', {
         method: 'POST',
@@ -58,7 +57,7 @@ class LoggerPage extends basePage {
 
   //create a html table from a list of logfiles
   renderLogTableData(logfilelist) {
-    return logfilelist.map((log, index) => {
+    return logfilelist.map((log) => {
       return (
         <tr key={log.key}>
           <td><a href={this.state.url + "/logdownload/" + log.key} download>{log.name}</a></td>
@@ -83,7 +82,7 @@ class LoggerPage extends basePage {
           logtype: id,
         })
       }).then(response => response.json())
-        .then(result => {
+        .then(() => {
           this.componentDidMount();
           this.setState({ waiting: false });
         })
@@ -100,7 +99,7 @@ class LoggerPage extends basePage {
         <p><i>Save and download flight logs</i></p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
         <h3>Telemetry Logs</h3>
-        <p>Telemetry Logging can be enabled or disabled in the "Flight Controller" page.</p>
+        <p>Telemetry Logging can be enabled or disabled in the &quot;Flight Controller&quot; page.</p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">
           <Button id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>

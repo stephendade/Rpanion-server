@@ -3,7 +3,6 @@ Page for configuring Ad-hoc Wifi
 This is seperate from the network config page due to conflicts
 with nmcli used on network config
 */
-import React from 'react';
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -48,7 +47,7 @@ class AdhocConfig extends basePage {
     this.setState({ loading: true });
     Promise.all([
       fetch(`/api/adhocadapters`).then(response => response.json()).then(state => { this.setState(state); return state; })
-    ]).then(retState => { this.loadDone() });
+    ]).then(() => { this.loadDone() });
   }
 
   getValidChannels() {
@@ -108,7 +107,7 @@ class AdhocConfig extends basePage {
     this.setState({ showPW: event.target.checked });
   }
 
-  handleadhocSubmit = event => {
+  handleadhocSubmit = () => {
     //user clicked enable/disable adhoc wifi
     this.setState({ waiting: true }, () => {
       fetch('/api/adhocadaptermodify', {
@@ -166,7 +165,7 @@ class AdhocConfig extends basePage {
               <label className="col-sm-2 col-form-label">Band</label>
               <div className="col-sm-10">
                 <select disabled={this.state.curSettings.isActive} name="band" onChange={this.bandhandler} value={this.state.curSettings.band}>
-                  {this.state.bandTypes.map((option, index) => (
+                  {this.state.bandTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
                 </select>
@@ -176,7 +175,7 @@ class AdhocConfig extends basePage {
               <label className="col-sm-2 col-form-label">Channel</label>
               <div className="col-sm-10">
                 <select disabled={this.state.curSettings.isActive} name="channel" onChange={this.channelhandler} value={this.state.curSettings.channel}>
-                  {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option, index) => (
+                  {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   )) : <option></option>}
                 </select>
@@ -186,7 +185,7 @@ class AdhocConfig extends basePage {
               <label className="col-sm-2 col-form-label">Security</label>
               <div className="col-sm-10">
                 <select disabled={this.state.curSettings.isActive} name="wpaType" value={this.state.curSettings.wpaType} onChange={this.securityhandler}>
-                  {this.state.wpaTypes.map((option, index) => (
+                  {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
                 </select>

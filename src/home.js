@@ -1,5 +1,3 @@
-import React from 'react'
-
 import basePage from './basePage.js'
 
 class Home extends basePage {

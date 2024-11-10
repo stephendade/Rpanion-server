@@ -1,4 +1,4 @@
-import React from 'react'
+import PropTypes from 'prop-types';
 
 // Socket IO connection status
 function SocketIOFooter (props) {
@@ -9,4 +9,9 @@ function SocketIOFooter (props) {
     : <p>Server Status: Not Connected</p>}</div>
 }
 
-export default SocketIOFooter
+// PropTypes validation
+SocketIOFooter.propTypes = {
+  socketioStatus: PropTypes.bool.isRequired
+};
+
+export default SocketIOFooter;

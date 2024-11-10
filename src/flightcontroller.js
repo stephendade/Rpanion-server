@@ -1,4 +1,3 @@
-import React from 'react';
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
@@ -49,15 +48,15 @@ class FCPage extends basePage {
     fetch(`/api/FCOutputs`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
   }
 
-  handleSerialPortChange = (value, action) => {
+  handleSerialPortChange = (value) => {
     this.setState({ serialPortSelected: value });
   }
 
-  handleBaudRateChange = (value, action) => {
+  handleBaudRateChange = (value) => {
     this.setState({ baudRateSelected: value });
   }
 
-  handleMavVersionChange = (value, action) => {
+  handleMavVersionChange = (value) => {
     this.setState({ mavVersionSelected: value });
   }
 
@@ -85,7 +84,7 @@ class FCPage extends basePage {
     this.setState({ UDPBPort: event.target.value });
   }
 
-  handleSubmit = (event) => {
+  handleSubmit = () => {
     //user clicked start/stop telemetry
     fetch('/api/FCModify', {
       method: 'POST',
@@ -107,7 +106,7 @@ class FCPage extends basePage {
     }).then(response => response.json()).then(state => { this.setState(state) });
   }
 
-  handleFCReboot = (event) => {
+  handleFCReboot = () => {
     //user clicked to reboot flight controller
     fetch('/api/FCReboot', {
       method: 'POST',
@@ -118,7 +117,7 @@ class FCPage extends basePage {
     });
   }
 
-  addUdpOutput = (event) => {
+  addUdpOutput = () => {
     //add a new udp output
     fetch('/api/addudpoutput', {
       method: 'POST',
@@ -203,7 +202,7 @@ class FCPage extends basePage {
         <h2>Telemetry Destinations</h2>
         <p><i>Telemetry must be stopped before the below options can be edited.</i></p>
         <h3>UDP Client</h3>
-        <p><i>Send telemetry to a specific IP:port. Use "UDP" option in Mission Planner.</i></p>
+        <p><i>Send telemetry to a specific IP:port. Use &quot;UDP&quot; option in Mission Planner.</i></p>
         <Table id='UDPOut' striped bordered hover size="sm">
           <thead>
             <tr><th>Destination IP:Port</th><th>Action</th></tr>
@@ -221,7 +220,7 @@ class FCPage extends basePage {
         </div>
         <br />
         <h3>UDP Server</h3>
-        <p><i>Allow a single GCS to connect to this device's IP:port. Multiple GCS's cannot be connected here. Use "UDPCI" option in Mission Planner.</i></p>
+        <p><i>Allow a single GCS to connect to this device&quot;s IP:port. Multiple GCS&quot;s cannot be connected here. Use &quot;UDPCI&quot; option in Mission Planner.</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Enable UDP Server</label>
           <div className="col-sm-8">
@@ -236,7 +235,7 @@ class FCPage extends basePage {
         </div>
         <br />
         <h3>TCP Server</h3>
-        <p><i>Allow multiple GCS's to connect to this device's IP:port. Use "TCP" option in Mission Planner.</i></p>
+        <p><i>Allow multiple GCS&quot;s to connect to this device&quot;s IP:port. Use &quot;TCP&quot; option in Mission Planner.</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-5 col-form-label">Enable TCP Server at port 5760</label>
           <div className="col-sm-7">

@@ -13,7 +13,7 @@ describe('Logging Functions', function () {
   // Recursively delete folder and files
   const deleteFolderRecursive = function (path, ext) {
     if (fs.existsSync(path)) {
-      fs.readdirSync(path).forEach((file, index) => {
+      fs.readdirSync(path).forEach((file) => {
         const curPath = Path.join(path, file)
         if (fs.lstatSync(curPath).isDirectory()) { // recurse
           deleteFolderRecursive(curPath)
@@ -53,7 +53,7 @@ describe('Logging Functions', function () {
     // create a fake log
     fs.writeFileSync(Path.join(appRoot.toString(), 'flightlogs', 'flight.tlog'), Buffer.from('tést'))
 
-    Lgr.getLogs(function (err, tlogs, binlogs, kmzlogs, activeLogging) {
+    Lgr.getLogs(function (err, tlogs, binlogs, kmzlogs) {
       assert.equal(tlogs.length, 1)
       assert.equal(binlogs.length, 0)
       assert.equal(kmzlogs.length, 0)
