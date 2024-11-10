@@ -47,18 +47,18 @@ class AboutPage extends basePage {
     fetch('/api/hardwareinfo').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
-  confirmShutdown = (event) => {
+  confirmShutdown = () => {
     //user clicked the shutdown button
     // modal events take it from here
     this.setState({ showModal: true });
   }
 
-  handleCloseModal = (event) => {
+  handleCloseModal = () => {
     // user does not want to shutdown
     this.setState({ showModal: false});
   }
 
-  handleShutdown = (event) => {
+  handleShutdown = () => {
     // user does want to shutdown
     this.setState({ showModal: false});
     fetch('/api/shutdowncc', {
@@ -70,7 +70,7 @@ class AboutPage extends basePage {
     });
   }
 
-  handleUpdateMaster = (event) => {
+  handleUpdateMaster = () => {
     // update to latest github master
     fetch('/api/updatemaster', {
       method: 'POST',

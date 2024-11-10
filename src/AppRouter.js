@@ -1,5 +1,4 @@
-import React from 'react'
-import { Route, Routes, Link } from 'react-router-dom'
+import { Route, Routes, Link, useLocation } from 'react-router-dom'
 
 import About from './about.js'
 import Home from './home.js'
@@ -47,7 +46,7 @@ function AppRouter () {
             <Route exact path="/adhoc" element={<AdhocConfig />} />
             <Route exact path="/cloud" element={<CloudConfig />} />
             <Route exact path="/vpn" element={<VPN/>} />
-            <Route element={NoMatch} />
+            <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
       </div>
@@ -55,13 +54,13 @@ function AppRouter () {
   )
 }
 
-function NoMatch ({ location }) {
+function NoMatch () {
+  const location = useLocation();
   return (
     <div>
-      <h3>
-        No match for <code>{location.pathname}</code>
-      </h3>
-    </div>
+    <h1>404 - Page Not Found</h1>
+    <p>The URL <code>{location.pathname}</code> does not exist.</p>
+  </div>
   )
 }
 

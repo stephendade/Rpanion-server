@@ -1,5 +1,3 @@
-import React from 'react';
-import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 
@@ -48,11 +46,11 @@ class NTRIPPage extends basePage {
     });
   }
 
-  togglePasswordVisible = event => {
+  togglePasswordVisible = (event) => {
     this.setState({ showPW: event.target.checked });
   }
 
-  handleNTRIPSubmit = event => {
+  handleNTRIPSubmit = () => {
     //user clicked start/stop NTRIP
     fetch('/api/ntripmodify', {
       method: 'POST',

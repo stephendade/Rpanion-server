@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { Component } from 'react';
 import { Helmet } from 'react-helmet'
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
@@ -42,12 +42,12 @@ class basePage extends Component {
   }
 
 
-  handleCloseError = event => {
+  handleCloseError = () => {
     // user has closed the error window
     this.setState({ error: null });
   }
 
-  handleCloseInformation = event => {
+  handleCloseInformation = () => {
     // user has closed the information window
     this.setState({ infoMessage: null });
   }

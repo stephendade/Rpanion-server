@@ -1,10 +1,9 @@
-const SerialPort = require('serialport')
 const { autoDetect } = require('@serialport/bindings-cpp')
 const fs = require('fs')
 const events = require('events')
 const path = require('path')
 const appRoot = require('app-root-path')
-const { spawn, spawnSync, exec } = require('child_process')
+const { spawn, spawnSync } = require('child_process')
 const si = require('systeminformation')
 
 const mavManager = require('../mavlink/mavManager.js')
@@ -104,11 +103,11 @@ class FCDetails {
     if (this.activeDevice !== null) {
       // restart link if saved serial device is found
       let found = false
-      this.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableHeartbeat, enableTCP) => {
+      this.getSerialDevices((err, devices) => {
         for (let i = 0, len = devices.length; i < len; i++) {
           if (this.activeDevice.serial.value === devices[i].value) {
             found = true
-            this.startLink((err, active) => {
+            this.startLink((err) => {
               if (err) {
                 console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
                 this.winston.info("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
@@ -180,9 +179,10 @@ class FCDetails {
 
     // restart mavlink-router, if link active
     if (this.m) {
-      this.closeLink((err) => {
+      this.closeLink(() => {
         this.startLink((err) => {
           if (err) {
+            console.log(err)
           }
         })
       })
@@ -192,6 +192,7 @@ class FCDetails {
     try {
       this.saveSerialSettings()
     } catch (e) {
+      console.log(e)
     }
 
     return this.getUDPOutputs()
@@ -215,9 +216,10 @@ class FCDetails {
 
         // restart mavlink-router, if link active
         if (this.m) {
-          this.closeLink((err) => {
+          this.closeLink(() => {
             this.startLink((err) => {
               if (err) {
+                console.log(err)
               }
             })
           })
@@ -227,6 +229,7 @@ class FCDetails {
         try {
           this.saveSerialSettings()
         } catch (e) {
+          console.log(e)
         }
 
         return this.getUDPOutputs()
@@ -340,7 +343,9 @@ class FCDetails {
               fs.unlinkSync(this.binlog)
             }
           }
-        } catch (err) {}
+        } catch (err) {
+          console.log(err)
+        }
         const res = data.toString().split(' ')
         const curLog = (res[res.length - 1]).trim()
         this.binlog = path.join(appRoot.toString(), 'flightlogs', 'binlogs', curLog)
@@ -493,9 +498,10 @@ class FCDetails {
       if (this.m && this.m.conStatusInt() === -1) {
         console.log('Trying to reconnect FC...')
         this.winston.info('Trying to reconnect FC...')
-        this.closeLink((err) => {
+        this.closeLink(() => {
           this.startLink((err) => {
             if (err) {
+              console.log(err)
             } else {
               // DS request is in this.m.restart()
               this.m.restart()
@@ -564,7 +570,7 @@ class FCDetails {
     } else {
       // close link
       this.activeDevice = null
-      this.closeLink((err) => {
+      this.closeLink(() => {
         this.saveSerialSettings()
         clearInterval(this.intervalObj)
         this.previousConnection = false
@@ -589,7 +595,7 @@ class FCDetails {
       console.log('Saved FC settings')
       this.winston.info('Saved FC settings')
     } catch (e) {
-
+      console.log(e)
     }
   }
 }

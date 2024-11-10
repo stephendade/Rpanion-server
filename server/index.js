@@ -40,7 +40,7 @@ app.use(limiter)
 app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
 
 const io = require('socket.io')(http, { cookie: false })
-const { check, validationResult, oneOf } = require('express-validator')
+const { check, validationResult } = require('express-validator')
 
 // Init settings before running the other classes
 settings.init({
@@ -536,12 +536,12 @@ app.get('/api/FCDetails', (req, res) => {
   })
 })
 
-app.post('/api/shutdowncc', function (req, res) {
+app.post('/api/shutdowncc', function () {
   // User wants to shutdown the computer
   aboutPage.shutdownCC()
 })
 
-app.post('/api/updatemaster', function (req, res) {
+app.post('/api/updatemaster', function () {
   // User wants to update Rpanion to latest master
   aboutPage.updateRS(io)
 })
@@ -567,7 +567,7 @@ app.post('/api/FCModify', [check('device').isJSON(), check('baud').isJSON(), che
   })
 })
 
-app.post('/api/FCReboot', function (req, res) {
+app.post('/api/FCReboot', function () {
   fcManager.rebootFC()
 })
 
@@ -597,7 +597,7 @@ app.post('/api/removeudpoutput', [check('removeoutputIP').isIP(), check('removeo
   res.send(JSON.stringify({ UDPoutputs: newOutput }))
 })
 
-io.on('connection', function (socket) {
+io.on('connection', function () {
   // only set interval if not already set
   if (FCStatusLoop !== null) {
     return

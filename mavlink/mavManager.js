@@ -359,18 +359,19 @@ class mavManager {
     let buf = Buffer.from(gpmessage)
     const msgset = []
     const maxBytes = 180
-    while (true) {
-      if (buf.length > maxBytes) {
+    while (buf.length > maxBytes) {
+      //if (buf.length > maxBytes) {
         // slice
         msgset.push(buf.slice(0, maxBytes))
         buf = buf.slice(maxBytes)
-      } else {
+      //} else {
         // need to pad to 180 chars? No, message packing
         // will do this for us
-        msgset.push(buf)
-        break
-      }
+      //  msgset.push(buf)
+      //  break
+      //}
     }
+    msgset.push(buf)
 
     for (let i = 0, len = msgset.length; i < len; i++) {
       const msg = new common.GpsRtcmData()

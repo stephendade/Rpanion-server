@@ -63,11 +63,11 @@ describe('Video Functions', function () {
     settings.clear()
     const vManager = new VideoStream(settings, winston)
 
-    vManager.startStopStreaming(true, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, false, '0', function (err, status, addresses) {
+    vManager.startStopStreaming(true, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, false, '0', function (err, status) {
       assert.equal(err, null)
       assert.equal(status, true)
       assert.notEqual(vManager.deviceStream.pid, null)
-      vManager.startStopStreaming(false, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, false, '0', function (err, status, addresses) {
+      vManager.startStopStreaming(false, 'testsrc', '1080', '1920', 'video/x-h264', '0', '1000', '5', false, false, false, true, false, '0', function (err, status) {
         assert.equal(err, null)
         assert.equal(status, false)
         done()

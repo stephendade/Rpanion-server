@@ -1,4 +1,3 @@
-import React from 'react';
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Accordion from 'react-bootstrap/Accordion';
@@ -42,13 +41,13 @@ class VideoPage extends basePage {
     fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.isMulticastUpdateIP(state.useUDPIP); this.loadDone() });
   }
 
-  handleVideoChange = (value, action) => {
+  handleVideoChange = (value) => {
     //new video device
     this.setState({ vidDeviceSelected: value, vidres: value.caps });
     this.handleResChange(this.state.streamingStatus !== true ? value.caps[0] : this.state.vidResSelected, "");
   }
 
-  handleResChange = (value, action) => {
+  handleResChange = (value) => {
     //resolution box new selected value
     if (value.fpsmax !== 0) {
       this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: Math.min(value.fpsmax, 10), fps: value.fps });
@@ -58,7 +57,7 @@ class VideoPage extends basePage {
     }
   }
 
-  handleRotChange = (value, action) => {
+  handleRotChange = (value) => {
     //resolution box new selected value
     this.setState({ rotSelected: value });
   }
@@ -107,17 +106,17 @@ class VideoPage extends basePage {
     this.setState({ fpsSelected: event.target.value });
   }
 
-  handleFPSChangeSelect = (value, action) => {
+  handleFPSChangeSelect = (value) => {
     //resolution box new selected value
     this.setState({ fpsSelected: value });
   }
 
-  handleTimestampChange = (event) => {
+  handleTimestampChange = () => {
     //use timestamp new value
     this.setState({ timestamp: !this.state.timestamp });
   }
 
-  handleUseCameraHeartbeatChange = (event) => {
+  handleUseCameraHeartbeatChange = () => {
     // Toggle camera heartbeat events
     this.setState({ enableCameraHeartbeat: !this.state.enableCameraHeartbeat });
   }
@@ -127,7 +126,7 @@ class VideoPage extends basePage {
     this.setState({ mavStreamSelected: value });
   }
 
-  handleStreaming = (event) => {
+  handleStreaming = () => {
     //user clicked start/stop streaming
     this.setState({ waiting: true }, () => {
       fetch('/api/startstopvideo', {
@@ -270,7 +269,7 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p style={{ fontFamily: "monospace" }}>{item}</p>
+                <p key={index} style={{ fontFamily: "monospace" }}>{item}</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
@@ -280,7 +279,7 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 rtspsrc location={item} latency=0 is-live=True ! queue ! decodebin ! autovideosink</p>
+                <p key={index} style={{ fontFamily: "monospace" }}>gst-launch-1.0 rtspsrc location={item} latency=0 is-live=True ! queue ! decodebin ! autovideosink</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
@@ -290,7 +289,7 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
+                <p key={index} style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
@@ -310,7 +309,7 @@ class VideoPage extends basePage {
               + GStreamer
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc {this.state.multicastString}port={this.state.useUDPPort} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc {this.state.multicastString}port={this.state.useUDPPort} caps=&apos;application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264&apos; ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
           <Accordion.Item eventKey="2">

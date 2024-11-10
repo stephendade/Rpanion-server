@@ -1,4 +1,3 @@
-import React from 'react'
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
 
@@ -49,7 +48,7 @@ class CloudConfig extends basePage {
     this.setState({ syncDeletions: event.target.checked });
   }
 
-  handleDoBinUploadSubmit = event => {
+  handleDoBinUploadSubmit = () => {
     //user clicked enable/disable bin file upload
     fetch('/api/binlogupload', {
         method: 'POST',
@@ -72,9 +71,9 @@ class CloudConfig extends basePage {
   renderContent () {
     return (
             <div>
-              <p><i>Automatically upload binlogs from the "Flight Logs" page to a remote (network) destination over an ssh connection</i></p>
+              <p><i>Automatically upload binlogs from the &quot;Flight Logs&quot; page to a remote (network) destination over an ssh connection</i></p>
                 <h3>Bin Logs Upload</h3>
-                <p>All bin logs (in Flight Logs -> Bin Logs) will be synchonised to the following remote destination using rsync.</p>
+                <p>All bin logs (in Flight Logs -&gt; Bin Logs) will be synchonised to the following remote destination using rsync.</p>
                 <p>The synchonisation runs every 20 seconds.</p>
                 <p>Destination format is <code>username@server:/path/to/remote/dir</code>, where <code>username</code> has an ssh publickey on the remote server.</p>
                 <Form style={{ width: 700 }}>
@@ -105,7 +104,7 @@ class CloudConfig extends basePage {
                   <hr/>
                     {this.state.pubkey.map(item => {
                       return (
-                          <div>
+                          <div key={item}>
                             <p>{ item }</p>
                             <hr/>
                           </div>
