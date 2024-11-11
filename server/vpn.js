@@ -84,24 +84,27 @@ function addWireguardProfile (filename, tmpfilepath, callback) {
 function activateWireguardProfile (filename, callback) {
   // activate a wireguard profile
   const profile = path.parse(filename).name
-  exec('sudo wg-quick up ' + profile + ' && sudo systemctl enable wg-quick@' + profile, (error, stdout) => {
-    if (error !== null) {
-      console.error(`exec error: ${error}`)
-      winston.error('Error in activateWireguardProfile() ', { message: error })
-      getVPNStatusWireguard(stdout.toString().trim(), (stderrnot, statusJSON) => {
-        return callback(stderrnot, statusJSON)
-      })
-    } else if (stdout.toString().includes('does not exist') === true) {
-      console.error(`exec error2: ${stdout}`)
-      winston.error('Error2 in activateWireguardProfile() ', { message: stdout })
-      getVPNStatusWireguard(stdout.toString().trim(), (stderrnot, statusJSON) => {
-        return callback(stderrnot, statusJSON)
-      })
-    } else {
-      getVPNStatusWireguard(null, (stderrnot, statusJSON) => {
-        return callback(null, statusJSON)
-      })
-    }
+  execFile('sudo', ['wg-quick', 'up', profile], (errorw, stdoutw) => {
+    execFile('sudo', ['systemctl', 'enable', 'wg-quick@' + profile], (error, stdout) => {
+      if (error !== null || errorw !== null) {
+        console.error(`exec error: ${error} ${errorw}`)
+        winston.error('Error in activateWireguardProfile() ', { message: error })
+        let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
+        getVPNStatusWireguard(errstr, (stderrnot, statusJSON) => {
+          return callback(stderrnot, statusJSON)
+        })
+      } else if (stdout.toString().includes('does not exist') === true) {
+        console.error(`exec error2: ${stdout} ${stdoutw}`)
+        winston.error('Error2 in activateWireguardProfile() ', { message: stdout })
+        getVPNStatusWireguard(stdout.toString().trim() + stdoutw.toString().trim(), (stderrnot, statusJSON) => {
+          return callback(stderrnot, statusJSON)
+        })
+      } else {
+        getVPNStatusWireguard(null, (stderrnot, statusJSON) => {
+          return callback(null, statusJSON)
+        })
+      }
+    })
   })
 }
 
@@ -109,24 +112,27 @@ function deactivateWireguardProfile (filename, callback) {
   // deactivate a wireguard profile
 
   const profile = path.parse(filename).name
-  exec('sudo systemctl disable wg-quick@' + profile + '&& sudo wg-quick down ' + profile, (error, stdout) => {
-    if (error !== null) {
-      console.error(`exec error: ${error}`)
-      winston.error('Error in deactivateWireguardProfile() ', { message: error })
-      getVPNStatusWireguard(error.toString().trim(), (stderrnot, statusJSON) => {
-        return callback(stderrnot, statusJSON)
-      })
-    } else if (stdout.toString().includes('does not exist') === true) {
-      console.error(`exec error: ${stdout}`)
-      winston.error('Error2 in deactivateWireguardProfile() ', { message: stdout })
-      getVPNStatusWireguard(stdout.toString().trim(), (stderrnot, statusJSON) => {
-        return callback(stderrnot, statusJSON)
-      })
-    } else {
-      getVPNStatusWireguard(null, (stderrnot, statusJSON) => {
-        return callback(null, statusJSON)
-      })
-    }
+    execFile('sudo', ['systemctl', 'disable', 'wg-quick@' + profile], (error, stdout) => {
+      execFile('sudo', ['wg-quick', 'down', profile], (errorw, stdoutw) => {
+        if (error !== null || errorw !== null) {
+        console.error(`exec error: ${error} ${errorw}`)
+        winston.error('Error in deactivateWireguardProfile() ', { message: error })
+        let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
+        getVPNStatusWireguard(errstr, (stderrnot, statusJSON) => {
+          return callback(stderrnot, statusJSON)
+        })
+      } else if (stdout.toString().includes('does not exist') === true) {
+        console.error(`exec error: ${stdout} ${stdoutw}`)
+        winston.error('Error2 in deactivateWireguardProfile() ', { message: stdout })
+        getVPNStatusWireguard(stdout.toString().trim() + stdoutw.toString().trim(), (stderrnot, statusJSON) => {
+          return callback(stderrnot, statusJSON)
+        })
+      } else {
+        getVPNStatusWireguard(null, (stderrnot, statusJSON) => {
+          return callback(null, statusJSON)
+        })
+      }
+    })
   })
 }
 
