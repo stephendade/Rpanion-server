@@ -25,7 +25,7 @@ function AppRouter () {
           <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/adhoc">Adhoc Wifi Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/apclients">Access Point Clients</Link>
-          <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
+          <Link className='list-group-item list-group-item-action bg-light' to="/video">Video and Photo</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/cloud">Cloud Upload</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/vpn">VPN Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>

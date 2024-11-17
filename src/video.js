@@ -185,7 +185,7 @@ class VideoPage extends basePage {
   }
 
   renderTitle() {
-    return "Video Streaming";
+    return "Video and Photo";
   }
 
   renderContent() {

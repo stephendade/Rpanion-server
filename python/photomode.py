@@ -5,7 +5,7 @@ from picamera2 import Picamera2
 from picamera2.encoders import H264Encoder
 
 import argparse
-import time, signal, os
+import time, signal, os, sys, shutil
 
 from gi.repository import GLib
 
@@ -26,7 +26,7 @@ signal.signal(signal.SIGUSR1, receive_signal)
 VIDEO_ACTIVE = False
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="Camera control server using libcamera")
+    parser = argparse.ArgumentParser(description="Camera control server using Picamera2")
     parser.add_argument("-d", "--destination", dest="mediaPath",
                         help="Save captured image to PATH. Default: ../media/",
                         metavar="PATH",
@@ -42,18 +42,55 @@ if __name__ == '__main__':
                         help="Video bitrate in bits per second. Default: 10000000",
                         default=10000000
                         )
+    parser.add_argument("-f", "--min-disk-space", metavar = "N",
+                    type = int, dest="minFreeSpace",
+                    help="Minimum free disk space (in MB) required to save files. Default: 1000 MB",
+                    default=1000
+                    )
     args = parser.parse_args()
 
 captureMode = args.captureMode
 print("Mode is: ", captureMode)
 
 mediaPath = args.mediaPath
-print("Media storage directory is:", mediaPath)
+
+# Convert to bytes
+minFreeSpace = args.minFreeSpace * 1000 * 1000
+
+# Check if the specified media directory exists
+if os.path.isdir(mediaPath):
+    print(f"Media storage directory '{mediaPath}' exists")
+# Check if we can write to the directory
+    try:
+        testfilepath = os.path.join(mediaPath, 'test.tmp')
+        filehandle = open( testfilepath, 'w' )
+        filehandle.close()
+        os.remove(testfilepath)
+        print(f"Media storage directory '{mediaPath}' is writable")
+    except IOError:
+        sys.exit(f"Unable to write to media storage directory '{mediaPath}'" )
+
+else:
+    print("Media storage path '{mediaPath}' doesn't exist. Attempting to create.")
+    # Create the directory
+    try:
+        os.mkdir(mediaPath)
+        print(f"Directory '{mediaPath}' created successfully.")
+    except FileExistsError:
+        print(f"Directory '{mediaPath}' already exists.")
+    except PermissionError:
+        sys.exit(f"Permission denied: Unable to create '{mediaPath}'.")
+    except Exception as e:
+        sys.exit(f"An error occurred: {e}")
 
 if captureMode == "video":
     vidBitrate = args.vidBitrate
     print("Video Bitrate is: ", vidBitrate, " (", vidBitrate / 1000000, " MBps)", sep = "")
 
+# Wait for input on stdin
+async def ainput(string: str) -> str:
+    await asyncio.to_thread(sys.stdout.write, f'{string} ')
+    name = await ainput("Your name:")
 
 # Initialize the camera
 if captureMode == "photo":
@@ -98,10 +135,19 @@ try:
     while True:
         if (GOT_SIGNAL and (captureMode == "photo")):
             GOT_SIGNAL = False
-            print("Received signal.SIGUSR1. Capturing photo.")
-            filename = time.strftime("/home/pi/Rpanion-server/media/RPN%Y%m%d_%H%M%S.jpg")
-            print(filename)
-            output_orig = picam2_still.capture_file(filename)
+
+            # Get the amount of free disk space, in bytes
+            freeDiskSpace = shutil.disk_usage(mediaPath)[2]
+
+            if freeDiskSpace < minFreeSpace:
+                print(f"Free disk space is below the minimum of {minFreeSpace} MiB. Image not recorded.")
+            else:
+                print("Received signal.SIGUSR1. Capturing photo.")
+                filename = time.strftime("RPN%Y%m%d_%H%M%S.jpg")
+                filepath = os.path.join(mediaPath, filename)
+                print(filepath)
+                output_orig = picam2_still.capture_file(filepath)
+
         elif (GOT_SIGNAL and (captureMode == "video")):
             GOT_SIGNAL = False
             print("Received signal.SIGUSR1.")

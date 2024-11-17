@@ -58,6 +58,8 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@babel/plugin-transform-private-property-in-object": "^7.25.9",
     "@eslint/js": "^9.13.0",
     "body-parser": "^1.20.2",
     "chai": "^4.5.0",
