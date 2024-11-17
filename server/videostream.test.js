@@ -87,22 +87,22 @@ describe('Video Functions', function () {
     })
   })
 
-  describe('#videomanagerstartInterval()', () => {
+  describe('#videomanagerstartInterval()', function () {
     let vManager
     let setIntervalStub
     let emitStub
 
-    beforeEach(() => {
+    beforeEach( function () {
       vManager = new VideoStream(settings, winston)
       setIntervalStub = sinon.stub(global, 'setInterval')
       emitStub = sinon.stub(vManager.eventEmitter, 'emit')
     })
 
-    afterEach(() => {
+    afterEach( function () {
       sinon.restore()
     })
 
-    it('should start an interval and emit a "cameraheartbeat" event', () => {
+    it('should start an interval and emit a "cameraheartbeat" event',  function () {
       const intervalId = 12345
       setIntervalStub.returns(intervalId)
 
@@ -122,11 +122,11 @@ describe('Video Functions', function () {
     })
   })
 
-  describe('#videomanagercaptureStillPhoto()', () => {
+  describe('#videomanagercaptureStillPhoto()',  function () {
     let vManager
     let emitStub
 
-    beforeEach(() => {
+    beforeEach( function () {
       vManager = new VideoStream(settings, winston)
       // Mocking deviceStream with a kill method
       vManager.deviceStream = {
@@ -136,11 +136,11 @@ describe('Video Functions', function () {
       emitStub = sinon.stub(vManager.eventEmitter, 'emit')
     })
 
-    afterEach(() => {
+    afterEach( function () {
       sinon.restore()
     })
 
-    it('should emit a "cameratrigger" event', () => {
+    it('should emit a "cameratrigger" event',  function () {
       // build a CAMERA_TRIGGER packet
       const expectedMsg = new common.CameraTrigger()
       expectedMsg.timeUsec = BigInt(Date.now() * 1000)
@@ -152,11 +152,11 @@ describe('Video Functions', function () {
     })
   })
 
-  describe('#videomanagersendCameraInformation()', () => {
+  describe('#videomanagersendCameraInformation()',  function () {
     let vManager
     let emitStub
 
-    beforeEach(() => {
+    beforeEach( function () {
       vManager = new VideoStream(settings, winston)
       emitStub = sinon.stub(vManager.eventEmitter, 'emit')
 
@@ -167,11 +167,11 @@ describe('Video Functions', function () {
       }
     })
 
-    afterEach(() => {
+    afterEach( function () {
       sinon.restore()
     })
 
-    it('should emit a "camerainfo" event', () => {
+    it('should emit a "camerainfo" event',  function () {
       // build a CAMERA_INFORMATION packet
       const expectedMsg = new common.CameraInformation()
 
@@ -212,11 +212,11 @@ describe('Video Functions', function () {
     })
   })
 
-  describe('#videomanagersendVideoStreamInformation()', () => {
+  describe('#videomanagersendVideoStreamInformation()',  function () {
     let vManager
     let emitStub
 
-    beforeEach(() => {
+    beforeEach( function () {
       vManager = new VideoStream(settings, winston)
       emitStub = sinon.stub(vManager.eventEmitter, 'emit')
 
@@ -233,11 +233,11 @@ describe('Video Functions', function () {
       }
     })
 
-    afterEach(() => {
+    afterEach( function () {
       sinon.restore()
     })
 
-    it('should emit a "videostreaminfo" event', () => {
+    it('should emit a "videostreaminfo" event',  function () {
       // build a VIDEO_STREAM_INFORMATION packet
       const expectedMsg = new common.VideoStreamInformation()
 
@@ -281,11 +281,11 @@ describe('Video Functions', function () {
     })
   })
 
-  describe('#videomanagersendCameraSettings()', () => {
+  describe('#videomanagersendCameraSettings()',  function () {
     let vManager
     let emitStub
 
-    beforeEach(() => {
+    beforeEach( function () {
       vManager = new VideoStream(settings, winston)
       emitStub = sinon.stub(vManager.eventEmitter, 'emit')
 
@@ -294,11 +294,11 @@ describe('Video Functions', function () {
       }
     })
 
-    afterEach(() => {
+    afterEach( function () {
       sinon.restore()
     })
 
-    it('should emit a "camerasettings" event', () => {
+    it('should emit a "camerasettings" event',  function () {
       // build a CAMERA_SETTINGS packet
       const expectedMsg = new common.CameraSettings()
       expectedMsg.timeBootMs = 0

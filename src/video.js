@@ -47,10 +47,6 @@ class VideoPage extends basePage {
     this.setState({ photoMode: event.target.value==="photo" });
   }
 
-  handleUsePhotoModeChange = (event) => {
-    this.setState({ photoMode: event.target.value==="photo" });
-  }
-
   handleVideoChange = (value) => {
     //new video device
     this.setState({ vidDeviceSelected: value, vidres: value.caps });
@@ -131,7 +127,7 @@ class VideoPage extends basePage {
     this.setState({ enableCameraHeartbeat: !this.state.enableCameraHeartbeat });
   }
 
-  handleMavControlChange = (event) => {
+  handleMavControlChange = () => {
     // Allow MAVLink-connected devices to control the camera
     this.setState({ enableMavControl: !this.state.enableMavControl });
   }
@@ -145,7 +141,7 @@ class VideoPage extends basePage {
     this.setState({ mediaPath: event.target.value});
   }
 
-  handleCaptureStill = (event) => {
+  handleCaptureStill = () => {
     fetch('/api/capturestillphoto', {
       method: 'POST',
       headers: {
@@ -154,21 +150,6 @@ class VideoPage extends basePage {
       }
     });
   }
-
-  handleMediaPathChange = (event) => {
-    this.setState({ mediaPath: event.target.value});
-  }
-
-  handleCaptureStill = (event) => {
-    fetch('/api/capturestillphoto', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      }
-    });
-  }
-
 
   handleStreaming = () => {
     //user clicked start/stop streaming
