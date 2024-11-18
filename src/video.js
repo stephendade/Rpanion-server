@@ -74,7 +74,7 @@ class VideoPage extends basePage {
 
   isMulticastUpdateIP(ip) {
     // Split the IP address into its four octets
-    const octets = ip.split('.').map(Number);
+    const octets = ip.toString().split('.').map(Number);
     let udpmult = " ";
 
     // Check if the IP address has 4 octets and all are within the valid range
