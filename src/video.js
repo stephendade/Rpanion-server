@@ -11,6 +11,7 @@ class VideoPage extends basePage {
   constructor(props) {
     super(props);
     this.state = {
+      ...this.state,
       ifaces: [],
       dev: [],
       vidDeviceSelected: this.props.vidDeviceSelected,
@@ -27,9 +28,6 @@ class VideoPage extends basePage {
       FPSMax: 0,
       fps: [],
       fpsSelected: 1,
-      loading: true,
-      error: null,
-      infoMessage: null,
       timestamp: false,
       enableCameraHeartbeat: false,
       mavStreamSelected: this.props.mavStreamSelected,
@@ -38,7 +36,7 @@ class VideoPage extends basePage {
   }
 
   componentDidMount() {
-    fetch(`/api/videodevices`).then(response => response.json()).then(state => { this.setState(state); this.isMulticastUpdateIP(state.useUDPIP); this.loadDone() });
+    fetch(`/api/videodevices`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.isMulticastUpdateIP(state.useUDPIP); this.loadDone() });
   }
 
   handleVideoChange = (value) => {
@@ -134,6 +132,7 @@ class VideoPage extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
           active: !this.state.streamingStatus,

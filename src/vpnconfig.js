@@ -8,10 +8,9 @@ class VPNPage extends basePage {
   constructor (props) {
     super(props)
     this.state = {
+      ...this.state,
       statusZerotier: {installed: false, status: false, text: []},
       statusWireguard: {installed: false, status: false, text: []},
-      error: null,
-      infoMessage: null,
       selectedVPN: { label: 'Zerotier', value: 'zerotier' },
       vpnOptions: [{ label: 'Zerotier', value: 'zerotier' }, { label: 'Wireguard', value: 'wireguard' }],
       selVPNInstalled: false,
@@ -26,8 +25,8 @@ class VPNPage extends basePage {
     // Fetch the vpn information and send to controls
     this.setState({ loading: true });
     Promise.all([
-      fetch(`/api/vpnzerotier`).then(response => response.json()).then(state => { this.setState(state); this.setState({ selVPNInstalled: state.statusZerotier.installed }); this.setState({ selVPNActive: state.statusZerotier.status }) }),
-      fetch(`/api/vpnwireguard`).then(response => response.json()).then(state => { this.setState(state); })
+      fetch(`/api/vpnzerotier`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.setState({ selVPNInstalled: state.statusZerotier.installed }); this.setState({ selVPNActive: state.statusZerotier.status }) }),
+      fetch(`/api/vpnwireguard`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); })
     ]).then(this.loadDone());
   }
 
@@ -57,6 +56,7 @@ class VPNPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         network: val
@@ -72,6 +72,7 @@ class VPNPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         network: this.state.newZerotierKey
@@ -87,6 +88,7 @@ class VPNPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         network: val
@@ -102,6 +104,7 @@ class VPNPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         network: val
@@ -117,6 +120,7 @@ class VPNPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         network: val
