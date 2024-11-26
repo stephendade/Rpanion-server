@@ -4,9 +4,7 @@ class Home extends basePage {
   constructor (props) {
     super(props)
     this.state = {
-      loading: true,
-      error: null,
-      infoMessage: null
+      ...this.state
     }
   }
 

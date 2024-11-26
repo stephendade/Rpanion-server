@@ -8,6 +8,7 @@ class AboutPage extends basePage {
   constructor (props, useSocketIO = true) {
     super(props, useSocketIO)
     this.state = {
+      ...this.state,
       OSVersion: '',
       Nodejsversion: '',
       rpanionversion: '',
@@ -16,9 +17,6 @@ class AboutPage extends basePage {
       SYSName: '',
       HATName: {},
       diskSpaceStatus: '',
-      loading: true,
-      error: null,
-      infoMessage: null,
       showModal: false,
       showModalResult: "",
       UpgradeStatus: '',
@@ -42,9 +40,9 @@ class AboutPage extends basePage {
   }
 
   componentDidMount () {
-    fetch('/api/softwareinfo').then(response => response.json()).then(state => this.setState(state))
-    fetch('/api/diskinfo').then(response => response.json()).then(state => this.setState(state))
-    fetch('/api/hardwareinfo').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
+    fetch('/api/softwareinfo', {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state))
+    fetch('/api/diskinfo', {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state))
+    fetch('/api/hardwareinfo', {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
   confirmShutdown = () => {
@@ -66,6 +64,7 @@ class AboutPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       }
     });
   }
@@ -77,6 +76,7 @@ class AboutPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       }
     });
   }
