@@ -9,10 +9,7 @@ class CloudConfig extends basePage {
   constructor (props, useSocketIO = true) {
     super(props, useSocketIO)
     this.state = {
-      loading: true,
-      waiting: false,
-      error: null,
-      infoMessage: null,
+      ...this.state,
       doBinUpload: false,
       binUploadLink: '',
       binLogStatus: 'N/A',
@@ -31,7 +28,7 @@ class CloudConfig extends basePage {
   }
 
   componentDidMount () {
-    fetch('/api/cloudinfo').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
+    fetch('/api/cloudinfo', {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
   changeHandler = event => {
@@ -55,6 +52,7 @@ class CloudConfig extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
             binUploadLink: this.state.binUploadLink,

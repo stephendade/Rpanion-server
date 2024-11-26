@@ -9,13 +9,10 @@ class LoggerPage extends basePage {
   constructor (props, useSocketIO = true) {
     super(props, useSocketIO)
     this.state = {
-      loading: false,
-      waiting: false,
+      ...this.state,
       TlogFiles: [],
       BinlogFiles: [],
       KMZlogFiles: [],
-      error: null,
-      infoMessage: null,
       diskSpaceStatus: "",
       conversionLogStatus: 'N/A',
       doLogConversion: true
@@ -39,6 +36,7 @@ class LoggerPage extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
             doLogConversion: !this.state.doLogConversion,
@@ -46,9 +44,9 @@ class LoggerPage extends basePage {
       }).then(response => response.json()).then(state => { this.setState(state) });
   }
   componentDidMount() {
-    fetch(`/api/logfiles`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
-    fetch(`/api/diskinfo`).then(response => response.json()).then(state => { this.setState(state) });
-    fetch(`/api/logconversioninfo`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
+    fetch(`/api/logfiles`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
+    fetch(`/api/diskinfo`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state) });
+    fetch(`/api/logconversioninfo`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
   renderTitle() {
@@ -77,6 +75,7 @@ class LoggerPage extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
           logtype: id,

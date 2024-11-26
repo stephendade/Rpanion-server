@@ -10,6 +10,7 @@ class FCPage extends basePage {
   constructor(props, useSocketIO = true) {
     super(props, useSocketIO);
     this.state = {
+      ...this.state,
       telemetryStatus: this.props.telemetryStatus,
       serialPorts: [],
       baudRates: [],
@@ -22,11 +23,6 @@ class FCPage extends basePage {
       FCStatus: {},
       UDPoutputs: [],
       addrow: "",
-      loading: true,
-      error: null,
-      infoMessage: null,
-      socketioStatus: false,
-      usedSocketIO: true,
       enableUDPB: false,
       UDPBPort: 14550,
       enableDSRequest: false,
@@ -44,8 +40,8 @@ class FCPage extends basePage {
   }
 
   componentDidMount() {
-    fetch(`/api/FCDetails`).then(response => response.json()).then(state => { this.setState(state) });
-    fetch(`/api/FCOutputs`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
+    fetch(`/api/FCDetails`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state) });
+    fetch(`/api/FCOutputs`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
   }
 
   handleSerialPortChange = (value) => {
@@ -91,6 +87,7 @@ class FCPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         device: JSON.stringify(this.state.serialPortSelected),
@@ -113,6 +110,7 @@ class FCPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       }
     });
   }
@@ -124,6 +122,7 @@ class FCPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         newoutputIP: this.state.addrow.split(":")[0],
@@ -139,6 +138,7 @@ class FCPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         removeoutputIP: val.IPPort.split(":")[0],
