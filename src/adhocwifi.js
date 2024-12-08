@@ -16,9 +16,7 @@ class AdhocConfig extends basePage {
     super(props);
 
     this.state = {
-      loading: true,
-      error: null,
-      infoMessage: null,
+      ...this.state,
       showPW: false,
       netDevice: [],
       netDeviceSelected: null,
@@ -46,7 +44,7 @@ class AdhocConfig extends basePage {
     // Fetch the network information and send to controls
     this.setState({ loading: true });
     Promise.all([
-      fetch(`/api/adhocadapters`).then(response => response.json()).then(state => { this.setState(state); return state; })
+      fetch(`/api/adhocadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); return state; })
     ]).then(() => { this.loadDone() });
   }
 
@@ -115,6 +113,7 @@ class AdhocConfig extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
           netDeviceSelected: this.state.netDeviceSelected.value,
