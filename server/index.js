@@ -34,9 +34,12 @@ const limiter = RateLimit({
   max: 50
 })
 
-// key for user login. Use a strong, secret key in production
-const SECRET_KEY = 'your-secret-key'
-let tokenBlacklist = []
+// Generate a new key if not provided
+function generateSecretKey() {
+  return crypto.randomBytes(64).toString('hex');
+}
+const RPANION_SECRET_KEY = process.env.RPANION_SECRET_KEY || generateSecretKey();
+let tokenBlacklist = [];
 
 // apply rate limiter to all requests
 app.use(limiter)
@@ -46,6 +49,7 @@ app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles
 
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult } = require('express-validator')
+const crypto = require('crypto');
 
 // Init settings before running the other classes
 settings.init({
@@ -163,7 +167,7 @@ app.post('/login', async (req, res) => {
   let password = req.body.password
   if (username === "ff" && password === "ff") {
     // Generate a token with user information
-    const token = jwt.sign({ username: username }, SECRET_KEY, {
+    const token = jwt.sign({ username: username }, RPANION_SECRET_KEY, {
       expiresIn: '1h', // Token expires in 1 hour
     });
     res.send({
@@ -207,7 +211,7 @@ function authenticateToken(req, res, next) {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
-  jwt.verify(token, SECRET_KEY, (err, user) => {
+  jwt.verify(token, RPANION_SECRET_KEY, (err, user) => {
     if (err) return res.status(403).json({ message: 'Invalid token' });
     req.user = user; // Attach user to request
     next();
