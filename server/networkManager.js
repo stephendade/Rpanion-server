@@ -81,15 +81,23 @@ function setWirelessStatus (status, callback) {
 function activateConnection (conName, callback) {
   // activate the connection (by id)
   // assumed that conName is a valid UUID
-  exec('sudo nmcli connection mod ' + conName + ' connection.autoconnect yes ' + ' && ' + 'sudo nmcli connection up ' + conName, (error, stdout, stderr) => {
+  execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'connection.autoconnect', 'yes'], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
       winston.error('Error in getAdapters() ', { message: stderr })
       return callback(stderr)
     } else {
-      console.log('Activated network: ' + conName)
-      winston.info('activateConnection()' + conName)
-      return callback(null, 'OK')
+      execFile('sudo', ['nmcli', 'connection', 'up', conName], (error, stdout, stderr) => {
+        if (stderr) {
+          console.error(`exec error: ${error}`)
+          winston.error('Error in getAdapters() ', { message: stderr })
+          return callback(stderr)
+        } else {
+          console.log('Activated network: ' + conName)
+          winston.info('activateConnection()' + conName)
+          return callback(null, 'OK')
+        }
+      })
     }
   })
 }
@@ -98,15 +106,23 @@ function deactivateConnection (conName, callback) {
   // deactivate the connection (by id)
   // assumed that conName is a valid UUID
   // need to disable auto-connect too
-  exec('sudo nmcli connection mod ' + conName + ' connection.autoconnect no ' + ' && ' + 'sudo nmcli connection down ' + conName, (error, stdout, stderr) => {
+  execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'connection.autoconnect', 'no'], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
       winston.error('Error in deactivateConnection() ', { message: stderr })
       return callback(stderr)
     } else {
-      console.log('Dectivated network: ' + conName)
-      winston.info('deactivateConnection()' + conName)
-      return callback(null, 'OK')
+      execFile('sudo', ['nmcli', 'connection', 'down', conName], (error, stdout, stderr) => {
+        if (stderr) {
+          console.error(`exec error: ${error}`)
+          winston.error('Error in deactivateConnection() ', { message: stderr })
+          return callback(stderr)
+        } else {
+          console.log('Dectivated network: ' + conName)
+          winston.info('deactivateConnection()' + conName)
+          return callback(null, 'OK')
+        }
+      })
     }
   })
 }
@@ -332,15 +348,21 @@ function editConnectionPSK (conName, conSettings, callback) {
     if (conSettings.wpaType.value !== 'none' &&
             Object.keys(conSettings.ssid).length !== 0 &&
             Object.keys(conSettings.password).length !== 0) {
-      exec('sudo nmcli connection mod ' + conName + ' 802-11-wireless-security.key-mgmt ' + conSettings.wpaType.value + ' &&' +
-            'sudo nmcli -s connection mod ' + conName + ' 802-11-wireless-security.pairwise ccmp 802-11-wireless-security.psk ' + conSettings.password.value, (error, stdout, stderr) => {
+            execFile('sudo', ['nmcli', 'connection', 'mod', conName, '802-11-wireless-security.key-mgmt', conSettings.wpaType.value], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
         } else {
-          winston.info('editConnectionPSK() edited psk ' + conName + ', ' + conSettings.wpaType.value)
-          console.log('Edited Wifi psk: ' + conName)
-          return callback(null, 'OK')
+          execFile('sudo', ['nmcli', '-s', 'connection', 'mod', conName, '802-11-wireless-security.pairwise', 'ccmp', '802-11-wireless-security.psk', conSettings.password.value], (error, stdout, stderr) => {
+            if (stderr) {
+              console.error(`exec error: ${error}`)
+              return callback(stderr)
+            } else {
+              winston.info('editConnectionPSK() edited psk ' + conName + ', ' + conSettings.wpaType.value)
+              console.log('Edited Wifi psk: ' + conName)
+              return callback(null, 'OK')
+            }
+          })
         }
       })
     }
