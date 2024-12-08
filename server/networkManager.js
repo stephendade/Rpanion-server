@@ -111,23 +111,57 @@ function deactivateConnection (conName, callback) {
   })
 }
 
-function getWifiScan (callback) {
-  exec('nmcli -t -c=no -f=ssid,signal,security device wifi list', (error, stdout, stderr) => {
-    if (stderr) {
-      console.error(`exec error: ${error}`)
-      winston.error('Error in getWifiScan() ', { message: stderr })
-      return callback(stderr, [])
-    } else {
-      const wifiList = []
-      stdout.split('\n').forEach(function (item) {
-        const detnet = item.split(':')
-        if (detnet[0] !== '') {
-          wifiList.push({ ssid: detnet[0], signal: detnet[1], security: detnet[2] })
-        }
-      })
-      return callback(null, wifiList)
-    }
-  })
+function getPrimaryWifiDevice(callback) {
+  exec('iw dev | grep Interface | awk \'{print $2}\'', (error, stdout, stderr) => {
+      if (error) {
+          console.error(`exec error: ${error}`)
+          return callback(error)
+      }
+      if (stderr) {
+          console.error(`stderr: ${stderr}`)
+          return callback(new Error(stderr))
+      }
+      const device = stdout.trim().split('\n')[0]
+      callback(null, device)
+  });
+}
+
+function getWifiScan(callback) {
+  getPrimaryWifiDevice((error, device) => {
+      if (error) {
+          return callback(error)
+      }
+
+      exec(`sudo iwlist ${device} scan`, (error, stdout, stderr) => {
+          if (error) {
+              console.error(`exec error: ${error}`)
+              return callback(error)
+          }
+          if (stderr) {
+              console.error(`stderr: ${stderr}`)
+              return callback(new Error(stderr))
+          }
+
+          const ssidRegex = /ESSID:"([^"]+)"/g
+          const signalRegex = /Signal level=(-?\d+)/g
+          const wpaRegex = /WPA[1-2]?/g
+
+          let ssidMatch, signalMatch, wpaMatch
+          const results = []
+
+          while ((ssidMatch = ssidRegex.exec(stdout)) !== null) {
+              signalMatch = signalRegex.exec(stdout)
+              wpaMatch = wpaRegex.exec(stdout)
+
+              results.push({
+                  ssid: ssidMatch[1],
+                  signal: signalMatch ? signalMatch[1] : 'N/A',
+                  security: wpaMatch ? wpaMatch[0] : 'open'
+              });
+          }
+          return callback(null, results)
+      });
+  });
 }
 
 function addConnection (conNameStr, conType, conAdapter, conSettings, callback) {
