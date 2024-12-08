@@ -27,6 +27,10 @@ const app = express()
 const http = require('http').Server(app)
 const path = require('path')
 
+const io = require('socket.io')(http, { cookie: false })
+const { check, validationResult } = require('express-validator')
+const crypto = require('crypto');
+
 // set up rate limiter: maximum of fifty requests per minute
 const RateLimit = require('express-rate-limit')
 const limiter = RateLimit({
@@ -46,10 +50,6 @@ app.use(limiter)
 
 // use file uploader for Wireguard profiles
 app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
-
-const io = require('socket.io')(http, { cookie: false })
-const { check, validationResult } = require('express-validator')
-const crypto = require('crypto');
 
 // Init settings before running the other classes
 settings.init({
