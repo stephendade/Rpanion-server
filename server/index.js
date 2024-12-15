@@ -26,6 +26,7 @@ const settings = require('settings-store')
 const app = express()
 const http = require('http').Server(app)
 const path = require('path')
+const { execFile } = require('child_process')
 
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult } = require('express-validator')
@@ -165,20 +166,27 @@ app.post('/login', async (req, res) => {
   // Capture the input fields
   let username = req.body.username
   let password = req.body.password
-  if (username === "ff" && password === "ff") {
-    // Generate a token with user information
-    const token = jwt.sign({ username: username }, RPANION_SECRET_KEY, {
-      expiresIn: '1h', // Token expires in 1 hour
-    });
-    res.send({
-      token: token
-    });    
-  } else {
-    res.status(401).send({
-      message: 'Invalid username or password'
-    });
-  }
-});
+
+  // Verify against OS login username/password and ensure the user has sudo access
+  const command = `echo ${password} | su -c "whoami" ${username}`
+
+  execFile('/bin/sh', ['-c', command], (error, stdout) => {
+    console.log(stdout)
+    if (!error && stdout.trim() === username) {
+      // Generate a token with user information
+      const token = jwt.sign({ username: username }, RPANION_SECRET_KEY, {
+        expiresIn: '1h', // Token expires in 1 hour
+      })
+      res.send({
+        token: token
+      })
+    } else {
+      res.status(401).send({
+        message: 'Invalid username or password or insufficient permissions'
+      })
+    }
+  })
+})
 
 // User logout
 app.post('/logout', authenticateToken, async (req, res) => {
