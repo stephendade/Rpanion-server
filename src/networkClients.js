@@ -8,16 +8,14 @@ class NetworkClientsPage extends basePage {
   constructor (props) {
     super(props)
     this.state = {
-      loading: true,
-      error: null,
-      infoMessage: null,
+      ...this.state,
       apname: '',
       apclients: null
     }
   }
 
   componentDidMount () {
-    fetch('/api/networkclients').then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
+    fetch('/api/networkclients', {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
   }
 
   renderTitle () {

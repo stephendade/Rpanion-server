@@ -9,9 +9,7 @@ class NTRIPPage extends basePage {
   constructor(props, useSocketIO = true) {
     super(props, useSocketIO);
     this.state = {
-      loading: true,
-      error: null,
-      infoMessage: null,
+      ...this.state,
       host: "",
       port: 0,
       mountpoint: "",
@@ -33,7 +31,7 @@ class NTRIPPage extends basePage {
   }
 
   componentDidMount() {
-    fetch(`/api/ntripconfig`).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
+    fetch(`/api/ntripconfig`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
   }
 
   changeHandler = event => {
@@ -57,6 +55,7 @@ class NTRIPPage extends basePage {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
         host: JSON.stringify(this.state.host),

@@ -1,10 +1,11 @@
-import { Component } from 'react';
+import { Component} from 'react';
 import { Helmet } from 'react-helmet'
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Spinner from 'react-bootstrap/Spinner';
+import Login from './login.js'
 
 class basePage extends Component {
   constructor(props, useSocketIO = false) {
@@ -13,8 +14,48 @@ class basePage extends Component {
       loading: true,
       waiting: false,
       socketioStatus: false,
-      usedSocketIO: useSocketIO
+      usedSocketIO: useSocketIO,
+      token: null,
+      error: null,
+      infoMessage: null,
     }
+
+    // check authentication
+    const tokenString = localStorage.getItem('token')
+    const userToken = JSON.parse(tokenString)
+    this.state.token = userToken?.token
+
+    //verify token, set to null if not valid
+    if (this.state.token) {
+      fetch('/auth', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.state.token}`, // Include token in the Authorization header
+        },
+      })
+      .then((response) => {
+        if (!response.ok) {
+          // Handle HTTP errors
+          return response.json().then((errorData) => {
+            if (errorData) {
+              console.error(errorData)
+              this.setState({ token: null })
+            }
+          });
+        }
+        return response.json();
+      })
+      .then(() => {
+      })
+      .catch((error) => {
+        // Handle errors
+        if (error) {
+          console.error(error)
+          this.setState({ token: null })
+        }
+      });
+    }
+
 
     if (this.state.usedSocketIO) {
       this.socket = io();
@@ -53,63 +94,76 @@ class basePage extends Component {
   }
 
   render() {
-    let { loading, usedSocketIO, socketioStatus, waiting, error, infoMessage } = this.state;
-    return (
-      <div>
-        <Helmet>
-          <title>{this.renderTitle()}</title>
-        </Helmet>
-        <h1>{this.renderTitle()}</h1>
-        <div style={{ display: (loading) ? "block" : "none" }}>
-          <Spinner animation="border" role="status" >
-          </Spinner>
-          <p><span className="sr-only" size={35}>Loading...</span></p>
-        </div>
-
-        <div className='sweet-waiting' style={{ display: (waiting) ? "block" : "none", "textAlign": "center", "position": "fixed", "width": "100%", "height": "100%", "top": "0", "left": "0", "right": "0", "bottom": "0", "zIndex": "9", "backgroundColor": "rgba(65,117,5,0.5)" }}>
-          <Spinner style={{ "position": "absolute", "top": "45%", "left": "50%" }} animation="border" role="status">
-          </Spinner>
-          <h2 style={{ "position": "absolute", "top": "65%", "left": "40%", "msTransform": "translateY(-50%)", "transform": "translateY(-50%)" }}>Submitting Changes</h2>
-        </div>
-
-        <div className='pagedetails' style={{ display: (loading) ? "none" : "block" }}>
-          {this.renderContent()}
-        </div>
-        <Modal show={error !== null} onHide={this.handleCloseError}>
-          <Modal.Header closeButton>
-            <Modal.Title>Error</Modal.Title>
-          </Modal.Header>
-
-          <Modal.Body>
-            <p>{error}</p>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.handleCloseError}>OK</Button>
-          </Modal.Footer>
-        </Modal>
-
-        <Modal show={infoMessage !== null} onHide={this.handleCloseInformation}>
-          <Modal.Header closeButton>
-            <Modal.Title>Information</Modal.Title>
-          </Modal.Header>
-
-          <Modal.Body>
-            <p>{infoMessage}</p>
-          </Modal.Body>
-
-          <Modal.Footer>
-            <Button variant="primary" onClick={this.handleCloseInformation}>OK</Button>
-          </Modal.Footer>
-        </Modal>
+    if(!this.state.token) {
+      return (
         <div>
-          {usedSocketIO ? (
-            <SocketIOFooter socketioStatus={socketioStatus} />
-          ) : (<p></p>
-          )}
+          <Helmet>
+            <title>{this.renderTitle()}</title>
+          </Helmet>
+          <h1>{this.renderTitle()}</h1>
+          <div className='pagedetails' style={{ display: (this.state.loading) ? "none" : "block" }}>
+            <Login />
+          </div>
         </div>
-      </div>
-    );
+      )
+    } else {
+      return (
+        <div>
+          <Helmet>
+            <title>{this.renderTitle()}</title>
+          </Helmet>
+          <h1>{this.renderTitle()}</h1>
+          <div style={{ display: (this.state.loading) ? "block" : "none" }}>
+            <Spinner animation="border" role="status" >
+            </Spinner>
+            <p><span className="sr-only" size={35}>Loading...</span></p>
+          </div>
+
+          <div className='sweet-waiting' style={{ display: (this.state.waiting) ? "block" : "none", "textAlign": "center", "position": "fixed", "width": "100%", "height": "100%", "top": "0", "left": "0", "right": "0", "bottom": "0", "zIndex": "9", "backgroundColor": "rgba(65,117,5,0.5)" }}>
+            <Spinner style={{ "position": "absolute", "top": "45%", "left": "50%" }} animation="border" role="status">
+            </Spinner>
+            <h2 style={{ "position": "absolute", "top": "65%", "left": "40%", "msTransform": "translateY(-50%)", "transform": "translateY(-50%)" }}>Submitting Changes</h2>
+          </div>
+
+          <div className='pagedetails' style={{ display: (this.state.loading) ? "none" : "block" }}>
+            {this.renderContent()}
+          </div>
+          <Modal show={this.state.error !== null} onHide={this.handleCloseError}>
+            <Modal.Header closeButton>
+              <Modal.Title>Error</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <p>{this.state.error}</p>
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button variant="primary" onClick={this.handleCloseError}>OK</Button>
+            </Modal.Footer>
+          </Modal>
+
+          <Modal show={this.state.infoMessage !== null} onHide={this.handleCloseInformation}>
+            <Modal.Header closeButton>
+              <Modal.Title>Information</Modal.Title>
+            </Modal.Header>
+
+            <Modal.Body>
+              <p>{this.state.infoMessage}</p>
+            </Modal.Body>
+
+            <Modal.Footer>
+              <Button variant="primary" onClick={this.handleCloseInformation}>OK</Button>
+            </Modal.Footer>
+          </Modal>
+          <div>
+            {this.state.usedSocketIO ? (
+              <SocketIOFooter socketioStatus={this.state.socketioStatus} />
+            ) : (<p></p>
+            )}
+          </div>
+        </div>
+      );
+    }
   }
 
 }

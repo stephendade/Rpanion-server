@@ -10,16 +10,14 @@ class NetworkConfig extends basePage {
   constructor(props) {
     super(props);
     this.state = {
-      loading: true,
+      ...this.state,
       detWifi: [],
       showModal: false,
       showModalResult: "",
       showModalDelete: false,
       showModalNewNetworkName: false,
       newNetworkName: '',
-      error: null,
       showPW: false,
-      infoMessage: null,
       wirelessEnabled: true,
       netDevice: [],
       netDeviceSelected: null,
@@ -83,9 +81,9 @@ class NetworkConfig extends basePage {
     // Fetch the network information and send to controls
     this.setState({ loading: true });
     Promise.all([
-      fetch(`/api/networkconnections`).then(response => response.json()).then(state => this.setState(state)),
-      fetch(`/api/wirelessstatus`).then(response => response.json()).then(state => this.setState(state)),
-      fetch(`/api/networkadapters`).then(response => response.json()).then(state => { this.setState(state); this.setState({ netDeviceSelected: state.netDevice[0] }); return state; })
+      fetch(`/api/networkconnections`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state)),
+      fetch(`/api/wirelessstatus`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state)),
+      fetch(`/api/networkadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.setState({ netDeviceSelected: state.netDevice[0] }); return state; })
     ]).then(retState => { this.handleAdapterChange(retState[2].netDevice[0], { action: "select-option" }); this.loadDone() });
   }
 
@@ -190,6 +188,7 @@ class NetworkConfig extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
           conName: value.value
@@ -237,6 +236,7 @@ class NetworkConfig extends basePage {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
             conSettings: this.state.curSettings,
@@ -269,6 +269,7 @@ class NetworkConfig extends basePage {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
             conName: this.state.netConnectionFilteredSelected.value,
@@ -306,11 +307,11 @@ class NetworkConfig extends basePage {
     //add new network button clicked
     if(this.state.netDeviceSelected.type === "wifi") {
       this.setState({ waiting: true }, () => {
-        fetch(`/api/wifiscan`).then(response => response.json())
-                              .then(state => this.setState(state))
-                              .then(this.setState({ newNetworkName: '' }))
-                              .then(this.setState({ showModalNewNetworkName: true }))
-                              .then(this.setState({ waiting: false }))
+        fetch(`/api/wifiscan`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
+                                                                                        .then(state => this.setState(state))
+                                                                                        .then(this.setState({ newNetworkName: '' }))
+                                                                                        .then(this.setState({ showModalNewNetworkName: true }))
+                                                                                        .then(this.setState({ waiting: false }))
       })
     }
     else {
@@ -330,6 +331,7 @@ class NetworkConfig extends basePage {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
             conName: this.state.netConnectionFilteredSelected.value,
@@ -364,6 +366,7 @@ class NetworkConfig extends basePage {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
             conName: this.state.netConnectionFilteredSelected.value,
@@ -492,6 +495,7 @@ class NetworkConfig extends basePage {
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
             conName: this.state.netConnectionFilteredSelected.value,
@@ -541,7 +545,7 @@ class NetworkConfig extends basePage {
 
   refreshWifi = () => {
     this.setState({ waiting: false }, () => {
-      fetch(`/api/wifiscan`).then(response => response.json())
+      fetch(`/api/wifiscan`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
                             .then(state => this.setState(state))
                             .then(this.setState({ waiting: false }))
     })
@@ -549,7 +553,7 @@ class NetworkConfig extends basePage {
 
   refreshConList = () => {
     this.setState({ waiting: false }, () => {
-      fetch(`/api/networkconnections`).then(response => response.json())
+      fetch(`/api/networkconnections`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
                                       .then(state => this.setState(state, () => { this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" }) }))
                                       .then(this.setState({ waiting: false }))
     })
@@ -573,6 +577,7 @@ class NetworkConfig extends basePage {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
           status: value,
