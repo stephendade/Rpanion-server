@@ -5,6 +5,7 @@
   "secure": false,
   "dependencies": {
     "app-root-path": "^3.1.0",
+    "bcrypt": "^5.1.1",
     "bootstrap": "^5.3.1",
     "compression": "^1.7.4",
     "express-fileupload": "^1.4.0",
