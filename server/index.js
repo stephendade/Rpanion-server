@@ -204,42 +204,206 @@ app.post('/login', async (req, res) => {
   })
 })
 
+// List all users
+app.get('/users', authenticateToken, (req, res) => {
+  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send({
+        message: 'Error reading user data'
+      })
+    }
+
+    const users = JSON.parse(data).map(user => ({ username: user.username }))
+    res.send(users)
+  })
+})
+
+// Update existing user password
+app.post('/updateUserPassword', authenticateToken, async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).send({
+      message: 'Username and password are required'
+    })
+  }
+
+  // Read the user.json file
+  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send({
+        message: 'Error reading user data'
+      })
+    }
+
+    const users = JSON.parse(data)
+    const userIndex = users.findIndex(u => u.username === username)
+
+    if (userIndex === -1) {
+      return res.status(404).send({
+        message: 'User not found'
+      })
+    }
+
+    // Hash the password
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+      if (err) {
+        return res.status(500).send({
+          message: 'Error hashing password'
+        })
+      }
+
+      // Update existing user password
+      users[userIndex].passwordhash = hashedPassword
+
+      // Write the updated user data back to the file
+      fs.writeFile(path.join(__dirname, '..', 'user.json'), JSON.stringify(users, null, 2), (err) => {
+        if (err) {
+          return res.status(500).send({
+            message: 'Error updating user data'
+          })
+        }
+
+        res.send({
+          message: 'User password updated successfully'
+        })
+      })
+    })
+  })
+})
+
+// Create new user
+app.post('/createUser', authenticateToken, async (req, res) => {
+  const { username, password } = req.body
+
+  if (!username || !password) {
+    return res.status(400).send({
+      message: 'Username and password are required'
+    })
+  }
+
+  // Read the user.json file
+  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send({
+        message: 'Error reading user data'
+      })
+    }
+
+    const users = JSON.parse(data)
+    const userExists = users.some(u => u.username === username)
+
+    if (userExists) {
+      return res.status(409).send({
+        message: 'User already exists'
+      })
+    }
+
+    // Hash the password
+    bcrypt.hash(password, 10, (err, hashedPassword) => {
+      if (err) {
+        return res.status(500).send({
+          message: 'Error hashing password'
+        })
+      }
+
+      // Create new user
+      users.push({ username, passwordhash: hashedPassword })
+
+      // Write the updated user data back to the file
+      fs.writeFile(path.join(__dirname, '..', 'user.json'), JSON.stringify(users, null, 2), (err) => {
+        if (err) {
+          return res.status(500).send({
+            message: 'Error updating user data'
+          })
+        }
+
+        res.send({
+          message: 'User created successfully'
+        })
+      })
+    })
+  })
+})
+
+// Delete a user
+app.post('/deleteUser', authenticateToken, (req, res) => {
+  const { username } = req.body
+
+  if (!username) {
+    return res.status(400).send({
+      message: 'Username is required'
+    })
+  }
+
+  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send({
+        message: 'Error reading user data'
+      })
+    }
+
+    let users = JSON.parse(data)
+
+    //if there's only 1 user remaining, don't allow deletion
+    if (users.length === 1) {
+      return res.status(500).send({
+        message: 'Cannot delete the last user'
+      })
+    }
+
+    users = users.filter(u => u.username !== username)
+
+    fs.writeFile(path.join(__dirname, '..', 'user.json'), JSON.stringify(users, null, 2), (err) => {
+      if (err) {
+        return res.status(500).send({
+          message: 'Error updating user data'
+        })
+      }
+
+      res.send({
+        message: 'User deleted successfully'
+      })
+    })
+  })
+})
+
 // User logout
 app.post('/logout', authenticateToken, async (req, res) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
 
   // Add token to the blacklist
-  tokenBlacklist.push(token);
+  tokenBlacklist.push(token)
 
   res.send({
     token: token
-  });  
+  })
 })
 
 // Simple token authentication call
 app.post('/auth', authenticateToken, async (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({error: null}))
-});
+})
 
 // Middleware to check if the request has a valid token
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const authHeader = req.headers['authorization']
+  const token = authHeader && authHeader.split(' ')[1]
 
-  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
+  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' })
 
   // Check if the token is blacklisted
   if (tokenBlacklist.includes(token)) {
-    return res.status(401).json({ message: 'Invalid token' });
+    return res.status(401).json({ message: 'Invalid token' })
   }
 
   jwt.verify(token, RPANION_SECRET_KEY, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
-    req.user = user; // Attach user to request
-    next();
-  });
+    if (err) return res.status(403).json({ message: 'Invalid token' })
+    req.user = user // Attach user to request
+    next()
+  })
 }
 
 // Serve the vpn zerotier info
