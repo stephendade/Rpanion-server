@@ -18,6 +18,7 @@ const Adhoc = require('./adhocManager.js')
 const cloudManager = require('./cloudUpload.js')
 const VPNManager = require('./vpn')
 const logConversionManager = require('./logConverter.js')
+const userLogin = require('./userLogin.js')
 const winston = require('./winstonconfig')(module)
 
 const appRoot = require('app-root-path')
@@ -33,8 +34,6 @@ const crypto = require('crypto');
 
 // set up rate limiter: maximum of fifty requests per minute
 const RateLimit = require('express-rate-limit')
-const fs = require('fs');
-const bcrypt = require('bcrypt');
 const limiter = RateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 50
@@ -67,6 +66,7 @@ const ntripClient = new ntrip(settings, winston)
 const cloud = new cloudManager(settings)
 const logConversion = new logConversionManager(settings)
 const adhocManager = new Adhoc(settings, winston)
+const userMgmt = new userLogin(winston)
 
 // cleanup, if needed
 process.on('SIGINT', quitting) // run signal handler when main process exits
@@ -168,37 +168,18 @@ app.post('/login', async (req, res) => {
   let username = req.body.username
   let password = req.body.password
 
-  // Read the user.json file
-  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
-    if (err) {
-      return res.status(500).send({
-        message: 'Error reading user data'
-      });
-    }
-
-    const users = JSON.parse(data);
-    const user = users.find(u => u.username === username);
-
-    if (user) {
-      // Compare the hashed password
-      bcrypt.compare(password, user.passwordhash, (err, result) => {
-        if (result) {
-          // Generate a token with user information
-          const token = jwt.sign({ username: username }, RPANION_SECRET_KEY, {
-            expiresIn: '1h', // Token expires in 1 hour
-          })
-          res.send({
-            token: token
-          })
-        } else {
-          res.status(401).send({
-            message: 'Invalid username or password'
-          })
-        }
+  userMgmt.checkLoginDetails(username, password).then((match) => {
+    if (match) {
+      // Generate a token with user information
+      const token = jwt.sign({ username: username }, RPANION_SECRET_KEY, {
+        expiresIn: '1h', // Token expires in 1 hour
+      })
+      res.send({
+        token: token
       })
     } else {
       res.status(401).send({
-        message: 'Invalid username or password'
+        error: 'Invalid username or password'
       })
     }
   })
@@ -206,14 +187,7 @@ app.post('/login', async (req, res) => {
 
 // List all users
 app.get('/users', authenticateToken, (req, res) => {
-  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
-    if (err) {
-      return res.status(500).send({
-        message: 'Error reading user data'
-      })
-    }
-
-    const users = JSON.parse(data).map(user => ({ username: user.username }))
+  userMgmt.getAllUsers().then((users) => {
     res.send(users)
   })
 })
@@ -224,51 +198,20 @@ app.post('/updateUserPassword', authenticateToken, async (req, res) => {
 
   if (!username || !password) {
     return res.status(400).send({
-      message: 'Username and password are required'
+      error: 'Username and password are required'
     })
   }
 
-  // Read the user.json file
-  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
-    if (err) {
-      return res.status(500).send({
-        message: 'Error reading user data'
+  userMgmt.changePassword(username, password).then((success) => {
+    if (success) {
+      res.send({
+        error: 'User password updated successfully'
+      })
+    } else {
+      res.status(500).send({
+        error: 'Error updating user password'
       })
     }
-
-    const users = JSON.parse(data)
-    const userIndex = users.findIndex(u => u.username === username)
-
-    if (userIndex === -1) {
-      return res.status(404).send({
-        message: 'User not found'
-      })
-    }
-
-    // Hash the password
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
-      if (err) {
-        return res.status(500).send({
-          message: 'Error hashing password'
-        })
-      }
-
-      // Update existing user password
-      users[userIndex].passwordhash = hashedPassword
-
-      // Write the updated user data back to the file
-      fs.writeFile(path.join(__dirname, '..', 'user.json'), JSON.stringify(users, null, 2), (err) => {
-        if (err) {
-          return res.status(500).send({
-            message: 'Error updating user data'
-          })
-        }
-
-        res.send({
-          message: 'User password updated successfully'
-        })
-      })
-    })
   })
 })
 
@@ -278,51 +221,20 @@ app.post('/createUser', authenticateToken, async (req, res) => {
 
   if (!username || !password) {
     return res.status(400).send({
-      message: 'Username and password are required'
+      error: 'Username and password are required'
     })
   }
 
-  // Read the user.json file
-  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
-    if (err) {
-      return res.status(500).send({
-        message: 'Error reading user data'
+  userMgmt.addUser(username, password).then((success) => {
+    if (success) {
+      res.send({
+        error: 'User created successfully'
+      })
+    } else {
+      res.status(500).send({
+        error: 'Error creating user'
       })
     }
-
-    const users = JSON.parse(data)
-    const userExists = users.some(u => u.username === username)
-
-    if (userExists) {
-      return res.status(409).send({
-        message: 'User already exists'
-      })
-    }
-
-    // Hash the password
-    bcrypt.hash(password, 10, (err, hashedPassword) => {
-      if (err) {
-        return res.status(500).send({
-          message: 'Error hashing password'
-        })
-      }
-
-      // Create new user
-      users.push({ username, passwordhash: hashedPassword })
-
-      // Write the updated user data back to the file
-      fs.writeFile(path.join(__dirname, '..', 'user.json'), JSON.stringify(users, null, 2), (err) => {
-        if (err) {
-          return res.status(500).send({
-            message: 'Error updating user data'
-          })
-        }
-
-        res.send({
-          message: 'User created successfully'
-        })
-      })
-    })
   })
 })
 
@@ -332,39 +244,20 @@ app.post('/deleteUser', authenticateToken, (req, res) => {
 
   if (!username) {
     return res.status(400).send({
-      message: 'Username is required'
+      error: 'Username is required'
     })
   }
 
-  fs.readFile(path.join(__dirname, '..', 'user.json'), 'utf8', (err, data) => {
-    if (err) {
-      return res.status(500).send({
-        message: 'Error reading user data'
-      })
-    }
-
-    let users = JSON.parse(data)
-
-    //if there's only 1 user remaining, don't allow deletion
-    if (users.length === 1) {
-      return res.status(500).send({
-        message: 'Cannot delete the last user'
-      })
-    }
-
-    users = users.filter(u => u.username !== username)
-
-    fs.writeFile(path.join(__dirname, '..', 'user.json'), JSON.stringify(users, null, 2), (err) => {
-      if (err) {
-        return res.status(500).send({
-          message: 'Error updating user data'
-        })
-      }
-
+  userMgmt.deleteUser(username).then((success) => {
+    if (success) {
       res.send({
-        message: 'User deleted successfully'
+        error: 'User deleted successfully'
       })
-    })
+    } else {
+      res.status(500).send({
+        error: 'Error deleting user'
+      })
+    }
   })
 })
 
