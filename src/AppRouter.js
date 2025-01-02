@@ -11,8 +11,11 @@ import NTRIPPage from './ntripcontroller.js'
 import AdhocConfig from './adhocwifi.js'
 import CloudConfig from './cloud.js'
 import VPN from './vpnconfig'
+import Logout from './logout.js'
+import UserManagement from './userManagement.js'
 
 function AppRouter () {
+
   return (
     <div id="wrapper" className="d-flex">
       <div id="sidebar-wrapper" className="bg-light border-right">
@@ -29,6 +32,8 @@ function AppRouter () {
           <Link className='list-group-item list-group-item-action bg-light' to="/cloud">Cloud Upload</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/vpn">VPN Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
+          <Link className='list-group-item list-group-item-action bg-light' to="/users">User Management</Link>
+          <Link className='list-group-item list-group-item-action bg-light' to="/logoutconfirm">Logout</Link>
         </div>
       </div>
 
@@ -46,6 +51,8 @@ function AppRouter () {
             <Route exact path="/adhoc" element={<AdhocConfig />} />
             <Route exact path="/cloud" element={<CloudConfig />} />
             <Route exact path="/vpn" element={<VPN/>} />
+            <Route exact path="/logoutconfirm" element={<Logout/>} />
+            <Route exact path="/users" element={<UserManagement/>} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
         </div>
