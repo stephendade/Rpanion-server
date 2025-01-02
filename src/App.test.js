@@ -9,6 +9,7 @@ import LogBrowser from './logBrowser.js'
 import NTRIPPage from './ntripcontroller.js'
 import AdhocConfig from './adhocwifi.js'
 import CloudConfig from './cloud.js'
+import UserManagement from './userManagement.js'
 
 describe('#apptest()', function () {
   it('homepage renders without crashing', function () {
@@ -71,6 +72,13 @@ describe('#apptest()', function () {
     const div = document.createElement('div')
     const root = createRoot(div)
     root.render(<CloudConfig />)
+    root.unmount()
+  })
+
+  it('user page renders without crashing', function () {
+    const div = document.createElement('div')
+    const root = createRoot(div)
+    root.render(<UserManagement />)
     root.unmount()
   })
 })

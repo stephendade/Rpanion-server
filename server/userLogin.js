@@ -133,6 +133,10 @@ class userLogin {
         return false
       }
 
+      if(password === '') {
+        return false
+      }
+
       user.passwordhash = await bcrypt.hash(password, 10)
 
       await fs.writeFile(this.usersFile, JSON.stringify(users, null, 2))
