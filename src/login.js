@@ -26,23 +26,22 @@ export default function loginPage() {
         body: JSON.stringify({ username, password }),
       });
 
+      const data = await response.json(); // Get the error response from the server
+
+      console.log('Login:', data);
+
       // Check if login was successful
       if (!response.ok) {
-        const errorData = await response.json(); // Get the error response from the server
-        throw new Error(errorData.message || 'Failed to login');
+        console.log('Login failed:', data);
+        setErrorMessage(data.error)
+      } else {
+        // If login is successful, process the data (e.g., save token)
+        localStorage.setItem('token', JSON.stringify(data));
+        window.location.reload();
+        
+        // Clear any previous error message
+        setErrorMessage('');
       }
-
-      // If login is successful, process the data (e.g., save token)
-      const data = await response.json();
-      console.log('Login successful:', data);
-      localStorage.setItem('token', JSON.stringify(data));
-      window.location.reload();
-      
-      // Clear any previous error message
-      setErrorMessage('');
-
-      // Do something on successful login (e.g., redirect)
-      // Example: navigate to another page or store token in localStorage
     } catch (error) {
       // If an error occurred, set the error message
       setErrorMessage(error.message);

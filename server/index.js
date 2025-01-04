@@ -178,9 +178,7 @@ app.post('/login', async (req, res) => {
         token: token
       })
     } else {
-      res.status(401).send({
-        error: 'Invalid username or password'
-      })
+      res.status(401).send(JSON.stringify({error: 'Invalid username or password'}))
     }
   })
 })
@@ -188,7 +186,7 @@ app.post('/login', async (req, res) => {
 // List all users
 app.get('/users', authenticateToken, (req, res) => {
   userMgmt.getAllUsers().then((users) => {
-    res.send(users)
+    res.send(JSON.stringify({users: users}))
   })
 })
 
@@ -197,20 +195,17 @@ app.post('/updateUserPassword', authenticateToken, async (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res.status(400).send({
-      error: 'Username and password are required'
-    })
+    //return res.status(400).send({
+    //  error: 'Username and password are required'
+    //})
+    res.status(400).send(JSON.stringify({error: 'Username and password are required'}))
   }
 
   userMgmt.changePassword(username, password).then((success) => {
     if (success) {
-      res.send({
-        error: 'User password updated successfully'
-      })
+      res.send(JSON.stringify({infoMessage: 'User password updated successfully'}))
     } else {
-      res.status(500).send({
-        error: 'Error updating user password'
-      })
+      res.status(500).send(JSON.stringify({error: 'Error updating user password'}))
     }
   })
 })
@@ -220,20 +215,14 @@ app.post('/createUser', authenticateToken, async (req, res) => {
   const { username, password } = req.body
 
   if (!username || !password) {
-    return res.status(400).send({
-      error: 'Username and password are required'
-    })
+    return res.status(400).send(JSON.stringify({error: 'Username and password are required'}))
   }
 
   userMgmt.addUser(username, password).then((success) => {
     if (success) {
-      res.send({
-        error: 'User created successfully'
-      })
+      res.send(JSON.stringify({infoMessage: 'User created successfully'}))
     } else {
-      res.status(500).send({
-        error: 'Error creating user'
-      })
+      res.status(500).send(JSON.stringify({error: 'Error creating user'}))
     }
   })
 })
@@ -243,20 +232,14 @@ app.post('/deleteUser', authenticateToken, (req, res) => {
   const { username } = req.body
 
   if (!username) {
-    return res.status(400).send({
-      error: 'Username is required'
-    })
+    return res.status(400).send(JSON.stringify({error: 'Username is required'}))
   }
 
   userMgmt.deleteUser(username).then((success) => {
     if (success) {
-      res.send({
-        error: 'User deleted successfully'
-      })
+      res.send(JSON.stringify({infoMessage: 'User deleted successfully'}))
     } else {
-      res.status(500).send({
-        error: 'Error deleting user'
-      })
+      res.status(500).send(JSON.stringify({error: 'Error deleting user'}))
     }
   })
 })
