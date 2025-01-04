@@ -133,6 +133,8 @@ class userManagement extends basePage {
     const isFormValid = this.state.username && (this.state.modalType === 'deleteUser' || (this.state.password && this.state.password === this.state.confirmPassword));
     return (
     <div>
+      <p><i>Manage access to Web GUI</i></p>
+      <p>Add and remove user access to Rpanion-server. Usernames and passwords must be 2-20 characters.</p>
       <Table id='users' striped bordered hover size="sm">
       <thead>
         <tr>

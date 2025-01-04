@@ -163,7 +163,12 @@ app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, '..', '/build')))
 
 // User login
-app.post('/login', async (req, res) => {
+app.post('/login', [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /login', { message: JSON.stringify(errors.array()) })
+    return res.status(422).json({ error: JSON.stringify(errors.array()) })
+  }
   // Capture the input fields
   let username = req.body.username
   let password = req.body.password
@@ -191,7 +196,12 @@ app.get('/users', authenticateToken, (req, res) => {
 })
 
 // Update existing user password
-app.post('/updateUserPassword', authenticateToken, async (req, res) => {
+app.post('/updateUserPassword', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /updateUserPassword', { message: JSON.stringify(errors.array()) })
+    return res.status(422).json({ error: JSON.stringify(errors.array()) })
+  }
   const { username, password } = req.body;
 
   if (!username || !password) {
@@ -211,7 +221,12 @@ app.post('/updateUserPassword', authenticateToken, async (req, res) => {
 })
 
 // Create new user
-app.post('/createUser', authenticateToken, async (req, res) => {
+app.post('/createUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
+    return res.status(422).json({ error: JSON.stringify(errors.array()) })
+  }
   const { username, password } = req.body
 
   if (!username || !password) {
@@ -228,7 +243,12 @@ app.post('/createUser', authenticateToken, async (req, res) => {
 })
 
 // Delete a user
-app.post('/deleteUser', authenticateToken, (req, res) => {
+app.post('/deleteUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 })], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    winston.error('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
+    return res.status(422).json({ error: JSON.stringify(errors.array()) })
+  }
   const { username } = req.body
 
   if (!username) {
