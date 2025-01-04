@@ -132,47 +132,44 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             pipeline.append("videoconvert")
             pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
 
-        # 3 options: Rpi hardware compression, Jetson hardware compression or software compression
-        if 'arm' in platform.uname().machine or 'aarch64' in platform.uname().machine:
-            # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
-            if 'tegra' in platform.uname().release:
-                # Jetson, with h/w rotation
-                if rotation == 90:
-                    devrotation = "flip-method=3"
-                elif rotation == 180:
-                    devrotation = "flip-method=2"
-                elif rotation == 270:
-                    devrotation = "flip-method=1"
-                else:
-                    devrotation = ""
-                pipeline.append("nvvidconv {0}".format(devrotation))
-                if timestamp:
-                    pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
-                    pipeline.append("nvvidconv")
-                pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
-                pipeline.append("h264parse")
-            elif "Ubuntu" not in platform.uname().version and not is_pi_5_or_later():
-                # Pi or similar arm platforms running on RasPiOS. Note that Pi5 onwards don't support hardware encoding
-                # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
-                # crashy sometimes.
-                if bitrate > 20000:
-                    level = "4.1"
-                else:
-                    level = "4"
-                pipeline.append("videoconvert")
-                pipeline.append("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\"".format(bitrate*1000))
-                pipeline.append("video/x-h264,profile=high,level=(string){0}".format(level))
-                pipeline.append("h264parse")
+        # 3 options: Rpi hardware compression (v4l2h264enc), Jetson hardware compression (nvv4l2h264enc)
+        # or software compression (x264enc)
+        # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
+        if Gst.ElementFactory.find("nvv4l2h264enc"):
+            # Jetson, with h/w rotation
+            if rotation == 90:
+                devrotation = "flip-method=3"
+            elif rotation == 180:
+                devrotation = "flip-method=2"
+            elif rotation == 270:
+                devrotation = "flip-method=1"
             else:
-                # s/w encoder - Pi-on-ubuntu, or Pi5 (or later)
-                pipeline.append("videoconvert")
-                pipeline.append("video/x-raw,format=NV12")
-                pipeline.append("queue max-size-buffers=1 leaky=downstream")
-                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
-        else:
-            # s/w encoder - x86, etc
+                devrotation = ""
+            pipeline.append("nvvidconv {0}".format(devrotation))
+            if timestamp:
+                pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
+                pipeline.append("nvvidconv")
+            pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
+            pipeline.append("h264parse")
+        elif Gst.ElementFactory.find("v4l2h264enc"):
+            # Pi or similar arm platforms running on RasPiOS. Note that Pi5 onwards don't support hardware encoding
+            # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
+            # crashy sometimes.
+            if bitrate > 20000:
+                level = "4.1"
+            else:
+                level = "4"
             pipeline.append("videoconvert")
-            pipeline.append("video/x-raw,format=I420")
+            pipeline.append("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\"".format(bitrate*1000))
+            pipeline.append("video/x-h264,profile=high,level=(string){0}".format(level))
+            pipeline.append("h264parse")
+        else:
+            # s/w encoder - x86, Pi5, etc
+            pipeline.append("videoconvert")
+            if is_pi_5_or_later():
+                pipeline.append("video/x-raw,format=NV12")
+            else:
+                pipeline.append("video/x-raw,format=I420")
             pipeline.append("queue max-size-buffers=1 leaky=downstream")
             pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
 
