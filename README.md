@@ -250,6 +250,16 @@ npm run dev
 
 At this point, the website will be active at ``http://<ip of device>:3000``
 
+## Default username and password
+
+Rpanion-server has access control in place to prevent unauthorised users from
+making changes to the system via the GUI.
+
+The access control does *not* apply to any MAVLink or video streams
+
+The default username is ``admin`` and password ``admin``. This can be changed
+on the "User Management" page.
+
 ## Tests
 
 Unit tests are split into separate commands for the frontend (ReactJS) and backend.
