@@ -24,6 +24,8 @@ On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and U
 
 On the Nvidia Jetson, Rpanion-server is compatible with Ubuntu 18.04 LTS.
 
+On the Nvidia Jetson Orin, Rpanion-server is compatible with Ubuntu 22.04 LTS.
+
 On the [Libre Computer Le Potato](https://libre.computer/products/aml-s905x-cc/), Rpanion-server is compatible with their flavor of [Raspberry Pi OS](https://distro.libre.computer/ci/raspbian/).
 
 > [!NOTE]
@@ -149,7 +151,7 @@ Otherwise, a systemd service can be installed (see ``rpanion.service``) to autom
 Rpanion-server when the Pi starts up.
 
 
-### Automatic (Nvidia Jetson)
+### Automatic (Nvidia Jetson and Jetson Orin)
 
 For the Nvidia Jetson run the below command on a fresh OS install
 to configure and install Rpanion-server and all required dependencies. Note this does not
@@ -158,6 +160,8 @@ configure an initial Wifi hotspot.
 ```
 cd ./deploy && ./jetson-deploy.sh
 ```
+
+Note that due to permissions issues, Rpanion-server needs to run as root.
 
 ### Automatic (Libre Computer AML-S905X-CC aka 'Le Potato')
 
