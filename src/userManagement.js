@@ -123,6 +123,7 @@ class userManagement extends basePage {
     }
     this.handleCloseModal();
     this.fetchUsers();
+    this.setState({ password: '', confirmPassword: '' });
   }
 
   renderTitle () {
