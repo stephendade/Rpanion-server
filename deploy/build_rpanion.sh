@@ -46,6 +46,11 @@ npm run build
 sudo cp rpanion.service /etc/systemd/system
 
 ## Change user and home dir to defaults, then reload service
-sudo perl -pe 's/pi/$ENV{SUDO_USER}/' -i /etc/systemd/system/rpanion.service
+## We need to run as root on Jetson's due to permissions issues
+if [ -f /etc/nv_tegra_release ]; then
+  sudo perl -pe 's/pi/root/' -i /etc/systemd/system/rpanion.service
+else
+  sudo perl -pe 's/pi/$ENV{SUDO_USER}/' -i /etc/systemd/system/rpanion.service
+fi
 sudo systemctl daemon-reload
 sudo systemctl enable rpanion.service
