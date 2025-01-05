@@ -11,7 +11,7 @@ function getVPNStatusZerotier (errpass, callback) {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
       winston.info('Error in getVPNStatusZerotier() ', { message: stderr })
-      return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
+      return callback(stderr.toString().trim(), { installed: false, status: false, text: JSON.parse('[]') })
     } else {
       // zerotier's in JSON format anyway, so just pipe through
       if (stdout.search('connection failed') > -1) {
