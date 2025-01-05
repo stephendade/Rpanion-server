@@ -23,7 +23,7 @@ class adhocManager {
           this.winston.info('Adhoc Init ' + this.device.toString())
         } else {
           console.log('Error in adhoc init ', { message: err })
-          this.winston.error('Error in adhoc init  ', { message: err })
+          this.winston.info('Error in adhoc init  ', { message: err })
         }
       })
     }
@@ -48,7 +48,7 @@ class adhocManager {
 
       if (stderr) {
         console.error(`exec error: ${error}`)
-        this.winston.error('Error in getAdapters() ', { message: stderr })
+        this.winston.info('Error in getAdapters() ', { message: stderr })
         return callback(stderr)
       } else {
         stdout.split('\n').forEach(function (item) {
@@ -115,7 +115,7 @@ class adhocManager {
               }
             } catch (e) {
               console.error('exec error: ' + e)
-              //this.winston.error('Error in getAdapters() ', { message: e })
+              //this.winston.info('Error in getAdapters() ', { message: e })
               return callback(e)
             }
 
@@ -158,17 +158,17 @@ class adhocManager {
       (settings.gateway === '' ? '' : '&& sudo route add default gw ' + settings.gateway + ' ' + device), (error, stdout, stderr) => {
         if (stderr) {
           console.log(`exec error: ${error}`)
-          this.winston.error('Error in setAdapter() ', { message: stderr })
+          this.winston.info('Error in setAdapter() ', { message: stderr })
           return callback(stderr)
         }
-        this.winston.error('Status in setAdapter() ', { message: stdout })
+        this.winston.info('Status in setAdapter() ', { message: stdout })
         // refresh
         console.log('Activate Adhoc Success')
         this.getAdapters((err, netStatusList, netDeviceSelected, settings) => {
           if (!err) {
             callback(null, netStatusList, netDeviceSelected, settings)
           } else {
-            this.winston.error('Error in /api/setAdapter ', { message: err })
+            this.winston.info('Error in /api/setAdapter ', { message: err })
             // reset back to managed
             execSync('sudo ip link set ' + device + ' down && sleep 1 && nmcli dev set ' + device + ' managed yes')
             callback(err, netStatusList, netDeviceSelected, settings)
@@ -181,7 +181,7 @@ class adhocManager {
       exec('sudo ip link set ' + device + ' down && sleep 1 && nmcli dev set ' + device + ' managed yes', (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
-          this.winston.error('Error in setAdapter() ', { message: stderr })
+          this.winston.info('Error in setAdapter() ', { message: stderr })
           return callback(stderr)
         }
         // refresh
@@ -189,7 +189,7 @@ class adhocManager {
           if (!err) {
             callback(null, netStatusList, netDeviceSelected, settings)
           } else {
-            this.winston.error('Error in /api/setAdapter ', { message: err })
+            this.winston.info('Error in /api/setAdapter ', { message: err })
             callback(err, netStatusList, netDeviceSelected, settings)
           }
         })
