@@ -12,7 +12,7 @@ function getAdapters (callback) {
     } else {
       stdout.split('\n').forEach(function (item) {
         const device = item.split(':')
-        if (device.length === 3 && device[1] !== 'loopback' && device[1] !== 'bridge' && device[1] !== 'wifi-p2p') {
+        if (device.length === 3 && device[1] !== 'loopback' && device[1] !== 'bridge' && device[1] !== 'wifi-p2p' && device[1] !== 'can0' && device[1] !== 'can1') {
           console.log('Adding Network device ' + device[0])
           winston.info('getAdapters() adding ' + device)
           // if wifi, check for avail channels
