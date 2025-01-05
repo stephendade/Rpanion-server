@@ -166,7 +166,7 @@ app.use(express.static(path.join(__dirname, '..', '/build')))
 app.post('/login', [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /login', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /login', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   // Capture the input fields
@@ -199,7 +199,7 @@ app.get('/users', authenticateToken, (req, res) => {
 app.post('/updateUserPassword', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /updateUserPassword', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /updateUserPassword', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   const { username, password } = req.body;
@@ -224,7 +224,7 @@ app.post('/updateUserPassword', authenticateToken, [check('username').escape().i
 app.post('/createUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   const { username, password } = req.body
@@ -246,7 +246,7 @@ app.post('/createUser', authenticateToken, [check('username').escape().isLength(
 app.post('/deleteUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 })], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   const { username } = req.body
@@ -320,7 +320,7 @@ app.get('/api/vpnzerotier', authenticateToken, (req, res) => {
 app.post('/api/vpnzerotieradd', authenticateToken, [check('network').isAlphanumeric()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/vpnzerotieradd', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/vpnzerotieradd', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   VPNManager.addZerotier(req.body.network, (stderr, statusJSON) => {
@@ -333,7 +333,7 @@ app.post('/api/vpnzerotieradd', authenticateToken, [check('network').isAlphanume
 app.post('/api/vpnzerotierdel', authenticateToken, [check('network').isAlphanumeric()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/vpnzerotierdel', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/vpnzerotierdel', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   VPNManager.removeZerotier(req.body.network, (stderr, statusJSON) => {
@@ -366,7 +366,7 @@ app.post('/api/vpnwireguardprofileadd', authenticateToken, (req, res) => {
 app.post('/api/vpnwireguardactivate', authenticateToken, [check('network').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/vpnwireguardactivate', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/vpnwireguardactivate', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -380,7 +380,7 @@ app.post('/api/vpnwireguardactivate', authenticateToken, [check('network').not()
 app.post('/api/vpnwireguarddeactivate', authenticateToken, [check('network').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/vpnwireguarddeactivate', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/vpnwireguarddeactivate', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -394,7 +394,7 @@ app.post('/api/vpnwireguarddeactivate', authenticateToken, [check('network').not
 app.post('/api/vpnwireguardelete', authenticateToken, [check('network').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/vpnwireguardelete', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/vpnwireguardelete', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -428,7 +428,7 @@ app.post('/api/binlogupload', authenticateToken, [check('doBinUpload').isBoolean
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
-    winston.error('Bad POST vars in /api/binlogupload', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/binlogupload', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   } else {
     cloud.setSettingsBin(req.body.doBinUpload, req.body.binUploadLink, req.body.syncDeletions)
@@ -454,7 +454,7 @@ app.post('/api/logconversion', authenticateToken, [check('doLogConversion').isBo
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
-    winston.error('Bad POST vars in /api/logconversion', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/logconversion', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   } else {
     logConversion.setSettingsLog(req.body.doLogConversion)
@@ -477,7 +477,7 @@ app.get('/api/adhocadapters', authenticateToken, (req, res) => {
       res.setHeader('Content-Type', 'application/json')
       const ret = { netDevice: [], netDeviceSelected: [], cursettings: [], error: err }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/adhocadapters ', { message: err })
+      winston.info('Error in /api/adhocadapters ', { message: err })
     }
   })
 })
@@ -496,7 +496,7 @@ app.post('/api/adhocadaptermodify', authenticateToken, [check('settings.isActive
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
-    winston.error('Bad POST vars in /api/adhocadaptermodify', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/adhocadaptermodify', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   } else {
     adhocManager.setAdapter(req.body.toState, req.body.netDeviceSelected, req.body.settings, (err, netDeviceList, netDeviceSelected, settings) => {
@@ -508,7 +508,7 @@ app.post('/api/adhocadaptermodify', authenticateToken, [check('settings.isActive
         res.setHeader('Content-Type', 'application/json')
         const ret = { netDevice: netDeviceList, netDeviceSelected, curSettings: settings, error: err }
         res.send(JSON.stringify(ret))
-        winston.error('Error in /api/adhocadapters ', { message: err })
+        winston.info('Error in /api/adhocadapters ', { message: err })
       }
     })
   }
@@ -524,7 +524,7 @@ app.post('/api/ntripmodify', authenticateToken, [check('active').isBoolean(),
   // User wants to start/stop NTRIP
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/ntripmodify', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/ntripmodify', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -560,7 +560,7 @@ app.get('/api/logfiles', authenticateToken, (req, res) => {
 app.post('/api/deletelogfiles', authenticateToken, [check('logtype').isIn(['tlog', 'binlog', 'kmzlog'])], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/deletelogfiles', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/deletelogfiles', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -578,7 +578,7 @@ app.get('/api/softwareinfo', authenticateToken, (req, res) => {
     } else {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({ OSVersion: err, Nodejsversion: err, rpanionversion: err, hostname: err }))
-      winston.error('Error in /api/softwareinfo ', { message: err })
+      winston.info('Error in /api/softwareinfo ', { message: err })
     }
   })
 })
@@ -612,7 +612,7 @@ app.get('/api/videodevices', authenticateToken, (req, res) => {
     } else {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({ error: err }))
-      winston.error('Error in /api/videodevices ', { message: err })
+      winston.info('Error in /api/videodevices ', { message: err })
     }
   })
 })
@@ -625,7 +625,7 @@ app.get('/api/hardwareinfo', authenticateToken, (req, res) => {
     } else {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({ CPUName: err, RAMName: err, HATName: err, SYSName: err }))
-      winston.error('Error in /api/hardwareinfo ', { message: err })
+      winston.info('Error in /api/hardwareinfo ', { message: err })
     }
   })
 })
@@ -638,7 +638,7 @@ app.get('/api/diskinfo', authenticateToken, (req, res) => {
     } else {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({ diskSpaceStatus: err }))
-      winston.error('Error in /api/diskinfo ', { message: err })
+      winston.info('Error in /api/diskinfo ', { message: err })
     }
   })
 })
@@ -688,7 +688,7 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         enableDSRequest,
         tlogging
       }))
-      winston.error('Error in /api/FCDetails ', { message: err })
+      winston.info('Error in /api/FCDetails ', { message: err })
     }
   })
 })
@@ -707,7 +707,7 @@ app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('b
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/FCModify', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/FCModify', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -719,7 +719,7 @@ app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('b
     } else {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({ telemetryStatus: false, error: err }))
-      winston.error('Error in /api/FCModify ', { message: err })
+      winston.info('Error in /api/FCModify ', { message: err })
     }
   })
 })
@@ -731,7 +731,7 @@ app.post('/api/FCReboot', authenticateToken, function () {
 app.post('/api/addudpoutput', authenticateToken, [check('newoutputIP').isIP(), check('newoutputPort').isInt({ min: 1 })], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/addudpoutput ', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/addudpoutput ', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -744,7 +744,7 @@ app.post('/api/addudpoutput', authenticateToken, [check('newoutputIP').isIP(), c
 app.post('/api/removeudpoutput', authenticateToken, [check('removeoutputIP').isIP(), check('removeoutputPort').isInt({ min: 1 })], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/removeudpoutput ', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/removeudpoutput ', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
@@ -778,7 +778,7 @@ app.get('/api/networkadapters', authenticateToken, (req, res) => {
       res.setHeader('Content-Type', 'application/json')
       const ret = { netDevice: [] }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/networkadapters ', { message: err })
+      winston.info('Error in /api/networkadapters ', { message: err })
     }
   })
 })
@@ -793,7 +793,7 @@ app.get('/api/wifiscan', authenticateToken, (req, res) => {
       res.setHeader('Content-Type', 'application/json')
       const ret = { detWifi: [] }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/wifiscan ', { message: err })
+      winston.info('Error in /api/wifiscan ', { message: err })
     }
   })
 })
@@ -808,7 +808,7 @@ app.get('/api/wirelessstatus', authenticateToken, (req, res) => {
       res.setHeader('Content-Type', 'application/json')
       const ret = { wirelessEnabled: true }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/wirelessstatus ', { message: err })
+      winston.info('Error in /api/wirelessstatus ', { message: err })
     }
   })
 })
@@ -816,7 +816,7 @@ app.get('/api/wirelessstatus', authenticateToken, (req, res) => {
 app.post('/api/setwirelessstatus', authenticateToken, [check('status').isBoolean()], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/setwirelessstatus ', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/setwirelessstatus ', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   // user wants to toggle wifi enabled/disabled
@@ -829,7 +829,7 @@ app.post('/api/setwirelessstatus', authenticateToken, [check('status').isBoolean
       res.setHeader('Content-Type', 'application/json')
       const ret = { wirelessEnabled: status }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/setwirelessstatus ', { message: err })
+      winston.info('Error in /api/setwirelessstatus ', { message: err })
     }
   })
 })
@@ -844,7 +844,7 @@ app.get('/api/networkconnections', authenticateToken, (req, res) => {
       res.setHeader('Content-Type', 'application/json')
       const ret = { netConnection: [] }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/networkconnections ', { message: err })
+      winston.info('Error in /api/networkconnections ', { message: err })
     }
   })
 })
@@ -864,7 +864,7 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
   check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
+    winston.info('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
     const ret = { streamingStatus: false, streamAddresses: [], error: ['Error ' + JSON.stringify(errors.array())] }
     return res.status(422).json(ret)
   }
@@ -878,7 +878,7 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
       res.setHeader('Content-Type', 'application/json')
       const ret = { streamingStatus: false, streamAddresses: ['Error ' + err] }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/startstopvideo ', { message: err })
+      winston.info('Error in /api/startstopvideo ', { message: err })
     }
   })
 })
@@ -888,7 +888,7 @@ app.post('/api/networkIP', authenticateToken, [check('conName').isUUID()], (req,
   // Finds the validation errors in this request and wraps them in an object with handy functions
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.error('Bad POST vars in /api/networkIP ', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/networkIP ', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   networkManager.getConnectionDetails(req.body.conName, (err, conDetails) => {
@@ -900,7 +900,7 @@ app.post('/api/networkIP', authenticateToken, [check('conName').isUUID()], (req,
       res.setHeader('Content-Type', 'application/json')
       const ret = { netConnectionDetails: {} }
       res.send(JSON.stringify(ret))
-      winston.error('Error in /api/networkIP ', { message: err })
+      winston.info('Error in /api/networkIP ', { message: err })
     }
   })
 })
@@ -913,7 +913,7 @@ app.post('/api/networkactivate', authenticateToken, [check('conName').isUUID()],
     res.setHeader('Content-Type', 'application/json')
     const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
-    winston.error('Bad POST vars in /api/networkactivate ', { message: errors.array() })
+    winston.info('Bad POST vars in /api/networkactivate ', { message: errors.array() })
   } else {
     console.log('Activating network ' + req.body.conName)
     networkManager.activateConnection(req.body.conName, (err) => {
@@ -921,7 +921,7 @@ app.post('/api/networkactivate', authenticateToken, [check('conName').isUUID()],
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: err }
         res.send(JSON.stringify(ret))
-        winston.error('Error in /api/networkactivate ', { message: err })
+        winston.info('Error in /api/networkactivate ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: null, action: 'NetworkActivateOK' }
@@ -939,7 +939,7 @@ app.post('/api/networkdeactivate', authenticateToken, [check('conName').isUUID()
     res.setHeader('Content-Type', 'application/json')
     const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
-    winston.error('Bad POST vars in /api/networkdeactivate ', { message: errors.array() })
+    winston.info('Bad POST vars in /api/networkdeactivate ', { message: errors.array() })
   } else {
     console.log('Dectivating network ' + req.body.conName)
     networkManager.deactivateConnection(req.body.conName, (err) => {
@@ -947,7 +947,7 @@ app.post('/api/networkdeactivate', authenticateToken, [check('conName').isUUID()
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: err }
         res.send(JSON.stringify(ret))
-        winston.error('Error in /api/networkdeactivate ', { message: err })
+        winston.info('Error in /api/networkdeactivate ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: null, action: 'NetworkDectivateOK' }
@@ -965,7 +965,7 @@ app.post('/api/networkdelete', authenticateToken, [check('conName').isUUID()], (
     res.setHeader('Content-Type', 'application/json')
     const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
-    winston.error('Bad POST vars in /api/networkdelete ', { message: errors.array() })
+    winston.info('Bad POST vars in /api/networkdelete ', { message: errors.array() })
   } else {
     console.log('Deleting network ' + req.body.conName)
     networkManager.deleteConnection(req.body.conName, (err) => {
@@ -973,7 +973,7 @@ app.post('/api/networkdelete', authenticateToken, [check('conName').isUUID()], (
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: err }
         res.send(JSON.stringify(ret))
-        winston.error('Error in /api/networkdelete ', { message: err })
+        winston.info('Error in /api/networkdelete ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: null, action: 'NetworkDeleteOK' }
@@ -1003,7 +1003,7 @@ app.post('/api/networkedit', authenticateToken, [check('conName').isUUID(),
     res.setHeader('Content-Type', 'application/json')
     const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
-    winston.error('Bad POST vars in /api/networkedit ', { message: errors.array() })
+    winston.info('Bad POST vars in /api/networkedit ', { message: errors.array() })
   } else {
     console.log('Editing network ' + req.body.conName)
     networkManager.editConnection(req.body.conName, req.body.conSettings, (err) => {
@@ -1011,7 +1011,7 @@ app.post('/api/networkedit', authenticateToken, [check('conName').isUUID(),
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: err }
         res.send(JSON.stringify(ret))
-        winston.error('Error in /api/networkedit ', { message: err })
+        winston.info('Error in /api/networkedit ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: null, action: 'NetworkEditOK' }
@@ -1043,7 +1043,7 @@ app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype
     res.setHeader('Content-Type', 'application/json')
     const ret = { error: 'Bad input - ' + errors.array()[0].param }
     res.send(JSON.stringify(ret))
-    winston.error('Bad POST vars in /api/networkadd ', { message: errors.array() })
+    winston.info('Bad POST vars in /api/networkadd ', { message: errors.array() })
   } else {
     console.log('Adding network ' + req.body)
     networkManager.addConnection(req.body.conName, req.body.conType, req.body.conAdapter, req.body.conSettings, (err) => {
@@ -1051,7 +1051,7 @@ app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: err }
         res.send(JSON.stringify(ret))
-        winston.error('Error in /api/networkadd ', { message: err })
+        winston.info('Error in /api/networkadd ', { message: err })
       } else {
         res.setHeader('Content-Type', 'application/json')
         const ret = { error: null, action: 'NetworkAddOK' }

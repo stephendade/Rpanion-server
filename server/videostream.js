@@ -70,7 +70,7 @@ class videoStream {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
       if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
         console.error(`exec error: ${error}`)
-        this.winston.error('Error in getVideoDevices() ', { message: stderr })
+        this.winston.info('Error in getVideoDevices() ', { message: stderr })
         return callback(stderr)
       } else {
         console.log(stdout)
@@ -91,7 +91,7 @@ class videoStream {
           if (seldevice.length !== 1) {
             // bad settings
             console.error('Bad video settings1 Resetting')
-            this.winston.error('Bad video settings. Resetting ', { message: this.savedDevice })
+            this.winston.info('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
@@ -114,7 +114,7 @@ class videoStream {
           } else {
             // bad settings
             console.error('Bad video settings. Resetting' + seldevice + ', ' + selRes)
-            this.winston.error('Bad video settings. Resetting ', { message: JSON.stringify(this.savedDevice) })
+            this.winston.info('Bad video settings. Resetting ', { message: JSON.stringify(this.savedDevice) })
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
@@ -254,7 +254,7 @@ class videoStream {
       })
 
       this.deviceStream.stderr.on('data', (data) => {
-        this.winston.error('startStopStreaming() err ', { message: data })
+        this.winston.info('startStopStreaming() err ', { message: data })
         console.error(`GST stderr: ${data}`)
       })
 
