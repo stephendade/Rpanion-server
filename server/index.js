@@ -285,8 +285,14 @@ app.post('/auth', authenticateToken, async (req, res) => {
 
 // Middleware to check if the request has a valid token
 function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization']
-  const token = authHeader && authHeader.split(' ')[1]
+  let authHeader = null
+  let token = null
+  try {
+    authHeader = req.headers['authorization']
+    token = authHeader && authHeader.split(' ')[1]
+  } catch (err) {
+    return res.status(401).json({ message: 'Access denied. No token provided.' })
+  }
 
   if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' })
 
@@ -539,10 +545,10 @@ app.get('/api/networkclients', authenticateToken, (req, res) => {
 })
 
 // Serve the logfiles
-app.use('/logdownload', authenticateToken, express.static(path.join(__dirname, '..', '/flightlogs')))
+app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')))
 
 // Serve the logfiles
-app.use('/rplogs', authenticateToken, express.static(path.join(__dirname, '..', '/logs')))
+app.use('/rplogs', express.static(path.join(__dirname, '..', '/logs')))
 
 app.get('/api/logfiles', authenticateToken, (req, res) => {
   logManager.getLogs((err, tlogs, binlogs, kmzlogs) => {
