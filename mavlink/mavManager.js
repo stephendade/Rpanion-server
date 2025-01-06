@@ -93,7 +93,7 @@ class mavManager {
       // ensure it's NOT a GCS, as mavlink-router will sometimes route
       // messages from connected GCS's
       if (this.targetSystem === null && packet.header.msgid === minimal.Heartbeat.MSG_ID && data.type !== 6
-        && data.type !== 18) {
+        && data.type !== 18 && data.type !== 27) {
         console.log('Vehicle is S/C: ' + packet.header.sysid + '/' + packet.header.compid)
         winston.info('Vehicle is S/C: ' + packet.header.sysid + '/' + packet.header.compid)
         this.targetSystem = packet.header.sysid
