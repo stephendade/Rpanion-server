@@ -467,6 +467,12 @@ class FCDetails {
     if (fs.existsSync('/dev/ttyTHS1')) {
       this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '/dev/ttyTHS1' })
     }
+    if (fs.existsSync('/dev/ttyTHS2')) {
+      this.serialDevices.push({ value: '/dev/ttyTHS2', label: '/dev/ttyTHS2', pnpId: '/dev/ttyTHS2' })
+    }
+    if (fs.existsSync('/dev/ttyTHS3')) {
+      this.serialDevices.push({ value: '/dev/ttyTHS3', label: '/dev/ttyTHS3', pnpId: '/dev/ttyTHS3' })
+    }
 
     // has the active device been disconnected?
     if (this.port) {
