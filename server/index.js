@@ -754,7 +754,16 @@ app.post('/api/removeudpoutput', authenticateToken, [check('removeoutputIP').isI
   res.send(JSON.stringify({ UDPoutputs: newOutput }))
 })
 
-io.on('connection', authenticateToken, function () {
+io.engine.use((req, res, next) => {
+  const isHandshake = req._query.sid === undefined
+  if (isHandshake) {
+    authenticateToken(req, res, next)
+  } else {
+    next()
+  }
+})
+
+io.on('connection', function () {
   // only set interval if not already set
   if (FCStatusLoop !== null) {
     return
