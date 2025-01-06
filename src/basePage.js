@@ -58,7 +58,11 @@ class basePage extends Component {
 
 
     if (this.state.usedSocketIO) {
-      this.socket = io();
+      this.socket = io({
+        extraHeaders: {
+          authorization: `Bearer ${this.state.token}`
+        }
+      })
 
       // Socket.io client
       this.socket.on('disconnect', function () {
