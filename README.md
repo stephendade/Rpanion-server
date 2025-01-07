@@ -84,6 +84,8 @@ Note the CSI camera does not currently work on Ubuntu 22.04 and 24.04, due to in
 
 Note the GPIO UARTs are not currently working with Ubuntu 24.04.
 
+Note that due to permissions issues, Rpanion-server needs to run as root in Ubuntu.
+
 If not already configured for an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script.
 The hotspot has the SSID "rpanion" and password "rpanion123". The Pi's IP address will be 10.0.2.100,
 so the Rpanion-sever website will be available at http://10.0.2.100:3000.

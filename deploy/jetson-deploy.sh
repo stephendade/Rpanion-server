@@ -48,6 +48,11 @@ fi
 ## and build & run Rpanion
 ./build_rpanion.sh
 
+## Need to run service as sudo
+sudo perl -pe 's/User=$ENV{SUDO_USER}/User=root/' -i /etc/systemd/system/rpanion.service
+sudo systemctl daemon-reload
+sudo systemctl restart rpanion.service
+
 ## For wireguard. Must be installed last as it messes the DNS resolutions
 sudo apt install -y resolvconf
 
