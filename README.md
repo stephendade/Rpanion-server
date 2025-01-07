@@ -59,7 +59,7 @@ to configure and install Rpanion-server with all required dependencies. Note thi
 an initial Wifi hotspot.
 
 ```
-cd ./deploy && ./RasPi2-3-4-5-deploy.sh
+cd ~/Rpanion-server/deploy/ && ./RasPi2-3-4-5-deploy.sh
 ```
 
 If running Ubuntu 20.04 OS on the Pi, use:
@@ -74,7 +74,15 @@ If running Ubuntu 22.04 OS on the Pi, use:
 cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu22-deploy.sh
 ```
 
-Note the CSI camera does not currently work on Ubuntu 22.04, due to incompatibilities with the Raspberry Pi.
+If running Ubuntu 24.04 OS on the Pi, use:
+
+```
+cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu24-deploy.sh
+```
+
+Note the CSI camera does not currently work on Ubuntu 22.04 and 24.04, due to incompatibilities with the Raspberry Pi.
+
+Note the GPIO UARTs are not currently working with Ubuntu 24.04.
 
 If not already configured for an initial Wifi hotspot, run the ``./deploy/wifi_access_point.sh`` script.
 The hotspot has the SSID "rpanion" and password "rpanion123". The Pi's IP address will be 10.0.2.100,
