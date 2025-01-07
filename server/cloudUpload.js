@@ -87,6 +87,12 @@ class cloudUpload {
         }
       })
     }
+    // if pubKey is empty, create a new default ssh key
+    if (pubkey.length === 0) {
+      winston.info('No SSH keys found, creating new one')
+      execSync('< /dev/zero ssh-keygen -q -N ""')
+      pubkey.push(fs.readFileSync(os.homedir() + '/.ssh/id_rsa.pub', { encoding: 'utf8', flag: 'r' }))
+    }
     return callback(this.options.doBinUpload,
       this.options.binUploadLink, this.options.syncDeletions, pubkey)
   }
