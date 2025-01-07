@@ -5,9 +5,6 @@ set -x
 
 git submodule update --init --recursive
 
-## Change hostname
-sudo hostnamectl set-hostname rpanion --static
-
 ## Enable serial port
 sudo perl -pe 's/console=serial0,115200//' -i /boot/firmware/cmdline.txt 
 
