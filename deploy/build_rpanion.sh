@@ -5,8 +5,8 @@ set -x
 
 cd ../
 
-# If less than 500Mb RAM, need to tell NodeJS to reduce memory usage during build
-if [ $(free -m | awk '/^Mem:/{print $2}') -le 500 ]; then
+# If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
+if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then
     export NODE_OPTIONS="--max-old-space-size=256"
 fi
     
