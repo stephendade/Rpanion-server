@@ -274,6 +274,9 @@ The access control does *not* apply to any MAVLink or video streams
 The default username is ``admin`` and password ``admin``. This can be changed
 on the "User Management" page.
 
+Usernames and passwords are stored in the ``user.json`` file in the Rpanion-server folder. Resetting this file (via ``git checkout user.json``)
+will reset the usernames/passwords back to it's defaults.
+
 ## Tests
 
 Unit tests are split into separate commands for the frontend (ReactJS) and backend.
