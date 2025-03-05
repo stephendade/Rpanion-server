@@ -31,4 +31,19 @@ describe('NTRIP Functions', function () {
 
     assert.equal(ntripClient.conStatusStr(), 'Not active')
   })
+
+  it('#ntripGGA()', function () {
+    settings.clear()
+    const ntripClient = new Ntrip(settings, winston)
+
+    let msg = ntripClient.generateGGAMessage([-54.3, 152.345])
+    let msgparts = msg.split(',')
+    // remove index 1 (time)
+    msgparts.splice(1, 1)
+    // remove checksum using splice, since it's dependent on the time field
+    msgparts.splice(-1, 1)
+
+    assert.deepEqual(msgparts, ['$GPGGA', '5418.000000', 'S', '15220.700000', 'E', '1', '00', '0.000', '0', 'M', '0', 'M', '1.000'])
+
+  })
 })
