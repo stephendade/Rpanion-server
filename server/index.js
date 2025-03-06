@@ -406,10 +406,10 @@ app.post('/api/vpnwireguardelete', authenticateToken, [check('network').not().is
 
 // Serve the ntrip info
 app.get('/api/ntripconfig', authenticateToken, (req, res) => {
-  ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
+  ntripClient.getSettings((host, port, mountpoint, username, password, active, useTLS) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
-    res.send(JSON.stringify({ host, port, mountpoint, username, password, active }))
+    res.send({ host, port, mountpoint, username, password, active, useTLS })
   })
 })
 
@@ -520,7 +520,8 @@ app.post('/api/ntripmodify', authenticateToken, [check('active').isBoolean(),
   check('port').isPort(),
   check('mountpoint').isLength({ min: 1 }),
   check('username').isLength({ min: 5 }),
-  check('password').isLength({ min: 5 })], function (req, res) {
+  check('password').isLength({ min: 5 }),
+  check('useTLS').isBoolean()], function (req, res) {
   // User wants to start/stop NTRIP
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -528,11 +529,12 @@ app.post('/api/ntripmodify', authenticateToken, [check('active').isBoolean(),
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
-  ntripClient.setSettings(JSON.parse(req.body.host), req.body.port, JSON.parse(req.body.mountpoint), JSON.parse(req.body.username), JSON.parse(req.body.password), req.body.active)
-  ntripClient.getSettings((host, port, mountpoint, username, password, active) => {
+  ntripClient.setSettings(JSON.parse(req.body.host), req.body.port, JSON.parse(req.body.mountpoint), JSON.parse(req.body.username),
+                          JSON.parse(req.body.password), req.body.active, req.body.useTLS)
+  ntripClient.getSettings((host, port, mountpoint, username, password, active, useTLS) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
-    res.send(JSON.stringify({ host, port, mountpoint, username, password, active }))
+    res.send(JSON.stringify({ host, port, mountpoint, username, password, active, useTLS }))
   })
 })
 
