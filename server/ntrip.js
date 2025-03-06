@@ -153,7 +153,7 @@ class NtripClientWrapper extends events.EventEmitter {
   }
 
   connect() {
-    const { host, port, username, password, mountpoint, tls: useTls } = this.options
+    const { host, port, username, password, mountpoint, useTls } = this.options
     const auth = Buffer.from(`${username}:${password}`, 'utf8').toString('base64')
     const headers = {
       'Ntrip-Version': 'Ntrip/2.0',
@@ -242,7 +242,7 @@ class ntrip {
       // the interval of send nmea, unit is millisecond
       interval: 2000,
       active: false,
-      tls: false
+      useTls: false
     }
 
     this.winston = winston
@@ -268,6 +268,7 @@ class ntrip {
     this.options.username = this.settings.value('ntrip.username', '')
     this.options.password = this.settings.value('ntrip.password', '')
     this.options.active = this.settings.value('ntrip.active', false)
+    this.options.useTls = this.settings.value('ntrip.useTls', false)
 
     this.client = null
     this.startStopNTRIP()
@@ -280,7 +281,8 @@ class ntrip {
       this.options.mountpoint,
       this.options.username,
       this.options.password,
-      this.options.active)
+      this.options.active,
+      this.options.useTls)
   }
 
   startStopNTRIP () {
@@ -346,7 +348,7 @@ class ntrip {
     }
   }
 
-  setSettings (host, port, mount, username, password, active) {
+  setSettings (host, port, mount, username, password, active, useTls) {
     // save new settings
     this.options.host = host
     this.options.port = port
@@ -354,6 +356,7 @@ class ntrip {
     this.options.username = username
     this.options.password = password
     this.options.active = active
+    this.options.useTls = useTls
 
     // and save
     try {
@@ -363,6 +366,7 @@ class ntrip {
       this.settings.setValue('ntrip.username', this.options.username)
       this.settings.setValue('ntrip.password', this.options.password)
       this.settings.setValue('ntrip.active', this.options.active)
+      this.settings.setValue('ntrip.useTls', this.options.useTls)
       console.log('Saved NTRIP settings')
       this.winston.info('Saved NTRIP settings')
     } catch (e) {

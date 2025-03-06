@@ -17,6 +17,7 @@ class NTRIPPage extends basePage {
       password: "",
       active: false,
       showPW: false,
+      useTLS: false,
       NTRIPStatus: this.props.NTRIPStatus
     }
 
@@ -48,6 +49,10 @@ class NTRIPPage extends basePage {
     this.setState({ showPW: event.target.checked });
   }
 
+  toggleuseTLS = (event) => {
+    this.setState({ useTLS: event.target.checked });
+  }
+
   handleNTRIPSubmit = () => {
     //user clicked start/stop NTRIP
     fetch('/api/ntripmodify', {
@@ -63,6 +68,7 @@ class NTRIPPage extends basePage {
         mountpoint: JSON.stringify(this.state.mountpoint),
         username: JSON.stringify(this.state.username),
         password: JSON.stringify(this.state.password),
+        useTLS: this.state.useTLS,
         active: !this.state.active
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
@@ -76,7 +82,6 @@ class NTRIPPage extends basePage {
     return (
       <div>
         <p><i>Stream NTRIP (GPS correction) data from a web service to the flight controller</i></p>
-        <p>TLS NTRIP connections (usually port 443) are not supported at this time</p>
         <h2>Configuration</h2>
         <Form style={{ width: 500 }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
@@ -89,6 +94,7 @@ class NTRIPPage extends basePage {
             <label className="col-sm-2 col-form-label">Port</label>
             <div className="col-sm-10">
               <input type="number" min="100" max="60000" step="1" className="form-control" name="port" disabled={this.state.active === true} onChange={this.changeHandler} value={this.state.port} />
+              <input type="checkbox" name="useTLS" disabled={this.state.active === true} onChange={this.toggleuseTLS} checked={this.state.useTLS} /><label>Use TLS</label>
             </div>
           </div>
           <div className="form-group row" style={{ marginBottom: '5px' }}>

@@ -27,7 +27,7 @@ describe('NTRIP Functions', function () {
 
     // assert.equal(ntripClient.conStatusStr(), 'No RTCM server connection')
 
-    ntripClient.setSettings('auscors.ga.gov.au', 2101, 'MNT', 'name', 'pwd', false)
+    ntripClient.setSettings('auscors.ga.gov.au', 2101, 'MNT', 'name', 'pwd', false, false)
 
     assert.equal(ntripClient.conStatusStr(), 'Not active')
   })
