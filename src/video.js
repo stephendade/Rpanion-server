@@ -31,7 +31,8 @@ class VideoPage extends basePage {
       timestamp: false,
       enableCameraHeartbeat: false,
       mavStreamSelected: this.props.mavStreamSelected,
-      multicastString: " "
+      multicastString: " ",
+      compression: { value: 'H264', label: 'H.264' }
     }
   }
 
@@ -150,6 +151,7 @@ class VideoPage extends basePage {
           useTimestamp: this.state.timestamp,
           useCameraHeartbeat: this.state.enableCameraHeartbeat,
           mavStreamSelected: this.state.mavStreamSelected.value,
+          compression: this.state.compression.value
         })
       }).then(response => response.json()).then(state => { this.setState(state); this.setState({ waiting: false }) });
     });
@@ -219,6 +221,22 @@ class VideoPage extends basePage {
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
           </div>
         </div>
+        
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <label className="col-sm-4 col-form-label">Compression</label>
+          <div className="col-sm-8">
+            <Select
+              isDisabled={this.state.streamingStatus}
+              options={[
+                { value: 'H264', label: 'H.264' },
+                { value: 'H265', label: 'H.265' }
+              ]}
+              onChange={(value) => this.setState({ compression: value })}
+              value={this.state.compression}
+            />
+          </div>
+        </div>
+
         <div style={{ display: (this.state.UDPChecked) ? "block" : "none" }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label ">Destination IP</label>
@@ -288,7 +306,7 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p key={index} style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! rtph264depay ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
+                <p key={index} style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! {this.state.compression.value == "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression.value == "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
@@ -299,7 +317,7 @@ class VideoPage extends basePage {
               + QGroundControl
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>Video Source: UDP h.264 Video Stream</p>
+              <p style={{ fontFamily: "monospace" }}>Video Source: UDP {this.state.compression.value == "H264" ? "h.264" : "h.265"} Video Stream</p>
               <p style={{ fontFamily: "monospace" }}>Port: {this.state.useUDPPort}</p>
             </Accordion.Body>
           </Accordion.Item>
@@ -308,7 +326,7 @@ class VideoPage extends basePage {
               + GStreamer
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc {this.state.multicastString}port={this.state.useUDPPort} caps=&apos;application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264&apos; ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc {this.state.multicastString}port={this.state.useUDPPort} caps=&apos;application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string){this.state.compression.value == "H264" ? "H264" : "H265"}&apos; ! rtpjitterbuffer ! {this.state.compression.value == "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression.value == "H264" ? "h264parse" : "h265parse"} ! {this.state.compression.value == "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! autovideosink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
           <Accordion.Item eventKey="2">
@@ -316,7 +334,7 @@ class VideoPage extends basePage {
               + Mission Planner Connection Strings
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>udpsrc {this.state.multicastString}port={this.state.useUDPPort} buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>udpsrc {this.state.multicastString}port={this.state.useUDPPort} buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! {this.state.compression.value == "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression.value == "H264" ? "h264parse" : "h265parse"} ! {this.state.compression.value == "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false</p>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
