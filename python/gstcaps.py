@@ -4,12 +4,12 @@ Find device caps
 Requires gst and picamera2
 """
 
-import sys
-import json
-import gi
 import math
 import platform
 import os
+import sys
+import json
+import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
@@ -48,24 +48,41 @@ if is_raspberry_pi():
             if cam['Model'] == 'imx296':
                 # Raspi global shutter camera has specific modes
                 # https://www.raspberrypi.com/documentation/accessories/camera.html
-                caps.append({'value': "1456x1088xx-raw", 'label': "1456x1088", 'height': 1088, 'width': 1456, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1440x900xx-raw", 'label': "1440x900", 'height': 900, 'width': 1440, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "1456x1088xx-raw", 'label': "1456x1088", 'height': 1088, 'width': 1456,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "1440x900xx-raw", 'label': "1440x900", 'height': 900, 'width': 1440,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
             elif cam['Model'] == 'imx708':
-                caps.append({'value': "1920x1200xx-raw", 'label': "1920x1200", 'height': 1200, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '120', 'fps': []})
-                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '120', 'fps': []})
+                if not Gst.ElementFactory.find("v4l2h264enc"):
+                    # can't run these resolutions with the hardware x264 encoder
+                    caps.append({'value': "2048x1080xx-raw", 'label': "2048x1080", 'height': 1080, 'width': 2048,
+                                'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+                    caps.append({'value': "1920x1200xx-raw", 'label': "1920x1200", 'height': 1200, 'width': 1920,
+                                'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                             'format': 'video/x-raw', 'fpsmax': '120', 'fps': []})
+                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                             'format': 'video/x-raw', 'fpsmax': '120', 'fps': []})
             else:
-                caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-                caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
-                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
+                caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                             'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+                caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
+                             'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
+                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                             'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
             name = "CSI Port Camera ({0})".format(cam['Model'])
             path = cam['Id']
-            if path.startswith("/base/soc/i2c") or path.startswith("/base/axi/pcie"):
+            if (path.startswith("/base/soc/i2c") or path.startswith("/base/axi/pcie")) and "usb@" not in path:
                 retDevices.append({'value': path, 'label': name, 'caps': caps})
     except:
         pass
@@ -84,19 +101,27 @@ for device in devices:
     # If Ubuntu and Rpi camera
     if "Ubuntu" in platform.uname().version and ("mmal service" in name or name == "unicam"):
         # Ubuntu needs to use the v4l2 driver
-        caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-        caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
-        caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-        caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
+        caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                     'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+        caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
+                     'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
+        caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                     'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+        caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                     'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
 
         path = "/dev/video0"
         name = "CSI Port Camera"
     # If legacy camera stack on RasPiOS
     elif "mmal service" in name:
-        caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-        caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
-        caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-        caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
+        caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                     'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+        caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
+                     'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
+        caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                     'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+        caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                     'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
 
         # Cope with dual CSI too
         if "/dev/video" in path:
@@ -129,13 +154,15 @@ for device in devices:
         for i in range(capsGST.get_size()):
             structure = capsGST.get_structure(i)
             #print(structure.to_string())
-            if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg'] :
+            if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg']:
                 width = structure.get_int('width').value
                 height = structure.get_int('height').value
 
-                # if on Rpi, don't return anything greater than 1080p on raw or jpg, as
+                # if using v4l2h264enc hw encoder, don't return anything greater than 1080p on raw or jpg, as
                 # Rpi's x264 hardware encoder doesn't support >1080p
-                if is_raspberry_pi() and (height > 1080 or width > 1920) and structure.get_name() in ['video/x-raw', 'image/jpeg']:
+                if (Gst.ElementFactory.find("v4l2h264enc") and
+                   (height > 1080 or width > 1920) and
+                   structure.get_name() in ['video/x-raw', 'image/jpeg']):
                     continue
                 #print(structure.get_list('framerate')[1].get_nth(0).fps_numerator)
                 #(_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
@@ -157,7 +184,7 @@ for device in devices:
                             #print(' - framerate = ', framerates.get_nth(i))
                     else:
                         fps.append({'value': "-1", 'label': "N/A"})
-                
+
                 #Only append if it's a unique value
                 form = structure.get_name().split('/')[1]
                 if "{0}x{1}x{2}".format(width, height, form) not in getcapval(caps):
@@ -168,10 +195,14 @@ for device in devices:
 # If we're on a Jetson and /dev/video0 or /dev/video0 exist but not listed, add as CSI ports
 if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release:
     caps = []
-    caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-    caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640, 'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
-    caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-    caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
+    caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+    caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
+                 'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
+    caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                 'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
+    caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                 'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
     if os.path.exists('/dev/video0') and '/dev/video0' not in [i['value'] for i in retDevices]:
         retDevices.append({'value': 'argus0', 'label': 'CSI0', 'caps': caps})
     if os.path.exists('/dev/video1') and '/dev/video1' not in [i['value'] for i in retDevices]:
@@ -179,9 +210,12 @@ if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release
 
 # Include testsrc
 capsTest = []
-capsTest.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-capsTest.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-capsTest.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640, 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsTest.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsTest.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsTest.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
 retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
 print(json.dumps(retDevices))
