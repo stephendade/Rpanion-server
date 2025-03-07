@@ -63,7 +63,7 @@ def is_multicast(ip: str) -> bool:
         return False
 
 
-def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp) -> str:
+def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp, compression) -> str:
     pipeline: List[str] = []
 
     # -1 is no framerate specified
@@ -132,10 +132,11 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             pipeline.append("videoconvert")
             pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
 
-        # 3 options: Rpi hardware compression (v4l2h264enc), Jetson hardware compression (nvv4l2h264enc)
+        # 3 options for H264: Rpi hardware compression (v4l2h264enc), Jetson hardware compression (nvv4l2h264enc)
         # or software compression (x264enc)
+        # 2 options for H265: Jetson hardware compression (nvv4l2h265enc) or software compression (x265enc)
         # Use v4l2-ctl -d 11 --list-ctrls-menu to get v4l2h264enc options
-        if Gst.ElementFactory.find("nvv4l2h264enc"):
+        if (Gst.ElementFactory.find("nvv4l2h264enc") and compression == "H264") or (Gst.ElementFactory.find("nvv4l2h265enc") and compression == "H265"):
             # Jetson, with h/w rotation
             if rotation == 90:
                 devrotation = "flip-method=3"
@@ -149,9 +150,13 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             if timestamp:
                 pipeline.append("clockoverlay time-format=\"%d-%b-%Y %H:%M:%S\"")
                 pipeline.append("nvvidconv")
-            pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
-            pipeline.append("h264parse")
-        elif Gst.ElementFactory.find("v4l2h264enc"):
+            if compression == "H265":
+                pipeline.append("nvv4l2h265enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
+                pipeline.append("h265parse")
+            elif compression == "H264":
+                pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
+                pipeline.append("h264parse")
+        elif Gst.ElementFactory.find("v4l2h264enc") and compression == "H264":
             # Pi or similar arm platforms running on RasPiOS. Note that Pi5 onwards don't support hardware encoding
             # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
             # crashy sometimes.
@@ -166,16 +171,22 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         else:
             # s/w encoder - x86, Pi5, etc
             pipeline.append("videoconvert")
-            if is_pi_5_or_later():
+            if is_pi_5_or_later() and compression == "H264":
                 pipeline.append("video/x-raw,format=NV12")
             else:
                 pipeline.append("video/x-raw,format=I420")
             pipeline.append("queue max-size-buffers=1 leaky=downstream")
-            pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
+            if compression == "H264":
+                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
+            elif compression == "H265":
+                pipeline.append("x265enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
 
     # final rtp formatting
     pipeline.append("queue")
-    pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
+    if compression == "H264":
+        pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
+    elif compression == "H265":
+        pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
 
     # return as full string
     print(" ! ".join(pipeline))
@@ -183,7 +194,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
 
 
 class MyFactory(GstRtspServer.RTSPMediaFactory):
-    def __init__(self, device, h, w, bitrate, format, rotation, framerate, timestamp):
+    def __init__(self, device, h, w, bitrate, format, rotation, framerate, timestamp, compression):
         GstRtspServer.RTSPMediaFactory.__init__(self)
         self.device = device
         self.height = h
@@ -193,10 +204,11 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.rotation = rotation
         self.framerate = framerate
         self.timestamp = timestamp
+        self.compression = compression
 
     def do_create_element(self, url):
         pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation,
-                                   self.framerate, self.timestamp)
+                                   self.framerate, self.timestamp, self.compression)
         return Gst.parse_launch(pipeline_str)
 
 
@@ -207,17 +219,18 @@ class GstServer():
         print("Server available on rtsp://<IP>:8554")
         print("Where IP is {0}".format(ip4_addresses()))
 
-    def addStream(self, device, h, w, bitrate, format, rotation, framerate, timestamp):
+    def addStream(self, device, h, w, bitrate, format, rotation, framerate, timestamp, compression):
         f = MyFactory(device, h, w, bitrate, format,
-                      rotation, framerate, timestamp)
+                      rotation, framerate, timestamp,
+                      compression)
         f.set_shared(True)
         m = self.server.get_mount_points()
         name = ''.join(filter(str.isalnum, device))
         m.add_factory("/" + name, f)
 
         print("Added " + "rtsp://<IP>:8554/" + name)
-        print("Use: gst-launch-1.0 rtspsrc is-live=True location=rtsp://<IP>:8554/" +
-              name + " latency=0 ! queue ! decodebin ! autovideosink")
+        print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" +
+              name + " latency=0 is-live=True ! queue ! decodebin ! autovideosink")
 
 
 if __name__ == '__main__':
@@ -231,6 +244,8 @@ if __name__ == '__main__':
         "--bitrate", help="Max bitrate (kbps)", default=2000, type=int)
     parser.add_argument("--format", help="Video format",
                         default="video/x-raw", type=str)
+    parser.add_argument("--compression", help="encoder choice",
+                        default='H264', type=str, choices=['H264', 'H265'])
     parser.add_argument("--rotation", help="rotation angle",
                         default=0, type=int, choices=[0, 90, 180, 270])
     parser.add_argument(
@@ -267,7 +282,7 @@ if __name__ == '__main__':
                 print("Bad format: " + cam)
                 break
             s.addStream(videosource, height, width, bitrate,
-                        formatstr, rotation, fps, timestamp)
+                        formatstr, rotation, fps, timestamp, args.compression)
 
         try:
             loop.run()
@@ -278,7 +293,7 @@ if __name__ == '__main__':
         # RTSP
         s = GstServer()
         s.addStream(args.videosource, args.height, args.width, args.bitrate,
-                    args.format, args.rotation, args.fps, args.timestamp)
+                    args.format, args.rotation, args.fps, args.timestamp, args.compression)
 
         try:
             loop.run()
@@ -288,7 +303,8 @@ if __name__ == '__main__':
     else:
         # RTP
         pipeline_str = getPipeline(args.videosource, args.height, args.width,
-                                   args.bitrate, args.format, args.rotation, args.fps, args.timestamp)
+                                   args.bitrate, args.format, args.rotation, args.fps, args.timestamp,
+                                   args.compression)
         pipeline_str += " ! udpsink host={0} port={1}".format(
             args.udp.split(':')[0], args.udp.split(':')[1])
         if is_multicast(args.udp.split(':')[0]):
@@ -297,8 +313,12 @@ if __name__ == '__main__':
         pipeline.set_state(Gst.State.PLAYING)
 
         print("Server sending UDP stream to " + args.udp)
-        print(
-            "Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtpjitterbuffer ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
+        if args.compression == "H264":
+            print(
+                "Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
+        elif args.compression == "H265":
+            print(
+                "Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265' ! rtpjitterbuffer ! rtph265depay ! h265parse ! avdec_h265 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
 
         try:
             loop.run()
