@@ -183,7 +183,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
 
     # final rtp formatting
     pipeline.append("queue")
-    if compression == "H264":
+    if compression == "H264" or format == "video/x-h264":
         pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
     elif compression == "H265":
         pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
