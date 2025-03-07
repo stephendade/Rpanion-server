@@ -872,7 +872,8 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
   check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
   check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
   check('fps').if(check('active').isIn([true])).isInt({ min: -1, max: 100 }),
-  check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])], (req, res) => {
+  check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])],
+  check('compression').if(check('active').isIn([true])).isIn(['H264', 'H265']), (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     winston.info('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
@@ -880,7 +881,9 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
     return res.status(422).json(ret)
   }
   // user wants to start/stop video streaming
-  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation, req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort, req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, (err, status, addresses) => {
+  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation,
+                              req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort,
+                              req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       const ret = { streamingStatus: status, streamAddresses: addresses }

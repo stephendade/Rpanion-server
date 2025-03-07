@@ -34,8 +34,8 @@ class videoStream {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
             this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP,
-            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, this.savedDevice.useCameraHeartbeat, this.savedDevice.mavStreamSelected,
-            (err) => {
+            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, this.savedDevice.useCameraHeartbeat,
+            this.savedDevice.mavStreamSelected, this.savedDevice.compression, (err) => {
               if (err) {
                 // failed setup, reset settings
                 console.log('Reset video4')
@@ -164,7 +164,7 @@ class videoStream {
     return iface
   }
 
-  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, useTimestamp, useCameraHeartbeat, mavStreamSelected, callback) {
+  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, useTimestamp, useCameraHeartbeat, mavStreamSelected, compression, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -205,7 +205,8 @@ class videoStream {
         useUDPPort,
         useTimestamp,
         useCameraHeartbeat,
-        mavStreamSelected
+        mavStreamSelected,
+        compression
       }
 
       // note that video device URL's are the alphanumeric characters only. So /dev/video0 -> devvideo0
@@ -225,7 +226,8 @@ class videoStream {
         '--bitrate=' + bitrate,
         '--rotation=' + rotation,
         '--fps=' + fps,
-        '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString())
+        '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString()),
+        '--compression=' + compression
       ]
 
       if (useTimestamp) {
@@ -377,6 +379,7 @@ class videoStream {
         msg.uri = this.savedDevice.useUDPPort.toString()
       } else {
         msg.type = 0
+        msg.encoding = this.savedDevice.compression.value === 'H264' ? 1 : (this.savedDevice.compression.value === 'H265' ? 2 : 0)
         msg.uri = `rtsp://${this.savedDevice.mavStreamSelected}:8554/${this.savedDevice.device}`
       }
 
