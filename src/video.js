@@ -54,6 +54,10 @@ class VideoPage extends basePage {
     else {
       this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: value.fps[0], fps: value.fps });
     }
+    //override if a h264 format is selected
+    if (value.format === "video/x-h264") {
+      this.setState({ compression: { value: 'H264', label: 'H.264' } });
+    }
   }
 
   handleRotChange = (value) => {
@@ -211,6 +215,20 @@ class VideoPage extends basePage {
             <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
           </div>
           </div>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+            <label className="col-sm-4 col-form-label">Compression</label>
+            <div className="col-sm-8">
+              <Select
+                isDisabled={this.state.streamingStatus}
+                options={[
+                  { value: 'H264', label: 'H.264' },
+                  { value: 'H265', label: 'H.265' }
+                ]}
+                onChange={(value) => this.setState({ compression: value })}
+                value={this.state.compression}
+              />
+            </div>
+          </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Framerate</label>
@@ -221,22 +239,6 @@ class VideoPage extends basePage {
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
           </div>
         </div>
-        
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Compression</label>
-          <div className="col-sm-8">
-            <Select
-              isDisabled={this.state.streamingStatus}
-              options={[
-                { value: 'H264', label: 'H.264' },
-                { value: 'H265', label: 'H.265' }
-              ]}
-              onChange={(value) => this.setState({ compression: value })}
-              value={this.state.compression}
-            />
-          </div>
-        </div>
-
         <div style={{ display: (this.state.UDPChecked) ? "block" : "none" }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label ">Destination IP</label>
