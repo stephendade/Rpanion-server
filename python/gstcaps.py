@@ -37,6 +37,21 @@ def is_raspberry_pi():
         return False
 
 
+REF_RES = [
+    {'value': "2048x1080xx-raw", 'label': "2048x1080", 'height': 1080, 'width': 2048,
+                                    'format': 'video/x-raw', 'fpsmax': 0, 'fps': []},
+    {'value': "1920x1200xx-raw", 'label': "1920x1200", 'height': 1200, 'width': 1920,
+                                    'format': 'video/x-raw', 'fpsmax': 0, 'fps': []},
+    {'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                                    'format': 'video/x-raw', 'fpsmax': 0, 'fps': []},
+    {'value': "1680x1050xx-raw", 'label': "1680x1050", 'height': 1050, 'width': 1680,
+                                    'format': 'video/x-raw', 'fpsmax': 0, 'fps': []},
+    {'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                                    'format': 'video/x-raw', 'fpsmax': 0, 'fps': []},
+    {'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                                    'format': 'video/x-raw', 'fpsmax': 0, 'fps': []}    
+]
+
 retDevices = []
 
 # Libcamera check, if installed
@@ -44,46 +59,66 @@ if is_raspberry_pi():
     try:
         from picamera2 import Picamera2
         for cam in Picamera2.global_camera_info():
+            name = "CSI Port Camera ({0})".format(cam['Model'])
+            path = cam['Id']
+            # ignore USB cameras
+            if not (path.startswith("/base/soc/i2c") or path.startswith("/base/axi/pcie")) or "usb@" in path:
+                continue
+
             caps = []
+            # open the camera and query. Note that different versions of Picamera have different ways of querying
+            try:
+                picam2 = Picamera2(cam['Id'])
+            except TypeError:
+                picam2 = Picamera2(cam['Num'])
+            modes = picam2.sensor_modes
+            for mode in modes:
+                #print("Camera size W{0} H{1} and max fps {2}".format(mode['size'][0], mode['size'][1], math.floor(mode['fps'])))
+                # Figure out largest standard resolution
+                for REF in REF_RES:
+                    IS_DUPLICATE = False
+                    # can't run some resolutions with the hardware x264 encoder
+                    if Gst.ElementFactory.find("v4l2h264enc"):
+                        if REF['width'] > 1920 or REF['height'] > 1080:
+                            continue
+                    if mode['size'][0] >= REF['width'] and mode['size'][1] >= REF['height']:
+                        # if res is already in the list, update the fpsmax
+                        for cap in caps:
+                            if cap['value'] == "{0}x{1}xx-raw".format(REF['width'], REF['height']) and cap['fpsmax'] < math.floor(mode['fps']):
+                                if Gst.ElementFactory.find("v4l2h264enc") and math.floor(mode['fps']) > 30:
+                                    # hardare x264 encoder can't do >30fps
+                                    IS_DUPLICATE = True
+                                    continue
+                                cap['fpsmax'] = math.floor(mode['fps'])
+                                #print("updating {0}".format("{0}x{1}xx-raw".format(REF['width'], REF['height'])))
+                                caps.pop(caps.index(cap))
+                                caps.append(cap)
+                                IS_DUPLICATE = True
+                                break
+                            elif cap['value'] == "{0}x{1}xx-raw".format(REF['width'], REF['height']):
+                                #print("Duplicate {0}".format("{0}x{1}xx-raw".format(REF['width'], REF['height'])))
+                                IS_DUPLICATE = True
+                                break
+                        if not IS_DUPLICATE:
+                            #print("adding {0}".format("{0}x{1}xx-raw at {2} fps".format(REF['width'], REF['height'], math.floor(mode['fps']))))
+                            # FPS limits on hardware H264 encoder. See https://forums.raspberrypi.com/viewtopic.php?t=345416
+                            if Gst.ElementFactory.find("v4l2h264enc") and math.floor(mode['fps']) > 30:
+                                if REF['width'] <= 1280 and REF['height'] <= 720:
+                                    fps = 60
+                                elif REF['width'] <= 1920 and REF['height'] <= 1080:
+                                    fps = 30
+                            else:
+                                fps = math.floor(mode['fps'])
+                            caps.append({'value': "{0}x{1}xx-raw".format(REF['width'], REF['height']),
+                                            'label': "{0}x{1}".format(REF['width'], REF['height']),
+                                            'height': REF['height'], 'width': REF['width'],
+                                            'format': 'video/x-raw', 'fpsmax': fps, 'fps': []})
             if cam['Model'] == 'imx296':
                 # Raspi global shutter camera has specific modes
                 # https://www.raspberrypi.com/documentation/accessories/camera.html
                 caps.append({'value': "1456x1088xx-raw", 'label': "1456x1088", 'height': 1088, 'width': 1456,
                              'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1440x900xx-raw", 'label': "1440x900", 'height': 900, 'width': 1440,
-                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
-                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
-                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-            elif cam['Model'] == 'imx708':
-                if not Gst.ElementFactory.find("v4l2h264enc"):
-                    # can't run these resolutions with the hardware x264 encoder
-                    caps.append({'value': "2048x1080xx-raw", 'label': "2048x1080", 'height': 1080, 'width': 2048,
-                                'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-                    caps.append({'value': "1920x1200xx-raw", 'label': "1920x1200", 'height': 1200, 'width': 1920,
-                                'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
-                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
-                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
-                             'format': 'video/x-raw', 'fpsmax': '120', 'fps': []})
-                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
-                             'format': 'video/x-raw', 'fpsmax': '120', 'fps': []})
-            else:
-                caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
-                             'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
-                caps.append({'value': "1640x922xx-raw", 'label': "1640x922", 'height': 922, 'width': 1640,
-                             'format': 'video/x-raw', 'fpsmax': '40', 'fps': []})
-                caps.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
-                             'format': 'video/x-raw', 'fpsmax': '60', 'fps': []})
-                caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
-                             'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
-            name = "CSI Port Camera ({0})".format(cam['Model'])
-            path = cam['Id']
-            if (path.startswith("/base/soc/i2c") or path.startswith("/base/axi/pcie")) and "usb@" not in path:
-                retDevices.append({'value': path, 'label': name, 'caps': caps})
+            retDevices.append({'value': path, 'label': name, 'caps': caps})
     except:
         pass
 
