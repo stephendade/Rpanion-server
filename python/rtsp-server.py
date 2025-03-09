@@ -177,9 +177,9 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 pipeline.append("video/x-raw,format=I420")
             pipeline.append("queue max-size-buffers=1 leaky=downstream")
             if compression == "H264":
-                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
+                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
             elif compression == "H265":
-                pipeline.append("x265enc tune=zerolatency bitrate={0} speed-preset=superfast".format(bitrate))
+                pipeline.append("x265enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
 
     # final rtp formatting
     pipeline.append("queue")
