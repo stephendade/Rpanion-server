@@ -71,6 +71,23 @@ class Home extends basePage {
   }
 
   renderContent () {
+    
+    // Get the exact state of the camrea
+    const videoStatus = (this.state.VideoStreamStatus || '').toString();
+    let cameraBadgeLabel = 'Inactive';
+    if (videoStatus.toLowerCase().includes('inactive') || videoStatus.toLowerCase().includes('not')) {
+      cameraBadgeLabel = 'Inactive';
+    } else if (videoStatus.toLowerCase().includes('streaming')) {
+      cameraBadgeLabel = 'Active (Streaming)';
+    } else if (videoStatus.toLowerCase().includes('photo')) {
+      cameraBadgeLabel = 'Active (Photo)';
+    } else if (videoStatus.toLowerCase().includes('recording')) {
+      cameraBadgeLabel = 'Recording';
+    } else if (videoStatus.toLowerCase().includes('video')) {
+      cameraBadgeLabel = 'Active (Video)';
+    }
+    const cameraBadgeVariant = this.getStatusVariant(videoStatus);
+
     return (
       <div style={{ width: 650 }}>
         <div className="mb-4">
@@ -140,14 +157,14 @@ class Home extends basePage {
             <Card>
               <Card.Header>
                 <h5 className="mb-0">
-                  Video Streaming
-                  <Badge bg={this.getStatusVariant(this.state.VideoStreamStatus)} className="ms-2">
-                    {this.state.VideoStreamStatus.includes('Active') ? 'Active' : 'Inactive'}
+                  Camera
+                  <Badge bg={cameraBadgeVariant} className="ms-2">
+                    {cameraBadgeLabel}
                   </Badge>
                 </h5>
               </Card.Header>
               <Card.Body>
-                <p>{this.state.VideoStreamStatus}</p>
+                <p>{videoStatus}</p>
               </Card.Body>
             </Card>
           </Col>

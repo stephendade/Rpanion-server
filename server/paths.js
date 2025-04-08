@@ -29,5 +29,6 @@ module.exports = {
     settingsFile: path.join(baseDir, 'config', 'settings.json'),
     flightsLogsDir: path.join(baseDir, 'flightlogs'),
     kmzDir: path.join(baseDir, 'flightlogs', 'kmzlogs'),
+    mediaDir: path.join(baseDir, 'media'),
     getPythonPath: getPythonPath,
 };

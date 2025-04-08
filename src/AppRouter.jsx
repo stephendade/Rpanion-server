@@ -64,14 +64,14 @@ function AppRouter () {
         <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
         <div id="sidebar-items" className="list-group list-group-flush">
           <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
-          <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
+          <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs and Media</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/ppp">PPP Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/ntrip">NTRIP Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/adhoc">Adhoc Wifi Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/apclients">Access Point Clients</Link>
-          <Link className='list-group-item list-group-item-action bg-light' to="/video">Video Streaming</Link>
+          <Link className='list-group-item list-group-item-action bg-light' to="/video">Photo and Video</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/cloud">Cloud Upload</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/vpn">VPN Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
