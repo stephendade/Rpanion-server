@@ -61,7 +61,7 @@ settings.init({
 const vManager = new videoStream(settings)
 const fcManager = new fcManagerClass(settings)
 const logManager = new flightLogger()
-const ntripClient = new ntrip(settings, )
+const ntripClient = new ntrip(settings,)
 const cloud = new cloudManager(settings)
 const logConversion = new logConversionManager(settings)
 const adhocManager = new Adhoc(settings)
@@ -76,22 +76,22 @@ async function gracefulShutdown(signal, exitCode = 0) {
   if (isShuttingDown) {
     return
   }
-  
+
   isShuttingDown = true
   console.log(`Received ${signal}. Shutting down gracefully...`)
-  
+
   // Set a timeout to force shutdown if graceful shutdown takes too long
   const forceShutdownTimer = setTimeout(() => {
     console.error('Graceful shutdown timeout exceeded. Forcing shutdown...')
     process.exit(1)
   }, SHUTDOWN_TIMEOUT)
-  
+
   try {
     // Stop accepting new connections
     if (http && http.listening) {
       console.log('Closing HTTP server...')
       console.log(`Waiting for ${activeConnections.size} active connections to finish...`)
-      
+
       await new Promise((resolve, reject) => {
         http.close((err) => {
           if (err) {
@@ -103,28 +103,28 @@ async function gracefulShutdown(signal, exitCode = 0) {
         })
       })
     }
-    
+
     // Stop Socket.IO connections
     if (io) {
       console.log('Closing Socket.IO connections...')
       io.close()
       console.log('Socket.IO closed')
     }
-    
+
     // Clear intervals
     if (FCStatusLoop) {
       clearInterval(FCStatusLoop)
       FCStatusLoop = null
       console.log('Status loop cleared')
     }
-    
+
     // Stop all managed services
     console.log('Stopping managed services...')
     pppConnectionManager.quitting()
     cloud.quitting()
     logConversion.quitting()
     console.log('All services stopped')
-    
+
     clearTimeout(forceShutdownTimer)
     console.log('---Shutdown Rpanion Complete---')
     process.exit(exitCode)
@@ -177,6 +177,57 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
   }
 })
 
+// Capture a single still photo when in photo mode
+// This code responds to the button on the web interface
+app.post('/api/capturestillphoto', authenticateToken, function (req, res) {
+  if (vManager.active && vManager.cameraMode === 'photo') {
+    console.log("[API /api/capturestillphoto] Conditions met. Calling vManager.captureStillPhoto()");
+    // Call without MAVLink sender/target info as it's a UI trigger
+    vManager.captureStillPhoto();
+    res.status(200).send({ message: 'Capture signal sent.' });
+  } else {
+    console.log("[API /api/capturestillphoto] Conditions NOT met. Sending 400.");
+    res.status(400).send({ error: 'Camera not active or not in photo mode.' });
+  }
+})
+
+// Toggle local video recording on/off
+// This code responds to the button on the web interface
+app.post('/api/togglevideorecording', authenticateToken, function (req, res) {
+
+  console.log(`[API /togglevideorecording] Received request. Server state: vManager.active=${vManager.active}, vManager.cameraMode=${vManager.cameraMode}`);
+  winston.info(`[API /togglevideorecording] Received request. Server state: vManager.active=${vManager.active}, vManager.cameraMode=${vManager.cameraMode}`);
+
+  // Check if active and in the correct mode
+  if (vManager.active && vManager.cameraMode === 'video') {
+    try {
+      vManager.toggleVideoRecording(); // Use the new method name
+      winston.info('Toggled video recording via API.');
+      res.status(200).send({ success: true, message: 'Toggle signal sent.' });
+    } catch (err) {
+      winston.error('Error toggling video recording:', err);
+      res.status(500).send({ error: 'Failed to send toggle signal.' });
+    }
+  } else {
+    console.log(`[API /togglevideorecording] Condition NOT met. Sending 400.`);
+    winston.warn(`[API /togglevideorecording] Condition NOT met (active=${vManager.active}, mode=${vManager.cameraMode}). Sending 400.`);
+    res.status(400).send({ error: 'Camera is not active in video recording mode.' });
+  }
+})
+
+// This function responds to a MAVLink command to capture a photo.
+vManager.eventEmitter.on('digicamcontrol', (senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the MAV_CMD_DO_DIGICAM_CONTROL command
+      fcManager.m.sendCommandAck(203, 0, senderSysId, senderCompId, targetComponent)
+    }
+  } catch (err) {
+    winston.error('Error acknowledging DoDigicamControl:', err);
+    console.log(err)
+  }
+})
+
 // Got a camera heartbeat event, send to flight controller
 vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
   try {
@@ -184,6 +235,7 @@ vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
       fcManager.m.sendHeartbeat(mavType, autopilot, component)
     }
   } catch (err) {
+    winston.error('Error sending camera heartbeat:', err);
     console.log(err)
   }
 })
@@ -192,10 +244,12 @@ vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
 vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetComponent) => {
   try {
     if (fcManager.m) {
+      // Acknowledge the CAMERA_INFORMATION request
       fcManager.m.sendCommandAck(common.CameraInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
+    winston.error('Error sending CameraInformation:', err);
     console.log(err)
   }
 })
@@ -204,10 +258,39 @@ vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetCo
 vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId, targetComponent) => {
   try {
     if (fcManager.m) {
+      // Acknowledge the VIDEO_STREAM_INFORMATION request
       fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
+    winston.error('Error sending VideoStreamInformation:', err);
+    console.log(err)
+  }
+})
+
+// Got a CAMERA_SETTINGS event, send to flight controller
+vManager.eventEmitter.on('camerasettings', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the CAMERA_SETTINGS request
+      fcManager.m.sendCommandAck(common.CameraSettings.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    winston.error('Error sending CameraSettings:', err);
+    console.log(err)
+  }
+})
+
+// Got a CAMERA_TRIGGER event, send to flight controller
+vManager.eventEmitter.on('cameratrigger', (msg, senderCompId) => {
+  try {
+    if (fcManager.m) {
+      // Send the CAMERA_TRIGGER message to the flight controller
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    winston.error('Error sending CameraTrigger:', err);
     console.log(err)
   }
 })
@@ -219,6 +302,7 @@ fcManager.eventEmitter.on('gotMessage', (packet, data) => {
     ntripClient.onMavPacket(packet, data)
     vManager.onMavPacket(packet, data)
   } catch (err) {
+    winston.error('Error processing MAVLink message in listener:', err);
     console.log(err)
   }
 })
@@ -248,7 +332,7 @@ app.use(express.json())
 app.use(express.static(path.join(__dirname, '..', '/build')))
 
 // User login
-app.post('/api/login', [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+app.post('/api/login', [check('username').escape().isLength({ min: 2, max: 20 }), check('password').escape().isLength({ min: 2, max: 20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log('Bad POST vars in /api/login', { message: JSON.stringify(errors.array()) })
@@ -268,7 +352,7 @@ app.post('/api/login', [check('username').escape().isLength({ min: 2, max:20 }),
         token: token
       })
     } else {
-      res.status(401).send(JSON.stringify({error: 'Invalid username or password'}))
+      res.status(401).send(JSON.stringify({ error: 'Invalid username or password' }))
     }
   })
 })
@@ -276,12 +360,12 @@ app.post('/api/login', [check('username').escape().isLength({ min: 2, max:20 }),
 // List all users
 app.get('/api/users', authenticateToken, (req, res) => {
   userMgmt.getAllUsers().then((users) => {
-    res.send(JSON.stringify({users: users}))
+    res.send(JSON.stringify({ users: users }))
   })
 })
 
 // Update existing user password
-app.post('/api/updateUserPassword', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+app.post('/api/updateUserPassword', authenticateToken, [check('username').escape().isLength({ min: 2, max: 20 }), check('password').escape().isLength({ min: 2, max: 20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log('Bad POST vars in /api/updateUserPassword', { message: JSON.stringify(errors.array()) })
@@ -293,20 +377,20 @@ app.post('/api/updateUserPassword', authenticateToken, [check('username').escape
     //return res.status(400).send({
     //  error: 'Username and password are required'
     //})
-    res.status(400).send(JSON.stringify({error: 'Username and password are required'}))
+    res.status(400).send(JSON.stringify({ error: 'Username and password are required' }))
   }
 
   userMgmt.changePassword(username, password).then((success) => {
     if (success) {
-      res.send(JSON.stringify({infoMessage: 'User password updated successfully'}))
+      res.send(JSON.stringify({ infoMessage: 'User password updated successfully' }))
     } else {
-      res.status(500).send(JSON.stringify({error: 'Error updating user password'}))
+      res.status(500).send(JSON.stringify({ error: 'Error updating user password' }))
     }
   })
 })
 
 // Create new user
-app.post('/api/createUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+app.post('/api/createUser', authenticateToken, [check('username').escape().isLength({ min: 2, max: 20 }), check('password').escape().isLength({ min: 2, max: 20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log('Bad POST vars in /api/logout', { message: JSON.stringify(errors.array()) })
@@ -315,20 +399,20 @@ app.post('/api/createUser', authenticateToken, [check('username').escape().isLen
   const { username, password } = req.body
 
   if (!username || !password) {
-    return res.status(400).send(JSON.stringify({error: 'Username and password are required'}))
+    return res.status(400).send(JSON.stringify({ error: 'Username and password are required' }))
   }
 
   userMgmt.addUser(username, password).then((success) => {
     if (success) {
-      res.send(JSON.stringify({infoMessage: 'User created successfully'}))
+      res.send(JSON.stringify({ infoMessage: 'User created successfully' }))
     } else {
-      res.status(500).send(JSON.stringify({error: 'Error creating user'}))
+      res.status(500).send(JSON.stringify({ error: 'Error creating user' }))
     }
   })
 })
 
 // Delete a user
-app.post('/api/deleteUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 })], (req, res) => {
+app.post('/api/deleteUser', authenticateToken, [check('username').escape().isLength({ min: 2, max: 20 })], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log('Bad POST vars in /api/logout', { message: JSON.stringify(errors.array()) })
@@ -337,14 +421,14 @@ app.post('/api/deleteUser', authenticateToken, [check('username').escape().isLen
   const { username } = req.body
 
   if (!username) {
-    return res.status(400).send(JSON.stringify({error: 'Username is required'}))
+    return res.status(400).send(JSON.stringify({ error: 'Username is required' }))
   }
 
   userMgmt.deleteUser(username).then((success) => {
     if (success) {
-      res.send(JSON.stringify({infoMessage: 'User deleted successfully'}))
+      res.send(JSON.stringify({ infoMessage: 'User deleted successfully' }))
     } else {
-      res.status(500).send(JSON.stringify({error: 'Error deleting user'}))
+      res.status(500).send(JSON.stringify({ error: 'Error deleting user' }))
     }
   })
 })
@@ -365,7 +449,7 @@ app.post('/api/logout', authenticateToken, async (req, res) => {
 // Simple token authentication call
 app.post('/api/auth', authenticateToken, async (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({error: null}))
+  res.send(JSON.stringify({ error: null }))
 })
 
 // Middleware to check if the request has a valid token
@@ -377,7 +461,7 @@ function authenticateToken(req, res, next) {
 
   // Determine if this is a Socket.IO request
   const isSocketIO = typeof res.status !== 'function'
-  
+
   // Helper function to send error responses
   const sendError = (statusCode, message) => {
     if (isSocketIO) {
@@ -417,7 +501,7 @@ function authenticateToken(req, res, next) {
 //pppConnectionManager url endpoints
 app.get('/api/pppconfig', authenticateToken, (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  pppConnectionManager.getPPPSettings((err, settings) => {  
+  pppConnectionManager.getPPPSettings((err, settings) => {
     if (err) {
       console.log('Error in /api/pppconfig', { message: err })
       res.send(JSON.stringify({ error: err }))
@@ -429,7 +513,7 @@ app.get('/api/pppconfig', authenticateToken, (req, res) => {
 
 app.post('/api/pppmodify', authenticateToken, [
   check('device').not().isEmpty(),
-  check('baudrate').isInt(), 
+  check('baudrate').isInt(),
   check('localIP').isIP(),
   check('remoteIP').isIP(),
   check('enabled').isBoolean()
@@ -446,11 +530,11 @@ app.post('/api/pppmodify', authenticateToken, [
     pppConnectionManager.startPPP(req.body.device, req.body.baudrate, req.body.localIP, req.body.remoteIP, (err, settings) => {
       if (err !== null) {
         console.log('Error in /api/pppmodify', { message: err })
-        console.log(JSON.stringify({settings, error: err }))
-        res.send(JSON.stringify({settings, error: err.toString() }))
+        console.log(JSON.stringify({ settings, error: err }))
+        res.send(JSON.stringify({ settings, error: err.toString() }))
         return
       } else {
-        res.send(JSON.stringify({settings}))
+        res.send(JSON.stringify({ settings }))
         return
       }
     })
@@ -459,11 +543,11 @@ app.post('/api/pppmodify', authenticateToken, [
     pppConnectionManager.stopPPP((err, settings) => {
       if (err) {
         //console.log('Error in /api/pppmodify', { message: err })
-        console.log(JSON.stringify({settings, error: err }))
-        res.send(JSON.stringify({settings, error: err }))
+        console.log(JSON.stringify({ settings, error: err }))
+        res.send(JSON.stringify({ settings, error: err }))
         return
       } else {
-        res.send(JSON.stringify({settings}))
+        res.send(JSON.stringify({ settings }))
         return
       }
     })
@@ -606,8 +690,8 @@ app.get('/api/cloudinfo', authenticateToken, (req, res) => {
 
 // activate or deactivate bin log upload
 app.post('/api/binlogupload', authenticateToken, [check('doBinUpload').isBoolean(),
-  check('binUploadLink').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim(),
-  check('syncDeletions').isBoolean()], function (req, res) {
+check('binUploadLink').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim(),
+check('syncDeletions').isBoolean()], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
@@ -667,15 +751,15 @@ app.get('/api/adhocadapters', authenticateToken, (req, res) => {
 
 // activate or deactivate adhoc wifi
 app.post('/api/adhocadaptermodify', authenticateToken, [check('settings.isActive').isBoolean(),
-  check('toState').isBoolean(),
-  check('netDeviceSelected').isAlphanumeric(),
-  check('settings.ipaddress').if(check('toState').isIn([true])).isIP(),
-  check('settings.wpaType').isIn(['none', 'wep']),
-  check('settings.password').if(check('settings.wpaType').isIn(['wep'])).isAlphanumeric(),
-  check('settings.ssid').if(check('toState').isIn([true])).isAlphanumeric(),
-  check('settings.band').isIn(['a', 'bg']),
-  check('settings.channel').if(check('toState').isIn([true])).isInt(),
-  check('settings.gateway').optional({ checkFalsy: true }).if(check('toState').isIn([true])).isIP()], function (req, res) {
+check('toState').isBoolean(),
+check('netDeviceSelected').isAlphanumeric(),
+check('settings.ipaddress').if(check('toState').isIn([true])).isIP(),
+check('settings.wpaType').isIn(['none', 'wep']),
+check('settings.password').if(check('settings.wpaType').isIn(['wep'])).isAlphanumeric(),
+check('settings.ssid').if(check('toState').isIn([true])).isAlphanumeric(),
+check('settings.band').isIn(['a', 'bg']),
+check('settings.channel').if(check('toState').isIn([true])).isInt(),
+check('settings.gateway').optional({ checkFalsy: true }).if(check('toState').isIn([true])).isIP()], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
@@ -699,12 +783,12 @@ app.post('/api/adhocadaptermodify', authenticateToken, [check('settings.isActive
 
 // change ntrip settings
 app.post('/api/ntripmodify', authenticateToken, [check('active').isBoolean(),
-  check('host').isLength({ min: 5 }),
-  check('port').isPort(),
-  check('mountpoint').isLength({ min: 1 }),
-  check('username').isLength({ min: 5 }),
-  check('password').isLength({ min: 5 }),
-  check('useTLS').isBoolean()], function (req, res) {
+check('host').isLength({ min: 5 }),
+check('port').isPort(),
+check('mountpoint').isLength({ min: 1 }),
+check('username').isLength({ min: 5 }),
+check('password').isLength({ min: 5 }),
+check('useTLS').isBoolean()], function (req, res) {
   // User wants to start/stop NTRIP
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -713,7 +797,7 @@ app.post('/api/ntripmodify', authenticateToken, [check('active').isBoolean(),
   }
 
   ntripClient.setSettings(JSON.parse(req.body.host), req.body.port, JSON.parse(req.body.mountpoint), JSON.parse(req.body.username),
-                          JSON.parse(req.body.password), req.body.active, req.body.useTLS)
+    JSON.parse(req.body.password), req.body.active, req.body.useTLS)
   ntripClient.getSettings((host, port, mountpoint, username, password, active, useTLS) => {
     res.setHeader('Content-Type', 'application/json')
     // console.log(JSON.stringify({host: host,  port: port, mountpoint: mountpoint, username: username, password: password}))
@@ -767,8 +851,8 @@ app.get('/api/softwareinfo', authenticateToken, (req, res) => {
 
 app.get('/api/videodevices', authenticateToken, (req, res) => {
   vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate,
-                            selfps, SeluseUDPIP, SeluseUDPPort, timestamp,
-                            fps, FPSMax, vidres, useCameraHeartbeat, selMavURI, compression, Seltransport, transportOptions, customRTSPSource) => {
+    selfps, SeluseUDPIP, SeluseUDPPort, timestamp,
+    fps, FPSMax, vidres, useCameraHeartbeat, selMavURI, compression, Seltransport, transportOptions, customRTSPSource) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({
@@ -897,17 +981,17 @@ app.post('/api/resetsettings', authenticateToken, function (req, res) {
   try {
     const fs = require('fs')
     const settingsPath = logpaths.settingsFile
-    
+
     // Delete the settings file
     if (fs.existsSync(settingsPath)) {
       fs.unlinkSync(settingsPath)
       console.log('Settings file deleted:', settingsPath)
     }
-    
+
     // Create empty settings object
     fs.writeFileSync(settingsPath, '{}')
     console.log('Settings reset to defaults')
-    
+
     res.setHeader('Content-Type', 'application/json')
     res.send(JSON.stringify({ success: true, message: 'Settings have been reset. Please restart the application for changes to take effect.' }))
   } catch (error) {
@@ -925,18 +1009,18 @@ app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isI
   }
 
   fcManager.startStopTelemetry(req.body.device, req.body.baud, req.body.mavversion, req.body.enableHeartbeat,
-                               req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
-                               req.body.doLogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
-    if (!err) {
-      res.setHeader('Content-Type', 'application/json')
-      // console.log(isSuccess);
-      res.send(JSON.stringify({ telemetryStatus: isSuccess, error: null }))
-    } else {
-      res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ telemetryStatus: false, error: err }))
-      console.log('Error in /api/FCModify ', { message: err })
-    }
-  })
+    req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
+    req.body.doLogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
+      if (!err) {
+        res.setHeader('Content-Type', 'application/json')
+        // console.log(isSuccess);
+        res.send(JSON.stringify({ telemetryStatus: isSuccess, error: null }))
+      } else {
+        res.setHeader('Content-Type', 'application/json')
+        res.send(JSON.stringify({ telemetryStatus: false, error: err }))
+        console.log('Error in /api/FCModify ', { message: err })
+      }
+    })
 })
 
 app.post('/api/FCReboot', authenticateToken, function () {
@@ -1076,18 +1160,18 @@ app.get('/api/networkconnections', authenticateToken, (req, res) => {
 })
 
 app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
-  check('device').if(check('active').isIn([true])).isLength({ min: 2 }),
-  check('height').if(check('active').isIn([true])).isInt({ min: 1 }),
-  check('width').if(check('active').isIn([true])).isInt({ min: 1 }),
-  check('transport').if(check('active').isIn([true])).isIn(['RTP', 'RTSP']),
-  check('useTimestamp').if(check('active').isIn([true])).isBoolean(),
-  check('useCameraHeartbeat').if(check('active').isIn([true])).isBoolean(),
-  check('useUDPPort').if(check('active').isIn([true])).isPort(),
-  check('useUDPIP').if(check('active').isIn([true])).isIP(),
-  check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
-  check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'video/x-h265', 'image/jpeg']),
-  check('fps').if(check('active').isIn([true])).isInt({ min: -1, max: 100 }),
-  check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])],
+check('device').if(check('active').isIn([true])).isLength({ min: 2 }),
+check('height').if(check('active').isIn([true])).isInt({ min: 1 }),
+check('width').if(check('active').isIn([true])).isInt({ min: 1 }),
+check('transport').if(check('active').isIn([true])).isIn(['RTP', 'RTSP']),
+check('useTimestamp').if(check('active').isIn([true])).isBoolean(),
+check('useCameraHeartbeat').if(check('active').isIn([true])).isBoolean(),
+check('useUDPPort').if(check('active').isIn([true])).isPort(),
+check('useUDPIP').if(check('active').isIn([true])).isIP(),
+check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
+check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'video/x-h265', 'image/jpeg']),
+check('fps').if(check('active').isIn([true])).isInt({ min: -1, max: 100 }),
+check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])],
   check('compression').if(check('active').isIn([true])).isIn(['H264', 'H265']),
   check('customRTSPSource').if(check('active').isIn([true])).custom((value) => {
     if (value === '' || value === null || value === undefined) {
@@ -1095,29 +1179,29 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
     }
     return check('customRTSPSource').isURL().run({ body: { customRTSPSource: value } });
   }), (req, res) => {
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    console.log('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
-    const ret = { streamingStatus: false, streamAddresses: [], error: ['Error ' + JSON.stringify(errors.array())] }
-    return res.status(422).json(ret)
-  }
-  // user wants to start/stop video streaming
-  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation,
-                              req.body.bitrate, req.body.fps, req.body.transport, req.body.useUDPIP, req.body.useUDPPort,
-                              req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression,
-                              req.body.customRTSPSource, (err, status, addresses) => {
-    if (!err) {
-      res.setHeader('Content-Type', 'application/json')
-      const ret = { streamingStatus: status, streamAddresses: addresses }
-      res.send(JSON.stringify(ret))
-    } else {
-      res.setHeader('Content-Type', 'application/json')
-      const ret = { streamingStatus: false, streamAddresses: ['Error ' + err] }
-      res.send(JSON.stringify(ret))
-      console.log('Error in /api/startstopvideo ', { message: err })
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      console.log('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
+      const ret = { streamingStatus: false, streamAddresses: [], error: ['Error ' + JSON.stringify(errors.array())] }
+      return res.status(422).json(ret)
     }
+    // user wants to start/stop video streaming
+    vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation,
+      req.body.bitrate, req.body.fps, req.body.transport, req.body.useUDPIP, req.body.useUDPPort,
+      req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression,
+      req.body.customRTSPSource, (err, status, addresses) => {
+        if (!err) {
+          res.setHeader('Content-Type', 'application/json')
+          const ret = { streamingStatus: status, streamAddresses: addresses }
+          res.send(JSON.stringify(ret))
+        } else {
+          res.setHeader('Content-Type', 'application/json')
+          const ret = { streamingStatus: false, streamAddresses: ['Error ' + err] }
+          res.send(JSON.stringify(ret))
+          console.log('Error in /api/startstopvideo ', { message: err })
+        }
+      })
   })
-})
 
 // Get details of a network connection by connection ID
 app.post('/api/networkIP', authenticateToken, [check('conName').isUUID()], (req, res) => {
@@ -1221,91 +1305,90 @@ app.post('/api/networkdelete', authenticateToken, [check('conName').isUUID()], (
 
 // user wants to edit network
 app.post('/api/networkedit', authenticateToken, [check('conName').isUUID(),
-  check('conSettings.ipaddresstype').isIn(['auto', 'manual', 'shared']),
-  check('conSettings.ipaddress').optional().isIP(),
-  check('conSettings.subnet').optional().isIP(),
-  check('conSettings.wpaType').optional().isIn(['none', 'wpa-psk']),
-  check('conSettings.password').optional().escape(),
-  check('conSettings.ssid').optional().escape(),
-  check('conSettings.attachedIface').optional().escape(),
-  check('conSettings.band').optional().isIn(['a', 'bg']),
-  check('conSettings.channel').optional().isInt(),
-  check('conSettings.mode').optional().isIn(['infrastructure', 'ap'])
+check('conSettings.ipaddresstype').isIn(['auto', 'manual', 'shared']),
+check('conSettings.ipaddress').optional().isIP(),
+check('conSettings.subnet').optional().isIP(),
+check('conSettings.wpaType').optional().isIn(['none', 'wpa-psk']),
+check('conSettings.password').optional().escape(),
+check('conSettings.ssid').optional().escape(),
+check('conSettings.attachedIface').optional().escape(),
+check('conSettings.band').optional().isIn(['a', 'bg']),
+check('conSettings.channel').optional().isInt(),
+check('conSettings.mode').optional().isIn(['infrastructure', 'ap'])
 ],
-(req, res) => {
-  // Finds the validation errors in this request and wraps them in an object with handy functions
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    res.setHeader('Content-Type', 'application/json')
-    const ret = { error: 'Bad input - ' + errors.array()[0].param }
-    res.send(JSON.stringify(ret))
-    console.log('Bad POST vars in /api/networkedit ', { message: errors.array() })
-  } else {
-    console.log('Editing network ' + req.body.conName)
-    networkManager.editConnection(req.body.conName, req.body.conSettings, (err) => {
-      if (err) {
-        res.setHeader('Content-Type', 'application/json')
-        const ret = { error: err }
-        res.send(JSON.stringify(ret))
-        console.log('Error in /api/networkedit ', { message: err })
-      } else {
-        res.setHeader('Content-Type', 'application/json')
-        const ret = { error: null, action: 'NetworkEditOK' }
-        res.send(JSON.stringify(ret))
-      }
-    })
-  }
-})
+  (req, res) => {
+    // Finds the validation errors in this request and wraps them in an object with handy functions
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      res.setHeader('Content-Type', 'application/json')
+      const ret = { error: 'Bad input - ' + errors.array()[0].param }
+      res.send(JSON.stringify(ret))
+      console.log('Bad POST vars in /api/networkedit ', { message: errors.array() })
+    } else {
+      console.log('Editing network ' + req.body.conName)
+      networkManager.editConnection(req.body.conName, req.body.conSettings, (err) => {
+        if (err) {
+          res.setHeader('Content-Type', 'application/json')
+          const ret = { error: err }
+          res.send(JSON.stringify(ret))
+          console.log('Error in /api/networkedit ', { message: err })
+        } else {
+          res.setHeader('Content-Type', 'application/json')
+          const ret = { error: null, action: 'NetworkEditOK' }
+          res.send(JSON.stringify(ret))
+        }
+      })
+    }
+  })
 
 // User wants to add network
 app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype').isIn(['auto', 'manual', 'shared']),
-  check('conSettings.ipaddress').optional().isIP(),
-  check('conSettings.subnet').optional().isIP(),
-  check('conSettings.wpaType').optional().isIn(['none', 'wpa-psk']),
-  check('conSettings.password').optional().escape(),
-  check('conSettings.ssid').optional().escape(),
-  check('conSettings.band').optional().isIn(['a', 'bg']),
-  check('conSettings.channel').optional().isInt(),
-  check('conSettings.attachedIface').optional().escape(),
-  check('conSettings.mode').optional().isIn(['infrastructure', 'ap']),
-  check('conName').escape(),
-  check('conType').escape(),
-  check('conAdapter').escape()
+check('conSettings.ipaddress').optional().isIP(),
+check('conSettings.subnet').optional().isIP(),
+check('conSettings.wpaType').optional().isIn(['none', 'wpa-psk']),
+check('conSettings.password').optional().escape(),
+check('conSettings.ssid').optional().escape(),
+check('conSettings.band').optional().isIn(['a', 'bg']),
+check('conSettings.channel').optional().isInt(),
+check('conSettings.attachedIface').optional().escape(),
+check('conSettings.mode').optional().isIn(['infrastructure', 'ap']),
+check('conName').escape(),
+check('conType').escape(),
+check('conAdapter').escape()
 ],
-(req, res) => {
-  // Finds the validation errors in this request and wraps them in an object with handy functions
-  const errors = validationResult(req)
-  if (!errors.isEmpty()) {
-    res.setHeader('Content-Type', 'application/json')
-    const ret = { error: 'Bad input - ' + errors.array()[0].param }
-    res.send(JSON.stringify(ret))
-    console.log('Bad POST vars in /api/networkadd ', { message: errors.array() })
-  } else {
-    console.log('Adding network ' + req.body)
-    networkManager.addConnection(req.body.conName, req.body.conType, req.body.conAdapter, req.body.conSettings, (err) => {
-      if (err) {
-        res.setHeader('Content-Type', 'application/json')
-        const ret = { error: err }
-        res.send(JSON.stringify(ret))
-        console.log('Error in /api/networkadd ', { message: err })
-      } else {
-        res.setHeader('Content-Type', 'application/json')
-        const ret = { error: null, action: 'NetworkAddOK' }
-        res.send(JSON.stringify(ret))
-      }
-    })
-  }
-  console.log(req.body)
-})
+  (req, res) => {
+    // Finds the validation errors in this request and wraps them in an object with handy functions
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      res.setHeader('Content-Type', 'application/json')
+      const ret = { error: 'Bad input - ' + errors.array()[0].param }
+      res.send(JSON.stringify(ret))
+      console.log('Bad POST vars in /api/networkadd ', { message: errors.array() })
+    } else {
+      console.log('Adding network ' + req.body)
+      networkManager.addConnection(req.body.conName, req.body.conType, req.body.conAdapter, req.body.conSettings, (err) => {
+        if (err) {
+          res.setHeader('Content-Type', 'application/json')
+          const ret = { error: err }
+          res.send(JSON.stringify(ret))
+          console.log('Error in /api/networkadd ', { message: err })
+        } else {
+          res.setHeader('Content-Type', 'application/json')
+          const ret = { error: null, action: 'NetworkAddOK' }
+          res.send(JSON.stringify(ret))
+        }
+      })
+    }
+    console.log(req.body)
+  })
 
 // Pass GUI requests to the React app only in production mode
-if (process.env.NODE_ENV !== 'development')
-{
+if (process.env.NODE_ENV !== 'development') {
   app.get(['/', '/controller', '/about', '/network',
-          '/video', '/vpn', '/ntrip', '/cloud', '/flightlogs',
-          '/apclients', '/adhoc', '/logoutconfirm', '/users', '/ppp'], (req, res) => {
-    res.sendFile(path.join(__dirname, '..', '/build/index.html'))
-  })
+    '/video', '/vpn', '/ntrip', '/cloud', '/flightlogs',
+    '/apclients', '/adhoc', '/logoutconfirm', '/users', '/ppp'], (req, res) => {
+      res.sendFile(path.join(__dirname, '..', '/build/index.html'))
+    })
 }
 
 // Track active connections for graceful shutdown
@@ -1318,19 +1401,19 @@ app.use((req, res, next) => {
     res.set('Connection', 'close')
     return res.status(503).json({ error: 'Server is shutting down' })
   }
-  
+
   // Track this connection
   activeConnections.add(res)
-  
+
   // Remove when done
   res.on('finish', () => {
     activeConnections.delete(res)
   })
-  
+
   res.on('close', () => {
     activeConnections.delete(res)
   })
-  
+
   next()
 })
 
