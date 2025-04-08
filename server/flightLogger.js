@@ -13,6 +13,7 @@ class flightLogger {
     // this.tlogfolder = path.join(this.topfolder, 'tlogs')
     // this.binlogfolder = path.join(this.topfolder, 'binlogs')
     this.kmzlogfolder = logpaths.kmzDir
+    this.mediafolder = logpaths.mediaDir
     // this.activeLogging = true
     // this.settings = settings
 
@@ -23,6 +24,8 @@ class flightLogger {
     fs.mkdirSync(this.topfolder, { recursive: true })
     // fs.mkdirSync(this.binlogfolder, { recursive: true })
     fs.mkdirSync(this.kmzlogfolder, { recursive: true })
+    // and the media folder
+    fs.mkdirSync(this.mediafolder, { recursive: true })
   }
 
   // Delete all logs - tlog or binlog or kmz files
@@ -53,6 +56,13 @@ class flightLogger {
         fs.unlinkSync(filePath)
       })
       console.log('Deleted kmzlogs')
+    } else if (logtype === 'media') {
+      const files = fs.readdirSync(this.mediafolder)
+      files.forEach((file) => {
+        const filePath = path.join(this.mediafolder, file)
+        fs.unlinkSync(filePath)
+      })
+      console.log('Deleted all media files')
     }
   }
 
@@ -60,13 +70,15 @@ class flightLogger {
   findInDir (dir, extfilter) {
     const files = fs.readdirSync(dir)
     const fileList = []
+    const extensions = Array.isArray(extfilter) ? extfilter : [extfilter]
 
     files.forEach((file) => {
       const filePath = path.join(dir, file)
       const fileStat = fs.lstatSync(filePath)
       const filemTime = new Date(fileStat.mtimeMs)
 
-      if (!fileStat.isDirectory() && filePath.endsWith(extfilter)) {
+      if (!fileStat.isDirectory() && extensions.some(ext => filePath.toLowerCase().endsWith(ext.toLowerCase()))) {
+      //if (!fileStat.isDirectory() && filePath.endsWith(extfilter)) {
         const relpath = path.relative(this.topfolder, filePath)
         const mTime = moment(filemTime).format('LLL')
         fileList.push({ key: relpath, name: path.basename(filePath), modified: mTime, size: Math.round(fileStat.size / 1024) })
@@ -82,8 +94,9 @@ class flightLogger {
     const newfilestlog = this.findInDir(this.topfolder, '.tlog')
     const newfilesbinlog = this.findInDir(this.topfolder, '.bin')
     const newfileskmzlog = this.findInDir(this.kmzlogfolder, '.kmz')
+    const newfilesmedia = this.findInDir(this.mediafolder, ['.jpg', '.png', '.gif', '.avi', '.mp4', '.h264', '.h265'])
 
-    return callback(false, newfilestlog, newfilesbinlog, newfileskmzlog)
+    return callback(false, newfilestlog, newfilesbinlog, newfileskmzlog, newfilesmedia)
   };
 }
 

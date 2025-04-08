@@ -50,6 +50,11 @@ describe('Logging Functions', function () {
   it('#getlogs()', function (done) {
     const Lgr = new Logger()
 
+    // Ensure media directory exists before testing
+    if (!fs.existsSync(logpaths.mediaDir)) {
+      fs.mkdirSync(logpaths.mediaDir, { recursive: true })
+    }
+
     // create a fake log
     fs.writeFileSync(Path.join(logpaths.flightsLogsDir, 'flight.tlog'), Buffer.from('tést'))
 
