@@ -3,8 +3,9 @@ import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Table from 'react-bootstrap/Table';
+import React from 'react'
 
-import basePage from './basePage.js';
+import basePage from './basePage.jsx';
 
 class NetworkConfig extends basePage {
   constructor(props) {

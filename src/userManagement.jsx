@@ -2,8 +2,9 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Modal from 'react-bootstrap/Modal';
 import Table from 'react-bootstrap/Table'
+import React from 'react'
 
-import basePage from './basePage.js'
+import basePage from './basePage.jsx'
 
 import './css/styles.css';
 
@@ -27,7 +28,7 @@ class userManagement extends basePage {
 
   fetchUsers = async () => {
     try {
-    const response = await fetch('/users', {
+    const response = await fetch('/api/users', {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -61,7 +62,7 @@ class userManagement extends basePage {
     const { modalType, username, password } = this.state;
     if (modalType === 'changePassword') {
       try {
-        const response = await fetch('/updateUserPassword', {
+        const response = await fetch('/api/updateUserPassword', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -82,7 +83,7 @@ class userManagement extends basePage {
     } else if (modalType === 'addUser') {
       // Logic to add user
       try {
-        const response = await fetch('/createUser', {
+        const response = await fetch('/api/createUser', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
@@ -102,7 +103,7 @@ class userManagement extends basePage {
       }
     } else if (modalType === 'deleteUser') {
       try {
-        const response = await fetch('/deleteUser', {
+        const response = await fetch('/api/deleteUser', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',

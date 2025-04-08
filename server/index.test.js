@@ -27,7 +27,7 @@ describe('Express server', function () {
   describe('GET /users nonauth', function () {
     it('should return a 401 status code', function (done) {
       chai.request(app)
-        .get('/users')
+        .get('/api/users')
         .set('Accept', 'application/json')
         .end(function (err, res) {
           assert.equal(res.status, 401)
@@ -41,7 +41,7 @@ describe('Express server', function () {
   describe('POST /login', function () {
     it('should return a 200 status code', function (done) {
       chai.request(app)
-        .post('/login')
+        .post('/api/login')
         .send({ username: 'admin', password: 'admin' })
         .set('Accept', 'application/json')
         .end(function (err, res) {

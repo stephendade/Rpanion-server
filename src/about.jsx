@@ -2,7 +2,7 @@ import React from 'react'
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 
-import basePage from './basePage.js'
+import basePage from './basePage.jsx'
 
 class AboutPage extends basePage {
   constructor (props, useSocketIO = true) {

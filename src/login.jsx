@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
+import React from 'react'
 
 import './css/styles.css';
 
@@ -18,7 +19,7 @@ export default function loginPage() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const response = await fetch('/login', {
+      const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

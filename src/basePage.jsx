@@ -5,7 +5,8 @@ import SocketIOFooter from './footerSocketIO';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Spinner from 'react-bootstrap/Spinner';
-import Login from './login.js'
+import React from 'react'
+import Login from './login.jsx'
 
 class basePage extends Component {
   constructor(props, useSocketIO = false) {
@@ -27,7 +28,7 @@ class basePage extends Component {
 
     //verify token, set to null if not valid
     if (this.state.token) {
-      fetch('/auth', {
+      fetch('/api/auth', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.state.token}`, // Include token in the Authorization header
