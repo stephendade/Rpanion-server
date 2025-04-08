@@ -3,6 +3,7 @@ const events = require('events')
 const path = require('path')
 const { spawn, spawnSync } = require('child_process')
 
+const { common } = require('node-mavlink')
 const mavManager = require('../mavlink/mavManager.js')
 const logpaths = require('./paths.js')
 const { detectSerialDevices, isModemManagerInstalled, isPi, getSerialPathFromValue } = require('./serialDetection.js')
@@ -76,6 +77,15 @@ class FCDetails {
 
     // mavlink-routerd path
     this.mavlinkRouterPath = null
+    
+    // Store vehicle position received via mavlink
+    this.vehiclePosition = {
+            lat: 0,
+            lon: 0,
+            alt: 0,       // MSL in meters
+            relAlt: 0,    // Relative to home/ground in meters
+            hdg: 0        // Heading in degrees
+    }
 
     // load settings
     this.settings = settings
@@ -249,7 +259,9 @@ class FCDetails {
         conStatus: this.m.conStatusStr(),
         statusText: this.m.statusText,
         byteRate: this.m.statusBytesPerSec.avgBytesSec,
-        fcVersion: this.m.fcVersion
+        fcVersion: this.m.fcVersion,
+        vehiclePosition: this.vehiclePosition
+
       }
     } else {
       return {
@@ -259,7 +271,8 @@ class FCDetails {
         conStatus: 'Not connected',
         statusText: '',
         byteRate: 0,
-        fcVersion: ''
+        fcVersion: '',
+        vehiclePosition: { lat: 0, lon: 0, alt: 0, relAlt: 0, hdg: 0 }
       }
     }
   }
@@ -424,6 +437,16 @@ class FCDetails {
       this.m.eventEmitter.on('gotMessage', (packet, data) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
+        if (packet.header.msgid === common.GlobalPositionInt.MSG_ID) {
+            // MAVLink sends lat/lon as int * 1E7, alt as mm, heading as cdeg
+            if (this.vehiclePosition) {
+                this.vehiclePosition.lat = data.lat / 10000000
+                this.vehiclePosition.lon = data.lon / 10000000
+                this.vehiclePosition.alt = data.alt / 1000
+                this.vehiclePosition.relAlt = data.relativeAlt / 1000
+                this.vehiclePosition.hdg = data.hdg / 100
+            }
+        }
         this.eventEmitter.emit('gotMessage', packet, data)
       })
     }

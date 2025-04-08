@@ -345,6 +345,13 @@ class FCPage extends basePage {
         <p>Connection Status: {this.state.FCStatus.conStatus}</p>
         <p>Vehicle Type: {this.state.FCStatus.vehType}</p>
         <p>Vehicle Firmware: {this.state.FCStatus.FW}{this.state.FCStatus.fcVersion === '' ? '' : (', Version: ' + this.state.FCStatus.fcVersion)}</p>
+        {this.state.FCStatus.vehiclePosition &&
+          <>
+            <p>Position: {this.state.FCStatus.vehiclePosition.lat.toFixed(7)}, {this.state.FCStatus.vehiclePosition.lon.toFixed(7)}</p>
+            <p>Altitude: {this.state.FCStatus.vehiclePosition.relAlt.toFixed(2)}m (Rel) / {this.state.FCStatus.vehiclePosition.alt.toFixed(2)}m (MSL)</p>
+            <p>Heading: {this.state.FCStatus.vehiclePosition.hdg.toFixed(0)}°</p>
+          </>
+        }
         <label>Console Output:
           <textarea readOnly rows="5" cols="50" value={this.state.FCStatus.statusText}></textarea>
         </label>
