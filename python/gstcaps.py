@@ -213,10 +213,18 @@ for device in devices:
                     fps = []
                     if framerates:
                         for i in range(framerates.n_values):
-                            fp = str(framerates.get_nth(i)).split('/')
-                            if int(fp[1]) == 1:
-                                fps.append({'value': str(int(fp[0])/int(fp[1])), 'label': (str(int(fp[0])/int(fp[1])) + " fps")})
-                            #print(' - framerate = ', framerates.get_nth(i))
+                            try:
+                                frac = framerates.get_nth(i)
+                                numerator = int(frac.numerator)
+                                denominator = int(frac.denominator)
+                                if denominator == 1:
+                                    fps.append({'value': str(int(numerator/denominator)), 'label': (str(int(numerator/denominator)) + " fps")})
+                                else:
+                                    fps_val = numerator / denominator
+                                    fps.append({'value': str(fps_val), 'label': (str(fps_val) + " fps")})
+                            except (AttributeError, TypeError, ValueError, ZeroDivisionError):
+                                # Skip framerates that can't be parsed
+                                pass
                     else:
                         fps.append({'value': "-1", 'label': "N/A"})
 
