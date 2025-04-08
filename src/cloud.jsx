@@ -1,7 +1,8 @@
 import Button from 'react-bootstrap/Button'
 import Form from 'react-bootstrap/Form'
+import React from 'react'
 
-import basePage from './basePage.js'
+import basePage from './basePage.jsx'
 
 import './css/styles.css'
 

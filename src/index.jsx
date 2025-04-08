@@ -1,5 +1,6 @@
 import { BrowserRouter } from 'react-router-dom'
 import { createRoot } from 'react-dom/client'
+import React from 'react'
 
 import 'bootstrap/dist/css/bootstrap.css'
 import 'startbootstrap-simple-sidebar/dist/css/styles.css'

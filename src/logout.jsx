@@ -1,5 +1,6 @@
 import Button from 'react-bootstrap/Button';
-import basePage from './basePage.js'
+import basePage from './basePage.jsx'
+import React from 'react'
 
 import './css/styles.css';
 
@@ -22,7 +23,7 @@ class logoutPage extends basePage {
     handleSubmit = async e => {
       e.preventDefault();
       try {
-        const response = await fetch('/logout', {
+        const response = await fetch('/api/logout', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

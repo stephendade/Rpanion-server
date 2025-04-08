@@ -1,4 +1,5 @@
-import basePage from './basePage.js'
+import React from 'react'
+import basePage from './basePage.jsx'
 
 class Home extends basePage {
   constructor (props) {

@@ -163,10 +163,10 @@ app.use(bodyParser.json())
 app.use(express.static(path.join(__dirname, '..', '/build')))
 
 // User login
-app.post('/login', [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+app.post('/api/login', [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.info('Bad POST vars in /login', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/login', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   // Capture the input fields
@@ -189,17 +189,17 @@ app.post('/login', [check('username').escape().isLength({ min: 2, max:20 }), che
 })
 
 // List all users
-app.get('/users', authenticateToken, (req, res) => {
+app.get('/api/users', authenticateToken, (req, res) => {
   userMgmt.getAllUsers().then((users) => {
     res.send(JSON.stringify({users: users}))
   })
 })
 
 // Update existing user password
-app.post('/updateUserPassword', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+app.post('/api/updateUserPassword', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.info('Bad POST vars in /updateUserPassword', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/updateUserPassword', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   const { username, password } = req.body;
@@ -221,10 +221,10 @@ app.post('/updateUserPassword', authenticateToken, [check('username').escape().i
 })
 
 // Create new user
-app.post('/createUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
+app.post('/api/createUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 }), check('password').escape().isLength({ min: 2, max:20 })], async (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.info('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/logout', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   const { username, password } = req.body
@@ -243,10 +243,10 @@ app.post('/createUser', authenticateToken, [check('username').escape().isLength(
 })
 
 // Delete a user
-app.post('/deleteUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 })], (req, res) => {
+app.post('/api/deleteUser', authenticateToken, [check('username').escape().isLength({ min: 2, max:20 })], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
-    winston.info('Bad POST vars in /logout', { message: JSON.stringify(errors.array()) })
+    winston.info('Bad POST vars in /api/logout', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
   const { username } = req.body
@@ -265,7 +265,7 @@ app.post('/deleteUser', authenticateToken, [check('username').escape().isLength(
 })
 
 // User logout
-app.post('/logout', authenticateToken, async (req, res) => {
+app.post('/api/logout', authenticateToken, async (req, res) => {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
 
@@ -278,7 +278,7 @@ app.post('/logout', authenticateToken, async (req, res) => {
 })
 
 // Simple token authentication call
-app.post('/auth', authenticateToken, async (req, res) => {
+app.post('/api/auth', authenticateToken, async (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({error: null}))
 })

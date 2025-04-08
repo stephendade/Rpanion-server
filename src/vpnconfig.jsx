@@ -2,7 +2,8 @@ import Button from 'react-bootstrap/Button'
 import Select from 'react-select'
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
-import basePage from './basePage.js'
+import React from 'react'
+import basePage from './basePage.jsx'
 
 class VPNPage extends basePage {
   constructor (props) {
