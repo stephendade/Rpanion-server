@@ -1,5 +1,4 @@
 import { Component} from 'react';
-import { Helmet } from 'react-helmet'
 import io from 'socket.io-client';
 import SocketIOFooter from './footerSocketIO';
 import Modal from 'react-bootstrap/Modal';
@@ -102,9 +101,7 @@ class basePage extends Component {
     if(!this.state.token) {
       return (
         <div>
-          <Helmet>
-            <title>{this.renderTitle()}</title>
-          </Helmet>
+          <title>{this.renderTitle()}</title>
           <h1>{this.renderTitle()}</h1>
           <div className='pagedetails' style={{ display: (this.state.loading) ? "none" : "block" }}>
             <Login />
@@ -114,9 +111,7 @@ class basePage extends Component {
     } else {
       return (
         <div>
-          <Helmet>
-            <title>{this.renderTitle()}</title>
-          </Helmet>
+          <title>{this.renderTitle()}</title>
           <h1>{this.renderTitle()}</h1>
           <div style={{ display: (this.state.loading) ? "block" : "none" }}>
             <Spinner animation="border" role="status" >
