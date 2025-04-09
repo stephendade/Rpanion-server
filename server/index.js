@@ -1076,11 +1076,6 @@ app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype
   console.log(req.body)
 })
 
-// Handles any requests that don't match the ones above (ie pass to react app)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '/build/index.html'))
-})
-
 const port = process.env.PORT || 3001
 http.listen(port, () => {
   console.log('Express server is running on localhost:' + port)
