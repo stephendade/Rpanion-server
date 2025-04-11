@@ -54,7 +54,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg) => {
-      msg.should.eql(Buffer.from([0xfd, 0x21, 0x00, 0x00, 0x00, 0x00, 0xBF, 0x4c, 0x00, 0x00, 0x00, 0x00, 0x14, 0x43, 0x00, 0x00, 0x00, 0x00,
+      assert.deepStrictEqual(msg, Buffer.from([0xfd, 0x21, 0x00, 0x00, 0x00, 0x00, 0xBF, 0x4c, 0x00, 0x00, 0x00, 0x00, 0x14, 0x43, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
         0x00, 0x00, 0x01, 0xbf, 0x5b]))
       assert.equal(m.statusBytesPerSec.bytes, 2)
@@ -79,7 +79,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg) => {
-      msg.should.eql(Buffer.from([253, 6, 0, 0, 0, 0, 191, 66, 0, 0, 4, 0, 0, 0, 0, 1, 171, 220]))
+      assert.deepStrictEqual(msg, Buffer.from([253, 6, 0, 0, 0, 0, 191, 66, 0, 0, 4, 0, 0, 0, 0, 1, 171, 220]))
       m.close()
       udpStream.close()
       done()
@@ -101,7 +101,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg) => {
-      msg.should.eql(Buffer.from([253, 33, 0, 0, 0, 0, 191, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 0, 0, 0, 1, 187, 227]))
+      assert.deepStrictEqual(msg, Buffer.from([253, 33, 0, 0, 0, 0, 191, 76, 0, 0, 0, 0, 128, 63, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 246, 0, 0, 0, 1, 187, 227]))
       m.close()
       udpStream.close()
       done()
@@ -123,7 +123,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg) => {
-      msg.should.eql(Buffer.from([253, 9, 0, 0, 0, 0, 191, 0, 0, 0, 0, 0, 0, 0, 18, 8, 0, 0, 2, 61, 244 ]))
+      assert.deepStrictEqual(msg, Buffer.from([253, 9, 0, 0, 0, 0, 191, 0, 0, 0, 0, 0, 0, 0, 18, 8, 0, 0, 2, 61, 244 ]))
       m.close()
       udpStream.close()
       done()
@@ -145,7 +145,7 @@ describe('MAVLink Functions', function () {
     })
 
     udpStream.on('message', (msg) => {
-      msg.should.eql(Buffer.from([253, 9, 0, 0, 0, 0, 191, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 197, 27]))
+      assert.deepStrictEqual(msg, Buffer.from([253, 9, 0, 0, 0, 0, 191, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 197, 27]))
       m.close()
       udpStream.close()
       done()

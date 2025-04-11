@@ -1076,11 +1076,13 @@ app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype
   console.log(req.body)
 })
 
-const port = process.env.PORT || 3001
-http.listen(port, () => {
-  console.log('Express server is running on localhost:' + port)
-  winston.info('Express server is running on localhost:' + port)
-})
+module.exports = app;
 
-// Export the app instance for testing purposes
-module.exports = app
+// Only start the server if this file is being run directly (not imported)
+if (require.main === module) {
+  const port = process.env.PORT || 3001;
+  http.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    winston.info(`Server running on port ${port}`);
+  });
+}
