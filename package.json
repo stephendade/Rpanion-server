@@ -20,7 +20,7 @@
     "react": "^19.1.0",
     "react-bootstrap": "^2.8.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.5.0",
+    "react-router-dom": "^7.5.2",
     "react-select": "^5.7.4",
     "rsync": "^0.6.1",
     "serialport": "^13.0.0",
