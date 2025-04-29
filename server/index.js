@@ -287,6 +287,10 @@ app.post('/api/auth', authenticateToken, async (req, res) => {
 function authenticateToken(req, res, next) {
   let authHeader = null
   let token = null
+  // Skip authentication in development mode
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
   try {
     authHeader = req.headers['authorization']
     token = authHeader && authHeader.split(' ')[1]
