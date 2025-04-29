@@ -268,6 +268,9 @@ Run both applications together with the command:
 npm run dev
 ```
 
+It is important to *only* use ``npm run dev`` during development, as it will skip
+the user login and authentication checks.
+
 At this point, the website will be active at ``http://<ip of device>:3000``
 
 ## Default username and password

@@ -46,7 +46,7 @@
     "lint": "eslint .",
     "server": "node-env-run server --exec nodemon | pino-colada",
     "service": "node ./server/index.js",
-    "dev": "run-p server start",
+    "dev": "NODE_ENV=development run-p server start",
     "preview": "vite preview"
   },
   "proxy": "http://localhost:3001",
