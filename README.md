@@ -31,6 +31,12 @@ On the [Libre Computer Le Potato](https://libre.computer/products/aml-s905x-cc/)
 > [!NOTE]
 > Some users may have issues connecting to the UART on the Raspberry Pi 3B+. Further details and configuration fixes are at https://github.com/stephendade/Rpanion-server/issues/215#issuecomment-2049058406.
 
+> [!NOTE]
+> For the Raspberry Pi CM4, Wifi AP performance is typically poor when using the
+> internal antenna. It is recommended to use an external antenna. Additionally
+> any CSI cameras will not be autodetected. See [here](https://forums.raspberrypi.com/viewtopic.php?t=352540) for more details.
+
+
 ## Features
 
 Rpanion-server allows the user to configure:
