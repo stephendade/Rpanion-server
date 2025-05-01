@@ -92,22 +92,9 @@ def convert_tlog_files():
     return passed
 
 
-def do_log(text):
-    try:
-        file_object = open('logs/tlog2kmz.py.log', 'a')
-        file_object.write(text)
-        file_object.write('\n')
-        file_object.close()
-    except Exception as e:                                
-        print("[tlog2kmz.py] Unable to log: ", e)
-        pass
-
-
 starttime = timeit.default_timer()
 print("[tlog2kmz.py] Starting:", starttime)
-do_log("[tlog2kmz.py] Starting: {now}".format(now=(datetime.now())))
 
 run_result = convert_tlog_files()
 
 print("[tlog2kmz.py] Passed = {passed} | Time = {time} seconds | now = {now}".format(passed=run_result, time=(timeit.default_timer() - starttime), now=(datetime.now())))
-do_log("[tlog2kmz.py] Passed = {passed} | Time = {time} seconds | now = {now}".format(passed=run_result, time=(timeit.default_timer() - starttime), now=(datetime.now())))
