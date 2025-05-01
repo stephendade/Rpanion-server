@@ -106,7 +106,6 @@ class AboutPage extends basePage {
         <p>OS version: {this.state.OSVersion}</p>
         <p>Node.js version: {this.state.Nodejsversion}</p>
         <p>Rpanion-server version: {this.state.rpanionversion}</p>
-        <p><a href='./rplogs/app.log' download>Download Rpanion-server logfile</a></p>
         <h2>Controls</h2>
         <p><Button size="sm" onClick={this.handleUpdateMaster}>Upgrade to lastest Github master</Button></p>
         <p><Button size="sm" onClick={this.confirmShutdown}>Shutdown Companion Computer</Button></p>

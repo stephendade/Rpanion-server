@@ -1,5 +1,4 @@
 const { exec, execSync, execFile } = require('child_process')
-const winston = require('./winstonconfig')(module)
 
 function getAdapters (callback) {
   // Get all network adapter name, type and states
@@ -7,14 +6,12 @@ function getAdapters (callback) {
     const netStatusList = []
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in getAdapters() ', { message: stderr })
       return callback(stderr)
     } else {
       stdout.split('\n').forEach(function (item) {
         const device = item.split(':')
         if (device.length === 3 && device[1] !== 'loopback' && device[1] !== 'bridge' && device[1] !== 'wifi-p2p' && device[1] !== 'can0' && device[1] !== 'can1') {
           console.log('Adding Network device ' + device[0])
-          winston.info('getAdapters() adding ' + device)
           // if wifi, check for avail channels
           const freqList = []
           freqList.push({ value: 0, freq: 0, text: 'auto', band: 0 })
@@ -32,7 +29,6 @@ function getAdapters (callback) {
               }
             } catch (e) {
               console.error('exec error: ' + e)
-              winston.info('Error in getAdapters() ', { message: e })
               return callback(e)
             }
           }
@@ -49,7 +45,6 @@ function getWirelessStatus (callback) {
   exec('nmcli -t radio wifi', (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in getWirelessStatus() ', { message: stderr })
       return callback(stderr)
     } else {
       console.log('Wifi is ' + stdout)
@@ -66,7 +61,6 @@ function setWirelessStatus (status, callback) {
   exec('nmcli radio wifi ' + ((status === true) ? 'on' : 'off') + ' && nmcli -t radio wifi', (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in setWirelessStatus() ', { message: stderr })
       return callback(stderr)
     } else {
       if (stdout === 'enabled\n') {
@@ -84,17 +78,14 @@ function activateConnection (conName, callback) {
   execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'connection.autoconnect', 'yes'], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in getAdapters() ', { message: stderr })
       return callback(stderr)
     } else {
       execFile('sudo', ['nmcli', 'connection', 'up', conName], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
-          winston.info('Error in getAdapters() ', { message: stderr })
           return callback(stderr)
         } else {
           console.log('Activated network: ' + conName)
-          winston.info('activateConnection()' + conName)
           return callback(null, 'OK')
         }
       })
@@ -109,17 +100,14 @@ function deactivateConnection (conName, callback) {
   execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'connection.autoconnect', 'no'], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in deactivateConnection() ', { message: stderr })
       return callback(stderr)
     } else {
       execFile('sudo', ['nmcli', 'connection', 'down', conName], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
-          winston.info('Error in deactivateConnection() ', { message: stderr })
           return callback(stderr)
         } else {
           console.log('Dectivated network: ' + conName)
-          winston.info('deactivateConnection()' + conName)
           return callback(null, 'OK')
         }
       })
@@ -194,22 +182,20 @@ function addConnection (conNameStr, conType, conAdapter, conSettings, callback) 
              'nmcli -g connection.uuid con show ' + conNameStr, (error, stdout, stderr) => {
       if (stderr) {
         console.error(`exec error: ${error}`)
-        winston.info('Error in addConnection() wifi ', { message: stderr })
         return callback(stderr)
       } else {
         // once the network is created, add in the settings
         const conUUID = stdout.split('\n')[stdout.split('\n').length - 2]
         console.log('Added network Wifi: ' + conNameStr + ' - ' + conAdapter + ' - ' + conUUID)
-        winston.info('addConnection() wifi ' + conNameStr + ' - ' + conAdapter + ' - ' + conUUID)
         this.editConnection(conUUID, conSettings, (err) => {
           // set autoconnect back to "yes"
           exec('sudo nmcli connection mod ' + conUUID + ' connection.autoconnect yes', (error, stdout, stderr) => {
             if (!err && !stderr) {
-              winston.info('addConnection() wifi OK')
+              console.log('addConnection() wifi OK')
               return callback(null, 'AddOK')
             } else {
-              winston.info('Error in editConnection() wifi addcon ', { message: err })
-              winston.info('Error in editConnection() wifi addcon ', { message: stderr })
+              console.log('Error in editConnection() wifi addcon ', { message: err })
+              console.log('Error in editConnection() wifi addcon ', { message: stderr })
               return callback(err)
             }
           })
@@ -222,22 +208,20 @@ function addConnection (conNameStr, conType, conAdapter, conSettings, callback) 
              'nmcli -g connection.uuid con show ' + conNameStr, (error, stdout, stderr) => {
       if (stderr) {
         console.error(`exec error: ${error}`)
-        winston.info('Error in addConnection() nowifi ', { message: stderr })
         return callback(stderr)
       } else {
         // once the network is created, add in the settings
         const conUUID = stdout.split('\n')[stdout.split('\n').length - 2]
         console.log('Added network Wired: ' + conNameStr + ' - ' + conAdapter + ' - ' + conUUID)
-        winston.info('addConnection() wired ' + conNameStr + ' - ' + conAdapter + ' - ' + conUUID)
         this.editConnection(conUUID, conSettings, (err) => {
           // set autoconnect back to "yes"
           exec('sudo nmcli connection mod ' + conUUID + ' connection.autoconnect yes', (error, stdout, stderr) => {
             if (!err && !stderr) {
-              winston.info('addConnection() wired OK')
+              console.log('addConnection() wired OK')
               return callback(null, 'AddOK')
             } else {
-              winston.info('Error in editConnection() wired addcon ', { message: err })
-              winston.info('Error in editConnection() wired addcon ', { message: stderr })
+              console.log('Error in editConnection() wired addcon ', { message: err })
+              console.log('Error in editConnection() wired addcon ', { message: stderr })
               return callback(err)
             }
           })
@@ -271,17 +255,17 @@ function editConnection (conName, conSettings, callback) {
                 }
               })
             } else {
-              winston.info('Error in editConnection() errPSK ', { message: errPSK })
+              console.log('Error in editConnection() errPSK ', { message: errPSK })
               return callback(errPSK)
             }
           })
         } else {
-          winston.info('Error in editConnection() errIP ', { message: errIP })
+          console.log('Error in editConnection() errIP ', { message: errIP })
           return callback(errIP)
         }
       })
     } else {
-      winston.info('Error in editConnection() errAttach ', { message: errAttach })
+      console.log('Error in editConnection() errAttach ', { message: errAttach })
       return callback(errAttach)
     }
   })
@@ -299,7 +283,6 @@ function editConnectionAttached (conName, conSettings, callback) {
       return callback(stderr)
     } else {
       console.log('Edited network Attachment: ' + conName + ' to ' + conSettings.attachedIface.value)
-      winston.info('editConnectionAttached() ' + conName + ' to ' + conSettings.attachedIface.value)
       return callback(null, 'EditAttachOK')
     }
   })
@@ -315,7 +298,6 @@ function editConnectionIP (conName, conSettings, callback) {
           return callback(stderr)
         } else {
           console.log('Edited network IP Auto: ' + conName)
-          winston.info('editConnectionIP() Auto: ' + conName)
           return callback(null, 'EditOK')
         }
       })
@@ -327,13 +309,12 @@ function editConnectionIP (conName, conSettings, callback) {
           return callback(stderr)
         } else {
           console.log('Edited network IP manual: ' + conName)
-          winston.info('editConnectionIP() manual: ' + conName + ', ' + conSettings.ipaddress.value + ', ' + conSettings.ipaddresstype.value)
           return callback(null, 'EditOK')
         }
       })
     }
   } else {
-    winston.info('editConnectionIP() not required')
+    console.log('editConnectionIP() not required')
     return callback(null, 'EditNotRequired')
   }
 }
@@ -358,7 +339,6 @@ function editConnectionPSK (conName, conSettings, callback) {
               console.error(`exec error: ${error}`)
               return callback(stderr)
             } else {
-              winston.info('editConnectionPSK() edited psk ' + conName + ', ' + conSettings.wpaType.value)
               console.log('Edited Wifi psk: ' + conName)
               return callback(null, 'OK')
             }
@@ -373,14 +353,13 @@ function editConnectionPSK (conName, conSettings, callback) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
         } else {
-          winston.info('editConnectionPSK() edited no-psk ' + conName + ', ' + conSettings.wpaType.value)
           console.log('Edited Wifi no-psk: ' + conName)
           return callback(null, 'OK')
         }
       })
     }
   } else {
-    winston.info('editConnectionPSK() not required')
+    console.log('editConnectionPSK() not required')
     return callback(null, 'EditNotRequired')
   }
 }
@@ -406,10 +385,8 @@ function editConnectionAPClient (conName, conSettings, callback) {
       execFile('sudo', cmds, (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
-          winston.info('Error in editConnectionAPClient() ', { message: stderr })
           return callback(stderr)
         } else {
-          winston.info('editConnectionAPClient() edited ssid/band: ' + conName + ', ' + conSettings.ssid.value + ', ' + conSettings.ipaddress.value)
           console.log('Edited Wifi ap ssid/band: ' + conName)
           return callback(null, 'OK')
         }
@@ -417,8 +394,6 @@ function editConnectionAPClient (conName, conSettings, callback) {
     } else {
       console.log('Badsettings in editConnectionAPClient')
       console.log(conSettings)
-      winston.info('Badsettings in editConnectionAPClient')
-      winston.info(conSettings)
       return callback(null, 'BADARGS')
     }
   } else {
@@ -427,10 +402,8 @@ function editConnectionAPClient (conName, conSettings, callback) {
       execFile('sudo', ['nmcli', 'connection', 'mod', conName, '802-11-wireless.ssid', conSettings.ssid.value], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
-          winston.info('Error in editConnectionAPClient() ', { message: stderr })
           return callback(stderr)
         } else {
-          winston.info('editConnectionAPClient() edited ssid: ' + conName + ', ' + conSettings.ssid.value)
           console.log('Edited Wifi client ssid: ' + conName)
           return callback(null, 'OK')
         }
@@ -438,8 +411,6 @@ function editConnectionAPClient (conName, conSettings, callback) {
     } else {
       console.log('Badsettings in editConnectionAPClient')
       console.log(conSettings)
-      winston.info('Badsettings in editConnectionAPClient')
-      winston.info(conSettings)
       return callback(null, 'BADARGS')
     }
   }
@@ -451,11 +422,9 @@ function deleteConnection (conName, callback) {
   execFile('sudo', ['nmcli', 'connection', 'delete', conName], (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in deleteConnection() ', { message: stderr })
       return callback(stderr)
     } else {
       console.log('Deleted network: ' + conName)
-      winston.info('deleteConnection() del: ' + conName)
       return callback(null, 'OK')
     }
   })
@@ -468,7 +437,6 @@ function getConnections (callback) {
     output = execSync('nmcli -t -f NAME,UUID,TYPE,DEVICE connection show')
   } catch (e) {
     console.error('exec error: ' + e)
-    winston.info('Error in getConnections() ', { message: e })
     return callback(e)
   }
 
@@ -483,7 +451,6 @@ function getConnections (callback) {
         subout = execSync('nmcli -s -t -f connection.interface-name connection show ' + connection[1])
         subout = subout.toString().split(':')[1].trim()
       } catch (e) {
-        winston.info('Error in getConnections2() ', { message: e })
         console.error('exec error: ' + e)
         // return callback("");
       }
@@ -498,7 +465,7 @@ function getConnections (callback) {
     }
     // if we're at the end, return callback
     if (i === allConns.length - 1) {
-      winston.info('getConnections() got: ' + allConns.length)
+      console.log('getConnections() got: ' + allConns.length)
       return callback(null, conStatusList)
     }
   }
@@ -509,7 +476,6 @@ function getConnectionDetails (conName, callback) {
     if (stderr) {
       // no connection with that name
       console.error(`exec error: ${error}`)
-      winston.info('Error in getConnectionDetails() ', { message: stderr })
       return callback(stderr)
     } else {
       const ret = { DHCP: 'auto', IP: '', subnet: '', mode: '', wpaType: 'none', password: '' }
@@ -574,7 +540,7 @@ function netmask2CIDR (mask) {
   }
   // Condition to check for validity of the netmask
   if (cidr.substring(cidr.search('0'), 32).search('1') !== -1) {
-    winston.info('Error in netmask2CIDR() ', { message: mask })
+    console.log('Error in netmask2CIDR() ', { message: mask })
     throw 'ERROR: Invalid Netmask ' + mask
   }
   return cidr.split('1').length - 1

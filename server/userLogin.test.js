@@ -1,7 +1,6 @@
 const assert = require('assert')
 const path = require('path')
 const userLogin = require('./userLogin.js')
-const winston = require('./winstonconfig')(module)
 const fs = require('fs')
 
 describe('User Login Functions', function () {
@@ -18,14 +17,14 @@ describe('User Login Functions', function () {
   })
 
   it('#logininit()', function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
 
     // check initial status
     assert.equal(userMgmt.usersFile, path.join(__dirname, '..', 'user.json'))
   })
 
   it('#checkLoginDetails()', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
         
     // check initial status
     const result = await userMgmt.checkLoginDetails('admin', 'admin')
@@ -33,7 +32,7 @@ describe('User Login Functions', function () {
   })
 
   it('#getAllUsers()', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                 
     // check initial status
     const result = await userMgmt.getAllUsers()
@@ -41,7 +40,7 @@ describe('User Login Functions', function () {
   })
 
   it('#addUser()', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                 
     // check initial status
     const result = await userMgmt.addUser('test', 'test')
@@ -49,7 +48,7 @@ describe('User Login Functions', function () {
   })
 
   it('#deleteUser()', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                         
     // check initial status
     const result = await userMgmt.deleteUser('test')
@@ -57,7 +56,7 @@ describe('User Login Functions', function () {
   })
 
   it('#changePassword()', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                                         
     // check initial status
     const result = await userMgmt.changePassword('admin', 'admin')
@@ -65,7 +64,7 @@ describe('User Login Functions', function () {
   })
 
   it('#changePassword() - invalid user', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                                                         
     // check initial status
     const result = await userMgmt.changePassword('test', 'test')
@@ -73,7 +72,7 @@ describe('User Login Functions', function () {
   })
 
   it('#changePassword() - invalid password', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                                                                         
     // check initial status
     const result = await userMgmt.changePassword('admin', '')
@@ -81,7 +80,7 @@ describe('User Login Functions', function () {
   })
 
   it('#changePassword() - invalid user and password', async function () {
-    const userMgmt = new userLogin(winston)
+    const userMgmt = new userLogin()
                                                                                         
     // check initial status
     const result = await userMgmt.changePassword('test', 'test')

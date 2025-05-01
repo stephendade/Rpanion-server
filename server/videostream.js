@@ -5,15 +5,13 @@ const events = require('events')
 const { minimal, common } = require('node-mavlink')
 
 class videoStream {
-  constructor (settings, winston) {
+  constructor (settings) {
     this.active = false
     this.deviceStream = null
     this.deviceAddresses = []
     this.devices = null
     this.settings = settings
     this.savedDevice = null
-
-    this.winston = winston
 
     // For sending events outside of object
     this.eventEmitter = new events.EventEmitter()
@@ -70,14 +68,11 @@ class videoStream {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
       if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
         console.error(`exec error: ${error}`)
-        this.winston.info('Error in getVideoDevices() ', { message: stderr })
         return callback(stderr)
       } else {
         console.log(stdout)
-        this.winston.info(stdout)
         this.devices = JSON.parse(stdout)
         console.log(this.devices)
-        this.winston.info(this.devices)
         const fpsSelected = ((this.devices.length > 0) ? (this.devices[0].caps[0].fpsmax === 0 ? this.devices[0].caps[0].fps[0] : this.devices[0].caps[0].fpsmax) : 1)
         // and return current settings
         if (!this.active) {
@@ -91,7 +86,6 @@ class videoStream {
           if (seldevice.length !== 1) {
             // bad settings
             console.error('Bad video settings1 Resetting')
-            this.winston.info('Bad video settings. Resetting ', { message: this.savedDevice })
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
@@ -114,7 +108,6 @@ class videoStream {
           } else {
             // bad settings
             console.error('Bad video settings. Resetting' + seldevice + ', ' + selRes)
-            this.winston.info('Bad video settings. Resetting ', { message: JSON.stringify(this.savedDevice) })
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
               { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
@@ -135,10 +128,8 @@ class videoStream {
       this.settings.setValue('videostream.savedDevice', this.savedDevice)
     } catch (e) {
       console.log(e)
-      this.winston.info(e)
     }
     console.log('Reset Video Settings')
-    this.winston.info('Reset Video Settings')
   }
 
   scanInterfaces () {
@@ -168,7 +159,6 @@ class videoStream {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
-      this.winston.info('Video current same')
       return callback(null, this.active, this.deviceAddresses)
     }
     // user wants to start or stop streaming
@@ -183,12 +173,10 @@ class videoStream {
         }
         if (!found) {
           console.log('No video device: ' + device)
-          this.winston.info('No video device: ' + device)
           return callback(new Error('No video device: ' + device))
         }
       } else {
         console.log('No video devices in list')
-        this.winston.info('No video devices in list')
       }
 
       this.active = true
@@ -240,29 +228,24 @@ class videoStream {
         if (this.deviceStream === null) {
           this.settings.setValue('videostream.active', false)
           console.log('Error spawning rtsp-server.py')
-          this.winston.info('Error spawning rtsp-server.py')
           return callback(null, this.active, this.deviceAddresses)
         }
         this.settings.setValue('videostream.active', this.active)
         this.settings.setValue('videostream.savedDevice', this.savedDevice)
       } catch (e) {
         console.log(e)
-        this.winston.info(e)
       }
 
       this.deviceStream.stdout.on('data', (data) => {
-        this.winston.info('startStopStreaming() data ' + data)
         console.log(`GST stdout: ${data}`)
       })
 
       this.deviceStream.stderr.on('data', (data) => {
-        this.winston.info('startStopStreaming() err ', { message: data })
         console.error(`GST stderr: ${data}`)
       })
 
       this.deviceStream.on('close', (code) => {
         console.log(`GST process exited with code ${code}`)
-        this.winston.info('startStopStreaming() close ' + code)
         this.deviceStream.stdin.pause()
         this.deviceStream.kill()
         this.resetVideo()
@@ -273,7 +256,6 @@ class videoStream {
       }
 
       console.log('Started Video Streaming of ' + device)
-      this.winston.info('Started Video Streaming of ' + device)
 
       return callback(null, this.active, this.deviceAddresses)
     } else {
@@ -296,7 +278,6 @@ class videoStream {
     const data = await si.osInfo()
     if (data.distro.toString().includes('Ubuntu')) {
       console.log('Video Running Ubuntu')
-      this.winston.info('Video Running Ubuntu')
       ret = true
     } else {
       ret = false
@@ -325,7 +306,6 @@ class videoStream {
       packet.header.msgid === common.CommandLong.MSG_ID &&
       data._param1 === common.CameraInformation.MSG_ID) {
       console.log('Responding to MAVLink request for CameraInformation')
-      this.winston.info('Responding to MAVLink request for CameraInformation')
 
       const senderSysId = packet.header.sysid
       const senderCompId = minimal.MavComponent.CAMERA
@@ -357,7 +337,6 @@ class videoStream {
       data._param1 === common.VideoStreamInformation.MSG_ID) {
 
       console.log('Responding to MAVLink request for VideoStreamInformation')
-      this.winston.info('Responding to MAVLink request for VideoStreamInformation')
 
       const senderSysId = packet.header.sysid
       const senderCompId = minimal.MavComponent.CAMERA

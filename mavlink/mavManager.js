@@ -1,7 +1,6 @@
 // Mavlink Manager
 const events = require('events')
 const udp = require('dgram')
-const winston = require('../server/winstonconfig')(module)
 const { MavLinkPacketSplitter, MavLinkPacketParser, MavLinkProtocolV2, minimal, common, ardupilotmega, MavLinkProtocolV1 } = require('node-mavlink')
 const { PassThrough } = require('stream')
 
@@ -95,7 +94,6 @@ class mavManager {
       if (this.targetSystem === null && packet.header.msgid === minimal.Heartbeat.MSG_ID && data.type !== 6
         && data.type !== 18 && data.type !== 27) {
         console.log('Vehicle is S/C: ' + packet.header.sysid + '/' + packet.header.compid)
-        winston.info('Vehicle is S/C: ' + packet.header.sysid + '/' + packet.header.compid)
         this.targetSystem = packet.header.sysid
         this.targetComponent = packet.header.compid
 
@@ -132,12 +130,10 @@ class mavManager {
         // arming status
         if ((data.baseMode & 128) !== 0 && this.statusArmed === 0) {
           console.log('Vehicle ARMED')
-          winston.info('Vehicle ARMED')
           this.statusArmed = 1
           this.eventEmitter.emit('armed')
         } else if ((data.baseMode & 128) === 0 && this.statusArmed === 1) {
           console.log('Vehicle DISARMED')
-          winston.info('Vehicle DISARMED')
           this.statusArmed = 0
           this.eventEmitter.emit('disarmed')
         }
@@ -148,7 +144,6 @@ class mavManager {
         // decode Ardupilot version
         this.fcVersion = this.decodeFlightSwVersion(data.flightSwVersion)
         console.log(this.fcVersion)
-        winston.info(this.fcVersion)
       }
     })
   }

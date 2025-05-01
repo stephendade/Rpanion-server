@@ -1,7 +1,6 @@
 const process = require('process')
 const { exec, spawn, execSync } = require('child_process')
 const si = require('systeminformation')
-const winston = require('./winstonconfig')(module)
 
 function getSoftwareInfo (callback) {
   // get the OS, Node.js and Rpanion-server versions
@@ -26,40 +25,32 @@ function getDiskInfo (callback) {
 /*function rebootCC () {
   // reboot the companion computer
   console.log('Reboot now')
-  winston.info('Reboot now')
   exec('sudo reboot', function (error, stdout, stderr) {
     if (error) {
       console.log(error)
-      winston.info(error)
     }
     console.log(stdout)
-    winston.info(stdout)
   })
 }*/
 
 function shutdownCC () {
   // shutdown the companion computer
   console.log('Shutting down')
-  winston.info('Shutting down')
   exec('sudo shutdown now', function (error, stdout) {
     if (error) {
       console.log(error)
-      winston.info(error)
     }
     console.log(stdout)
-    winston.info(stdout)
   })
 }
 
 function updateRS (io) {
   // update Rpanion-server
   console.log('Upgrading')
-  winston.info('Upgrading')
   io.sockets.emit('upgradeStatus', 'InProgress')
   const ug = spawn('bash', ['./deploy/upgrade.sh'], { shell: true })
   ug.stdout.on('data', function (data) {
     console.log('stdout: ' + data.toString())
-    winston.info('stdout: ' + data.toString())
     io.sockets.emit('upgradeText', data.toString())
     io.sockets.emit('upgradeStatus', 'InProgress')
     if (data.toString().trim() === '---Upgrade Complete---') {
@@ -69,7 +60,6 @@ function updateRS (io) {
 
   ug.stderr.on('data', function (data) {
     console.log('Upgrade fail: ' + data.toString())
-    winston.info('Upgrade fail: ' + data.toString())
     io.sockets.emit('upgradeText', data.toString())
     io.sockets.emit('upgradeStatus', 'InProgress')
     if (data.toString().trim() === '---Upgrade Complete---') {
@@ -79,7 +69,6 @@ function updateRS (io) {
 
   ug.on('exit', function (code) {
     console.log('Upgrade complete: ' + code.toString())
-    winston.info('Upgrade complete: ' + code.toString())
     io.sockets.emit('upgradeText', '---Upgrade Complete (' + code.toString() + ')---')
     io.sockets.emit('upgradeStatus', 'Complete')
   })

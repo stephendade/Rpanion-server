@@ -1,7 +1,6 @@
 const spawn = require('child_process').spawn
 const path = require('path')
 const appRoot = require('app-root-path')
-const winston = require('./winstonconfig')(module)
 
 class logConverter {
   constructor (settings) {
@@ -38,7 +37,6 @@ class logConverter {
           })
         } catch (error) {
           console.error(error)
-          winston.info(error.stack)
         }
       }
     }, this.options.interval * 1000)
@@ -63,10 +61,8 @@ class logConverter {
     try {
       this.settings.setValue('logConverter.doLogConversion', this.options.doLogConversion)
       console.log('Saved Log Converter settings')
-      winston.info('Saved Log Converter settings')
     } catch (e) {
       console.log(e)
-      winston.info(e)
     }
   }
 

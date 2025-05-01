@@ -29,11 +29,9 @@ function isPi () {
 }
 
 class FCDetails {
-  constructor (settings, winston) {
+  constructor (settings) {
     // if the device was successfully opend and got packets
     this.previousConnection = false
-
-    this.winston = winston
 
     // all detected serial ports and baud rates
     this.serialDevices = []
@@ -110,7 +108,6 @@ class FCDetails {
             this.startLink((err) => {
               if (err) {
                 console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
-                this.winston.info("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
                 this.activeDevice = null
               }
               this.startInterval()
@@ -120,7 +117,6 @@ class FCDetails {
         }
         if (!found) {
           console.log("Can't find saved FC, resetting")
-          this.winston.info("Can't find saved FC, resetting")
           this.activeDevice = null
         }
       })
@@ -175,7 +171,6 @@ class FCDetails {
     // add it in
     this.UDPoutputs.push({ IP: newIP, port: newPort })
     console.log('Added UDP Output ' + newIP + ':' + newPort)
-    this.winston.info('Added UDP Output ' + newIP + ':' + newPort)
 
     // restart mavlink-router, if link active
     if (this.m) {
@@ -212,7 +207,6 @@ class FCDetails {
         // and remove
         this.UDPoutputs.splice(i, 1)
         console.log('Removed UDP Output ' + remIP + ':' + remPort)
-        this.winston.info('Removed UDP Output ' + remIP + ':' + remPort)
 
         // restart mavlink-router, if link active
         if (this.m) {
@@ -268,7 +262,6 @@ class FCDetails {
     // command the flight controller to reboot
     if (this.m !== null) {
       console.log('Rebooting FC')
-      this.winston.info('Rebooting FC')
       this.m.sendReboot()
     }
   }
@@ -277,7 +270,6 @@ class FCDetails {
     // command the flight controller to start streaming bin log
     if (this.m !== null) {
       console.log('Bin log start request')
-      this.winston.info('Bin log start request')
       this.m.sendBinStreamRequest()
     }
   }
@@ -286,7 +278,6 @@ class FCDetails {
     // command the flight controller to stop streaming bin log
     if (this.m !== null) {
       console.log('Bin log stop request')
-      this.winston.info('Bin log stop request')
       this.m.sendBinStreamRequestStop()
     }
   }
@@ -294,7 +285,6 @@ class FCDetails {
   startLink (callback) {
     // start the serial link
     console.log('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value)
-    this.winston.info('Opening Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value)
     // this.outputs.push({ IP: newIP, port: newPort })
 
     // build up the commandline for mavlink-router
@@ -322,7 +312,6 @@ class FCDetails {
     // check mavlink-router exists
     if (!this.validMavlinkRouter()) {
       console.log('Could not find mavlink-routerd')
-      this.winston.info('Could not find mavlink-routerd')
       return callback('Could not find mavlink-routerd', false)
     }
 
@@ -356,12 +345,10 @@ class FCDetails {
     this.router.on('close', (code) => {
       console.log(`child process exited with code ${code}`)
       console.log('Closed Router')
-      this.winston.info('Closed Router')
       this.eventEmitter.emit('stopLink')
     })
 
     console.log('Opened Router')
-    this.winston.info('Opened Router')
 
     // only restart the mavlink processor if it's a new link,
     // not a reconnect attempt
@@ -391,11 +378,9 @@ class FCDetails {
     if (this.router && this.router.exitCode === null) {
       this.router.kill('SIGINT')
       console.log('Trying to close router')
-      this.winston.info('Trying to close router')
       return callback(null)
     } else {
       console.log('Already Closed Router')
-      this.winston.info('Already Closed Router')
       this.eventEmitter.emit('stopLink')
       return callback(null)
     }
@@ -477,7 +462,6 @@ class FCDetails {
     // has the active device been disconnected?
     if (this.port) {
       console.log('Lost active device')
-      this.winston.info('Lost active device')
       // this.active = false;
       this.m.close()
       this.m = null
@@ -503,7 +487,6 @@ class FCDetails {
       // check for timeouts in serial link (ie disconnected cable or reboot)
       if (this.m && this.m.conStatusInt() === -1) {
         console.log('Trying to reconnect FC...')
-        this.winston.info('Trying to reconnect FC...')
         this.closeLink(() => {
           this.startLink((err) => {
             if (err) {
@@ -564,7 +547,6 @@ class FCDetails {
       this.startLink((err) => {
         if (err) {
           console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
-          this.winston.info("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
           this.activeDevice = null
         } else {
           // start timeout function for auto-reconnect
@@ -599,7 +581,6 @@ class FCDetails {
       this.settings.setValue('flightcontroller.enableDSRequest', this.enableDSRequest)
       this.settings.setValue('flightcontroller.tlogging', this.tlogging)
       console.log('Saved FC settings')
-      this.winston.info('Saved FC settings')
     } catch (e) {
       console.log(e)
     }

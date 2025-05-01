@@ -232,7 +232,7 @@ class NtripClientWrapper extends events.EventEmitter {
 }
 
 class ntrip {
-  constructor (settings, winston) {
+  constructor (settings) {
     this.options = {
       host: '',
       port: 2101,
@@ -244,8 +244,6 @@ class ntrip {
       active: false,
       useTls: false
     }
-
-    this.winston = winston
 
     // status. 0=not active, 1=waiting for FC, 2=waiting for GPS lock, 3=waiting for NTRIP server, 4=getting packets
     // -1=ntrip error
@@ -311,14 +309,12 @@ class ntrip {
         // halt on error
         if (this.options.active) {
           console.log('NTRIP error ' + err)
-          this.winston.info('NTRIP error ' + err)
           this.status = -1
         }
       })
 
       this.client.connect()
       console.log('NTRIP started')
-      this.winston.info('NTRIP started')
       this.status = 1
     } else {
       // stop the client
@@ -332,7 +328,6 @@ class ntrip {
 
       this.status = 0
       console.log('NTRIP stopped')
-      this.winston.info('NTRIP stopped')
     }
   }
 
@@ -368,10 +363,8 @@ class ntrip {
       this.settings.setValue('ntrip.active', this.options.active)
       this.settings.setValue('ntrip.useTls', this.options.useTls)
       console.log('Saved NTRIP settings')
-      this.winston.info('Saved NTRIP settings')
     } catch (e) {
       console.log(e)
-      this.winston.info(e)
     }
 
     this.startStopNTRIP()
