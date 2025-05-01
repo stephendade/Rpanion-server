@@ -1,6 +1,5 @@
 const assert = require('assert')
 const VPNManager = require('./vpn')
-// const winston = require('./winstonconfig')(module)
 
 describe('VPN Functions', function () {
   it('#getVPNStatusZerotier()', function (done) {

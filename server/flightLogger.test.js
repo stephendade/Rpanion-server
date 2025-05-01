@@ -3,7 +3,6 @@ const Path = require('path')
 const fs = require('fs')
 const appRoot = require('app-root-path')
 const Logger = require('./flightLogger')
-const winston = require('./winstonconfig')(module)
 
 describe('Logging Functions', function () {
   beforeEach('Ensure cleared log folder', function () {
@@ -26,14 +25,14 @@ describe('Logging Functions', function () {
   }
 
   it('#loggerinit()', function () {
-    const Lgr = new Logger(winston)
+    const Lgr = new Logger()
 
     // assert folders were created
     assert.ok(fs.existsSync(Lgr.topfolder))
   })
 
   it('#clearlogfiles()', function () {
-    const Lgr = new Logger(winston)
+    const Lgr = new Logger()
 
     // create a fake log
     fs.writeFileSync(Path.join(appRoot.toString(), 'flightlogs', 'flight.tlog'), Buffer.from('tést'))
@@ -48,7 +47,7 @@ describe('Logging Functions', function () {
   })
 
   it('#getlogs()', function (done) {
-    const Lgr = new Logger(winston)
+    const Lgr = new Logger()
 
     // create a fake log
     fs.writeFileSync(Path.join(appRoot.toString(), 'flightlogs', 'flight.tlog'), Buffer.from('tést'))

@@ -1,5 +1,4 @@
 const { exec, execSync } = require('child_process')
-const winston = require('./winstonconfig')(module)
 
 function getClients (callback) {
   // If in AP mode, get list of clients
@@ -7,7 +6,6 @@ function getClients (callback) {
   exec('nmcli -t -f NAME,UUID,TYPE,DEVICE connection show', (error, stdout, stderr) => {
     if (stderr) {
       console.error(`exec error: ${error}`)
-      winston.info('Error in getClients() ', { message: stderr })
       return callback(stderr.toString(), null, null)
     } else {
       const allConns = stdout.split('\n')
@@ -32,7 +30,6 @@ function getClients (callback) {
                 if (allleases[j] !== '') {
                   const details = allleases[j].split(' ')
                   if (details.length !== 5) {
-                    winston.info('Bad lease ', { message: details })
                     return callback('Bad lease', connection, [])
                   }
                   const ip = details[2]
@@ -46,7 +43,7 @@ function getClients (callback) {
               return callback(null, ssidStr, allclients)
             }
           } catch (e) {
-            winston.info('Error in getClients() inter2 ', { message: e })
+            console.log('Error in getClients() inter2 ', { message: e })
             return callback(e.toString(), null, null)
           }
         }

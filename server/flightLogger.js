@@ -8,15 +8,13 @@ const fs = require('fs')
 const moment = require('moment')
 
 class flightLogger {
-  constructor (winston) {
+  constructor () {
     this.topfolder = path.join(appRoot.toString(), 'flightlogs')
     // this.tlogfolder = path.join(this.topfolder, 'tlogs')
     // this.binlogfolder = path.join(this.topfolder, 'binlogs')
     this.kmzlogfolder = path.join(this.topfolder, 'kmzlogs')
     // this.activeLogging = true
     // this.settings = settings
-
-    this.winston = winston
 
     // get settings
     // this.activeLogging = this.settings.value('flightLogger.activeLogging', true)
@@ -38,7 +36,6 @@ class flightLogger {
         }
       })
       console.log('Deleted tlogs')
-      this.winston.info('Deleted tlogs')
     } else if (logtype === 'binlog') {
       const files = fs.readdirSync(this.topfolder)
       files.forEach((file) => {
@@ -49,7 +46,6 @@ class flightLogger {
         }
       })
       console.log('Deleted binlogs')
-      this.winston.info('Deleted binlogs')
     } else if (logtype === 'kmzlog') {
       const files = fs.readdirSync(this.kmzlogfolder)
       files.forEach((file) => {
@@ -57,7 +53,6 @@ class flightLogger {
         fs.unlinkSync(filePath)
       })
       console.log('Deleted kmzlogs')
-      this.winston.info('Deleted kmzlogs')
     }
   }
 
