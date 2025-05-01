@@ -7,6 +7,7 @@ git submodule update --init --recursive
 
 ## Set permissions
 sudo adduser $USER dialout
+sudo adduser $USER tty
 sudo systemctl disable nvgetty.service
 
 ## Packages
