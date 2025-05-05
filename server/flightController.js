@@ -48,7 +48,8 @@ class FCDetails {
       { value: 460800, label: '460800' },
       { value: 500000, label: '500000' },
       { value: 921600, label: '921600' },
-      { value: 1500000, label: '1500000' }]
+      { value: 1500000, label: '1500000' },
+      { value: 2000000, label: '2000000' }]
     this.mavlinkVersions = [{ value: 1, label: '1.0' },
       { value: 2, label: '2.0' }]
     // JSON of active device (port and baud and mavversion). User selected
