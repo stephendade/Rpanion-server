@@ -20,6 +20,7 @@ NPM_INSTALL_EXIT_CODE=0
 # Loop through the retries
 for i in $(seq 1 $MAX_RETRIES); do
   echo "Running npm install (attempt $i)..."
+  sudo apt install -y npm
   npm install
   NPM_INSTALL_EXIT_CODE=$?
 
