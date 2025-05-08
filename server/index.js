@@ -55,7 +55,7 @@ app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles
 settings.init({
   appName: 'Rpanion-server', // required,
   reverseDNS: 'com.server.rpanion', // required for macOS
-  filename: path.join(appRoot.toString(), 'settings.json')
+  filename: path.join(appRoot.toString(), './config/settings.json')
 })
 
 const vManager = new videoStream(settings)
