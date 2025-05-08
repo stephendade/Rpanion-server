@@ -52,11 +52,19 @@ app.use(limiter)
 app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
 
 // Init settings before running the other classes
-settings.init({
-  appName: 'Rpanion-server', // required,
-  reverseDNS: 'com.server.rpanion', // required for macOS
-  filename: path.join(appRoot.toString(), './config/settings.json')
-})
+if (process.env.NODE_ENV === 'development') {
+  settings.init({
+    appName: 'Rpanion-server', // required,
+    reverseDNS: 'com.server.rpanion', // required for macOS
+    filename: path.join(appRoot.toString(), './config/settings.json')
+  })
+} else {
+  settings.init({
+    appName: 'Rpanion-server', // required,
+    reverseDNS: 'com.server.rpanion', // required for macOS
+    filename: '/etc/Rpanion-server/settings.json'
+  })
+}
 
 const vManager = new videoStream(settings)
 const fcManager = new fcManagerClass(settings)

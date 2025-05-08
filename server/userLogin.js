@@ -4,7 +4,11 @@ const bcrypt = require('bcrypt');
 
 class userLogin {
   constructor () {
-    this.usersFile = path.join(__dirname, '..', 'config', 'user.json')
+    if (process.env.NODE_ENV === 'development') {
+      this.usersFile = path.join(__dirname, '..', 'config', 'user.json')
+    } else {
+      this.usersFile = '/etc/Rpanion-server/user.json'
+    }
   }
 
   /**
