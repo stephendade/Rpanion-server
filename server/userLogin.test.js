@@ -8,19 +8,19 @@ describe('User Login Functions', function () {
 
   before(function () {
     // Backup the original user.json file
-    originalUserFile = fs.readFileSync(path.join(__dirname, '..', 'user.json'), 'utf8')
+    originalUserFile = fs.readFileSync(path.join(__dirname, '..', 'config', 'user.json'), 'utf8')
   })
 
   after(function () {
     // Restore the original user.json file
-    fs.writeFileSync(path.join(__dirname, '..', 'user.json'), originalUserFile, 'utf8')
+    fs.writeFileSync(path.join(__dirname, '..', 'config', 'user.json'), originalUserFile, 'utf8')
   })
 
   it('#logininit()', function () {
     const userMgmt = new userLogin()
 
     // check initial status
-    assert.equal(userMgmt.usersFile, path.join(__dirname, '..', 'user.json'))
+    assert.equal(userMgmt.usersFile, path.join(__dirname, '..', 'config', 'user.json'))
   })
 
   it('#checkLoginDetails()', async function () {

@@ -1,4 +1,4 @@
 {
   "verbose": false,
-  "ignore": ["settings.json", "./modules/*", "./logs/*", "./flightlogs/*", "user.json"]
+  "ignore": ["./config/settings.json", "./modules/*", "./logs/*", "./flightlogs/*", "./config/user.json"]
 }

@@ -4,7 +4,7 @@ const bcrypt = require('bcrypt');
 
 class userLogin {
   constructor () {
-    this.usersFile = path.join(__dirname, '..', 'user.json')
+    this.usersFile = path.join(__dirname, '..', 'config', 'user.json')
   }
 
   /**
