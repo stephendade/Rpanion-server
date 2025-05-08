@@ -37,9 +37,9 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
-    "testfront": "vitest --run ./src",
-    "testback": " mocha --exit ./server/*.test.js ./mavlink/*.test.js",
-    "mocha": "_mocha --exit ./server/*.test.js ./mavlink/*.test.js",
+    "testfront": "NODE_ENV=development vitest --run ./src",
+    "testback": "NODE_ENV=development mocha --exit ./server/*.test.js ./mavlink/*.test.js",
+    "mocha": "NODE_ENV=development _mocha --exit ./server/*.test.js ./mavlink/*.test.js",
     "test-cov": "nyc npm run mocha && nyc report --reporter=text-lcov",
     "test-coveralls": "nyc npm run mocha && nyc report --reporter=text-lcov | coveralls",
     "lint": "eslint .",
