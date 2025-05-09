@@ -19,8 +19,8 @@ const cloudManager = require('./cloudUpload.js')
 const VPNManager = require('./vpn')
 const logConversionManager = require('./logConverter.js')
 const userLogin = require('./userLogin.js')
+const logpaths = require('./paths.js')
 
-const appRoot = require('app-root-path')
 const settings = require('settings-store')
 
 const app = express()
@@ -52,19 +52,11 @@ app.use(limiter)
 app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
 
 // Init settings before running the other classes
-if (process.env.NODE_ENV === 'development') {
-  settings.init({
-    appName: 'Rpanion-server', // required,
-    reverseDNS: 'com.server.rpanion', // required for macOS
-    filename: path.join(appRoot.toString(), './config/settings.json')
-  })
-} else {
-  settings.init({
-    appName: 'Rpanion-server', // required,
-    reverseDNS: 'com.server.rpanion', // required for macOS
-    filename: '/etc/Rpanion-server/settings.json'
-  })
-}
+settings.init({
+  appName: 'Rpanion-server', // required,
+  reverseDNS: 'com.server.rpanion', // required for macOS
+  filename: logpaths.settingsFile
+})
 
 const vManager = new videoStream(settings)
 const fcManager = new fcManagerClass(settings)
@@ -557,10 +549,7 @@ app.get('/api/networkclients', authenticateToken, (req, res) => {
 })
 
 // Serve the logfiles
-app.use('/logdownload', express.static(path.join(__dirname, '..', '/flightlogs')))
-
-// Serve the logfiles
-app.use('/rplogs', express.static(path.join(__dirname, '..', '/logs')))
+app.use('/logdownload', express.static(logpaths.flightsLogsDir))
 
 app.get('/api/logfiles', authenticateToken, (req, res) => {
   logManager.getLogs((err, tlogs, binlogs, kmzlogs) => {

@@ -3,16 +3,16 @@
  */
 
 const path = require('path')
-const appRoot = require('app-root-path')
 const fs = require('fs')
 const moment = require('moment')
+const logpaths = require('./paths.js')
 
 class flightLogger {
   constructor () {
-    this.topfolder = path.join(appRoot.toString(), 'flightlogs')
+    this.topfolder = logpaths.flightsLogsDir
     // this.tlogfolder = path.join(this.topfolder, 'tlogs')
     // this.binlogfolder = path.join(this.topfolder, 'binlogs')
-    this.kmzlogfolder = path.join(this.topfolder, 'kmzlogs')
+    this.kmzlogfolder = logpaths.kmzDir
     // this.activeLogging = true
     // this.settings = settings
 

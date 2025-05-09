@@ -1,14 +1,11 @@
-const path = require('path')
 const fs = require('fs').promises;
 const bcrypt = require('bcrypt');
 
+const logpaths = require('./paths.js')
+
 class userLogin {
   constructor () {
-    if (process.env.NODE_ENV === 'development') {
-      this.usersFile = path.join(__dirname, '..', 'config', 'user.json')
-    } else {
-      this.usersFile = '/etc/Rpanion-server/user.json'
-    }
+    this.usersFile = logpaths.usersFile
   }
 
   /**
