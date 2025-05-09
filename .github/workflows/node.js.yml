@@ -40,10 +40,10 @@ jobs:
     - run: npm ci
     - run: npm run build --if-present
     - run: npm run testback
-    - run: rm -f settings.json
+    - run: rm -f ./config/settings.json
     - run: npm run testfront
     - run: npm run test-cov
-    - run: rm -f settings.json
+    - run: rm -f ./config/settings.json
     
     - name: Coveralls
       uses: coverallsapp/github-action@master

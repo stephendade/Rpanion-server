@@ -1,12 +1,11 @@
 const assert = require('assert')
 const settings = require('settings-store')
 const Ntrip = require('./ntrip')
-const winston = require('./winstonconfig')(module)
 
 describe('NTRIP Functions', function () {
   it('#ntripinit()', function () {
     settings.clear()
-    const ntripClient = new Ntrip(settings, winston)
+    const ntripClient = new Ntrip(settings)
 
     // check initial status
     assert.equal(ntripClient.options.active, false)
@@ -15,7 +14,7 @@ describe('NTRIP Functions', function () {
   it('#ntriptryconnect()', function () {
     // Getting starting client with bad details
     settings.clear()
-    const ntripClient = new Ntrip(settings, winston)
+    const ntripClient = new Ntrip(settings)
 
     // ntripClient.setSettings ("auscors.ga.gov.au", 2101, "MNT", "name", "pwd", true)
 
@@ -34,7 +33,7 @@ describe('NTRIP Functions', function () {
 
   it('#ntripGGA()', function () {
     settings.clear()
-    const ntripClient = new Ntrip(settings, winston)
+    const ntripClient = new Ntrip(settings)
 
     let msg = ntripClient.generateGGAMessage([-54.3, 152.345])
     let msgparts = msg.split(',')
