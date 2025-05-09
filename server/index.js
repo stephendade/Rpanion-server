@@ -699,11 +699,6 @@ app.post('/api/shutdowncc', authenticateToken, function () {
   aboutPage.shutdownCC()
 })
 
-app.post('/api/updatemaster', authenticateToken, function () {
-  // User wants to update Rpanion to latest master
-  aboutPage.updateRS(io)
-})
-
 app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
