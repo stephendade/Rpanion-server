@@ -7,6 +7,7 @@ const { spawn, spawnSync } = require('child_process')
 const si = require('systeminformation')
 
 const mavManager = require('../mavlink/mavManager.js')
+const logpaths = require('./paths.js')
 
 function isPi () {
   let cpuInfo = ''
@@ -299,7 +300,7 @@ class FCDetails {
       cmd.push(this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port)
     }
     cmd.push('--log')
-    cmd.push('./flightlogs')
+    cmd.push(logpaths.flightsLogsDir)
     if (this.tlogging === true) {
       cmd.push('--telemetry-log')
     }

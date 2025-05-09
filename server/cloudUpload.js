@@ -1,9 +1,10 @@
 const Rsync = require('rsync')
 const path = require('path')
-const appRoot = require('app-root-path')
 const fs = require('fs')
 const os = require('os')
 const { execSync } = require('child_process')
+
+const logpaths = require('./paths.js')
 
 class cloudUpload {
   constructor (settings) {
@@ -12,7 +13,7 @@ class cloudUpload {
       interval: 20
     }
 
-    this.topfolder = path.join(appRoot.toString(), 'flightlogs')
+    this.topfolder = logpaths.flightsLogsDir
 
     this.rsyncPid = null
 
