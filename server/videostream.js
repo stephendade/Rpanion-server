@@ -72,7 +72,7 @@ class videoStream {
       } else {
         console.log(stdout)
         this.devices = JSON.parse(stdout)
-        console.log(this.devices)
+        //console.log(this.devices)
         const fpsSelected = ((this.devices.length > 0) ? (this.devices[0].caps[0].fpsmax === 0 ? this.devices[0].caps[0].fps[0] : this.devices[0].caps[0].fpsmax) : 1)
         // and return current settings
         if (!this.active) {
@@ -99,7 +99,7 @@ class videoStream {
           }
           if (seldevice.length === 1 && selRes.length === 1) {
             this.populateAddresses(seldevice[0].value.replace(/\W/g, ''))
-            console.log(seldevice[0])
+            //console.log(seldevice[0])
             return callback(null, this.devices, this.active, seldevice[0], selRes[0],
               { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation },
               this.savedDevice.bitrate, selFPS, this.savedDevice.useUDP, this.savedDevice.useUDPIP,
