@@ -25,8 +25,25 @@ jobs:
         - name: Build package
           run: npm run package
 
-        - name: Upload deb artifact
+        - name: Archive build
           uses: actions/upload-artifact@v4
           with:
             name: deb-package
             path: 'Rpanion-server_*.deb'
+            retention-days: 7
+        - name: Pre Release
+          uses: "softprops/action-gh-release@v2"
+          if: github.ref == 'refs/heads/master'
+          with:
+            prerelease: true
+            name: "Development Build"
+            tag_name: "latest"
+            files: 'Rpanion-server_*.deb'
+            token: "${{ secrets.GITHUB_TOKEN }}"
+        - name: Release
+          uses: "softprops/action-gh-release@v2"
+          if: startsWith(github.ref, 'refs/tags/v')
+          with:
+            prerelease: false
+            files: 'Rpanion-server_*.deb'
+            token: "${{ secrets.GITHUB_TOKEN }}"
