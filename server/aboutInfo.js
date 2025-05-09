@@ -44,7 +44,7 @@ function shutdownCC () {
   })
 }
 
-function updateRS (io) {
+/*function updateRS (io) {
   // update Rpanion-server
   console.log('Upgrading')
   io.sockets.emit('upgradeStatus', 'InProgress')
@@ -72,7 +72,7 @@ function updateRS (io) {
     io.sockets.emit('upgradeText', '---Upgrade Complete (' + code.toString() + ')---')
     io.sockets.emit('upgradeStatus', 'Complete')
   })
-}
+} */
 
 function getHardwareInfo (callback) {
   // define all values, you want to get back
@@ -106,4 +106,4 @@ function getHardwareInfo (callback) {
   })
 }
 
-module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC, updateRS }
+module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC }

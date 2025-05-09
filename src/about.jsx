@@ -19,24 +19,8 @@ class AboutPage extends basePage {
       diskSpaceStatus: '',
       showModal: false,
       showModalResult: "",
-      UpgradeStatus: '',
-      UpgradeIntStat: ''
     }
 
-    this.upgradeTextContainer = React.createRef();
-
-    //Socket.io client for reading in analog update values
-    this.socket.on('upgradeText', function (msg) {
-      const prevText = this.state.UpgradeStatus
-      this.setState({ UpgradeStatus: (prevText + msg) })
-    }.bind(this));
-    this.socket.on('upgradeStatus', function (msg) {
-      this.setState({ UpgradeIntStat: msg })
-    }.bind(this));
-    this.socket.on('reconnect', function () {
-      //refresh state
-      this.componentDidMount();
-    }.bind(this));
   }
 
   componentDidMount () {
@@ -60,18 +44,6 @@ class AboutPage extends basePage {
     // user does want to shutdown
     this.setState({ showModal: false});
     fetch('/api/shutdowncc', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${this.state.token}`
-      }
-    });
-  }
-
-  handleUpdateMaster = () => {
-    // update to latest github master
-    fetch('/api/updatemaster', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
@@ -107,20 +79,7 @@ class AboutPage extends basePage {
         <p>Node.js version: {this.state.Nodejsversion}</p>
         <p>Rpanion-server version: {this.state.rpanionversion}</p>
         <h2>Controls</h2>
-        <p><Button size="sm" onClick={this.handleUpdateMaster}>Upgrade to lastest Github master</Button></p>
         <p><Button size="sm" onClick={this.confirmShutdown}>Shutdown Companion Computer</Button></p>
-
-        <div style={{ display: (this.state.UpgradeIntStat === 'InProgress' || this.state.UpgradeIntStat === 'Complete') ? "block" : "none" }}>
-          <h2>Upgrade Status</h2>
-          <div style={{ display: (this.state.UpgradeIntStat === 'InProgress') ? "block" : "none" }}>
-            <p>Upgrade is in progress ... please wait</p>
-          </div>
-          <div style={{ display: (this.state.UpgradeIntStat === 'Complete') ? "block" : "none" }}>
-            <p>Upgrade complete</p>
-          </div>
-          <textarea ref={this.upgradeTextContainer} readOnly rows="20" cols="60" value={this.state.UpgradeStatus}></textarea>
-        </div>
-        
 
         <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
           <Modal.Header closeButton>
