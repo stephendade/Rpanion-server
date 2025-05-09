@@ -1,9 +1,10 @@
 #!/bin/sh
 # Setup system user
 adduser --system --no-create-home --group rpanion || true
-adduser rpanion plugdev dialout sudo || true
+adduser rpanion plugdev dialout || true
 # Set permissions
 chown -R rpanion:rpanion /usr/share/rpanion-server
+chown -R rpanion:rpanion /etc/Rpanion-server
 chmod +x /usr/share/rpanion-server/server/index.js
 systemctl daemon-reload
 systemctl enable rpanion-server
