@@ -1,10 +1,10 @@
 const Rsync = require('rsync')
 const path = require('path')
-const appRoot = require('app-root-path')
 const fs = require('fs')
 const os = require('os')
-const winston = require('./winstonconfig')(module)
 const { execSync } = require('child_process')
+
+const logpaths = require('./paths.js')
 
 class cloudUpload {
   constructor (settings) {
@@ -13,7 +13,7 @@ class cloudUpload {
       interval: 20
     }
 
-    this.topfolder = path.join(appRoot.toString(), 'flightlogs')
+    this.topfolder = logpaths.flightsLogsDir
 
     this.rsyncPid = null
 
@@ -59,9 +59,6 @@ class cloudUpload {
             console.log(error)
             console.log(code)
             console.log(cmd)
-            winston.info(error)
-            winston.info(code)
-            winston.info(cmd)
           }
         })
       }
@@ -69,7 +66,6 @@ class cloudUpload {
   }
 
   quitting () {
-    winston.info('---Shutdown Cloud---')
     if (this.rsyncPid) {
       this.rsyncPid.kill()
     }
@@ -89,7 +85,7 @@ class cloudUpload {
     }
     // if pubKey is empty, create a new default ssh key
     if (pubkey.length === 0) {
-      winston.info('No SSH keys found, creating new one')
+      console.log('No SSH keys found, creating new one')
       execSync('< /dev/zero ssh-keygen -q -N ""')
       pubkey.push(fs.readFileSync(os.homedir() + '/.ssh/id_rsa.pub', { encoding: 'utf8', flag: 'r' }))
     }
@@ -109,10 +105,8 @@ class cloudUpload {
       this.settings.setValue('cloud.binUploadLink', this.options.binUploadLink)
       this.settings.setValue('cloud.syncDeletions', this.options.syncDeletions)
       console.log('Saved Cloud Bin settings')
-      winston.info('Saved Cloud Bin settings')
     } catch (e) {
       console.log(e)
-      winston.info(e)
     }
   }
 

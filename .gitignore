@@ -22,7 +22,7 @@ yarn-debug.log*
 yarn-error.log*
 /package-lock.json
 
-settings.json
+./config/settings.json
 settingsTest.json
 /logs
 /flightlogs

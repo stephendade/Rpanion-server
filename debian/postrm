@@ -1,0 +1,6 @@
+#!/bin/sh
+# Clean up system user on purge
+if [ "$1" = "purge" ]; then
+  deluser --system rpanion || true
+  delgroup --system rpanion || true
+fi
