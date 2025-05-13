@@ -46,13 +46,13 @@ fi
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
-## and build & run Rpanion
-./build_rpanion.sh
-
-## Need to run service as sudo
-sudo perl -pe 's/User=$ENV{SUDO_USER}/User=root/' -i /etc/systemd/system/rpanion.service
-sudo systemctl daemon-reload
-sudo systemctl restart rpanion.service
+## and build Rpanion dev
+# If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
+if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then
+    export NODE_OPTIONS="--max-old-space-size=256"
+fi
+cd ../
+npm install
 
 ## For wireguard. Must be installed last as it messes the DNS resolutions
 sudo apt install -y resolvconf

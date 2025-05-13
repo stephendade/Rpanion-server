@@ -5,11 +5,6 @@ set -x
 
 git submodule update --init --recursive
 
-## Raspi-Config - camera, serial port, ssh
-#sudo raspi-config nonint do_expand_rootfs
-sudo raspi-config nonint do_camera 0
-sudo raspi-config nonint do_ssh 0
-
 # Increase swap size to 1024MB if it is currently less than 1000MB
 # Allows the NPM build to complete successfully on systems with 500MB of RAM
 if [ $(stat -c%s "/var/swap") -le 1000000000 ]; then
@@ -33,10 +28,6 @@ if [ -e "/proc/device-tree/compatible" ]; then
     fi
 fi
 
-## Change hostname
-sudo raspi-config nonint do_hostname rpanion
-sudo perl -pe 's/raspberrypi/rpanion/' -i /etc/hosts
-
 ./install_common_libraries.sh
 
 ## Only install picamera2 on RaspiOS
@@ -59,8 +50,13 @@ sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkMa
 ## mavlink-router
 ./build_mavlinkrouter.sh
 
-## and build & run Rpanion
-./build_rpanion.sh
+## and build Rpanion dev
+# If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
+if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then
+    export NODE_OPTIONS="--max-old-space-size=256"
+fi
+cd ../
+npm install
 
 ## For wireguard. Must be installed last as it messes the DNS resolutions
 sudo apt install -y resolvconf
