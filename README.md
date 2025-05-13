@@ -58,32 +58,20 @@ cd ~/ && git clone --recursive https://github.com/stephendade/Rpanion-server.git
 
 ### Automatic (Raspberry Pi)
 
-The Raspberry Pi Zero W(1) is not supported from version 0.10.0 onwards.
+The Raspberry Pi Zero W(1) and Raspberry Pi 2 are not supported from version 0.10.0 onwards.
 
-For the Raspberry Pi 2, 3, 4,5 and Zero(2) run the below command on a fresh Raspberry Pi OS install
+For the Raspberry Pi 3, 4, 5 and Zero(2) run the below command on a fresh Raspberry Pi OS install
 to configure and install Rpanion-server with all required dependencies. Note this does not configure
 an initial Wifi hotspot.
 
 ```
-cd ~/Rpanion-server/deploy/ && ./RasPi2-3-4-5-deploy.sh
+cd ~/Rpanion-server/deploy/ && ./RasPi3-4-5-deploy.sh
 ```
 
-If running Ubuntu 20.04 OS on the Pi, use:
+If running Ubuntu OS on the Pi, use:
 
 ```
-cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20-deploy.sh
-```
-
-If running Ubuntu 22.04 OS on the Pi, use:
-
-```
-cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu22-deploy.sh
-```
-
-If running Ubuntu 24.04 OS on the Pi, use:
-
-```
-cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu24-deploy.sh
+cd ~/Rpanion-server/deploy/ && ./RasPi-ubuntu20.sh
 ```
 
 Note the CSI camera does not currently work on Ubuntu 22.04 and 24.04, due to incompatibilities with the Raspberry Pi.
@@ -163,9 +151,6 @@ cd ~/Rpanion-server
 npm run service
 ```
 
-Otherwise, a systemd service can be installed (see ``rpanion.service``) to automatically start
-Rpanion-server when the Pi starts up.
-
 
 ### Automatic (Nvidia Jetson and Jetson Orin)
 
@@ -186,7 +171,7 @@ to configure and install Rpanion-server and all required dependencies. Note this
 configure an initial Wifi hotspot.
 
 ```
-cd ./deploy && ./RasPi2-3-4-deploy.sh
+cd ./deploy && ./RasPi3-4-5deploy.sh
 ```
 
 If using a usb to serial converter, you might need to modify permissions of the device.
@@ -222,23 +207,6 @@ to be rebuilt.
 
 If running Rpanion-server as a service, ensure to restart the service.
 
-An automatic update script performed via:
-
-```
-./deploy/upgrade.sh
-```
-
-## Building and Running in production mode
-
-Running in production mode builds the reactJS app first. This gives
-performance increases over running in development mode.
-
-```bash
-npm run build
-PORT=3000
-npm run server
-```
-
 ## Building and Running in development mode
 
 Running in development mode allows for any code changes to trigger a restart of Rpanion-server. 
@@ -246,23 +214,7 @@ Running in development mode allows for any code changes to trigger a restart of 
 Rpanion-server consists of a node.js server running on port 3001 and a React frontend application
 running on port 3000 in development mode. 
 
-In production mode, the React application is rendered statically
-from the node.js server on port 3001. This can be overidden via setting the ``PORT`` environment
-variable (see ``rpanion.service`` for for example).
-
-You can start the server on its own with the command:
-
-```bash
-npm run server
-```
-
-Run the React application on its own with the command:
-
-```bash
-npm start
-```
-
-Run both applications together with the command:
+Run both applications (front and back end) together, use the command:
 
 ```bash
 npm run dev
@@ -312,15 +264,4 @@ Use ``npx npm-check-updates -u`` to update nodejs libraries.
 Use ``npm version minor`` to create a new release.
 
 To produce a disk image from a SD card, insert the card and run ``./deploy/create_image.sh``.
-
-## Running as a Service
-
-To have Rpanion-server running on automatically on boot, there is an included systemd service file.
-
-This can be enabled via:
-
-```
-sudo cp rpanion.service /etc/systemd/system
-sudo systemctl enable rpanion.service
-```
 
