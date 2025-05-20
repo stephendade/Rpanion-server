@@ -29,3 +29,5 @@ settingsTest.json
 .nyc_output
 
 /local_modules/long/node_modules
+
+/rpanion-server_*
