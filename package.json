@@ -1,5 +1,5 @@
 {
-  "name": "Rpanion-server",
+  "name": "rpanion-server",
   "version": "0.11.0",
   "private": true,
   "secure": false,
@@ -47,23 +47,25 @@
     "service": "node ./server/index.js",
     "dev": "NODE_ENV=development run-p server start",
     "preview": "vite preview",
-    "package": "npm run build && mkdir -p ./additional/etc/Rpanion-server/config && cp ./config/user.json ./additional/etc/Rpanion-server/config && node-deb --extra-files additional -- server mavlink build && rm -r ./additional"
+    "package": "npm run build && mkdir -p ./additional/etc/rpanion-server/config && cp ./config/user.json ./additional/etc/rpanion-server/config && node-deb --verbose --extra-files additional -- server mavlink build && rm -r ./additional"
   },
   "node_deb": {
     "entrypoints": {
       "daemon": "./server/index.js"
     },
     "init": "systemd",
-    "name": "rpanion-server",
     "dependencies": "nodejs (>= 16.0.0)",
+    "user": "rpanion",
+    "group": "rpanion",
+    "install_strategy": "copy",
+    "maintainer": "Stephen Dade (stephen_dade@hotmail.com)",
     "description": "A node.js based server for companion computers used in Mavlink-based vehicles (ie Ardupilot, PX4). It presents a web-based interface (running on the companion computer), where system settings such as network, telemetry and video streaming can be configured from.",
-    "install-strategy": "copy",
-    "before-install": "./debian/preinst",
-    "after-install": "./debian/postinst",
-    "before-remove": "./debian/prerm",
-    "after-remove": "./debian/postrm",
     "templates": {
-      "systemd-service": "./debian/systemd.service.hbs"
+      "systemd_service": "./debian/systemd.service",
+      "preinst": "./debian/preinst",
+      "postinst": "./debian/postinst",
+      "postrm": "./debian/postrm",
+      "prerm": "./debian/prerm"
     },
     "package": {
       "includes": [
@@ -83,7 +85,6 @@
   "devDependencies": {
     "@eslint/js": "^9.23.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "body-parser": "^2.2.0",
     "coveralls-next": "^4.2.1",
     "eslint": "^9.24.0",
     "eslint-plugin-mocha": "^10.5.0",

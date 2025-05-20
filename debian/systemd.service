@@ -1,0 +1,15 @@
+[Unit]
+Description=Rpanion Server
+After=network.target
+
+[Service]
+Type=simple
+User=rpanion
+Group=rpanion
+ExecStart=/usr/bin/node /usr/share/rpanion-server/app/server/index.js
+WorkingDirectory=/usr/share/rpanion-server/app
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
