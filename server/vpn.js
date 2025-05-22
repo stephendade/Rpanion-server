@@ -3,14 +3,12 @@
 */
 const path = require('path')
 const { exec, execFile } = require('child_process')
-const winston = require('./winstonconfig')(module)
 
 function getVPNStatusZerotier (errpass, callback) {
   // get status of VPN
   exec('sudo zerotier-cli info && sudo zerotier-cli listnetworks -j', (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
-      winston.info('Error in getVPNStatusZerotier() ', { message: stderr })
       return callback(stderr.toString().trim(), { installed: false, status: false, text: JSON.parse('[]') })
     } else {
       // zerotier's in JSON format anyway, so just pipe through
@@ -31,7 +29,6 @@ function addZerotier (network, callback) {
   execFile('sudo', ['zerotier-cli', 'join', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
-      winston.info('Error in addZerotier() ', { message: stderr })
     } else {
       // console.log(stdout)
       if (stdout.search('200 join OK') > -1) {
@@ -48,7 +45,6 @@ function removeZerotier (network, callback) {
   execFile('sudo', ['zerotier-cli', 'leave', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
-      winston.info('Error in removeZerotier() ', { message: stderr })
     } else {
       // console.log(stdout)
       if (stdout.search('200 leave OK') > -1) {
@@ -75,7 +71,6 @@ function addWireguardProfile (filename, tmpfilepath, callback) {
   exec('sudo cp ' + tmpfilepath + ' /etc/wireguard/' + filename + ' && sudo rm ' + tmpfilepath, (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
-      winston.info('Error in vpnwireguardprofileadd() ', { message: stderr })
     }
     return callback()
   })
@@ -88,14 +83,12 @@ function activateWireguardProfile (filename, callback) {
     execFile('sudo', ['systemctl', 'enable', 'wg-quick@' + profile], (error, stdout) => {
       if (error !== null || errorw !== null) {
         console.error(`exec error: ${error} ${errorw}`)
-        winston.info('Error in activateWireguardProfile() ', { message: error })
         let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
         getVPNStatusWireguard(errstr, (stderrnot, statusJSON) => {
           return callback(stderrnot, statusJSON)
         })
       } else if (stdout.toString().includes('does not exist') === true) {
         console.error(`exec error2: ${stdout} ${stdoutw}`)
-        winston.info('Error2 in activateWireguardProfile() ', { message: stdout })
         getVPNStatusWireguard(stdout.toString().trim() + stdoutw.toString().trim(), (stderrnot, statusJSON) => {
           return callback(stderrnot, statusJSON)
         })
@@ -116,14 +109,12 @@ function deactivateWireguardProfile (filename, callback) {
       execFile('sudo', ['wg-quick', 'down', profile], (errorw, stdoutw) => {
         if (error !== null || errorw !== null) {
         console.error(`exec error: ${error} ${errorw}`)
-        winston.info('Error in deactivateWireguardProfile() ', { message: error })
         let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
         getVPNStatusWireguard(errstr, (stderrnot, statusJSON) => {
           return callback(stderrnot, statusJSON)
         })
       } else if (stdout.toString().includes('does not exist') === true) {
         console.error(`exec error: ${stdout} ${stdoutw}`)
-        winston.info('Error2 in deactivateWireguardProfile() ', { message: stdout })
         getVPNStatusWireguard(stdout.toString().trim() + stdoutw.toString().trim(), (stderrnot, statusJSON) => {
           return callback(stderrnot, statusJSON)
         })
@@ -155,7 +146,6 @@ function deleteWireguardProfile (filename, callback) {
   execFile('sudo', ['rm', '/etc/wireguard/' + wgprofile], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
-      winston.info('Error in vpnwireguardelete() ', { message: stderr })
     }
     getVPNStatusWireguard(null, (stderrnot, statusJSON) => {
       return callback(null, statusJSON)
@@ -169,7 +159,6 @@ function getVPNStatusWireguard (errpass, callback) {
     // check if installed
     if (errorwg !== null) {
       console.error(`exec error: ${stderrwg}`)
-      winston.info('Error in getVPNStatusWireguard() ', { message: stderrwg })
       return callback(stderrwg, { installed: false, status: false, text: JSON.parse('[]') })
     }
     if (stdoutwg.toString().trim() === '') {
@@ -178,7 +167,6 @@ function getVPNStatusWireguard (errpass, callback) {
       execFile('sudo', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
         if (error !== null) {
           console.error(`exec error: ${error}`)
-          winston.info('Error in getVPNStatusWireguard() ', { message: stderr })
           return callback(stderr, { installed: false, status: false, text: JSON.parse('[]') })
         } else {
           // output in JSON format anyway, so just pipe through

@@ -1,11 +1,11 @@
-const path = require('path')
 const fs = require('fs').promises;
 const bcrypt = require('bcrypt');
 
+const logpaths = require('./paths.js')
+
 class userLogin {
-  constructor (winston) {
-    this.usersFile = path.join(__dirname, '..', 'user.json')
-    this.winston = winston
+  constructor () {
+    this.usersFile = logpaths.usersFile
   }
 
   /**
@@ -29,7 +29,6 @@ class userLogin {
       return false
     } catch (error) {
       console.error('Error reading users file:', error)
-      this.winston.info('Error reading users file:', error)
       return false
     }
   }
@@ -47,7 +46,6 @@ class userLogin {
       return users
     } catch (error) {
       console.error('Error getting users:', error)
-      this.winston.info('Error getting users:', error)
       return []
     }
   }
@@ -77,7 +75,6 @@ class userLogin {
       return true
     } catch (error) {
       console.error('Error adding user:', error)
-      this.winston.info('Error adding user:', error)
       return false
     }
   }
@@ -110,7 +107,6 @@ class userLogin {
       return true
     } catch (error) {
       console.error('Error deleting user:', error)
-      this.winston.info('Error deleting user:', error)
       return false
     }
   }
@@ -143,7 +139,6 @@ class userLogin {
       return true
     } catch (error) {
       console.error('Error changing password:', error)
-      this.winston.info('Error changing password:', error)
       return false
     }
   }

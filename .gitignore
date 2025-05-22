@@ -22,10 +22,12 @@ yarn-debug.log*
 yarn-error.log*
 /package-lock.json
 
-settings.json
+./config/settings.json
 settingsTest.json
 /logs
 /flightlogs
 .nyc_output
 
 /local_modules/long/node_modules
+
+/rpanion-server_*

@@ -3,11 +3,11 @@ const Path = require('path')
 const fs = require('fs')
 const appRoot = require('app-root-path')
 const Logger = require('./flightLogger')
-const winston = require('./winstonconfig')(module)
+const logpaths = require('./paths.js')
 
 describe('Logging Functions', function () {
   beforeEach('Ensure cleared log folder', function () {
-    deleteFolderRecursive(Path.join(appRoot.toString(), 'flightlogs'), '.tlog')
+    deleteFolderRecursive(logpaths.flightsLogsDir, '.tlog')
   })
 
   // Recursively delete folder and files
@@ -26,32 +26,32 @@ describe('Logging Functions', function () {
   }
 
   it('#loggerinit()', function () {
-    const Lgr = new Logger(winston)
+    const Lgr = new Logger()
 
     // assert folders were created
     assert.ok(fs.existsSync(Lgr.topfolder))
   })
 
   it('#clearlogfiles()', function () {
-    const Lgr = new Logger(winston)
+    const Lgr = new Logger()
 
     // create a fake log
-    fs.writeFileSync(Path.join(appRoot.toString(), 'flightlogs', 'flight.tlog'), Buffer.from('tést'))
+    fs.writeFileSync(Path.join(logpaths.flightsLogsDir, 'flight.tlog'), Buffer.from('tést'))
 
     Lgr.clearlogs('tlog', null)
     Lgr.clearlogs('binlog', null)
     Lgr.clearlogs('kmzlog', null)
 
     // assert all files deleted
-    assert.equal(fs.readdirSync(Path.join(appRoot.toString(), 'flightlogs')).length, 1) // note that the kmzlogs folder counts as 1
-    assert.equal(fs.readdirSync(Path.join(appRoot.toString(), 'flightlogs', 'kmzlogs')).length, 0)
+    assert.equal(fs.readdirSync(logpaths.flightsLogsDir).length, 1) // note that the kmzlogs folder counts as 1
+    assert.equal(fs.readdirSync(logpaths.kmzDir).length, 0)
   })
 
   it('#getlogs()', function (done) {
-    const Lgr = new Logger(winston)
+    const Lgr = new Logger()
 
     // create a fake log
-    fs.writeFileSync(Path.join(appRoot.toString(), 'flightlogs', 'flight.tlog'), Buffer.from('tést'))
+    fs.writeFileSync(Path.join(logpaths.flightsLogsDir, 'flight.tlog'), Buffer.from('tést'))
 
     Lgr.getLogs(function (err, tlogs, binlogs, kmzlogs) {
       assert.equal(tlogs.length, 1)
