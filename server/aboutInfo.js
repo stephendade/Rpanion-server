@@ -6,7 +6,15 @@ function getSoftwareInfo (callback) {
   // get the OS, Node.js and Rpanion-server versions
   si.osInfo(function (data) {
     const swstring = '' + data.distro + ' - ' + data.release + ' (' + data.codename + ')'
-    return callback(swstring, process.version, process.env.npm_package_version, data.hostname, null)
+    let rpanionVersion = process.env.npm_package_version
+    if (process.env.NODE_ENV !== 'development') {
+      try {
+        rpanionVersion = execSync('dpkg -l | awk \'$2=="rpanion-server" { print $3 }\'').toString().trim()
+      } catch (err) {
+        console.log('Error getting rpanion-server version:', err)
+      }
+    }
+    return callback(swstring, process.version, rpanionVersion, data.hostname, null)
   })
 }
 
