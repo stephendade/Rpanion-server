@@ -1070,6 +1070,13 @@ app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype
   console.log(req.body)
 })
 
+// Pass GUI requests to the React app
+app.get(['/', '/controller', '/about', '/network',
+         '/video', '/vpn', '/ntrip', '/cloud', '/flightlogs',
+        '/apclients', '/adhoc', '/logoutconfirm', '/users'], (req, res) => {
+  res.sendFile(path.join(__dirname, '..', '/build/index.html'))
+})
+
 module.exports = app;
 
 // Only start the server if this file is being run directly (not imported)
@@ -1079,3 +1086,4 @@ if (require.main === module) {
     console.log(`Server running on port ${port}`);
   });
 }
+
