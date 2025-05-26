@@ -7,7 +7,7 @@ const isDev = process.env.NODE_ENV === 'development';
 // Set base directory depending on dev mode
 const baseDir = isDev ? 
     appRoot.toString() : 
-    '/etc/Rpanion-server';
+    '/etc/rpanion-server';
 
 // Export the paths
 module.exports = {
