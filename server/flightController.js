@@ -338,7 +338,7 @@ class FCDetails {
         }
         const res = data.toString().split(' ')
         const curLog = (res[res.length - 1]).trim()
-        this.binlog = path.join(appRoot.toString(), 'flightlogs', 'binlogs', curLog)
+        this.binlog = path.join(logpaths.flightsLogsDir, curLog)
         console.log('Current log is: ' + this.binlog)
       }
     })
