@@ -6,7 +6,7 @@ const { exec, execFile } = require('child_process')
 
 function getVPNStatusZerotier (errpass, callback) {
   // get status of VPN
-  exec('sudo zerotier-cli info && sudo zerotier-cli listnetworks -j', (error, stdout, stderr) => {
+  exec('zerotier-cli info && zerotier-cli listnetworks -j', (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
       return callback(stderr.toString().trim(), { installed: false, status: false, text: JSON.parse('[]') })
@@ -26,7 +26,7 @@ function getVPNStatusZerotier (errpass, callback) {
 
 function addZerotier (network, callback) {
   console.log('Adding: ' + network)
-  execFile('sudo', ['zerotier-cli', 'join', network], (error, stdout, stderr) => {
+  execFile('zerotier-cli', ['join', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
     } else {
@@ -42,7 +42,7 @@ function addZerotier (network, callback) {
 
 function removeZerotier (network, callback) {
   console.log('Removing: ' + network)
-  execFile('sudo', ['zerotier-cli', 'leave', network], (error, stdout, stderr) => {
+  execFile('zerotier-cli', ['leave', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
     } else {
@@ -164,7 +164,7 @@ function getVPNStatusWireguard (errpass, callback) {
     if (stdoutwg.toString().trim() === '') {
       return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
     } else {
-      execFile('sudo', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
+      execFile('python', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
         if (error !== null) {
           console.error(`exec error: ${error}`)
           return callback(stderr, { installed: false, status: false, text: JSON.parse('[]') })
