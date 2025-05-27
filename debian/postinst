@@ -2,7 +2,7 @@
 # Setup system user
 if ! getent passwd "rpanion" >/dev/null
 then
-    adduser --system --no-create-home --group --quiet rpanion
+    adduser --system --group --home /home/rpanion --quiet rpanion
 fi
 
 sudo usermod -a -G plugdev rpanion
@@ -18,3 +18,16 @@ chmod +x /usr/share/rpanion-server/app/server/index.js
 systemctl daemon-reload
 systemctl enable rpanion-server
 systemctl start rpanion-server
+
+#install pymavlink
+echo "Installing pymavlink Python package..."
+sudo -u rpanion pip install pymavlink --user --break-system-packages
+sudo -u rpanion echo "export PATH=\$PATH:/home/rpanion/.local/bin" >> /home/rpanion/.profile
+
+#copy zerotier-cli token from /var/lib
+if [ -f /var/lib/zerotier-one/authtoken.secret ]; then
+    echo "Copying Zerotier auth token to rpanion user home directory..."
+    cp /var/lib/zerotier-one/authtoken.secret /home/rpanion/.zeroTierOneAuthToken
+    chown rpanion:rpanion /home/rpanion/.zeroTierOneAuthToken
+    chmod 0600 /home/rpanion/.zeroTierOneAuthToken
+fi
