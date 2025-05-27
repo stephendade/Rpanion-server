@@ -7,10 +7,4 @@ if ! command -v mavlink-routerd >/dev/null 2>&1; then
     exit 1
 fi
 
-# Check if pymavlink is installed via pip
-if ! python3 -c "import pymavlink" >/dev/null 2>&1; then
-    echo "Error: pymavlink Python package not installed"
-    exit 1
-fi
-
 exit 0
