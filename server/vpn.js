@@ -68,7 +68,7 @@ function addWireguardProfile (filename, tmpfilepath, callback) {
   }
 
   // remove the file
-  exec('sudo cp ' + tmpfilepath + ' /etc/wireguard/' + filename + ' && sudo rm ' + tmpfilepath, (error, stdout, stderr) => {
+  exec('cp ' + tmpfilepath + ' /etc/wireguard/' + filename + ' && rm ' + tmpfilepath, (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
     }
@@ -79,8 +79,8 @@ function addWireguardProfile (filename, tmpfilepath, callback) {
 function activateWireguardProfile (filename, callback) {
   // activate a wireguard profile
   const profile = path.parse(filename).name
-  execFile('sudo', ['wg-quick', 'up', profile], (errorw, stdoutw) => {
-    execFile('sudo', ['systemctl', 'enable', 'wg-quick@' + profile], (error, stdout) => {
+  execFile('wg-quick', ['up', profile], (errorw, stdoutw) => {
+    execFile('systemctl', ['enable', 'wg-quick@' + profile], (error, stdout) => {
       if (error !== null || errorw !== null) {
         console.error(`exec error: ${error} ${errorw}`)
         let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
@@ -105,8 +105,8 @@ function deactivateWireguardProfile (filename, callback) {
   // deactivate a wireguard profile
 
   const profile = path.parse(filename).name
-    execFile('sudo', ['systemctl', 'disable', 'wg-quick@' + profile], (error, stdout) => {
-      execFile('sudo', ['wg-quick', 'down', profile], (errorw, stdoutw) => {
+    execFile('systemctl', ['systemctl', 'disable', 'wg-quick@' + profile], (error, stdout) => {
+      execFile('wg-quick', ['down', profile], (errorw, stdoutw) => {
         if (error !== null || errorw !== null) {
         console.error(`exec error: ${error} ${errorw}`)
         let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
@@ -143,7 +143,7 @@ function deleteWireguardProfile (filename, callback) {
     })
   }
 
-  execFile('sudo', ['rm', '/etc/wireguard/' + wgprofile], (error, stdout, stderr) => {
+  execFile('rm', ['/etc/wireguard/' + wgprofile], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
     }
