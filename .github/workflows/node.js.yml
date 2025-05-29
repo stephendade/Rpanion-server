@@ -32,6 +32,12 @@ jobs:
       run: |
         cd ./deploy && ./build_mavlinkrouter.sh
 
+    - name: Copy Zerotier token
+      run: |
+          sudo cp /var/lib/zerotier-one/authtoken.secret /home/$USER/.zeroTierOneAuthToken
+          sudo chown $USER:$USER /home/$USER/.zeroTierOneAuthToken
+          chmod 0600 /home/$USER/.zeroTierOneAuthToken
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
