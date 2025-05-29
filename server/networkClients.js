@@ -1,4 +1,5 @@
 const { exec, execSync } = require('child_process')
+const fs = require('fs')
 
 function getClients (callback) {
   // If in AP mode, get list of clients
@@ -24,7 +25,7 @@ function getClients (callback) {
               // 1606808691 34:7d:f6:65:b1:1b 10.0.2.117 l5411 01:34:7d:f6:65:b1:1b
               // we have an active AP
               const allclients = []
-              const out = execSync('cat /var/lib/NetworkManager/dnsmasq-' + device + '.leases')
+              const out = fs.readFileSync('/var/lib/NetworkManager/dnsmasq-' + device + '.leases')
               const allleases = out.toString().split('\n')
               for (let j = 0, lenn = allleases.length; j < lenn; j++) {
                 if (allleases[j] !== '') {
