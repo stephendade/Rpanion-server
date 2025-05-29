@@ -310,6 +310,16 @@ function authenticateToken(req, res, next) {
   })
 }
 
+// Serve the logfile
+app.get('/api/logfile', authenticateToken, (req, res) => {
+  aboutPage.getsystemctllog((logStr) => {
+    console.log(logStr)
+    res.setHeader('Content-Disposition', 'attachment; filename="rpanion.log"')
+    res.setHeader('Content-Type', 'text/plain')
+    res.send(logStr)
+  })
+})
+
 // Serve the vpn zerotier info
 app.get('/api/vpnzerotier', authenticateToken, (req, res) => {
   VPNManager.getVPNStatusZerotier(null, (stderr, statusJSON) => {

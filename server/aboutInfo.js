@@ -114,4 +114,19 @@ function getHardwareInfo (callback) {
   })
 }
 
-module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC }
+function getsystemctllog(callback) {
+  // get the systemctl log
+  exec('journalctl -u rpanion-server.service --since "24 hours ago" -n 500 --no-pager', (error, stdout, stderr) => {
+    if (error) {
+      console.log(`getsystemctllog exec error: ${error}`)
+      return callback(error.toString())
+    }
+    if (stderr) {
+      console.log(`getsystemctllog stderr: ${stderr}`)
+      return callback(stderr.toString())
+    }
+    return callback(stdout.toString())
+  })
+}
+
+module.exports = { getSoftwareInfo, getHardwareInfo, getDiskInfo, shutdownCC, getsystemctllog }
