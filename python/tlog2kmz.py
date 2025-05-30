@@ -13,6 +13,7 @@ from os.path import exists
 from datetime import datetime
 from pymavlink import mavutil
 from pymavlink.generator import mavtemplate
+import argparse
 
 def cmd_as_shell(cmd):
     return (" ".join(['"%s"' % x for x in cmd]))
@@ -42,11 +43,11 @@ def mavtogpx_filepath():
         return "~/.local/bin/mavtogpx.py"  # relies on pymavlink instalation and path in ubuntu
 
 
-def convert_tlog_files():
+def convert_tlog_files(folder):
     """Convert any tlog files to GPX,  KML, KMZ and PNG."""
-    mavlog = glob.glob("flightlogs/*.tlog")
+    mavlog = glob.glob(os.path.join(folder, "*.tlog"))
     latest_file = max(mavlog, key=os.path.getctime)
-    kmzlogs = glob.glob("flightlogs/kmzlogs/*.kmz")
+    kmzlogs = glob.glob(os.path.join(folder, "kmzlogs", "*.kmz"))
     passed = True
     for m in mavlog:
 
@@ -75,7 +76,7 @@ def convert_tlog_files():
 
         try:
             run_cmd('zip %s.kmz %s.kml' % (m, m))
-            run_cmd('mv %s.kmz flightlogs/kmzlogs' % (m))
+            run_cmd('mv {0}.kmz '.format(m) + os.path.join(folder, "kmzlogs"))
         except subprocess.CalledProcessError:
             passed = False
 
@@ -92,9 +93,14 @@ def convert_tlog_files():
     return passed
 
 
-starttime = timeit.default_timer()
-print("[tlog2kmz.py] Starting:", starttime)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Convert tlog files to KMZ format')
+    parser.add_argument('folder', help='folder containing tlog files')
+    args = parser.parse_args()
 
-run_result = convert_tlog_files()
+    starttime = timeit.default_timer()
+    print("[tlog2kmz.py] Starting:", starttime)
 
-print("[tlog2kmz.py] Passed = {passed} | Time = {time} seconds | now = {now}".format(passed=run_result, time=(timeit.default_timer() - starttime), now=(datetime.now())))
+    run_result = convert_tlog_files(args.folder)
+
+    print("[tlog2kmz.py] Passed = {passed} | Time = {time} seconds | now = {now}".format(passed=run_result, time=(timeit.default_timer() - starttime), now=(datetime.now())))
