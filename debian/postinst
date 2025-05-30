@@ -10,6 +10,7 @@ sudo usermod -a -G dialout rpanion
 sudo usermod -a -G netdev rpanion
 sudo usermod -a -G gpio rpanion
 sudo usermod -a -G video rpanion
+sudo usermod -a -G adm rpanion
 
 # Set permissions
 chown -R rpanion:rpanion /usr/share/rpanion-server
