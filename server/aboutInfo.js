@@ -33,7 +33,7 @@ function getDiskInfo (callback) {
 /*function rebootCC () {
   // reboot the companion computer
   console.log('Reboot now')
-  exec('sudo reboot', function (error, stdout, stderr) {
+  exec('reboot', function (error, stdout, stderr) {
     if (error) {
       console.log(error)
     }
@@ -44,7 +44,7 @@ function getDiskInfo (callback) {
 function shutdownCC () {
   // shutdown the companion computer
   console.log('Shutting down')
-  exec('sudo shutdown now', function (error, stdout) {
+  exec('shutdown now', function (error, stdout) {
     if (error) {
       console.log(error)
     }
