@@ -215,6 +215,7 @@ class VPNPage extends basePage {
                 <Form id='uploadForm' 
                   action='/api/vpnwireguardprofileadd' 
                   method='post' 
+                  headers={{'Authorization': `Bearer ${this.state.token}`}}
                   encType="multipart/form-data">
                     <Form.Control type="file" name="wgprofile" disabled={!this.state.selVPNActive} onChange={this.fileChangeHandler} accept=".conf, .config"/>
                     <Button type='submit' value='Upload' disabled={this.state.selectedWGFile === ''}>Upload</Button>
