@@ -69,7 +69,7 @@ class adhocManager {
               const outputcfg = execSync('iwconfig ' + device[0])
               const ipcfg = execSync('ip -4 -j addr show ' + device[0])
               const gateway = execSync('ip route show | grep ' + device[0] + ' | grep default | awk \'{ print $3 }\'')
-              const pwdLine = execSync('sudo iwlist ' + device[0] + ' key')
+              const pwdLine = execSync('iwlist ' + device[0] + ' key')
               if (outputcfg.toString().includes('Mode:Ad-Hoc')) {
                 // adapter is acive in adhoc mopde, grab settings
                 activeDevice = device[0]
@@ -140,16 +140,16 @@ class adhocManager {
     if (toState) {
       // activate
       console.log('Activate Adhoc')
-      exec('nmcli dev set ' + device + ' managed no && sleep 1 && sudo ip link set ' +
-      device + ' down && sudo iwconfig ' +
-      device + ' mode ad-hoc ' + ' && sudo iwconfig ' +
-      device + ' channel ' + settings.channel + ' && sudo iwconfig ' +
+      exec('nmcli dev set ' + device + ' managed no && sleep 1 && ip link set ' +
+      device + ' down && iwconfig ' +
+      device + ' mode ad-hoc ' + ' && iwconfig ' +
+      device + ' channel ' + settings.channel + ' && iwconfig ' +
       device + ' essid \'' + settings.ssid + '\'  ' +
-      (settings.wpaType === 'none' ? '' : '&& sudo iwconfig ' + device + ' key s:' + settings.password) +
-      ' && sudo ip addr flush ' + device +
-      ' && sudo ip addr add ' + settings.ipaddress + '/16 dev ' + device +
-      ' && sudo ip link set ' + device + ' up' +
-      (settings.gateway === '' ? '' : '&& sudo route add default gw ' + settings.gateway + ' ' + device), (error, stdout, stderr) => {
+      (settings.wpaType === 'none' ? '' : '&& iwconfig ' + device + ' key s:' + settings.password) +
+      ' && ip addr flush ' + device +
+      ' && ip addr add ' + settings.ipaddress + '/16 dev ' + device +
+      ' && ip link set ' + device + ' up' +
+      (settings.gateway === '' ? '' : '&& route add default gw ' + settings.gateway + ' ' + device), (error, stdout, stderr) => {
         if (stderr) {
           console.log(`exec error: ${error}`)
           return callback(stderr)
@@ -161,7 +161,7 @@ class adhocManager {
             callback(null, netStatusList, netDeviceSelected, settings)
           } else {
             // reset back to managed
-            execSync('sudo ip link set ' + device + ' down && sleep 1 && nmcli dev set ' + device + ' managed yes')
+            execSync('ip link set ' + device + ' down && sleep 1 && nmcli dev set ' + device + ' managed yes')
             callback(err, netStatusList, netDeviceSelected, settings)
           }
         })
@@ -169,7 +169,7 @@ class adhocManager {
     } else {
       // deactivate
       console.log('Deactivate Adhoc')
-      exec('sudo ip link set ' + device + ' down && sleep 1 && nmcli dev set ' + device + ' managed yes', (error, stdout, stderr) => {
+      exec('ip link set ' + device + ' down && sleep 1 && nmcli dev set ' + device + ' managed yes', (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
           return callback(stderr)
