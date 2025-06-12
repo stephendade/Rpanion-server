@@ -1,5 +1,5 @@
 #!/bin/sh
 
-deluser --system --remove-home rpanion || true
-delgroup --system rpanion || true
+rm -f /etc/sudoers.d/allow-vpn-control
 
+deluser --system --remove-home rpanion || true

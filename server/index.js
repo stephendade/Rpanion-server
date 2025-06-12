@@ -366,11 +366,22 @@ app.get('/api/vpnwireguard', authenticateToken, (req, res) => {
 app.post('/api/vpnwireguardprofileadd', authenticateToken, (req, res) => {
   if (!req.files || Object.keys(req.files).length === 0 || req.files.wgprofile.truncated) {
     console.log("Couldn't upload")
-    return res.redirect('../vpn')
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ error: 'Bad wireguard profile' }))
   }
 
-  VPNManager.addWireguardProfile(req.files.wgprofile.name, req.files.wgprofile.tempFilePath, () => {
-    return res.redirect('../vpn')
+  VPNManager.addWireguardProfile(req.files.wgprofile.name, req.files.wgprofile.tempFilePath, (err) => {
+    if (err) {
+      console.log('Error in /api/vpnwireguardprofileadd', { message: err })
+      res.setHeader('Content-Type', 'application/json')
+      res.send(JSON.stringify({ error: err }))
+    } else {
+      // get refreshed status
+      VPNManager.getVPNStatusWireguard(null, (stderr, statusJSON) => {
+        res.setHeader('Content-Type', 'application/json')
+        res.send(JSON.stringify({ error: stderr, statusWireguard: statusJSON }))
+      })
+    }
   })
 })
 
