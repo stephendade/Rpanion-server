@@ -10,25 +10,35 @@ sudo usermod -a -G dialout rpanion
 sudo usermod -a -G netdev rpanion
 sudo usermod -a -G gpio rpanion
 sudo usermod -a -G video rpanion
-sudo usermod -a -G adm rpanion
 
 # Set permissions
-chown -R rpanion:rpanion /usr/share/rpanion-server
-chown -R rpanion:rpanion /etc/rpanion-server
+chown -R rpanion /usr/share/rpanion-server
+chown -R rpanion /etc/rpanion-server
+chown -R rpanion /etc/wireguard
 chmod +x /usr/share/rpanion-server/app/server/index.js
 systemctl daemon-reload
 systemctl enable rpanion-server
 systemctl start rpanion-server
+
+# Allow wireguard and zerotier service to be disabled or enabled without password
+cat <<EOF > /etc/sudoers.d/allow-vpn-control
+rpanion ALL=(ALL) NOPASSWD: \
+  /usr/bin/systemctl disable wg-quick@*, \
+  /usr/bin/systemctl enable wg-quick@*, \
+  /usr/bin/wg-quick down *, \
+  /usr/bin/wg-quick up *, \
+  /usr/bin/wg show *, \
+  /usr/sbin/zerotier-cli join *, \
+  /usr/sbin/zerotier-cli leave *, \
+  /usr/sbin/zerotier-cli listnetworks *, \
+  /usr/sbin/zerotier-cli info
+EOF
+
+chmod 440 /etc/sudoers.d/allow-vpn-control
+
 
 #install pymavlink
 echo "Installing pymavlink Python package..."
 sudo -u rpanion pip install pymavlink --user --break-system-packages
 sudo -u rpanion echo "export PATH=\$PATH:/home/rpanion/.local/bin" >> /home/rpanion/.profile
 
-#copy zerotier-cli token from /var/lib
-if [ -f /var/lib/zerotier-one/authtoken.secret ]; then
-    echo "Copying Zerotier auth token to rpanion user home directory..."
-    cp /var/lib/zerotier-one/authtoken.secret /home/rpanion/.zeroTierOneAuthToken
-    chown rpanion:rpanion /home/rpanion/.zeroTierOneAuthToken
-    chmod 0600 /home/rpanion/.zeroTierOneAuthToken
-fi

@@ -6,7 +6,7 @@ const { exec, execFile } = require('child_process')
 
 function getVPNStatusZerotier (errpass, callback) {
   // get status of VPN
-  exec('zerotier-cli info && zerotier-cli listnetworks -j', (error, stdout, stderr) => {
+  exec('sudo zerotier-cli info && sudo zerotier-cli listnetworks -j', (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
       return callback(stderr.toString().trim(), { installed: false, status: false, text: JSON.parse('[]') })
@@ -26,7 +26,7 @@ function getVPNStatusZerotier (errpass, callback) {
 
 function addZerotier (network, callback) {
   console.log('Adding: ' + network)
-  execFile('zerotier-cli', ['join', network], (error, stdout, stderr) => {
+  execFile('sudo', ['zerotier-cli', 'join', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
     } else {
@@ -42,7 +42,7 @@ function addZerotier (network, callback) {
 
 function removeZerotier (network, callback) {
   console.log('Removing: ' + network)
-  execFile('zerotier-cli', ['leave', network], (error, stdout, stderr) => {
+  execFile('sudo', ['zerotier-cli', 'leave', network], (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
     } else {
@@ -64,23 +64,24 @@ function addWireguardProfile (filename, tmpfilepath, callback) {
 
   if (!allowedExtension.includes(extensionName)) {
     console.log('Bad extension')
-    return callback()
+    return callback('Bad extension')
   }
 
   // remove the file
   exec('cp ' + tmpfilepath + ' /etc/wireguard/' + filename + ' && rm ' + tmpfilepath, (error, stdout, stderr) => {
     if (stderr.toString().trim() !== '') {
       console.error(`exec error: ${error}`)
+      return callback(stderr.toString().trim())
     }
-    return callback()
+    return callback(null)
   })
 }
 
 function activateWireguardProfile (filename, callback) {
   // activate a wireguard profile
   const profile = path.parse(filename).name
-  execFile('wg-quick', ['up', profile], (errorw, stdoutw) => {
-    execFile('systemctl', ['enable', 'wg-quick@' + profile], (error, stdout) => {
+  execFile('sudo', ['wg-quick', 'up', profile], (errorw, stdoutw) => {
+    execFile('sudo', ['systemctl', 'enable', 'wg-quick@' + profile], (error, stdout) => {
       if (error !== null || errorw !== null) {
         console.error(`exec error: ${error} ${errorw}`)
         let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')
@@ -105,8 +106,8 @@ function deactivateWireguardProfile (filename, callback) {
   // deactivate a wireguard profile
 
   const profile = path.parse(filename).name
-    execFile('systemctl', ['systemctl', 'disable', 'wg-quick@' + profile], (error, stdout) => {
-      execFile('wg-quick', ['down', profile], (errorw, stdoutw) => {
+    execFile('sudo', ['systemctl', 'disable', 'wg-quick@' + profile], (error, stdout) => {
+      execFile('sudo', ['wg-quick', 'down', profile], (errorw, stdoutw) => {
         if (error !== null || errorw !== null) {
         console.error(`exec error: ${error} ${errorw}`)
         let errstr = (error !== null ? error.toString().trim() : '') + (errorw !== null ? errorw.toString().trim() : '')

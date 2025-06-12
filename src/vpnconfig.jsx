@@ -132,7 +132,26 @@ class VPNPage extends basePage {
 
   fileChangeHandler = (event) => {
     this.setState({ selectedWGFile: event.target.files[0] });
-	};
+  };
+
+  handleSubmit = (event) => {
+    event.preventDefault();
+    const formData = new FormData();
+    formData.append('wgprofile', this.state.selectedWGFile);
+
+    fetch('/api/vpnwireguardprofileadd', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.state.token}`
+      },
+      body: formData
+    })
+    .then(response => response.json())
+    .then(state => { this.setState(state) })
+    .catch(error => {
+      this.setState({ waiting: false, error: "Error uploading profile: " + error })
+    });
+  };
 
   renderTitle () {
     return 'VPN'
@@ -212,11 +231,7 @@ class VPNPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label ">Add new Wireguard profile</label>
               <div className="col-sm-6">
-                <Form id='uploadForm' 
-                  action='/api/vpnwireguardprofileadd' 
-                  method='post' 
-                  headers={{'Authorization': `Bearer ${this.state.token}`}}
-                  encType="multipart/form-data">
+                <Form id='uploadForm' onSubmit={this.handleSubmit}>
                     <Form.Control type="file" name="wgprofile" disabled={!this.state.selVPNActive} onChange={this.fileChangeHandler} accept=".conf, .config"/>
                     <Button type='submit' value='Upload' disabled={this.state.selectedWGFile === ''}>Upload</Button>
                 </Form>
