@@ -3,13 +3,13 @@ name: Build Debian Package
 on:
     push:
         branches: [ master ]
-    pull_request:
-        branches: [ master ]
 
 jobs:
     build:
         runs-on: ubuntu-latest
-
+        strategy:
+          matrix:
+            arch: [amd64, arm64]
         steps:
         - uses: actions/checkout@v4
 
@@ -28,8 +28,8 @@ jobs:
         - name: Archive build
           uses: actions/upload-artifact@v4
           with:
-            name: deb-package
-            path: 'Rpanion-server_*.deb'
+            name: deb-package-${{ matrix.arch }}
+            path: 'rpanion-server_*.deb'
             retention-days: 7
         - name: Pre Release
           uses: "softprops/action-gh-release@v2"
@@ -38,12 +38,12 @@ jobs:
             prerelease: true
             name: "Development Build"
             tag_name: "latest"
-            files: 'Rpanion-server_*.deb'
+            files: 'rpanion-server_*.deb'
             token: "${{ secrets.GITHUB_TOKEN }}"
         - name: Release
           uses: "softprops/action-gh-release@v2"
           if: startsWith(github.ref, 'refs/tags/v')
           with:
             prerelease: false
-            files: 'Rpanion-server_*.deb'
+            files: 'rpanion-server_*.deb'
             token: "${{ secrets.GITHUB_TOKEN }}"
