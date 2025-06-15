@@ -39,7 +39,7 @@ chmod 440 /etc/sudoers.d/allow-vpn-control
 
 
 #install pymavlink
-echo "Installing pymavlink Python package..."
+echo "Installing pymavlink Python package to rpanion..."
 sudo -u rpanion pip install pymavlink --user --break-system-packages
 sudo -u rpanion echo "export PATH=\$PATH:/home/rpanion/.local/bin" >> /home/rpanion/.profile
 
