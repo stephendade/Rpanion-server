@@ -44,7 +44,7 @@ function getDiskInfo (callback) {
 function shutdownCC () {
   // shutdown the companion computer
   console.log('Shutting down')
-  exec('shutdown now', function (error, stdout) {
+  exec('sudo shutdown now', function (error, stdout) {
     if (error) {
       console.log(error)
     }

@@ -31,7 +31,8 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/sbin/zerotier-cli join *, \
   /usr/sbin/zerotier-cli leave *, \
   /usr/sbin/zerotier-cli listnetworks *, \
-  /usr/sbin/zerotier-cli info
+  /usr/sbin/zerotier-cli info, \
+  /usr/sbin/shutdown *
 EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control
