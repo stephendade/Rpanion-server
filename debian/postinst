@@ -10,6 +10,8 @@ sudo usermod -a -G dialout rpanion
 sudo usermod -a -G netdev rpanion
 sudo usermod -a -G gpio rpanion
 sudo usermod -a -G video rpanion
+sudo usermod -a -G adm rpanion    # for systemd journal access
+sudo usermod -a -G render rpanion   # for access to hardware video encoding on Jetson Orin
 
 # Set permissions
 chown -R rpanion /usr/share/rpanion-server
@@ -40,6 +42,6 @@ chmod 440 /etc/sudoers.d/allow-vpn-control
 
 #install pymavlink
 echo "Installing pymavlink Python package to rpanion..."
-sudo -u rpanion pip install pymavlink --user --break-system-packages
+sudo -u rpanion PIP_BREAK_SYSTEM_PACKAGES=1 pip install pymavlink --user
 sudo -u rpanion echo "export PATH=\$PATH:/home/rpanion/.local/bin" >> /home/rpanion/.profile
 

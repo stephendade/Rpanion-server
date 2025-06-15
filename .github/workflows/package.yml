@@ -3,10 +3,12 @@ name: Build Debian Package
 on:
     push:
         branches: [ master ]
+    pull_request:
+      branches: [ master ]
 
 jobs:
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-22.04
         strategy:
           matrix:
             arch: [amd64, arm64]
@@ -19,16 +21,39 @@ jobs:
             node-version: 20.x
             cache: 'npm'
 
+        - name: Regenerate package-lock.json for arm64
+          if: matrix.arch == 'arm64'
+          run: |
+            if [ -f package-lock.json ]; then
+              rm package-lock.json
+            fi
+            npm install --package-lock-only
+
         - name: Install dependencies
           run: npm ci
+
+        - name: Insert architecture into package.json
+          run: |
+            # Update package.json with the architecture
+            jq --arg arch "${{ matrix.arch }}" '.node_deb.architecture = $arch' package.json > tmp.json && mv tmp.json package.json
 
         - name: Build package
           run: npm run package
 
+        - name: Repackage using xz for earlier Debian versions
+          run: |
+            for file in rpanion-server_*.deb; do
+              dpkg-deb -R "$file" temp_dir
+              dpkg-deb -bZxz temp_dir "${file%.deb}.xz"
+              rm -rf temp_dir
+              rm -rf "$file"
+              mv "${file%.deb}.xz" "$file"
+            done
+
         - name: Archive build
           uses: actions/upload-artifact@v4
           with:
-            name: deb-package-${{ matrix.arch }}
+            name: rpanion-server-${{ matrix.arch }}.deb
             path: 'rpanion-server_*.deb'
             retention-days: 7
         - name: Pre Release

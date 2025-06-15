@@ -1,5 +1,5 @@
 const fs = require('fs').promises;
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const logpaths = require('./paths.js')
 
