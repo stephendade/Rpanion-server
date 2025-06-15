@@ -5,7 +5,7 @@
   "secure": false,
   "dependencies": {
     "app-root-path": "^3.1.0",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
     "bootstrap": "^5.3.1",
     "compression": "^1.7.4",
     "express": "^5.1.0",
@@ -59,6 +59,7 @@
     "group": "rpanion",
     "install_strategy": "copy",
     "maintainer": "Stephen Dade (stephen_dade@hotmail.com)",
+    "architecture": "${DEB_HOST_ARCH}",
     "description": "A node.js based server for companion computers used in Mavlink-based vehicles (ie Ardupilot, PX4). It presents a web-based interface (running on the companion computer), where system settings such as network, telemetry and video streaming can be configured from.",
     "templates": {
       "systemd_service": "./debian/systemd.service",
