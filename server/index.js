@@ -1091,12 +1091,15 @@ app.post('/api/networkadd', authenticateToken, [check('conSettings.ipaddresstype
   console.log(req.body)
 })
 
-// Pass GUI requests to the React app
-app.get(['/', '/controller', '/about', '/network',
-         '/video', '/vpn', '/ntrip', '/cloud', '/flightlogs',
-        '/apclients', '/adhoc', '/logoutconfirm', '/users'], (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '/build/index.html'))
-})
+// Pass GUI requests to the React app only in production mode
+if (process.env.NODE_ENV !== 'development')
+{
+  app.get(['/', '/controller', '/about', '/network',
+          '/video', '/vpn', '/ntrip', '/cloud', '/flightlogs',
+          '/apclients', '/adhoc', '/logoutconfirm', '/users'], (req, res) => {
+    res.sendFile(path.join(__dirname, '..', '/build/index.html'))
+  })
+}
 
 module.exports = app;
 
