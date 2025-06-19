@@ -44,7 +44,7 @@
     "test-coveralls": "nyc npm run mocha && nyc report --reporter=text-lcov | coveralls",
     "lint": "eslint .",
     "server": "node-env-run server --exec nodemon | pino-colada",
-    "service": "node ./server/index.js",
+    "serviceDev": "npm run build && NODE_ENV=development node ./server/index.js",
     "dev": "NODE_ENV=development run-p server start",
     "preview": "vite preview",
     "package": "npm run build && mkdir -p ./additional/etc/rpanion-server/config && cp ./config/user.json ./additional/etc/rpanion-server/config && node-deb --verbose --extra-files additional -- server mavlink build python && rm -r ./additional"
