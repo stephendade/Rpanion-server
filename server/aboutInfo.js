@@ -116,7 +116,7 @@ function getHardwareInfo (callback) {
 
 function getsystemctllog(callback) {
   // get the systemctl log
-  exec('journalctl -u rpanion-server.service --since "24 hours ago" -n 500 --no-pager', (error, stdout, stderr) => {
+  exec('journalctl -u rpanion-server.service -n 1000 --no-pager', (error, stdout, stderr) => {
     if (error) {
       console.log(`getsystemctllog exec error: ${error}`)
       return callback(error.toString())
@@ -125,7 +125,9 @@ function getsystemctllog(callback) {
       console.log(`getsystemctllog stderr: ${stderr}`)
       return callback(stderr.toString())
     }
-    return callback(stdout.toString())
+    // for security, remove the bearer token from the log
+    const log = stdout.toString().replace(/Bearer [a-zA-Z0-9-_.]+/g, 'Bearer <token>')
+    return callback(log)
   })
 }
 
