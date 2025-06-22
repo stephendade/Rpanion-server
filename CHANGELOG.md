@@ -1,5 +1,14 @@
 ### Changelog
 
+#### [v0.11.1](https://github.com/stephendade/Rpanion-server/compare/v0.11.0...v0.11.1)
+ - Migrate to using debian packages for release
+ - Use specific "rpanion" user with proper permissions for networking and vpn management
+ - Use ``/etc/rpanion-server`` to store logs and user files when running from deb package
+ - Update to using vite package for frontend development
+ - Video: Add option to stream using H265 codec
+ - Ntrip: Add TLS support
+ - Video: Better detection of Ras Pi CSI camera resolutions
+
 #### [v0.11.0](https://github.com/stephendade/Rpanion-server/compare/v0.10.0...v0.11.0)
  - Add support for Raspberry Pi 5
  - Add support for NVIDIA Jetson Orin

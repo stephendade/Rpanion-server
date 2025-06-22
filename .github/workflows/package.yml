@@ -3,8 +3,6 @@ name: Build Debian Package
 on:
     push:
         branches: [ master ]
-    pull_request:
-      branches: [ master ]
 
 jobs:
     build:
@@ -56,6 +54,51 @@ jobs:
             name: rpanion-server-${{ matrix.arch }}.deb
             path: 'rpanion-server_*.deb'
             retention-days: 7
+    deploy:
+      needs: build  # This ensures deploy only runs after all matrix builds complete
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+        - name: Download all artifacts
+          uses: actions/download-artifact@v4
+          with:
+            path: artifacts/
+        - name: Release
+          uses: "softprops/action-gh-release@v2"
+          if: github.ref_type == 'tag'
+          with:
+            prerelease: false
+            files: |
+              artifacts/rpanion-server-amd64.deb/rpanion-server_*.deb
+              artifacts/rpanion-server-arm64.deb/rpanion-server_*.deb
+            token: "${{ secrets.GITHUB_TOKEN }}"
+        - name: Delete existing pre-release
+          if: github.ref == 'refs/heads/master'
+          run: |
+            gh release delete latest --yes || true
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # Moved rename step here for pre-release builds
+        - name: Rename files for pre-release builds
+          if: github.ref == 'refs/heads/master'
+          run: |
+            # List all the files first for debugging
+            find artifacts/ -name "*.deb"
+            
+            # Rename each file with -dev suffix
+            for file in artifacts/*/*.deb; do
+              echo "Processing file: $file"
+              dir=$(dirname "$file")
+              filename=$(basename "$file")
+              version=$(echo "$filename" | sed -E 's/rpanion-server_([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+              arch=$(echo "$filename" | grep -oE '_amd64\.deb|_arm64\.deb')
+              new_name="rpanion-server_dev${arch}"
+              mv "$file" "$dir/$new_name"
+              echo "Renamed $filename to $new_name"
+            done
+            
+            # List again to verify renaming
+            find artifacts/ -name "*.deb"
         - name: Pre Release
           uses: "softprops/action-gh-release@v2"
           if: github.ref == 'refs/heads/master'
@@ -63,12 +106,7 @@ jobs:
             prerelease: true
             name: "Development Build"
             tag_name: "latest"
-            files: 'rpanion-server_*.deb'
-            token: "${{ secrets.GITHUB_TOKEN }}"
-        - name: Release
-          uses: "softprops/action-gh-release@v2"
-          if: startsWith(github.ref, 'refs/tags/v')
-          with:
-            prerelease: false
-            files: 'rpanion-server_*.deb'
+            files: |
+              artifacts/rpanion-server-amd64.deb/rpanion-server_*.deb
+              artifacts/rpanion-server-arm64.deb/rpanion-server_*.deb
             token: "${{ secrets.GITHUB_TOKEN }}"
