@@ -179,7 +179,11 @@ npm run lint
 
 Use ``npx npm-check-updates -u`` to update nodejs libraries.
 
-Use ``npm version minor`` to create a new release.
+Use ``npm version minor`` to create a new release commit.
+
+Then update the changelog.md and amend this to the commit.
+
+Then "git push --tags" to create the release PR.
 
 To produce a disk image from a SD card, insert the card and run ``./deploy/create_image.sh``.
 
