@@ -1,8 +1,11 @@
 name: Build Debian Package
 
 on:
-    push:
-        branches: [ master ]
+  push:
+    branches:
+      - master
+    tags:
+      - 'v*.*.*'
 
 jobs:
     build:
