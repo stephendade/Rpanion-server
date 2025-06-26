@@ -1,6 +1,6 @@
 {
   "name": "rpanion-server",
-  "version": "0.11.3",
+  "version": "0.11.4",
   "private": true,
   "secure": false,
   "dependencies": {
