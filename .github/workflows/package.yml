@@ -1,11 +1,6 @@
 name: Build Debian Package
 
-on:
-  push:
-    branches:
-      - master
-    tags:
-      - 'v*.*.*'
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
     build:
@@ -68,7 +63,7 @@ jobs:
             path: artifacts/
         - name: Release
           uses: "softprops/action-gh-release@v2"
-          if: github.ref_type == 'tag'
+          if: startsWith(github.ref, 'refs/tags/v')
           with:
             prerelease: false
             files: |
