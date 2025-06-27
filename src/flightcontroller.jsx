@@ -13,12 +13,15 @@ class FCPage extends basePage {
     this.state = {
       ...this.state,
       telemetryStatus: this.props.telemetryStatus,
+      selInputType: null,
+      inputTypes: [],
       serialPorts: [],
       baudRates: [],
       mavVersions: [],
       serialPortSelected: null,
       baudRateSelected: null,
       mavVersionSelected: null,
+      udpInputPort: 14551, // Add this line
       enableHeartbeat: null,
       enableTCP: null,
       FCStatus: {},
@@ -43,6 +46,15 @@ class FCPage extends basePage {
   componentDidMount() {
     fetch(`/api/FCDetails`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state) });
     fetch(`/api/FCOutputs`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
+  }
+
+  handleInputTypeChange = (value) => {
+    this.setState({ selInputType: value });
+  }
+
+  handleUDPInputPortChange = (event) => {
+    //user changed the UDP input port
+    this.setState({ udpInputPort: event.target.value });
   }
 
   handleSerialPortChange = (value) => {
@@ -91,8 +103,10 @@ class FCPage extends basePage {
         'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
+        inputType: JSON.stringify(this.state.selInputType),
         device: JSON.stringify(this.state.serialPortSelected),
         baud: JSON.stringify(this.state.baudRateSelected),
+        udpInputPort: this.state.udpInputPort,
         mavversion: JSON.stringify(this.state.mavVersionSelected),
         enableHeartbeat: this.state.enableHeartbeat,
         enableTCP: this.state.enableTCP,
@@ -171,21 +185,55 @@ class FCPage extends basePage {
 
   renderContent() {
     return (
-      <div style={{ width: 600 }}>
-        <h2>Serial Input</h2>
+      <div style={{ width: 650 }}>
+        <h2>Flight Controller Input</h2>
         <p><i>Flight Controller connection to this device</i></p>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Serial Device</label>
+          <label className="col-sm-4 col-form-label">Input Type</label>
           <div className="col-sm-8">
-            <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected} />
+            <Select 
+              value={this.state.selInputType} 
+              onChange={this.handleInputTypeChange}
+              isDisabled={this.state.telemetryStatus}
+              options={this.state.inputTypes} />
           </div>
         </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Baud Rate</label>
-          <div className="col-sm-8">
-            <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected} />
+        {this.state.selInputType === null || this.state.selInputType.value === 'UART' ? (
+        <>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">Serial Device</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected} />
+              </div>
           </div>
-        </div>
+          <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">Baud Rate</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected} />
+              </div>
+          </div>
+        </>
+        ) : (
+          <>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-5 col-form-label">UDP Input Port (NET_P1_PORT)</label>
+              <div className="col-sm-7">
+                <input 
+                  type="number" 
+                  min="1000" 
+                  max="65535" 
+                  value={this.state.udpInputPort}
+                  onChange={this.handleUDPInputPortChange}
+                  disabled={this.state.telemetryStatus}
+                />
+              </div>
+            </div>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <p><i>Requires NET_P1_TYPE=2 and NET_P1_IP*=Rpanion IP Address</i></p>
+            </div>
+          </>
+        )}
+
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">MAVLink Version</label>
           <div className="col-sm-8">
@@ -195,7 +243,7 @@ class FCPage extends basePage {
 
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">
-            <Button disabled={this.state.serialPorts.length === 0} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
+            <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType.value === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
           </div>
         </div>
 
