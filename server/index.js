@@ -672,7 +672,9 @@ app.get('/api/FCOutputs', authenticateToken, (req, res) => {
 
 app.get('/api/FCDetails', authenticateToken, (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  fcManager.getSerialDevices((err, devices, bauds, seldevice, selbaud, mavers, selmav, active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, tlogging) => {
+  fcManager.getDeviceSettings((err, devices, bauds, seldevice, selbaud, mavers, selmav,
+    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, tlogging,
+    udpInputPort, selInputType, inputTypes) => {
     // hacky way to pass through the
     if (!err) {
       console.log('Sending')
@@ -690,7 +692,10 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         enableUDPB,
         UDPBPort,
         enableDSRequest,
-        tlogging
+        tlogging,
+        udpInputPort,
+        selInputType,
+        inputTypes
       }))
     } else {
       console.log(devices)
@@ -708,7 +713,10 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         enableUDPB,
         UDPBPort,
         enableDSRequest,
-        tlogging
+        tlogging,
+        udpInputPort,
+        selInputType,
+        inputTypes
       }))
       console.log('Error in /api/FCDetails ', { message: err })
     }
@@ -728,7 +736,9 @@ app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('b
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
-  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat, req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest, req.body.tlogging, (err, isSuccess) => {
+  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat,
+                               req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
+                               req.body.tlogging, JSON.parse(req.body.inputType), req.body.udpInputPort, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);
