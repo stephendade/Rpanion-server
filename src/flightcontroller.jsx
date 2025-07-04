@@ -216,7 +216,7 @@ class FCPage extends basePage {
         ) : (
           <>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-5 col-form-label">UDP Input Port (NET_P1_PORT)</label>
+              <label className="col-sm-5 col-form-label">UDP Input Port (NET_Pn_PORT)</label>
               <div className="col-sm-7">
                 <input 
                   type="number" 
@@ -229,7 +229,7 @@ class FCPage extends basePage {
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <p><i>Requires NET_P1_TYPE=2 and NET_P1_IP*=Rpanion IP Address</i></p>
+              <p><i>Requires NET_Pn_TYPE=1 and NET_Pn_IP*=Rpanion IP Address</i></p>
             </div>
           </>
         )}

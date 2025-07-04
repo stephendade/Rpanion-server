@@ -50,7 +50,7 @@ class FCDetails {
     this.mavlinkVersions = [{ value: 1, label: '1.0' },
       { value: 2, label: '2.0' }]
     this.inputTypes = [{ value: 'UART', label: 'UART' },
-      { value: 'UDP', label: 'UDP Client' }]
+      { value: 'UDP', label: 'UDP Server' }]
     // JSON of active device (input type, port and baud and mavversion). User selected
     // null if user selected no link (or no serial port of that name)
     this.activeDevice = null
