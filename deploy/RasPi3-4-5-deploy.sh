@@ -47,9 +47,6 @@ sudo apt install -y nodejs
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
 
-## mavlink-router
-./build_mavlinkrouter.sh
-
 ## and build Rpanion dev
 # If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
 if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then

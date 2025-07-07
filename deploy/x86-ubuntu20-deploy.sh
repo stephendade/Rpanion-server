@@ -36,9 +36,6 @@ echo "[keyfile]" | sudo tee -a /etc/NetworkManager/conf.d/10-globally-managed-de
 echo "unmanaged-devices=*,except:type:wifi,except:type:gsm,except:type:cdma,except:type:wwan,except:type:ethernet,type:vlan" | sudo tee -a /etc/NetworkManager/conf.d/10-globally-managed-devices.conf >/dev/null
 sudo service network-manager restart
 
-## mavlink-router
-./build_mavlinkrouter.sh
-
 ## and build Rpanion dev
 # If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
 if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then

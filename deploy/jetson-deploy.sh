@@ -43,9 +43,6 @@ if systemctl list-units --full -all | grep -Fq 'NetworkManager.service'; then
     sudo service NetworkManager restart
 fi
 
-## mavlink-router
-./build_mavlinkrouter.sh
-
 ## and build Rpanion dev
 # If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
 if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then
