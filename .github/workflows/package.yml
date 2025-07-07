@@ -17,6 +17,9 @@ jobs:
             node-version: 20.x
             cache: 'npm'
 
+        - name: Update submodules
+          run: git submodule update --init --recursive
+
         - name: Regenerate package-lock.json for arm64
           if: matrix.arch == 'arm64'
           run: |
@@ -35,7 +38,7 @@ jobs:
 
         - name: Build mavlink-router
           run: |
-            cd ./deploy && ./build_mavlinkrouter.sh
+            sudo apt update && sudo apt install -y ninja-build  && sudo pip3 install meson && cd ./deploy && ./build_mavlinkrouter.sh
 
         - name: Build package
           run: npm run package
