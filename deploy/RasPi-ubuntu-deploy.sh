@@ -64,9 +64,6 @@ if [[ "$(lsb_release -rs)" =~ ^2[2-9]\. ]]; then
     sudo netplan apply
 fi
 
-## mavlink-router
-./build_mavlinkrouter.sh
-
 ## and build Rpanion dev
 # If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
 if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then
