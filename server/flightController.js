@@ -92,6 +92,9 @@ class FCDetails {
     // Is the connection active?
     this.active = false
 
+    // mavlink-routerd path
+    this.mavlinkRouterPath = null
+
     // load settings
     this.settings = settings
     this.activeDevice = this.settings.value('flightcontroller.activeDevice', null)
@@ -143,12 +146,23 @@ class FCDetails {
   }
 
   validMavlinkRouter () {
-    // check mavlink-router is installed
+    // check mavlink-router is installed and updates folder
     const ls = spawnSync('which', ['mavlink-routerd'])
     console.log(ls.stdout.toString())
     if (ls.stdout.toString().trim() == '') {
+      // also check the parent directory
+      const parentDir = path.dirname(__dirname)
+      const mavlinkRouterPath = path.join(parentDir, 'mavlink-routerd')
+      if (fs.existsSync(mavlinkRouterPath)) {
+        console.log('Found mavlink-routerd in ' + parentDir)
+        this.mavlinkRouterPath = parentDir + "/mavlink-routerd"
+        return true
+      }
+      this.mavlinkRouterPath = null
       return false
     } else {
+      console.log('Found mavlink-routerd in ' + ls.stdout.toString().trim())
+      this.mavlinkRouterPath = ls.stdout.toString().trim()
       return true
     }
   }
@@ -344,7 +358,7 @@ class FCDetails {
     }
 
     // start mavlink-router
-    this.router = spawn('mavlink-routerd', cmd)
+    this.router = spawn(this.mavlinkRouterPath, cmd)
     this.router.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`)
     })
