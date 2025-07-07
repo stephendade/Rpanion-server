@@ -1,10 +1,4 @@
 #!/bin/sh
 set -e
 
-# Check if mavlink-routerd is installed
-if ! command -v mavlink-routerd >/dev/null 2>&1; then
-    echo "Error: mavlink-routerd not found in PATH"
-    exit 1
-fi
-
 exit 0

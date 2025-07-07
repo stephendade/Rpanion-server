@@ -63,9 +63,6 @@ curl -s https://install.zerotier.com | sudo bash
 sudo apt install wireguard wireguard-tools
 ```
 
-The mavlink-router (https://github.com/intel/mavlink-router) software is used for
-backend routing and is required to be installed.
-
 Then install the required packages:
 
 ```

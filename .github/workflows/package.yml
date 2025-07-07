@@ -17,9 +17,6 @@ jobs:
             node-version: 20.x
             cache: 'npm'
 
-        - name: Update submodules
-          run: git submodule update --init --recursive
-
         - name: Regenerate package-lock.json for arm64
           if: matrix.arch == 'arm64'
           run: |
@@ -36,9 +33,29 @@ jobs:
             # Update package.json with the architecture
             jq --arg arch "${{ matrix.arch }}" '.node_deb.architecture = $arch' package.json > tmp.json && mv tmp.json package.json
 
-        - name: Build mavlink-router
+        - name: Download pre-built mavlink-router
           run: |
-            sudo apt update && sudo apt install -y ninja-build  && sudo pip3 install meson && cd ./deploy && ./build_mavlinkrouter.sh
+            mkdir -p ./additional/usr/share/rpanion-server/app/
+            
+            # Set the mavlink-router version to download
+            MAVLINK_ROUTER_VERSION="4"
+            
+            # Download the appropriate binary based on architecture
+            if [ "${{ matrix.arch }}" = "arm64" ]; then
+              echo "Downloading mavlink-router for ARM64"
+              wget -O ./additional/usr/share/rpanion-server/app/mavlink-routerd \
+                "https://github.com/mavlink-router/mavlink-router/releases/download/v${MAVLINK_ROUTER_VERSION}/mavlink-routerd-glibc-aarch64" 
+            else
+              echo "Downloading mavlink-router for AMD64"
+              wget -O ./additional/usr/share/rpanion-server/app/mavlink-routerd \
+                "https://github.com/mavlink-router/mavlink-router/releases/download/v${MAVLINK_ROUTER_VERSION}/mavlink-routerd-glibc-x86_64"
+            fi
+            
+            # Make the binary executable
+            chmod +x ./additional/usr/share/rpanion-server/app/mavlink-routerd
+            
+            # Verify the downloaded binary
+            file ./additional/usr/share/rpanion-server/app/mavlink-routerd
 
         - name: Build package
           run: npm run package
