@@ -25,12 +25,22 @@ jobs:
       run: |
         cd ./deploy && ./install_common_libraries.sh
 
-    - name: Update submodules
-      run: git submodule update --init --recursive
-
-    - name: Build mavlink-router
+    - name: Download pre-built mavlink-router
       run: |
-        cd ./deploy && ./build_mavlinkrouter.sh
+        
+        # Set the mavlink-router version to download
+        MAVLINK_ROUTER_VERSION="4"
+        
+        echo "Downloading mavlink-router for AMD64"
+        wget -O ./mavlink-routerd \
+          "https://github.com/mavlink-router/mavlink-router/releases/download/v${MAVLINK_ROUTER_VERSION}/mavlink-routerd-glibc-x86_64"
+        
+        
+        # Make the binary executable
+        chmod +x ./mavlink-routerd
+        
+        # Verify the downloaded binary
+        file ./mavlink-routerd
 
     - name: Copy Zerotier token
       run: |
