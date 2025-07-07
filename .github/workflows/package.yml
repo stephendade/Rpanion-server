@@ -33,6 +33,10 @@ jobs:
             # Update package.json with the architecture
             jq --arg arch "${{ matrix.arch }}" '.node_deb.architecture = $arch' package.json > tmp.json && mv tmp.json package.json
 
+        - name: Build mavlink-router
+          run: |
+            cd ./deploy && ./build_mavlinkrouter.sh
+
         - name: Build package
           run: npm run package
 
