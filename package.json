@@ -47,7 +47,7 @@
     "serviceDev": "npm run build && NODE_ENV=development node ./server/index.js",
     "dev": "NODE_ENV=development run-p server start",
     "preview": "vite preview",
-    "package": "npm run build && mkdir -p ./additional/etc/rpanion-server/config && cp ./config/user.json ./additional/etc/rpanion-server/config && node-deb --verbose --extra-files additional -- server mavlink build python && rm -r ./additional"
+    "package": "npm run build && mkdir -p ./additional/etc/rpanion-server/config && cp ./config/user.json ./additional/etc/rpanion-server/config && mkdir -p ./additional/usr/share/rpanion-server/app/server && cp modules/mavlink-router/build/src/mavlink-routerd ./additional/usr/share/rpanion-server/app/ && node-deb --verbose --extra-files additional -- server mavlink build python && rm -r ./additional"
   },
   "node_deb": {
     "entrypoints": {
@@ -67,13 +67,6 @@
       "postinst": "./debian/postinst",
       "postrm": "./debian/postrm",
       "prerm": "./debian/prerm"
-    },
-    "package": {
-      "includes": [
-        "server/**/*",
-        "mavlink/**/*",
-        "build/**/*"
-      ]
     }
   },
   "proxy": "http://localhost:3001",
