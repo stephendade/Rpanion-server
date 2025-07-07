@@ -12,6 +12,7 @@ sudo usermod -a -G gpio rpanion
 sudo usermod -a -G video rpanion
 sudo usermod -a -G adm rpanion    # for systemd journal access
 sudo usermod -a -G render rpanion   # for access to hardware video encoding on Jetson Orin
+sudo usermod -a -G networkmanager rpanion   # for access to nmcli
 
 # Set permissions
 chown -R rpanion /usr/share/rpanion-server
@@ -34,7 +35,8 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/sbin/zerotier-cli leave *, \
   /usr/sbin/zerotier-cli listnetworks *, \
   /usr/sbin/zerotier-cli info, \
-  /usr/sbin/shutdown *
+  /usr/sbin/shutdown *, \
+  /usr/bin/nmcli *
 EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control
