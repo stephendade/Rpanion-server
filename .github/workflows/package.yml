@@ -128,7 +128,6 @@ jobs:
           with:
             prerelease: true
             name: "Development Build"
-            tag_name: "latest"
             files: |
               artifacts/rpanion-server-amd64.deb/rpanion-server_*.deb
               artifacts/rpanion-server-arm64.deb/rpanion-server_*.deb
