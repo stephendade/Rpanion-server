@@ -33,6 +33,7 @@ const crypto = require('crypto');
 
 // set up rate limiter: maximum of fifty requests per minute
 const RateLimit = require('express-rate-limit')
+const pppConnection = require('./pppConnection.js')
 const limiter = RateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
   max: 50
@@ -66,17 +67,46 @@ const cloud = new cloudManager(settings)
 const logConversion = new logConversionManager(settings)
 const adhocManager = new Adhoc(settings)
 const userMgmt = new userLogin()
+const pppConnectionManager = new pppConnection(settings)
 
-// cleanup, if needed
-process.on('SIGINT', quitting) // run signal handler when main process exits
-// process.on('SIGTERM', quitting) // run signal handler when service exits. Need for Ubuntu??
-
-function quitting () {
+// Add graceful shutdown handlers
+process.on('SIGINT', () => {
+  console.log('Received SIGINT. Shutting down gracefully...')
+  pppConnectionManager.quitting()
   cloud.quitting()
   logConversion.quitting()
   console.log('---Shutdown Rpanion---')
   process.exit(0)
-}
+})
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM. Shutting down gracefully...')
+  pppConnectionManager.quitting()
+  cloud.quitting()
+  logConversion.quitting()
+  console.log('---Shutdown Rpanion---')
+  process.exit(0)
+})
+
+// Also good to handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err)
+  pppConnectionManager.quitting()
+  cloud.quitting()
+  logConversion.quitting()
+  console.log('---Shutdown Rpanion---')
+  process.exit(1)
+})
+
+// Handle nodemon restarts
+process.once('SIGUSR2', () => {
+  console.log('Received SIGUSR2. Shutting down gracefully...')
+  pppConnectionManager.quitting()
+  cloud.quitting()
+  logConversion.quitting()
+  console.log('---Shutdown Rpanion---')
+  process.kill(process.pid, 'SIGUSR2')
+})
 
 // Got an RTCM message, send to flight controller
 ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
@@ -309,6 +339,62 @@ function authenticateToken(req, res, next) {
     next()
   })
 }
+
+//pppConnectionManager url endpoints
+app.get('/api/pppstatus', authenticateToken, (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  pppConnectionManager.getPPPSettings((err, settings) => {  
+    if (err) {
+      console.log('Error in /api/pppstatus', { message: err })
+      res.send(JSON.stringify({ error: err }))
+      return
+    }
+    res.send(JSON.stringify(settings))
+  })
+})
+
+app.post('/api/pppmodify', authenticateToken, [
+  check('device').isJSON(),
+  check('baudrate').isJSON(), 
+  check('localIP').isIP(),
+  check('remoteIP').isIP(),
+  check('enabled').isBoolean()
+], (req, res) => {
+  const errors = validationResult(req)
+  if (!errors.isEmpty()) {
+    console.log('Bad POST vars in /api/pppmodify', { message: JSON.stringify(errors.array()) })
+    return res.status(422).json({ error: JSON.stringify(errors.array()) })
+  }
+
+  if (req.body.enabled === true) {
+    console.log('Starting PPP connection');
+    res.setHeader('Content-Type', 'application/json')
+    pppConnectionManager.startPPP(JSON.parse(req.body.device), JSON.parse(req.body.baudrate), req.body.localIP, req.body.remoteIP, (err, settings) => {
+      if (err !== null) {
+        console.log('Error in /api/pppmodify', { message: err })
+        console.log(JSON.stringify({settings, error: err }))
+        res.send(JSON.stringify({settings, error: err.toString() }))
+        return
+      } else {
+        res.send(JSON.stringify({settings}))
+        return
+      }
+    })
+  }
+  else if (req.body.enabled === false) {
+    pppConnectionManager.stopPPP((err, settings) => {
+      if (err) {
+        //console.log('Error in /api/pppmodify', { message: err })
+        console.log(JSON.stringify({settings, error: err }))
+        res.send(JSON.stringify({settings, error: err }))
+        return
+      } else {
+        res.send(JSON.stringify({settings}))
+        return
+      }
+    })
+  }
+})
 
 // Serve the logfile
 app.get('/api/logfile', authenticateToken, (req, res) => {

@@ -14,6 +14,7 @@ import CloudConfig from './cloud.jsx'
 import VPN from './vpnconfig.jsx'
 import Logout from './logout.jsx'
 import UserManagement from './userManagement.jsx'
+import PPPPage from './ppp.jsx'
 
 function AppRouter () {
 
@@ -25,6 +26,7 @@ function AppRouter () {
           <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/controller">Flight Controller</Link>
+          <Link className='list-group-item list-group-item-action bg-light' to="/ppp">PPP Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/ntrip">NTRIP Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/network">Network Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/adhoc">Adhoc Wifi Config</Link>
@@ -43,6 +45,7 @@ function AppRouter () {
           <Routes>
             <Route exact path="/" element={<Home />} />
             <Route exact path="/controller" element={<FCConfig />} />
+            <Route exact path="/ppp" element={<PPPPage />} />
             <Route exact path="/network" element={<NetworkConfig />} />
             <Route exact path="/about" element={<About />} />
             <Route exact path="/video" element={<VideoPage />} />

@@ -13,6 +13,7 @@ import NTRIPPage from './ntripcontroller.jsx'
 import AdhocConfig from './adhocwifi.jsx'
 import CloudConfig from './cloud.jsx'
 import UserManagement from './userManagement.jsx'
+import PPPConnection from '../server/pppConnection.js'
 
 describe('#apptest()', function () {
   test('homepage renders without crashing', function () {
@@ -82,6 +83,13 @@ describe('#apptest()', function () {
     const div = document.createElement('div')
     const root = createRoot(div)
     root.render(<UserManagement />)
+    root.unmount()
+  })
+
+  test('PPP connection page renders without crashing', function () {
+    const div = document.createElement('div')
+    const root = createRoot(div)
+    root.render(<PPPConnection />)
     root.unmount()
   })
 })
