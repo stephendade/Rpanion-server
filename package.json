@@ -94,6 +94,7 @@
     "nyc": "^17.1.0",
     "pino-colada": "^2.2.2",
     "pino-http": "^10.3.0",
+    "sinon": "^21.0.0",
     "vite-plugin-eslint": "^1.8.1",
     "vitest": "^3.1.1"
   },
