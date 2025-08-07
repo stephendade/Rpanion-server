@@ -79,7 +79,7 @@
   "devDependencies": {
     "@eslint/js": "^9.23.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "coveralls-next": "^4.2.1",
+    "coveralls-next": "^4.2.2",
     "eslint": "^9.24.0",
     "eslint-plugin-mocha": "^10.5.0",
     "eslint-plugin-react": "^7.37.5",
