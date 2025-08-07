@@ -1,7 +1,6 @@
 <div align="left">
 
-![GitHub Actions](https://github.com/stephendade/Rpanion-server/actions/workflows/node.js.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/stephendade/Rpanion-server/badge.svg)](https://coveralls.io/github/stephendade/Rpanion-server)
+![Build Status](https://github.com/stephendade/Rpanion-server/actions/workflows/unitests.yml/badge.svg)![Package Status](https://github.com/stephendade/Rpanion-server/actions/workflows/package.yml/badge.svg)![Coverage Status](https://coveralls.io/repos/github/stephendade/Rpanion-server/badge.svg)
 
 </div>
 
