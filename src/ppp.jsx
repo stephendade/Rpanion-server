@@ -11,7 +11,7 @@ class PPPPage extends basePage {
         super(props, useSocketIO);
         this.state = {
             ...this.state,
-            pppStatus: "",
+            PPPStatus: "",
             config: {
                 enabled: false,
                 selDevice: null,
@@ -22,21 +22,31 @@ class PPPPage extends basePage {
                 remoteIP: '',
             },
         };
+
+        //Socket.io client for reading in update values
+        this.socket.on('PPPStatus', function (msg) {
+            this.setState({ PPPStatus: msg });
+        }.bind(this));
+
+        this.socket.on('reconnect', function () {
+            //refresh state
+            this.componentDidMount();
+        }.bind(this));
     }
 
     componentDidMount() {
-        this.fetchPPPStatus();
+        this.fetchPPPConfig();
     }
 
-    fetchPPPStatus = async () => {
+    fetchPPPConfig = async () => {
         try {
-            const response = await fetch('/api/pppstatus');
+            const response = await fetch('/api/pppconfig');
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             this.setState({ config: data});
             this.loadDone();
         } catch (error) {
-            this.setState({ error: 'Failed to fetch PPP status', isLoading: false });
+            this.setState({ error: 'Failed to fetch PPP config', isLoading: false });
         }
     };
 
@@ -159,7 +169,7 @@ class PPPPage extends basePage {
                       </div>
                 </Form>
             <h2>Status</h2>
-            <p>{this.state.pppStatus}</p>
+            <p>{this.state.PPPStatus}</p>
         </div>
         );
     }

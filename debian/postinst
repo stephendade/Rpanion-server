@@ -23,7 +23,7 @@ systemctl daemon-reload
 systemctl enable rpanion-server
 systemctl start rpanion-server
 
-# Allow wireguard and zerotier service to be disabled or enabled without password
+# Allow relevant services to be disabled or enabled without password
 cat <<EOF > /etc/sudoers.d/allow-vpn-control
 rpanion ALL=(ALL) NOPASSWD: \
   /usr/bin/systemctl disable wg-quick@*, \
@@ -36,7 +36,8 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/sbin/zerotier-cli listnetworks *, \
   /usr/sbin/zerotier-cli info, \
   /usr/sbin/shutdown *, \
-  /usr/bin/nmcli *
+  /usr/bin/nmcli *, \
+  /usr/sbin/pppd *
 EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control
