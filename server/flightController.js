@@ -609,7 +609,7 @@ class FCDetails {
       // this.activeDevice = {inputType, udpInputPort, serial: device, baud: baud};
       this.startLink((err) => {
         if (err) {
-          console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
+          console.log(err)
           this.activeDevice = null
         } else {
           // start timeout function for auto-reconnect
