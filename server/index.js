@@ -341,11 +341,11 @@ function authenticateToken(req, res, next) {
 }
 
 //pppConnectionManager url endpoints
-app.get('/api/pppstatus', authenticateToken, (req, res) => {
+app.get('/api/pppconfig', authenticateToken, (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   pppConnectionManager.getPPPSettings((err, settings) => {  
     if (err) {
-      console.log('Error in /api/pppstatus', { message: err })
+      console.log('Error in /api/pppconfig', { message: err })
       res.send(JSON.stringify({ error: err }))
       return
     }
@@ -887,6 +887,7 @@ io.on('connection', function () {
     io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr())
     io.sockets.emit('CloudBinStatus', cloud.conStatusBinStr())
     io.sockets.emit('LogConversionStatus', logConversion.conStatusLogStr())
+    io.sockets.emit('PPPStatus', pppConnectionManager.conStatusStr())
   }, 1000)
 })
 

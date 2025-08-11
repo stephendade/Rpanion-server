@@ -45,6 +45,8 @@ class PPPConnection {
             { value: 2000000, label: '2 MBaud' },
             { value: 12500000, label: '12.5 MBaud' }];
         this.serialDevices = [];
+        this.badbaudRate = false; // flag to indicate if the baud rate is not supported
+        this.prevdata = null; // previous data for comparison
 
         if (this.isConnected) {
             const attemptPPPStart = () => {
@@ -61,7 +63,7 @@ class PPPConnection {
                             this.setSettings();
                         }
                     } else {
-                        console.log('PPP connection started successfully:', result);
+                        console.log('PPP connection started successfully');
                     }
                 });
             };
@@ -83,7 +85,11 @@ class PPPConnection {
         if (this.pppProcess) {
             console.log('Stopping PPP connection on quit...');
             this.pppProcess.kill();
-            execSync('sudo pkill -SIGTERM pppd && sleep 1');
+            try {
+                execSync('sudo pkill -SIGTERM pppd && sleep 1');
+            } catch (error) {
+                console.error('Error stopping PPP connection on shutdown:', error);
+            }
         }
         console.log('PPPConnection quitting');
     }
@@ -156,6 +162,7 @@ class PPPConnection {
     }
 
     startPPP(device, baudRate, localIP, remoteIP, callback) {
+        this.badbaudRate = false;
         if (this.isConnected) {
             return callback(new Error('PPP is already connected'), {
                 selDevice: this.device,
@@ -221,6 +228,13 @@ class PPPConnection {
         });
         this.pppProcess.stdout.on('data', (data) => {
             console.log("PPP Output: ", data.toString().trim());
+            // Check for non support baud rates "speed <baud> not supported"
+            if (data.toString().includes('speed') && data.toString().includes('not supported')) {
+                this.pppProcess.kill();
+                this.pppProcess = null; // reset the process reference
+                this.isConnected = false;
+                this.badbaudRate = true;
+            }
         });
         this.pppProcess.stderr.on('data', (data) => {
             console.log("PPP Error: ", data.toString().trim());
@@ -290,7 +304,6 @@ class PPPConnection {
                     if (match) {
                         const rxBytes = parseInt(match[1], 10);
                         const txBytes = parseInt(match[5], 10);
-                        console.log(`PPP Data Rate - RX: ${rxBytes} bytes, TX: ${txBytes} bytes`);
                         resolve({ rxBytes, txBytes });
                     } else {
                         reject('Could not parse PPP data rate');
@@ -335,6 +348,71 @@ class PPPConnection {
             }
         });
     }
+
+    // uses ifconfig to get the PPP connection datarate
+    getPPPDataRate() {
+        if (!this.isConnected) {
+            return { rxRate: 0, txRate: 0 };
+        }
+        // get current data transfer stats for connected PPP session
+        try {
+            let stdout = execSync('ifconfig ppp0 | grep packets', { encoding: 'utf8' }).toString().trim();
+            if (!stdout) {
+                return { rxRate: 0, txRate: 0, percentusedRx: 0, percentusedTx: 0 };
+            }
+            // match format :
+            //        RX packets 0  bytes 0 (0.0 B)
+            //        TX packets 118  bytes 12232 (12.2 KB)
+            const [ , matchRX, matchTX ] = stdout.match(/RX\s+packets\s+\d+\s+bytes\s+(\d+).*TX\s+packets\s+\d+\s+bytes\s+(\d+)/s);
+            if (matchRX && matchTX) {
+                const rxBytes = parseInt(matchRX);
+                const txBytes = parseInt(matchTX);
+                // calculate the data rate in bytes per second
+                if (this.prevdata) {
+                    const elapsed = Date.now() - this.prevdata.timestamp; // in milliseconds
+                    const rxRate = (rxBytes - this.prevdata.rxBytes) / (elapsed / 1000); // bytes per second
+                    const txRate = (txBytes - this.prevdata.txBytes) / (elapsed / 1000); // bytes per second
+                    const percentusedRx = rxRate / (this.baudRate.value / 8); // percent of baud rate used
+                    const percentusedTx = txRate / (this.baudRate.value / 8); // percent of baud rate used
+                    this.prevdata = { rxBytes, txBytes, timestamp: Date.now() };
+                    return { rxRate, txRate, percentusedRx, percentusedTx };
+                }
+                this.prevdata = { rxBytes, txBytes, timestamp: Date.now() };
+                return { rxRate: 0, txRate: 0, percentusedRx: 0, percentusedTx: 0 };
+            } else {
+                return { rxRate: 0, txRate: 0, percentusedRx: 0, percentusedTx: 0};
+            }
+        } catch (error) {
+            console.error('Error getting PPP data rate:', error.message);
+            return { rxRate: 0, txRate: 0, percentusedRx: 0, percentusedTx: 0 };
+        }
+    }
+
+    // Returns a string representation of the PPP connection status for use by socket.io
+    conStatusStr () {
+        //format the connection status string
+        if (this.badbaudRate) {
+            return 'Disconnected (Baud rate not supported)';
+        }
+        if (!this.isConnected) {
+            return 'Disconnected';
+        }
+        if (this.pppProcess && this.pppProcess.pid) {
+            //get datarate
+            const { rxRate, txRate, percentusedRx, percentusedTx } = this.getPPPDataRate();
+            let status = 'Connected';
+            if (this.pppProcess.pid) {
+                status += ` (PID: ${this.pppProcess.pid})`;
+            }
+            if (rxRate > 0 || txRate > 0) {
+                status += `, RX: ${rxRate.toFixed(2)} B/s (${(percentusedRx * 100).toFixed(2)}%), TX: ${txRate.toFixed(2)} B/s (${(percentusedTx * 100).toFixed(2)}%)`;
+            } else {
+                status += ', No data transfer';
+            }
+            return status;
+        }
+    }
 }
+
 
 module.exports = PPPConnection;
