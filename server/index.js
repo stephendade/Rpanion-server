@@ -1193,7 +1193,7 @@ if (process.env.NODE_ENV !== 'development')
 {
   app.get(['/', '/controller', '/about', '/network',
           '/video', '/vpn', '/ntrip', '/cloud', '/flightlogs',
-          '/apclients', '/adhoc', '/logoutconfirm', '/users'], (req, res) => {
+          '/apclients', '/adhoc', '/logoutconfirm', '/users', '/ppp'], (req, res) => {
     res.sendFile(path.join(__dirname, '..', '/build/index.html'))
   })
 }
