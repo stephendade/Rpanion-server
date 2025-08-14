@@ -40,7 +40,7 @@ class PPPPage extends basePage {
 
     fetchPPPConfig = async () => {
         try {
-            const response = await fetch('/api/pppconfig');
+            const response = await fetch('/api/pppconfig', {headers: {Authorization: `Bearer ${this.state.token}`}});
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
             this.setState({ config: data});
