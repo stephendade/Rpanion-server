@@ -4,30 +4,17 @@
 # Taken from https://github.com/tamaggo/gstreamer-examples/blob/master/test_gst_rtsp_server.py
 # gst-launch-1.0 rtspsrc location=rtsp://127.0.0.1:8554/video latency=0 ! decodebin ! autovideosink
 
-
-import gi
 import argparse
-import os
 import platform
-from netifaces import interfaces, ifaddresses, AF_INET
 import ipaddress
 from typing import List
 import subprocess
+import gi
 
 gi.require_version("Gst", "1.0")
 gi.require_version("GstRtsp", "1.0")
 gi.require_version("GstRtspServer", "1.0")
 from gi.repository import Gst, GstRtspServer, GLib
-
-
-def ip4_addresses() -> List[str]:
-    ip_list: List[str] = []
-    for interface in interfaces():
-        if AF_INET in ifaddresses(interface).keys():
-            for link in ifaddresses(interface)[AF_INET]:
-                if 'addr' in link.keys():
-                    ip_list.append(link['addr'])
-    return ip_list
 
 
 # Returns true if this is a Raspi5 or later
@@ -217,7 +204,6 @@ class GstServer():
         self.server = GstRtspServer.RTSPServer()
         self.sourceID = self.server.attach(None)
         print("Server available on rtsp://<IP>:8554")
-        print("Where IP is {0}".format(ip4_addresses()))
 
     def addStream(self, device, h, w, bitrate, format, rotation, framerate, timestamp, compression):
         f = MyFactory(device, h, w, bitrate, format,
@@ -248,10 +234,12 @@ if __name__ == '__main__':
                         default='H264', type=str, choices=['H264', 'H265'])
     parser.add_argument("--rotation", help="rotation angle",
                         default=0, type=int, choices=[0, 90, 180, 270])
+    parser.add_argument("--transport", help="Transport protocol selection",
+                        default="RTSP", type=str, choices=['RTSP', 'RTP'])
     parser.add_argument(
-        "--udp", help="use UDP sink (dest IP:port) instead of RTSP", default="0:5600", type=str)
+        "--udp", help="If using RTP, the destinatinon IP:port", default="127.0.0.1:5600", type=str)
     parser.add_argument(
-        "--multirtsp", help="CSV of multi-camera setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
+        "--multirtsp", help="CSV of multi-camera RTSP setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
     parser.add_argument("--timestamp", help="add timestamp",
                         default=False, action='store_true')
     args = parser.parse_args()
@@ -265,7 +253,7 @@ if __name__ == '__main__':
     if args.multirtsp != "":
         # Multi-camera streaming, delimited via ';'
         # Example commandline is:
-        # ./rtsp-server.py --multirtsp="/dev/video0,480,640,2000,video/x-raw,0,10;/dev/video2,480,640,2000,video/x-raw,0,10"
+        # ./video-server.py --multirtsp="/dev/video0,480,640,2000,video/x-raw,0,10;/dev/video2,480,640,2000,video/x-raw,0,10"
 
         cams = args.multirtsp.split(';')
         s = GstServer()
@@ -289,7 +277,7 @@ if __name__ == '__main__':
         except:
             print("Exiting RTSP Server")
             loop.quit()
-    elif args.udp.split(':')[0] == "0":
+    elif args.transport == "RTSP":
         # RTSP
         s = GstServer()
         s.addStream(args.videosource, args.height, args.width, args.bitrate,
@@ -300,7 +288,7 @@ if __name__ == '__main__':
         except:
             print("Exiting RTSP Server")
             loop.quit()
-    else:
+    elif args.transport == "RTP":
         # RTP
         pipeline_str = getPipeline(args.videosource, args.height, args.width,
                                    args.bitrate, args.format, args.rotation, args.fps, args.timestamp,

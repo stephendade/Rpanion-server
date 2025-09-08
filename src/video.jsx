@@ -23,7 +23,8 @@ class VideoPage extends basePage {
       rotations: [{ label: "0°", value: 0 }, { label: "90°", value: 90 }, { label: "180°", value: 180 }, { label: "270°", value: 270 }],
       rotSelected: { label: "0°", value: 0 },
       bitrate: 1000,
-      UDPChecked: false,
+      transportSelected: { label: "RTSP", value: "RTSP" },
+      transportOptions: [{ label: "RTP", value: "RTP" }, { label: "RTSP", value: "RTSP" }],
       useUDPIP: "127.0.0.1",
       useUDPPort: 5600,
       FPSMax: 0,
@@ -33,7 +34,8 @@ class VideoPage extends basePage {
       enableCameraHeartbeat: false,
       mavStreamSelected: this.props.mavStreamSelected,
       multicastString: " ",
-      compression: { value: 'H264', label: 'H.264' }
+      compression: { value: 'H264', label: 'H.264' },
+      compressionOptions: [{ value: 'H264', label: 'H.264' }, { value: 'H265', label: 'H.265' }]
     }
   }
 
@@ -69,11 +71,6 @@ class VideoPage extends basePage {
   handleBitrateChange = (event) => {
     //bitrate spinner new value
     this.setState({ bitrate: event.target.value });
-  }
-
-  handleUseUDPChange = (event) => {
-    //bitrate spinner new value
-    this.setState({ UDPChecked: event.target.value==="rtp" });
   }
 
   isMulticastUpdateIP(ip) {
@@ -150,7 +147,7 @@ class VideoPage extends basePage {
           fps: this.state.FPSMax !== 0 ? this.state.fpsSelected : Number(this.state.fpsSelected.value),
           //fps: this.state.fpsSelected,
           bitrate: this.state.bitrate,
-          useUDP: this.state.UDPChecked,
+          transport: this.state.transportSelected.value,
           useUDPIP: this.state.useUDPIP,
           useUDPPort: this.state.useUDPPort,
           useTimestamp: this.state.timestamp,
@@ -174,14 +171,12 @@ class VideoPage extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Streaming Mode</label>
               <div className="col-sm-8">
-                <div className="form-check">
-                  <input className="form-check-input" type="radio" name="streamtype" value="rtp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={this.state.UDPChecked} />
-                  <label className="form-check-label">RTP (stream to single client)</label>
-                </div>
-                <div className="form-check">
-                  <input className="form-check-input" type="radio" name="streamtype" value="rtsp" disabled={this.state.streamingStatus} onChange={this.handleUseUDPChange} checked={!this.state.UDPChecked} />
-                  <label className="form-check-label">RTSP (multiple clients can connect to stream)</label>
-                </div>
+                <Select
+                  isDisabled={this.state.streamingStatus}
+                  options={this.state.transportOptions}
+                  onChange={(value) => this.setState({ transportSelected: value })}
+                  value={this.state.transportSelected}
+                />
               </div>
             </div>
 
@@ -221,10 +216,7 @@ class VideoPage extends basePage {
             <div className="col-sm-8">
               <Select
                 isDisabled={this.state.streamingStatus}
-                options={[
-                  { value: 'H264', label: 'H.264' },
-                  { value: 'H265', label: 'H.265' }
-                ]}
+                options={this.state.compressionOptions}
                 onChange={(value) => this.setState({ compression: value })}
                 value={this.state.compression}
               />
@@ -240,17 +232,17 @@ class VideoPage extends basePage {
             <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
           </div>
         </div>
-        <div style={{ display: (this.state.UDPChecked) ? "block" : "none" }}>
+        <div style={{ display: (this.state.transportSelected.value === 'RTP') ? "block" : "none" }}>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label ">Destination IP</label>
             <div className="col-sm-8">
-              <input type="text" name="ipaddress" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange} />
+              <input type="text" name="ipaddress" disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange} />
             </div>
           </div>
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label">Destination Port</label>
             <div className="col-sm-8">
-              <input type="text" name="port" disabled={!this.state.UDPChecked || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
+              <input type="text" name="port" disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
             </div>
           </div>
         </div>
@@ -263,7 +255,7 @@ class VideoPage extends basePage {
           <input type="checkbox" disabled={this.state.streamingStatus} checked={this.state.enableCameraHeartbeat} onChange={this.handleUseCameraHeartbeatChange} />
           </div>
         </div>
-        <div style={{ display: (this.state.enableCameraHeartbeat && (!this.state.UDPChecked)) ? "block" : "none" }}>
+        <div style={{ display: (this.state.enableCameraHeartbeat && (!(this.state.transportSelected.value === 'RTP'))) ? "block" : "none" }}>
           <div className="form-group row" style={{ marginBottom: '5px' } }>
               <label className="col-sm-4 col-form-label">Video source IP Address</label>
               <div className="col-sm-8">
@@ -282,7 +274,7 @@ class VideoPage extends basePage {
 
         <br />
         <h3 style={{ display: (this.state.streamingStatus) ? "block" : "none" }}>Connection strings for video stream</h3>
-        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !this.state.UDPChecked) ? "block" : "none" }}>
+        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !(this.state.transportSelected.value === 'RTP')) ? "block" : "none" }}>
           <Accordion.Item eventKey="0">
             <Accordion.Header>
               + RTSP Streaming Addresses (for VLC, etc)
@@ -314,7 +306,7 @@ class VideoPage extends basePage {
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
-        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && this.state.UDPChecked) ? "block" : "none" }}>
+        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && (this.state.transportSelected.value === 'RTP')) ? "block" : "none" }}>
           <Accordion.Item eventKey="0">
             <Accordion.Header>
               + QGroundControl

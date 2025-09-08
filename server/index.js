@@ -693,7 +693,9 @@ app.get('/api/softwareinfo', authenticateToken, (req, res) => {
 
 app.get('/api/videodevices', authenticateToken, (req, res) => {
   vManager.populateAddresses()
-  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, useCameraHeartbeat, selMavURI) => {
+  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate,
+                            selfps, SeluseUDPIP, SeluseUDPPort, timestamp,
+                            fps, FPSMax, vidres, useCameraHeartbeat, selMavURI, compression, Seltransport, transportOptions) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({
@@ -707,7 +709,8 @@ app.get('/api/videodevices', authenticateToken, (req, res) => {
         rotSelected: selRot,
         bitrate: selbitrate,
         fpsSelected: selfps,
-        UDPChecked: SeluseUDP,
+        transportSelected: Seltransport,
+        transportOptions: transportOptions,
         useUDPIP: SeluseUDPIP,
         useUDPPort: SeluseUDPPort,
         timestamp,
@@ -715,7 +718,8 @@ app.get('/api/videodevices', authenticateToken, (req, res) => {
         fps: fps,
         FPSMax: FPSMax,
         enableCameraHeartbeat: useCameraHeartbeat,
-        mavStreamSelected: selMavURI
+        mavStreamSelected: selMavURI,
+        compression: compression
       }))
     } else {
       res.setHeader('Content-Type', 'application/json')
@@ -976,7 +980,7 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
   check('device').if(check('active').isIn([true])).isLength({ min: 2 }),
   check('height').if(check('active').isIn([true])).isInt({ min: 1 }),
   check('width').if(check('active').isIn([true])).isInt({ min: 1 }),
-  check('useUDP').if(check('active').isIn([true])).isBoolean(),
+  check('transport').if(check('active').isIn([true])).isIn(['RTP', 'RTSP']),
   check('useTimestamp').if(check('active').isIn([true])).isBoolean(),
   check('useCameraHeartbeat').if(check('active').isIn([true])).isBoolean(),
   check('useUDPPort').if(check('active').isIn([true])).isPort(),
@@ -994,7 +998,7 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
   }
   // user wants to start/stop video streaming
   vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation,
-                              req.body.bitrate, req.body.fps, req.body.useUDP, req.body.useUDPIP, req.body.useUDPPort,
+                              req.body.bitrate, req.body.fps, req.body.transport, req.body.useUDPIP, req.body.useUDPPort,
                               req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')

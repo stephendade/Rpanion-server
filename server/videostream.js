@@ -1,4 +1,4 @@
-const { exec, spawn } = require('child_process')
+const { exec, execSync, spawn } = require('child_process')
 const os = require('os')
 const si = require('systeminformation')
 const events = require('events')
@@ -31,7 +31,7 @@ class videoStream {
         if (!error) {
           this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
             this.savedDevice.width, this.savedDevice.format,
-            this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.useUDP,
+            this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.transport,
             this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, this.savedDevice.useCameraHeartbeat,
             this.savedDevice.mavStreamSelected, this.savedDevice.compression, (err) => {
               if (err) {
@@ -60,10 +60,46 @@ class videoStream {
     }
   }
 
+  getCompressionSelect(val) {
+    // return the compression select object for a given value
+    const options = [
+      { value: 'H264', label: 'H.264' },
+      { value: 'H265', label: 'H.265' },
+    ]
+    const sel = options.filter(it => it.value === val)
+    if (sel.length === 1) {
+      return sel[0]
+    } else {
+      return options[0]
+    }
+  }
+
+  getTransportSelect(val) {
+    // return the transport select object for a given value
+    const options = [
+      { value: 'RTP', label: 'RTP' },
+      { value: 'RTSP', label: 'RTSP' },
+    ]
+    const sel = options.filter(it => it.value === val)
+    if (sel.length === 1) {
+      return sel[0]
+    } else {
+      return options[1]
+    }
+  }
+
+  getTransportOptions(){
+    // get transport options
+    return [
+      { value: 'RTP', label: 'RTP' },
+      { value: 'RTSP', label: 'RTSP' },
+    ];
+  }
+
   // video streaming
   getVideoDevices (callback) {
     // get all video device details
-    // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDP, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, cameraHeartbeat, selMavURI
+    // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, cameraHeartbeat, selMavURI, compression, transport, transportOptions
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
       if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
@@ -77,9 +113,10 @@ class videoStream {
         // and return current settings
         if (!this.active) {
           return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
-            { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
+            { label: '0°', value: 0 }, 1100, fpsSelected, '127.0.0.1', 5400, false,
             (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-            this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 })
+            this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 },
+            this.getCompressionSelect(""), this.getTransportSelect(""), this.getTransportOptions())
         } else {
           // format saved settings
           const seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
@@ -88,9 +125,10 @@ class videoStream {
             console.error('Bad video settings1 Resetting')
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
-              { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
+              { label: '0°', value: 0 }, 1100, fpsSelected, '127.0.0.1', 5400, false,
               (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 })
+              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 },
+              this.getCompressionSelect(""), this.getTransportSelect(""), this.getTransportOptions())
           }
           const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])
           let selFPS = this.savedDevice.fps
@@ -102,17 +140,20 @@ class videoStream {
             //console.log(seldevice[0])
             return callback(null, this.devices, this.active, seldevice[0], selRes[0],
               { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation },
-              this.savedDevice.bitrate, selFPS, this.savedDevice.useUDP, this.savedDevice.useUDPIP,
+              this.savedDevice.bitrate, selFPS, this.savedDevice.useUDPIP,
               this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, (selRes[0].fps !== undefined) ? selRes[0].fps : [],
-              selRes[0].fpsmax, seldevice[0].caps, this.savedDevice.useCameraHeartbeat, { label: this.savedDevice.mavStreamSelected.toString(), value: this.savedDevice.mavStreamSelected })
+              selRes[0].fpsmax, seldevice[0].caps, this.savedDevice.useCameraHeartbeat,
+              { label: this.savedDevice.mavStreamSelected.toString(), value: this.savedDevice.mavStreamSelected },
+              this.getCompressionSelect(this.savedDevice.compression), this.getTransportSelect(this.savedDevice.transport), this.getTransportOptions())
           } else {
             // bad settings
             console.error('Bad video settings. Resetting' + seldevice + ', ' + selRes)
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
-              { label: '0°', value: 0 }, 1100, fpsSelected, false, '127.0.0.1', 5400, false,
+              { label: '0°', value: 0 }, 1100, fpsSelected, '127.0.0.1', 5400, false,
               (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 })
+              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 },
+              this.getCompressionSelect(""), this.getTransportSelect(""), this.getTransportOptions())
           }
         }
       }
@@ -155,7 +196,7 @@ class videoStream {
     return iface
   }
 
-  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, useUDP, useUDPIP, useUDPPort, useTimestamp, useCameraHeartbeat, mavStreamSelected, compression, callback) {
+  async startStopStreaming (active, device, height, width, format, rotation, bitrate, fps, transport, useUDPIP, useUDPPort, useTimestamp, useCameraHeartbeat, mavStreamSelected, compression, callback) {
     // if current state same, don't do anything
     if (this.active === active) {
       console.log('Video current same')
@@ -188,7 +229,7 @@ class videoStream {
         bitrate,
         fps,
         rotation,
-        useUDP,
+        transport,
         useUDPIP,
         useUDPPort,
         useTimestamp,
@@ -206,7 +247,7 @@ class videoStream {
         format = 'video/x-raw'
       }
 
-      const args = ['./python/rtsp-server.py',
+      const args = ['./python/video-server.py',
         '--video=' + device,
         '--height=' + height,
         '--width=' + width,
@@ -214,7 +255,8 @@ class videoStream {
         '--bitrate=' + bitrate,
         '--rotation=' + rotation,
         '--fps=' + fps,
-        '--udp=' + ((useUDP === false) ? '0' : useUDPIP + ':' + useUDPPort.toString()),
+        '--transport=' + transport,
+        '--udp=' + useUDPIP + ':' + useUDPPort.toString(),
         '--compression=' + compression
       ]
 
@@ -227,7 +269,7 @@ class videoStream {
       try {
         if (this.deviceStream === null) {
           this.settings.setValue('videostream.active', false)
-          console.log('Error spawning rtsp-server.py')
+          console.log('Error spawning video-server.py')
           return callback(null, this.active, this.deviceAddresses)
         }
         this.settings.setValue('videostream.active', this.active)
@@ -350,7 +392,7 @@ class videoStream {
       msg.count = 1
 
       // msg.type and msg.uri need to be different depending on whether RTP or RTSP is selected
-      if (this.savedDevice.useUDP) {
+      if (this.savedDevice.transport == 'RTP') {
         // msg.type = 0 = VIDEO_STREAM_TYPE_RTSP
         // msg.type = 1 = VIDEO_STREAM_TYPE_RTPUDP
         msg.type = 1
