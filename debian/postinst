@@ -37,7 +37,8 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/sbin/zerotier-cli info, \
   /usr/sbin/shutdown *, \
   /usr/bin/nmcli *, \
-  /usr/sbin/pppd *
+  /usr/sbin/pppd *, \
+  /usr/sbin/iw dev * scan ap-force
 EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control

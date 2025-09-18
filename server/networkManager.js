@@ -132,40 +132,58 @@ function getPrimaryWifiDevice(callback) {
 
 function getWifiScan(callback) {
   getPrimaryWifiDevice((error, device) => {
+    if (error) {
+      return callback(error)
+    }
+
+    exec(`sudo iw dev ${device} scan ap-force`, (error, stdout, stderr) => {
       if (error) {
-          return callback(error)
+        console.error(`exec error: ${error}`)
+        return callback(error)
+      }
+      if (stderr) {
+        console.error(`stderr: ${stderr}`)
+        return callback(new Error(stderr))
       }
 
-      exec(`iwlist ${device} scan`, (error, stdout, stderr) => {
-          if (error) {
-              console.error(`exec error: ${error}`)
-              return callback(error)
-          }
-          if (stderr) {
-              console.error(`stderr: ${stderr}`)
-              return callback(new Error(stderr))
-          }
+      const networks = [];
+      let current = null;
 
-          const ssidRegex = /ESSID:"([^"]+)"/g
-          const signalRegex = /Signal level=(-?\d+)/g
-          const wpaRegex = /WPA[1-2]?/g
+      stdout.split("\n").forEach(line => {
+        line = line.trim();
 
-          let ssidMatch, signalMatch, wpaMatch
-          const results = []
+        if (line.startsWith("BSS ")) {
+          if (current) networks.push(current);
+          current = { ssid: null, signal: null, security: "Open" };
+          return;
+        }
 
-          while ((ssidMatch = ssidRegex.exec(stdout)) !== null) {
-              signalMatch = signalRegex.exec(stdout)
-              wpaMatch = wpaRegex.exec(stdout)
+        if (!current) return;
 
-              results.push({
-                  ssid: ssidMatch[1],
-                  signal: signalMatch ? signalMatch[1] : 'N/A',
-                  security: wpaMatch ? wpaMatch[0] : 'open'
-              });
-          }
-          return callback(null, results)
+        if (line.startsWith("SSID:")) {
+          current.ssid = line.slice(5).trim();
+        }
+
+        if (line.startsWith("signal:")) {
+          const dBm = parseFloat(line.split(" ")[1]);
+          current.signal = dBm;
+        }
+
+        if (line.includes("RSN:")) {
+          current.security = "WPA2";
+        } else if (line.includes("WPA:")) {
+          current.security = "WPA";
+        } else if (line.includes("WEP:")) {
+          current.security = "WEP";
+        }
       });
-  });
+      if (current) networks.push(current);
+      callback(null, networks
+        .filter(net => net.ssid) // Filter out entries without SSID
+        .sort((a, b) => b.signal - a.signal) // Sort by signal strength descending
+      );
+    });
+  })
 }
 
 function addConnection (conNameStr, conType, conAdapter, conSettings, callback) {
