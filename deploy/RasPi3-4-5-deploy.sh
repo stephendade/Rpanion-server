@@ -30,6 +30,11 @@ fi
 
 ./install_common_libraries.sh
 
+# Also need gstreamer1.0-libcamera, as the libcamerasrc gst element has moved in bookworm
+source /etc/os-release
+if [[ "$ID" == "debian" || "$ID" == "raspbian" ]] && [ "$VERSION_CODENAME" == "bookworm" ]; then
+    sudo apt install -y  gstreamer1.0-libcamera
+
 ## Only install picamera2 on RaspiOS
 sudo apt -y install python3-picamera2 python3-libcamera python3-kms++
 
