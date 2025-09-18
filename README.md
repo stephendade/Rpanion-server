@@ -49,26 +49,24 @@ Rpanion-server allows the user to configure:
 ## Installing
 
 Rpanion-server has pre-built debian packges for arm64 platforms (Jetson, Raspberry Pi, etc). This
-is the easiest way to get started.
+is the easiest way to get started. The packages are available from the "Releases" page.
 
-There are also full disk images with a pre-configured Wifi hotspot for the Raspberry Pi.
+### Disk Images
 
-### Prerequisites
+There are full disk images with a pre-configured Wifi hotspot for the Raspberry Pi. These
+are on the "releases" page
 
-To (optionally) use the Zerotier and/or Wireguard VPN's, install as follows:
+### Installation from deb package
 
-```
-curl -s https://install.zerotier.com | sudo bash
-sudo apt install wireguard wireguard-tools
-```
+This method installs rpanion-server (and pre-requisities) on an existing system.
 
-Then install the required packages:
+First install the required packages:
 
 ```
-sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-dev gstreamer1.0-plugins-base-apps
-sudo apt install -y gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad python3-netifaces
-sudo apt install -y network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git ninja-build jq
-sudo apt install -y libxml2-dev libxslt1-dev python3-lxml python3-numpy python3-future gpsbabel zip
+sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0 gstreamer1.0-plugins-base-apps
+sudo apt install -y gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
+sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git ninja-build jq
+sudo apt install -y python3-lxml python3-numpy python3-future gpsbabel zip
 ```
 
 If running on RasPiOS, install the libcamera drivers:
@@ -88,6 +86,16 @@ sudo apt update
 sudo apt install -y nodejs
 ```
 
+
+To (optionally) use the Zerotier and/or Wireguard VPN's, install as follows:
+
+```
+curl -s https://install.zerotier.com | sudo bash
+sudo apt install wireguard wireguard-tools
+```
+
+Download Rpanion-server from the releases page.
+
 Then install Rpanion-server:
 ```
 sudo dpkg -i rpanion-server-xxx.deb
@@ -106,7 +114,7 @@ Note the GPIO UARTs are not currently working with Ubuntu 24.04.
 If an older version of the Raspberry Pi OS is used (Buster, V10 or below), the ``gst-rpicamsrc`` Gstreamer element
 must be installed. See https://github.com/thaytan/gst-rpicamsrc for install instructions.
 
-### Automatic (Libre Computer AML-S905X-CC aka 'Le Potato') notes
+### Libre Computer AML-S905X-CC aka 'Le Potato' notes
 
 If using a usb to serial converter, you might need to modify permissions of the device.
 
@@ -143,6 +151,10 @@ It is important to *only* use ``npm run dev`` during development, as it will ski
 the user login and authentication checks.
 
 At this point, the website will be active at ``http://<ip of device>:3000``
+
+## Packaging
+
+To produce a deb package, run ``npm run package``.
 
 ## Default username and password
 
