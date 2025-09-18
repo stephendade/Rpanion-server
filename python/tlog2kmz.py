@@ -2,6 +2,8 @@
 """
 Heavily based on ArduPilot tools code.
 
+Requires mav2gpx from pymavlink
+
 """
 
 import glob
@@ -11,8 +13,6 @@ import timeit
 from os.path import exists
 
 from datetime import datetime
-from pymavlink import mavutil
-from pymavlink.generator import mavtemplate
 import argparse
 
 def cmd_as_shell(cmd):
