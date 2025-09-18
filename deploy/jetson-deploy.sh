@@ -15,7 +15,7 @@ sudo systemctl disable nvgetty.service
 
 sudo systemctl disable dnsmasq
 
-sudo apt-get install -y ca-certificates curl gnupg python3-netifaces nvidia-l4t-gstreamer
+sudo apt-get install -y ca-certificates curl gnupg nvidia-l4t-gstreamer
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 #Ubuntu 18 (Jetson) doesn't like modern nodejs

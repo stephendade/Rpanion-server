@@ -6,12 +6,11 @@ set -x
 ## General Packages
 sudo apt update
 sudo apt upgrade -y
-sudo apt install -y libunwind-dev
-sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-dev gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
-sudo apt install -y network-manager python3 python3-dev python3-gst-1.0 python3-pip dnsmasq git jq
+sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-0 gir1.2-gst-rtsp-server-1.0 gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
+sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq
 
 ## Pymavlink
-sudo apt install -y libxml2-dev libxslt1-dev python3-lxml python3-numpy python3-future
+sudo apt install -y python3-lxml python3-numpy python3-future
 
 sudo apt purge -y modemmanager
 sudo apt remove -y nodejs nodejs-doc
@@ -20,24 +19,12 @@ sudo apt remove -y nodejs nodejs-doc
 echo "PATH=\$PATH:~/.local/bin" >> ~/.profile
 source ~/.profile
 
-# Debian Bookdown does not like pip install wthout a virtualenv, so do apt installs instead
-# Also need gstreamer1.0-libcamera, as the libcamerasrc gst element has moved
-source /etc/os-release
-if [[ "$ID" == "debian" || "$ID" == "raspbian" ]] && [ "$VERSION_CODENAME" == "bookworm" ]; then
-    sudo apt install -y python3-netifaces gstreamer1.0-libcamera
-elif [ "$ID" == "ubuntu" ] && [ "$VERSION_CODENAME" == "noble" ]; then
-    sudo apt install -y python3-netifaces
-else
-    sudo python3 -m pip install --upgrade pip
-    pip3 install netifaces --user
-fi
-
-## Pymavlink and gpsbabel to create KMZ.
-#Ubuntu 18 (Jetson) doesn't like the --break-system-packages option
-if [ "$ID" == "ubuntu" ] && [ "$VERSION_CODENAME" == "bionic" ]; then
-    DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user
-else
+## Pymavlink and gpsbabel to create KMZ. Requires pip version 23 or greater to use --break-system-packages
+PIP_VERSION=$(pip3 -V | cut -d' ' -f2 | cut -d'.' -f1)
+if [ "$PIP_VERSION" -ge "23" ]; then
     DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user --break-system-packages
+else
+    DISABLE_MAVNATIVE=True pip3 install --upgrade pymavlink --user
 fi
 sudo apt-get install -y gpsbabel zip
 
