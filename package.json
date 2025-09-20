@@ -113,6 +113,9 @@
     ]
   },
   "overrides": {
-    "autoprefixer": "10.4.5"
+    "autoprefixer": "10.4.5",
+    "vite": {
+      "rollup": "npm:@rollup/wasm-node"
+    }
   }
 }
