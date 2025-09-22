@@ -1,6 +1,8 @@
 import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
+import Accordion from 'react-bootstrap/Accordion';
+
 import React from 'react'
 
 import basePage from './basePage.jsx';
@@ -186,137 +188,146 @@ class FCPage extends basePage {
   renderContent() {
     return (
       <div style={{ width: 650 }}>
-        <h2>Flight Controller Input</h2>
-        <p><i>Flight Controller connection to this device</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Input Type</label>
-          <div className="col-sm-8">
-            <Select 
-              value={this.state.selInputType} 
-              onChange={this.handleInputTypeChange}
-              isDisabled={this.state.telemetryStatus}
-              options={this.state.inputTypes} />
-          </div>
-        </div>
-        {this.state.selInputType === null || this.state.selInputType.value === 'UART' ? (
-        <>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">Serial Device</label>
-              <div className="col-sm-8">
-                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected} />
-              </div>
-          </div>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">Baud Rate</label>
-              <div className="col-sm-8">
-                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected} />
-              </div>
-          </div>
-        </>
-        ) : (
-          <>
+        <Accordion defaultActiveKey="0">
+          <Accordion.Item eventKey="0">
+          <Accordion.Header>Flight Controller Input</Accordion.Header>
+          <Accordion.Body>
+            <p><i>Flight Controller connection to this device</i></p>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-5 col-form-label">UDP Input Port (NET_Pn_PORT)</label>
+              <label className="col-sm-4 col-form-label">Input Type</label>
+              <div className="col-sm-8">
+                <Select 
+                  value={this.state.selInputType} 
+                  onChange={this.handleInputTypeChange}
+                  isDisabled={this.state.telemetryStatus}
+                  options={this.state.inputTypes} />
+              </div>
+            </div>
+            {this.state.selInputType === null || this.state.selInputType.value === 'UART' ? (
+            <>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Serial Device</label>
+                  <div className="col-sm-8">
+                    <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected} />
+                  </div>
+              </div>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Baud Rate</label>
+                  <div className="col-sm-8">
+                    <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected} />
+                  </div>
+              </div>
+            </>
+            ) : (
+              <>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-5 col-form-label">UDP Input Port (NET_Pn_PORT)</label>
+                  <div className="col-sm-7">
+                    <input 
+                      type="number" 
+                      min="1000" 
+                      max="65535" 
+                      value={this.state.udpInputPort}
+                      onChange={this.handleUDPInputPortChange}
+                      disabled={this.state.telemetryStatus}
+                    />
+                  </div>
+                </div>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <p><i>Requires NET_Pn_TYPE=1 and NET_Pn_IP*=Rpanion IP Address</i></p>
+                </div>
+              </>
+            )}
+
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">MAVLink Version</label>
+              <div className="col-sm-8">
+                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected} />
+              </div>
+            </div>
+
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <div className="col-sm-8">
+                <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType.value === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
+              </div>
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
+        <Accordion.Item eventKey="1">
+          <Accordion.Header>Telemetry Destinations</Accordion.Header>
+          <Accordion.Body>
+            <p><i>Telemetry must be stopped before the below options can be edited.</i></p>
+            <h3>UDP Client</h3>
+            <p><i>Send telemetry to a specific IP:port. Use &quot;UDP&quot; option in Mission Planner.</i></p>
+            <Table id='UDPOut' striped bordered hover size="sm">
+              <thead>
+                <tr><th>Destination IP:Port</th><th>Action</th></tr>
+              </thead>
+              <tbody>
+                <tr key={this.state.UDPoutputs.length}><td>127.0.0.1:14540</td><td><i>Required for Rpanion-server</i></td></tr>
+                {this.renderUDPTableData(this.state.UDPoutputs)}
+              </tbody>
+            </Table>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">Add new destination</label>
+              <div className="col-sm-8">
+                <input type="text" onChange={this.changeaddrow} disabled={this.state.telemetryStatus} value={this.state.addrow} /><Button size="sm" disabled={this.state.telemetryStatus} onClick={this.addUdpOutput}>Add</Button>
+              </div>
+            </div>
+            <br />
+            <h3>UDP Server</h3>
+            <p><i>Allow a single GCS to connect to this device&quot;s IP:port. Multiple GCS&quot;s cannot be connected here. Use &quot;UDPCI&quot; option in Mission Planner.</i></p>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">Enable UDP Server</label>
+              <div className="col-sm-8">
+                <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />
+                </div>
+            </div>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-4 col-form-label">UDP Server Port</label>
+              <div className="col-sm-8">
+                <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
+              </div>
+            </div>
+            <br />
+            <h3>TCP Server</h3>
+            <p><i>Allow multiple GCS&quot;s to connect to this device&quot;s IP:port. Use &quot;TCP&quot; option in Mission Planner.</i></p>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-5 col-form-label">Enable TCP Server at port 5760</label>
               <div className="col-sm-7">
-                <input 
-                  type="number" 
-                  min="1000" 
-                  max="65535" 
-                  value={this.state.udpInputPort}
-                  onChange={this.handleUDPInputPortChange}
-                  disabled={this.state.telemetryStatus}
-                />
+              <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />
               </div>
             </div>
+          </Accordion.Body>
+        </Accordion.Item>
+        <Accordion.Item eventKey="2">
+          <Accordion.Header>Other Options</Accordion.Header>
+          <Accordion.Body>
+            <p><i>Allow Rpanion-server to send datastream requests. Required if a GCS is not connected</i></p>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <p><i>Requires NET_Pn_TYPE=1 and NET_Pn_IP*=Rpanion IP Address</i></p>
+              <label className="col-sm-5 col-form-label">Enable datastream requests</label>
+              <div className="col-sm-7">
+              <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
+              </div>
             </div>
-          </>
-        )}
-
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">MAVLink Version</label>
-          <div className="col-sm-8">
-            <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected} />
-          </div>
-        </div>
-
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <div className="col-sm-8">
-            <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType.value === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
-          </div>
-        </div>
-
-        <br />
-        <h2>Telemetry Destinations</h2>
-        <p><i>Telemetry must be stopped before the below options can be edited.</i></p>
-        <h3>UDP Client</h3>
-        <p><i>Send telemetry to a specific IP:port. Use &quot;UDP&quot; option in Mission Planner.</i></p>
-        <Table id='UDPOut' striped bordered hover size="sm">
-          <thead>
-            <tr><th>Destination IP:Port</th><th>Action</th></tr>
-          </thead>
-          <tbody>
-            <tr key={this.state.UDPoutputs.length}><td>127.0.0.1:14540</td><td><i>Required for Rpanion-server</i></td></tr>
-            {this.renderUDPTableData(this.state.UDPoutputs)}
-          </tbody>
-        </Table>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Add new destination</label>
-          <div className="col-sm-8">
-            <input type="text" onChange={this.changeaddrow} disabled={this.state.telemetryStatus} value={this.state.addrow} /><Button size="sm" disabled={this.state.telemetryStatus} onClick={this.addUdpOutput}>Add</Button>
-          </div>
-        </div>
-        <br />
-        <h3>UDP Server</h3>
-        <p><i>Allow a single GCS to connect to this device&quot;s IP:port. Multiple GCS&quot;s cannot be connected here. Use &quot;UDPCI&quot; option in Mission Planner.</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Enable UDP Server</label>
-          <div className="col-sm-8">
-            <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />
+            <br />
+            <p><i>Advertise RPanion as an onboard companion computer on the MAVLink network</i></p>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-5 col-form-label">Enable MAVLink heartbeats</label>
+              <div className="col-sm-7">
+              <input type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
+              </div>
             </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">UDP Server Port</label>
-          <div className="col-sm-8">
-            <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
-          </div>
-        </div>
-        <br />
-        <h3>TCP Server</h3>
-        <p><i>Allow multiple GCS&quot;s to connect to this device&quot;s IP:port. Use &quot;TCP&quot; option in Mission Planner.</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-5 col-form-label">Enable TCP Server at port 5760</label>
-          <div className="col-sm-7">
-          <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />
-          </div>
-        </div>
-        <br />
-        <h2>Other Options</h2>
-        <p><i>Allow Rpanion-server to send datastream requests. Required if a GCS is not connected</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-5 col-form-label">Enable datastream requests</label>
-          <div className="col-sm-7">
-          <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
-          </div>
-        </div>
-        <br />
-        <p><i>Advertise RPanion as an onboard companion computer on the MAVLink network</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-5 col-form-label">Enable MAVLink heartbeats</label>
-          <div className="col-sm-7">
-          <input type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
-          </div>
-        </div>
-        <br />
-        <p><i>Record MAVLink telemetry stream to logfile</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-5 col-form-label">Enable telemetry logging (tlogs)</label>
-          <div className="col-sm-7">
-          <input type="checkbox" checked={this.state.tlogging} disabled={this.state.telemetryStatus} onChange={this.handleTloggingChange} />
-          </div>
-        </div>
-        <br />
+            <br />
+            <p><i>Record MAVLink telemetry stream to logfile</i></p>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-5 col-form-label">Enable telemetry logging (tlogs)</label>
+              <div className="col-sm-7">
+              <input type="checkbox" checked={this.state.tlogging} disabled={this.state.telemetryStatus} onChange={this.handleTloggingChange} />
+              </div>
+            </div>
+          </Accordion.Body>
+        </Accordion.Item>
         <h2>Status</h2>
         <p>Packets Received: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
         <p>Connection Status: {this.state.FCStatus.conStatus}</p>
@@ -327,6 +338,7 @@ class FCPage extends basePage {
         </label>
         <br />
         <Button size="sm" disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</Button>
+      </Accordion>
       </div>
     );
   }
