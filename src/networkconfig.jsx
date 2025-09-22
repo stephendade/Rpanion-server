@@ -4,6 +4,7 @@ import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import Table from 'react-bootstrap/Table';
 import React from 'react'
+import IPAddressInput from './components/IPAddressInput.jsx';
 
 import basePage from './basePage.jsx';
 
@@ -688,13 +689,23 @@ class NetworkConfig extends basePage {
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">IP Address</label>
                 <div className="col-sm-8">
-                  <input type="text" name="ipaddress" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} />
+                  <IPAddressInput
+                    name="ipaddress"
+                    value={this.state.curSettings.ipaddress.value || ''}
+                    onChange={this.changeHandler}
+                    disabled={this.state.curSettings.ipaddresstype.value === "auto"}
+                  />
                 </div>
               </div>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">Subnet Mask</label>
                 <div className="col-sm-8">
-                  <input type="text" name="subnet" disabled={this.state.curSettings.ipaddresstype.value === "auto"} onChange={this.changeHandler} value={this.state.curSettings.subnet.value} />
+                  <IPAddressInput
+                    name="subnet"
+                    value={this.state.curSettings.subnet.value || ''}
+                    onChange={this.changeHandler}
+                    disabled={this.state.curSettings.ipaddresstype.value === "auto"}
+                  />
                 </div>
               </div>
               </div>
@@ -780,7 +791,11 @@ class NetworkConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Starting IP Address</label>
               <div className="col-sm-8">
-                <input name="ipaddress" onChange={this.changeHandler} value={this.state.curSettings.ipaddress.value} type="text" />
+                <IPAddressInput
+                  name="ipaddress"
+                  value={this.state.curSettings.ipaddress.value || ''}
+                  onChange={this.changeHandler}
+                />
               </div>
             </div>
 

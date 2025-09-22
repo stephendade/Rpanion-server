@@ -3,6 +3,7 @@ import Button from 'react-bootstrap/Button';
 import Accordion from 'react-bootstrap/Accordion';
 import Form from 'react-bootstrap/Form';
 import React from 'react'
+import IPAddressInput from './components/IPAddressInput.jsx';
 
 import basePage from './basePage.jsx';
 
@@ -167,103 +168,116 @@ class VideoPage extends basePage {
     return (
       <Form style={{ width: 600 }}>
         <p><i>Stream live video from any connected camera devices. Only 1 camera can be streamed at a time. Multicast IP addresses are supported in RTP mode.</i></p>
-        <h2>Configuration</h2>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">Streaming Mode</label>
-              <div className="col-sm-8">
-                <Select
-                  isDisabled={this.state.streamingStatus}
-                  options={this.state.transportOptions}
-                  onChange={(value) => this.setState({ transportSelected: value })}
-                  value={this.state.transportSelected}
-                />
-              </div>
-            </div>
+        <Accordion defaultActiveKey="0">
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>Configuration</Accordion.Header>
+            <Accordion.Body>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                    <label className="col-sm-4 col-form-label">Streaming Mode</label>
+                    <div className="col-sm-8">
+                      <Select
+                        isDisabled={this.state.streamingStatus}
+                        options={this.state.transportOptions}
+                        onChange={(value) => this.setState({ transportSelected: value })}
+                        value={this.state.transportSelected}
+                      />
+                    </div>
+                  </div>
 
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Device</label>
-          <div className="col-sm-8">
-            <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected} />
-          </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Resolution</label>
-          <div className="col-sm-8">
-            <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected} />
-          </div>
-        </div>
-        <div style={{ display: (typeof this.state.vidResSelected !== 'undefined' && this.state.vidResSelected.format !== "video/x-h264") ? "block" : "none" }}>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-            <label className="col-sm-4 col-form-label">Rotation</label>
-            <div className="col-sm-8">
-              <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected} />
-            </div>
-          </div>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-            <label className="col-sm-4 col-form-label">Maximum Bitrate</label>
-            <div className="col-sm-8">
-              <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="50000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
-            </div>
-          </div>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
-          <div className="col-sm-8">
-            <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
-          </div>
-          </div>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-            <label className="col-sm-4 col-form-label">Compression</label>
-            <div className="col-sm-8">
-              <Select
-                isDisabled={this.state.streamingStatus}
-                options={this.state.compressionOptions}
-                onChange={(value) => this.setState({ compression: value })}
-                value={this.state.compression}
-              />
-            </div>
-          </div>
-        </div>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Framerate</label>
-          <div className="col-sm-8" style={{ display: (this.state.FPSMax === 0) ? "block" : "none" }}>
-            <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect} />
-          </div>
-          <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
-            <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
-          </div>
-        </div>
-        <div style={{ display: (this.state.transportSelected.value === 'RTP') ? "block" : "none" }}>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-            <label className="col-sm-4 col-form-label ">Destination IP</label>
-            <div className="col-sm-8">
-              <input type="text" name="ipaddress" disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus} value={this.state.useUDPIP} onChange={this.handleUDPIPChange} />
-            </div>
-          </div>
-          <div className="form-group row" style={{ marginBottom: '5px' }}>
-            <label className="col-sm-4 col-form-label">Destination Port</label>
-            <div className="col-sm-8">
-              <input type="text" name="port" disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
-            </div>
-          </div>
-        </div>
-        <br/>
-        <h3>MAVLink Video Streaming Service</h3>
-        <p><i>Configuration for advertising the camera and associated video stream via MAVLink. See <a href='https://mavlink.io/en/services/camera.html#video_streaming'>here</a> for details.</i></p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <label className="col-sm-4 col-form-label">Enable camera heartbeats</label>
-          <div className="col-sm-7">
-          <input type="checkbox" disabled={this.state.streamingStatus} checked={this.state.enableCameraHeartbeat} onChange={this.handleUseCameraHeartbeatChange} />
-          </div>
-        </div>
-        <div style={{ display: (this.state.enableCameraHeartbeat && (!(this.state.transportSelected.value === 'RTP'))) ? "block" : "none" }}>
-          <div className="form-group row" style={{ marginBottom: '5px' } }>
-              <label className="col-sm-4 col-form-label">Video source IP Address</label>
-              <div className="col-sm-8">
-                <Select isDisabled={this.state.streamingStatus} onChange={this.handleMavStreamChange} options={this.state.ifaces.map((item) => ({ value: item, label: item}))} value={this.state.mavStreamSelected} />
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Device</label>
+                <div className="col-sm-8">
+                  <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected} />
+                </div>
               </div>
-          </div>
-        </div>
-        <br/>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Resolution</label>
+                <div className="col-sm-8">
+                  <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected} />
+                </div>
+              </div>
+              <div style={{ display: (typeof this.state.vidResSelected !== 'undefined' && this.state.vidResSelected.format !== "video/x-h264") ? "block" : "none" }}>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Rotation</label>
+                  <div className="col-sm-8">
+                    <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected} />
+                  </div>
+                </div>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Maximum Bitrate</label>
+                  <div className="col-sm-8">
+                    <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="50000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+                  </div>
+                </div>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
+                <div className="col-sm-8">
+                  <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
+                </div>
+                </div>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Compression</label>
+                  <div className="col-sm-8">
+                    <Select
+                      isDisabled={this.state.streamingStatus}
+                      options={this.state.compressionOptions}
+                      onChange={(value) => this.setState({ compression: value })}
+                      value={this.state.compression}
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Framerate</label>
+                <div className="col-sm-8" style={{ display: (this.state.FPSMax === 0) ? "block" : "none" }}>
+                  <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect} />
+                </div>
+                <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
+                  <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
+                </div>
+              </div>
+              <div style={{ display: (this.state.transportSelected.value === 'RTP') ? "block" : "none" }}>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label ">Destination IP</label>
+                  <div className="col-sm-7">
+                    <IPAddressInput
+                      name="ipaddress"
+                      value={this.state.useUDPIP || ''}
+                      onChange={this.handleUDPIPChange}
+                      disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus}
+                    />
+                  </div>
+                </div>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Destination Port</label>
+                  <div className="col-sm-8">
+                    <input type="text" name="port" disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
+                  </div>
+                </div>
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="1">
+            <Accordion.Header>MAVLink Video Streaming Service</Accordion.Header>
+            <Accordion.Body>
+              <p><i>Configuration for advertising the camera and associated video stream via MAVLink. See <a href='https://mavlink.io/en/services/camera.html#video_streaming'>here</a> for details.</i></p>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <label className="col-sm-4 col-form-label">Enable camera heartbeats</label>
+                <div className="col-sm-7">
+                <input type="checkbox" disabled={this.state.streamingStatus} checked={this.state.enableCameraHeartbeat} onChange={this.handleUseCameraHeartbeatChange} />
+                </div>
+              </div>
+              <div style={{ display: (this.state.enableCameraHeartbeat && (!(this.state.transportSelected.value === 'RTP'))) ? "block" : "none" }}>
+                <div className="form-group row" style={{ marginBottom: '5px' } }>
+                    <label className="col-sm-4 col-form-label">Video source IP Address</label>
+                    <div className="col-sm-8">
+                      <Select isDisabled={this.state.streamingStatus} onChange={this.handleMavStreamChange} options={this.state.ifaces.map((item) => ({ value: item, label: item}))} value={this.state.mavStreamSelected} />
+                    </div>
+                </div>
+              </div>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
 
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">

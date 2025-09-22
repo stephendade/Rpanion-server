@@ -1,5 +1,6 @@
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
+import Accordion from 'react-bootstrap/Accordion';
 import React from 'react'
 
 import basePage from './basePage.jsx';
@@ -98,61 +99,72 @@ class LoggerPage extends basePage {
       <div style={{ width: 600 }}>
         <p><i>Save and download flight logs</i></p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
-        <h3>Telemetry Logs</h3>
-        <p>Telemetry Logging can be enabled or disabled in the &quot;Flight Controller&quot; page.</p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <div className="col-sm-8">
-          <Button id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>
-          </div>
-        </div>
-        <Table id='Tlogfile' striped bordered hover size="sm">
-          <thead>
-            <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
-          </thead>
-          <tbody>
-            {this.renderLogTableData(this.state.TlogFiles)}
-          </tbody>
-        </Table>
-        <br />
-        <h3>Bin Logs</h3>
-        <p>This requires the <code>LOG_BACKEND_TYPE</code> parameter in ArduPilot set to <code>Mavlink</code>. A high baudrate to the flight controller (921500 or greater) is required.</p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <div className="col-sm-8">
-          <Button id='binlog' onClick={this.clearLogs}>Clear inactive logs</Button>
-          </div>
-        </div>
-        <Table id='Binlogfile' striped bordered hover size="sm">
-          <thead>
-            <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
-          </thead>
-          <tbody>
-            {this.renderLogTableData(this.state.BinlogFiles)}
-          </tbody>
-        </Table>
-        <br />
-        <h3>KMZ Files</h3>
-        <p>KMZ files created from the Telemetry Logs every 20 seconds.</p>
-        
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <div className="col-sm-8">
-            <Button onClick={this.handleDoLogConversion} className="btn btn-primary">{this.state.doLogConversion === true ? 'Disable' : 'Enable'}</Button>
-          </div>
-        </div>
-        <p>Status: {this.state.conversionLogStatus}</p>
-        <div className="form-group row" style={{ marginBottom: '5px' }}>
-          <div className="col-sm-8">
-          <Button id='kmzlog' onClick={this.clearLogs}>Clear KMZ files</Button>
-          </div>
-        </div>
-        <Table id='KMZlogfile' striped bordered hover size="sm">
-          <thead>
-            <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
-          </thead>
-          <tbody>
-            {this.renderLogTableData(this.state.KMZlogFiles)}
-          </tbody>
-        </Table>
-        <br />
+        <Accordion defaultActiveKey="0">
+          <Accordion.Item eventKey="0">
+            <Accordion.Header>Telemetry Logs</Accordion.Header>
+            <Accordion.Body>
+              <p>Telemetry Logging can be enabled or disabled in the &quot;Flight Controller&quot; page.</p>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="col-sm-8">
+                <Button id='tlog' onClick={this.clearLogs}>Clear inactive logs</Button>
+                </div>
+              </div>
+              <Table id='Tlogfile' striped bordered hover size="sm">
+                <thead>
+                  <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
+                </thead>
+                <tbody>
+                  {this.renderLogTableData(this.state.TlogFiles)}
+                </tbody>
+              </Table>
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="1">
+            <Accordion.Header>Bin Logs</Accordion.Header>
+            <Accordion.Body>
+              <p>This requires the <code>LOG_BACKEND_TYPE</code> parameter in ArduPilot set to <code>Mavlink</code>. A high baudrate to the flight controller (921500 or greater) is required.</p>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="col-sm-8">
+                <Button id='binlog' onClick={this.clearLogs}>Clear inactive logs</Button>
+                </div>
+              </div>
+              <Table id='Binlogfile' striped bordered hover size="sm">
+                <thead>
+                  <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
+                </thead>
+                <tbody>
+                  {this.renderLogTableData(this.state.BinlogFiles)}
+                </tbody>
+              </Table>
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="2">
+            <Accordion.Header>KMZ Files</Accordion.Header>
+            <Accordion.Body>
+              <p>KMZ files created from the Telemetry Logs every 20 seconds.</p>
+              
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="col-sm-8">
+                  <Button onClick={this.handleDoLogConversion} className="btn btn-primary">{this.state.doLogConversion === true ? 'Disable' : 'Enable'}</Button>
+                </div>
+              </div>
+              <p>Status: {this.state.conversionLogStatus}</p>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="col-sm-8">
+                <Button id='kmzlog' onClick={this.clearLogs}>Clear KMZ files</Button>
+                </div>
+              </div>
+              <Table id='KMZlogfile' striped bordered hover size="sm">
+                <thead>
+                  <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
+                </thead>
+                <tbody>
+                  {this.renderLogTableData(this.state.KMZlogFiles)}
+                </tbody>
+              </Table>
+            </Accordion.Body>
+          </Accordion.Item>
+        </Accordion>
       </div>
     );
   }
