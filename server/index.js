@@ -892,6 +892,7 @@ io.on('connection', function () {
     io.sockets.emit('CloudBinStatus', cloud.conStatusBinStr())
     io.sockets.emit('LogConversionStatus', logConversion.conStatusLogStr())
     io.sockets.emit('PPPStatus', pppConnectionManager.conStatusStr())
+    io.sockets.emit('VideoStreamStatus', vManager.getStreamingStatus())
   }, 1000)
 })
 
