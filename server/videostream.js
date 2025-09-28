@@ -327,6 +327,15 @@ class videoStream {
     return ret
   }
 
+  getStreamingStatus () {
+    // return the current streaming status
+    if (this.active) {
+      return 'Active - Streaming video'
+    } else {
+      return 'Not streaming'
+    }
+  }
+
   startInterval () {
     // start the 1-sec loop to send heartbeat events
     this.intervalObj = setInterval(() => {
