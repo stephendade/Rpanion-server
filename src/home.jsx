@@ -73,10 +73,19 @@ class Home extends basePage {
   renderContent () {
     return (
       <div>
+        <div className="mb-4">
+          <h5>Quick Links</h5>
+          <p>Use the navigation menu to configure system components:</p>
+          <ul>
+            <li><a href='https://github.com/stephendade/Rpanion-server'>Rpanion-server website</a></li>
+            <li><a href='https://www.docs.rpanion.com/software/rpanion-server'>Rpanion-server documentation</a></li>
+          </ul>
+        </div>
+
         <p>Welcome to the Rpanion-server home page. Real-time system status is updated every second.</p>
         
         <Row className="mb-4">
-          <Col md={6} lg={4} className="mb-3">
+          <Col md={6} className="mb-3">
             <Card>
               <Card.Header>
                 <h5 className="mb-0">
@@ -95,7 +104,7 @@ class Home extends basePage {
             </Card>
           </Col>
 
-          <Col md={6} lg={4} className="mb-3">
+          <Col md={6} className="mb-3">
             <Card>
               <Card.Header>
                 <h5 className="mb-0">
@@ -111,7 +120,7 @@ class Home extends basePage {
             </Card>
           </Col>
 
-          <Col md={6} lg={4} className="mb-3">
+          <Col md={6} className="mb-3">
             <Card>
               <Card.Header>
                 <h5 className="mb-0">
@@ -127,7 +136,7 @@ class Home extends basePage {
             </Card>
           </Col>
 
-          <Col md={6} lg={4} className="mb-3">
+          <Col md={6} className="mb-3">
             <Card>
               <Card.Header>
                 <h5 className="mb-0">
@@ -143,7 +152,7 @@ class Home extends basePage {
             </Card>
           </Col>
 
-          <Col md={6} lg={4} className="mb-3">
+          <Col md={6} className="mb-3">
             <Card>
               <Card.Header>
                 <h5 className="mb-0">
@@ -159,15 +168,6 @@ class Home extends basePage {
             </Card>
           </Col>
         </Row>
-
-        <div className="mt-4">
-          <h5>Quick Links</h5>
-          <p>Use the navigation menu to configure system components:</p>
-          <ul>
-            <li><a href='https://github.com/stephendade/Rpanion-server'>Rpanion-server website</a></li>
-            <li><a href='https://www.docs.rpanion.com/software/rpanion-server'>Rpanion-server documentation</a></li>
-          </ul>
-        </div>
       </div>
     )
   }
