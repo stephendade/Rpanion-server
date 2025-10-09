@@ -84,12 +84,12 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             format = "I420"  # https://forums.raspberrypi.com/viewtopic.php?t=93560
         pipeline.append("libcamerasrc camera-name={0}".format(device))
         pipeline.append("capsfilter caps=video/x-raw,width={0},height={1},format={3}{2}".format(width, height, framestr, format))
-        pipeline.append("queue max-size-buffers=1 leaky=downstream")
+        pipeline.append("queue max-size-buffers=3 leaky=downstream")
     elif format == "video/x-raw":
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("videorate")
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
-        pipeline.append("queue max-size-buffers=1 leaky=downstream")
+        pipeline.append("queue max-size-buffers=3 leaky=downstream")
     elif format == "video/x-h264":
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
@@ -97,8 +97,8 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("videorate")
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
-        pipeline.append("queue max-size-buffers=1 leaky=downstream")
-        pipeline.append("jpegdec")
+        pipeline.append("queue max-size-buffers=3 leaky=downstream")
+        pipeline.append("v4l2jpegdec")
     else:
         print("Bad camera")
         return ""
@@ -162,7 +162,11 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 pipeline.append("video/x-raw,format=NV12")
             else:
                 pipeline.append("video/x-raw,format=I420")
-            pipeline.append("queue max-size-buffers=1 leaky=downstream")
+            # testcamerasrc doesn't like leaky queues
+            if device != "testsrc":
+                pipeline.append("queue max-size-buffers=3 leaky=downstream")
+            else:
+                pipeline.append("queue max-size-buffers=3")
             if compression == "H264":
                 pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
             elif compression == "H265":
