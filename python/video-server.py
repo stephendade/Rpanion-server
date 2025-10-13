@@ -64,11 +64,8 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         pipeline.append("videotestsrc pattern=ball")
         pipeline.append("video/x-raw,width={0},height={1}{2}".format(width, height, framestr))
     elif device.startswith("rtsp://"):
-        # RTSP source - use rtspsrc with depayloader and decoder
-        pipeline.append("rtspsrc location={0} latency=0".format(device))
-        pipeline.append("rtph264depay")
-        pipeline.append("h264parse")
-        pipeline.append("avdec_h264")
+        # RTSP source - use rtspsrc with decodebin for automatic codec handling
+        pipeline.append("rtspsrc location={0} latency=0 ! decodebin".format(device))
         pipeline.append("videoscale")
         pipeline.append("video/x-raw,width={0},height={1}".format(width, height))
         pipeline.append("queue max-size-buffers=3 leaky=downstream")

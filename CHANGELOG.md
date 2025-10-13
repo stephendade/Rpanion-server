@@ -1,5 +1,8 @@
 ### Changelog
 
+#### Unreleased
+ - Video: Add support for RTSP source input
+
 #### [v0.11.1](https://github.com/stephendade/Rpanion-server/compare/v0.11.0...v0.11.1)
  - Migrate to using debian packages for release
  - Use specific "rpanion" user with proper permissions for networking and vpn management
