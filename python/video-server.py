@@ -63,6 +63,15 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
     if device == "testsrc":
         pipeline.append("videotestsrc pattern=ball")
         pipeline.append("video/x-raw,width={0},height={1}{2}".format(width, height, framestr))
+    elif device.startswith("rtsp://"):
+        # RTSP source - use rtspsrc with depayloader and decoder
+        pipeline.append("rtspsrc location={0} latency=0".format(device))
+        pipeline.append("rtph264depay")
+        pipeline.append("h264parse")
+        pipeline.append("avdec_h264")
+        pipeline.append("videoscale")
+        pipeline.append("video/x-raw,width={0},height={1}".format(width, height))
+        pipeline.append("queue max-size-buffers=3 leaky=downstream")
     elif device in ["argus0", "argus1"]:
         pipeline.append("nvarguscamerasrc sensor-id={0}".format(device[-1]))
         pipeline.append("video/x-raw(memory:NVMM),width={0},height={1},format=NV12{2}".format(width, height, framestr))

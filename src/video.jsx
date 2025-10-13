@@ -36,7 +36,8 @@ class VideoPage extends basePage {
       mavStreamSelected: this.props.mavStreamSelected,
       multicastString: " ",
       compression: { value: 'H264', label: 'H.264' },
-      compressionOptions: [{ value: 'H264', label: 'H.264' }, { value: 'H265', label: 'H.265' }]
+      compressionOptions: [{ value: 'H264', label: 'H.264' }, { value: 'H265', label: 'H.265' }],
+      rtspURL: "rtsp://"
     }
   }
 
@@ -128,6 +129,11 @@ class VideoPage extends basePage {
     this.setState({ mavStreamSelected: value });
   }
 
+  handleRTSPURLChange = (event) => {
+    //new RTSP URL value
+    this.setState({ rtspURL: event.target.value });
+  }
+
   handleStreaming = () => {
     //user clicked start/stop streaming
     this.setState({ waiting: true }, () => {
@@ -140,7 +146,7 @@ class VideoPage extends basePage {
         },
         body: JSON.stringify({
           active: !this.state.streamingStatus,
-          device: this.state.vidDeviceSelected.value,
+          device: this.state.vidDeviceSelected.value === 'rtspsrc' ? this.state.rtspURL : this.state.vidDeviceSelected.value,
           height: this.state.vidResSelected.height,
           width: this.state.vidResSelected.width,
           format: this.state.vidResSelected.format,
@@ -188,6 +194,19 @@ class VideoPage extends basePage {
                 <label className="col-sm-4 col-form-label">Device</label>
                 <div className="col-sm-8">
                   <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected} />
+                </div>
+              </div>
+              <div className="form-group row" style={{ marginBottom: '5px', display: (this.state.vidDeviceSelected && this.state.vidDeviceSelected.value === 'rtspsrc') ? "block" : "none" }}>
+                <label className="col-sm-4 col-form-label">RTSP URL</label>
+                <div className="col-sm-8">
+                  <input 
+                    type="text" 
+                    disabled={this.state.streamingStatus} 
+                    value={this.state.rtspURL} 
+                    onChange={this.handleRTSPURLChange}
+                    placeholder="rtsp://192.168.1.100:8554/stream"
+                    style={{ width: '100%' }}
+                  />
                 </div>
               </div>
               <div className="form-group row" style={{ marginBottom: '5px' }}>

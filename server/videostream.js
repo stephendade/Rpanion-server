@@ -212,7 +212,8 @@ class videoStream {
             found = true
           }
         }
-        if (!found) {
+        // Allow RTSP URLs even if not in the device list
+        if (!found && !device.startsWith('rtsp://')) {
           console.log('No video device: ' + device)
           return callback(new Error('No video device: ' + device))
         }
@@ -248,7 +249,7 @@ class videoStream {
       }
 
       const args = ['./python/video-server.py',
-        '--video=' + device,
+        '--videosource=' + device,
         '--height=' + height,
         '--width=' + width,
         '--format=' + format,

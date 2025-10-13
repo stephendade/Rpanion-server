@@ -253,4 +253,14 @@ capsTest.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'w
                  'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
 retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
+# Include RTSP source
+capsRTSP = []
+capsRTSP.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsRTSP.append({'value': "1280x720xx-raw", 'label': "1280x720", 'height': 720, 'width': 1280,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+capsRTSP.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
+                 'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
+retDevices.append({'value': "rtspsrc", 'label': "RTSP Source", 'caps': capsRTSP})
+
 print(json.dumps(retDevices))
