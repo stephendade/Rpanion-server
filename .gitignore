@@ -31,3 +31,8 @@ settingsTest.json
 /local_modules/long/node_modules
 
 /rpanion-server_*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class

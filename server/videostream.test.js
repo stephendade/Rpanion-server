@@ -51,6 +51,10 @@ describe('Video Functions', function () {
       assert.deepEqual(compression, { label: 'H.264', value: 'H264' })
       assert.deepEqual(transport, { label: 'RTSP', value: 'RTSP' })
       assert.deepEqual(transportOptions, [{ label: 'RTP', value: 'RTP' }, { label: 'RTSP', value: 'RTSP' }])
+      // Check that RTSP source is available in devices
+      const rtspSrc = devices.find(d => d.value === 'rtspsrc')
+      assert.notEqual(rtspSrc, undefined)
+      assert.equal(rtspSrc.label, 'RTSP Source')
       done()
     })
   }).timeout(5000)
@@ -61,6 +65,26 @@ describe('Video Functions', function () {
 
     const res = await vManager.isUbuntu()
     assert.equal(res, true)
+  })
+
+  it('#videomanagerRTSPSource()', function (done) {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+
+    vManager.getVideoDevices(function (err) {
+      assert.equal(err, null)
+      // Test that RTSP URL can be used as a device
+      vManager.startStopStreaming(true, 'rtsp://192.168.1.100:8554/stream', '1080', '1920', 'video/x-raw', '0', '1000', '5', 'RTSP', '127.0.0.1', 5600, false, false, '0', 'H264', function (err, status) {
+        assert.equal(err, null)
+        assert.equal(status, true)
+        assert.notEqual(vManager.deviceStream.pid, null)
+        vManager.startStopStreaming(false, 'rtsp://192.168.1.100:8554/stream', '1080', '1920', 'video/x-raw', '0', '1000', '5', 'RTSP', '127.0.0.1', 5600, false, false, '0', 'H264', function (err, status) {
+          assert.equal(err, null)
+          assert.equal(status, false)
+          done()
+        })
+      })
+    })
   })
 
   it('#videomanagerstartStopStreaming()', function (done) {
