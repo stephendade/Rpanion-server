@@ -32,6 +32,11 @@ fi
 ./install_common_libraries.sh
 sudo apt install -y wireless-tools
 
+# Remove packages that slow boot time and are not needed
+sudo apt remove -y snapd cloud-init
+sudo systemctl disable systemd-networkd-wait-online.service
+sudo systemctl mask systemd-networkd-wait-online.service
+
 sudo systemctl disable dnsmasq
 
 sudo apt-get install -y ca-certificates curl gnupg
