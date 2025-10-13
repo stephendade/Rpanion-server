@@ -37,7 +37,7 @@ sudo systemctl disable dnsmasq
 sudo apt-get install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 sudo apt update
 sudo apt install -y nodejs
@@ -63,14 +63,6 @@ if [[ "$(lsb_release -rs)" =~ ^2[2-9]\. ]]; then
     sudo netplan generate
     sudo netplan apply
 fi
-
-## and build Rpanion dev
-# If less than 520Mb RAM, need to tell NodeJS to reduce memory usage during build
-if [ $(free -m | awk '/^Mem:/{print $2}') -le 520 ]; then
-    export NODE_OPTIONS="--max-old-space-size=256"
-fi
-cd ../
-npm install
 
 ## For wireguard. Must be installed last as it messes the DNS resolutions
 sudo apt install -y resolvconf

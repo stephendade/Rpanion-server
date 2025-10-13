@@ -63,10 +63,10 @@ This method installs rpanion-server (and pre-requisities) on an existing system.
 First install the required packages:
 
 ```
-sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0 gstreamer1.0-plugins-base-apps
-sudo apt install -y gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
-sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git ninja-build jq
-sudo apt install -y python3-lxml python3-numpy python3-future gpsbabel zip
+sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-0 gir1.2-gst-rtsp-server-1.0 
+sudo apt install -y gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
+sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq
+sudo apt install -y python3-lxml python3-numpy gpsbabel zip
 ```
 
 If running on RasPiOS, install the libcamera drivers:
@@ -80,7 +80,7 @@ Install Nodejs:
 sudo apt install -y ca-certificates curl gnupg
 sudo mkdir -p /etc/apt/keyrings
 curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_20.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
 sudo apt update
 sudo apt install -y nodejs
@@ -100,6 +100,8 @@ Then install Rpanion-server:
 ```
 sudo dpkg -i rpanion-server-xxx.deb
 ```
+
+For device-specific configurations, see the ``./deploy`` folder for Jetson, X86 and Raspberry Pi (RasPiOS and Ubuntu) scripts.
 
 After installation, Rpanion-server will be available at http://<device_ip>:3001
 
@@ -134,7 +136,7 @@ https://www.xmodulo.com/change-usb-device-permission-linux.html
 The mavlink-router (https://github.com/mavlink/mavlink-router) software is used for backend routing and is required to be installed.
 
 Follow the scripts in the ``/deploy`` folder for your selected platform to set up the
-development environment.
+development environment. The ``./deploy/devExtras.sh`` contains additional packages to install.
 
 Running in development mode allows for any code changes to trigger a restart of Rpanion-server. 
 
