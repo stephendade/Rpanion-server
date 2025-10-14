@@ -30,7 +30,9 @@ fi
 
 ## Packages
 ./install_common_libraries.sh
-sudo apt install -y wireless-tools
+
+# Need this for pppd support
+sudo apt install linux-modules-extra-raspi
 
 # Remove packages that slow boot time and are not needed
 sudo apt remove -y snapd cloud-init
