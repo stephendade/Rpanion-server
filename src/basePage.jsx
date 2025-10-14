@@ -38,7 +38,6 @@ class basePage extends Component {
           // Handle HTTP errors
           return response.json().then((errorData) => {
             if (errorData) {
-              console.error(errorData)
               this.setState({ token: null })
             }
           });
