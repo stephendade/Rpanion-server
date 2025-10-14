@@ -313,29 +313,46 @@ app.post('/api/auth', authenticateToken, async (req, res) => {
 
 // Middleware to check if the request has a valid token
 function authenticateToken(req, res, next) {
-  let authHeader = null
-  let token = null
   // Skip authentication in development mode
   if (process.env.NODE_ENV === 'development') {
     return next();
   }
-  try {
-    authHeader = req.headers['authorization']
-    token = authHeader && authHeader.split(' ')[1]
-  } catch (err) {
-    return res.status(401).json({ message: 'Access denied. No token provided.' })
+
+  // Determine if this is a Socket.IO request
+  const isSocketIO = typeof res.status !== 'function'
+  
+  // Helper function to send error responses
+  const sendError = (statusCode, message) => {
+    if (isSocketIO) {
+      return next(new Error(message))
+    }
+    return res.status(statusCode).json({ message })
   }
 
-  if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' })
+  // Extract token
+  let token;
+  try {
+    const authHeader = req.headers['authorization']
+    token = authHeader && authHeader.split(' ')[1]
+  } catch (err) {
+    return sendError(401, 'Access denied. No token provided.')
+  }
+
+  if (!token) {
+    return sendError(401, 'Access denied. No token provided.')
+  }
 
   // Check if the token is blacklisted
   if (tokenBlacklist.includes(token)) {
-    return res.status(401).json({ message: 'Invalid token' })
+    return sendError(401, 'Invalid token')
   }
 
+  // Verify token
   jwt.verify(token, RPANION_SECRET_KEY, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' })
-    req.user = user // Attach user to request
+    if (err) {
+      return sendError(403, 'Invalid token')
+    }
+    req.user = user
     next()
   })
 }
