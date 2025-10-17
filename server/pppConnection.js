@@ -214,7 +214,6 @@ class PPPConnection {
             //'debug',
             'crtscts',
             'nodetach',
-            'proxyarp',
             'ktune'
         ];
         // if running in dev env, need to preload sudo login
