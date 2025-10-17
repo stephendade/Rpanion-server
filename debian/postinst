@@ -38,7 +38,8 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/sbin/shutdown *, \
   /usr/bin/nmcli *, \
   /usr/sbin/pppd *, \
-  /usr/sbin/iw dev * scan ap-force
+  /usr/sbin/iw dev * scan ap-force, \
+  /usr/bin/pkill -SIGTERM pppd
 EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control
