@@ -36,7 +36,8 @@ class VideoPage extends basePage {
       mavStreamSelected: this.props.mavStreamSelected,
       multicastString: " ",
       compression: { value: 'H264', label: 'H.264' },
-      compressionOptions: [{ value: 'H264', label: 'H.264' }, { value: 'H265', label: 'H.265' }]
+      compressionOptions: [{ value: 'H264', label: 'H.264' }, { value: 'H265', label: 'H.265' }],
+      customRTSPSource: this.props.customRTSPSource
     }
   }
 
@@ -128,6 +129,75 @@ class VideoPage extends basePage {
     this.setState({ mavStreamSelected: value });
   }
 
+  isrtspSourceSelected() {
+    return this.state.vidDeviceSelected && (this.state.vidDeviceSelected.value === "rtspsourceh264" || this.state.vidDeviceSelected.value === "rtspsourceh265");
+  }
+
+  doGstreamerRTPString() {
+    //generate gstreamer RTP string for UDP streaming
+    let gststring = "gst-launch-1.0 udpsrc " + this.state.multicastString + "port=" + this.state.useUDPPort + " buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! ";
+    if (!this.isrtspSourceSelected()) {
+      if (this.state.compression.value === "H264") {
+        gststring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false";
+      }
+      else {
+        gststring += "rtph265depay ! h265parse ! avdec_h265 ! videoconvert ! autovideosink sync=false";
+      }
+    }
+    else {
+      if (this.state.vidDeviceSelected.value === "rtspsourceh264") {
+        gststring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false";
+      }
+      else {
+        gststring += "rtph265depay ! h265parse ! avdec_h265 ! videoconvert ! autovideosink sync=false";
+      }
+    }
+    return gststring;
+  }
+
+  doMissionPlannerRTPString() {
+    //generate mission planner RTP string for UDP streaming
+    let mpstring = "udpsrc " + this.state.multicastString + "port=" + this.state.useUDPPort + " buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! ";
+    if (!this.isrtspSourceSelected()) {
+      if (this.state.compression.value === "H264") {
+        mpstring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false";
+      }
+      else {
+        mpstring += "rtph265depay ! h265parse ! avdec_h265 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false";
+      }
+    }
+    else {
+      if (this.state.vidDeviceSelected.value === "rtspsourceh264") {
+        mpstring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false";
+      }
+      else {
+        mpstring += "rtph265depay ! h265parse ! avdec_h265 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false";
+      }
+    }
+    return mpstring;
+  }
+
+  doQGCformatselection() {
+    //generate QGC format selection string
+    let qgcstring = "Video Source: UDP ";
+    if (!this.isrtspSourceSelected()) {
+      if (this.state.compression.value === "H264") {
+        qgcstring += "h.264 Video Stream";
+      }
+      else {
+        qgcstring += "h.265 Video Stream";
+      }
+    } else {
+      if (this.state.vidDeviceSelected.value === "rtspsourceh264") {
+        qgcstring += "h.264 Video Stream";
+      }
+      else {
+        qgcstring += "h.265 Video Stream";
+      }
+    }
+    return qgcstring;
+  }
+
   handleStreaming = () => {
     //user clicked start/stop streaming
     this.setState({ waiting: true }, () => {
@@ -154,7 +224,8 @@ class VideoPage extends basePage {
           useTimestamp: this.state.timestamp,
           useCameraHeartbeat: this.state.enableCameraHeartbeat,
           mavStreamSelected: this.state.mavStreamSelected.value,
-          compression: this.state.compression.value
+          compression: this.state.compression.value,
+          customRTSPSource: this.state.customRTSPSource
         })
       }).then(response => response.json()).then(state => { this.setState(state); this.setState({ waiting: false }) });
     });
@@ -190,13 +261,23 @@ class VideoPage extends basePage {
                   <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected} />
                 </div>
               </div>
-              <div className="form-group row" style={{ marginBottom: '5px' }}>
-                <label className="col-sm-4 col-form-label">Resolution</label>
-                <div className="col-sm-8">
-                  <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected} />
+              <div style={{ display: (this.isrtspSourceSelected()) ? "block" : "none" }}>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">RTSP Source URL</label>
+                  <div className="col-sm-8">
+                    <Form.Control type="text" name="rtspsource" disabled={this.state.streamingStatus} value={this.state.customRTSPSource || ''} onChange={(e) => this.setState({ customRTSPSource: e.target.value })} placeholder="e.g. rtsp://username:password@url:port/stream" />
+                  </div>
                 </div>
               </div>
-              <div style={{ display: (typeof this.state.vidResSelected !== 'undefined' && this.state.vidResSelected.format !== "video/x-h264") ? "block" : "none" }}>
+              <div style={{ display: (this.isrtspSourceSelected()) ? "none" : "block" }}>
+                <div className="form-group row" style={{ marginBottom: '5px'}}>
+                  <label className="col-sm-4 col-form-label">Resolution</label>
+                  <div className="col-sm-8">
+                    <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: (typeof this.state.vidResSelected !== 'undefined' && this.state.vidResSelected.format !== "video/x-h264" && !this.isrtspSourceSelected()) ? "block" : "none" }}>
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Rotation</label>
                   <div className="col-sm-8">
@@ -227,13 +308,15 @@ class VideoPage extends basePage {
                   </div>
                 </div>
               </div>
-              <div className="form-group row" style={{ marginBottom: '5px' }}>
-                <label className="col-sm-4 col-form-label">Framerate</label>
-                <div className="col-sm-8" style={{ display: (this.state.FPSMax === 0) ? "block" : "none" }}>
-                  <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect} />
-                </div>
-                <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
-                  <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
+              <div style={{ display: (this.isrtspSourceSelected()) ? "none" : "block" }}>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Framerate</label>
+                  <div className="col-sm-8" style={{ display: (this.state.FPSMax === 0) ? "block" : "none" }}>
+                    <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect} />
+                  </div>
+                  <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
+                    <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
+                  </div>
                 </div>
               </div>
               <div style={{ display: (this.state.transportSelected.value === 'RTP') ? "block" : "none" }}>
@@ -326,7 +409,7 @@ class VideoPage extends basePage {
               + QGroundControl
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>Video Source: UDP {this.state.compression.value == "H264" ? "h.264" : "h.265"} Video Stream</p>
+              <p style={{ fontFamily: "monospace" }}>{this.doQGCformatselection()}</p>
               <p style={{ fontFamily: "monospace" }}>Port: {this.state.useUDPPort}</p>
             </Accordion.Body>
           </Accordion.Item>
@@ -335,7 +418,7 @@ class VideoPage extends basePage {
               + GStreamer
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>gst-launch-1.0 udpsrc {this.state.multicastString}port={this.state.useUDPPort} caps=&apos;application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string){this.state.compression.value == "H264" ? "H264" : "H265"}&apos; ! rtpjitterbuffer ! {this.state.compression.value == "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression.value == "H264" ? "h264parse" : "h265parse"} ! {this.state.compression.value == "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! autovideosink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>{this.doGstreamerRTPString()}</p>
             </Accordion.Body>
           </Accordion.Item>
           <Accordion.Item eventKey="2">
@@ -343,7 +426,7 @@ class VideoPage extends basePage {
               + Mission Planner Connection Strings
             </Accordion.Header>
             <Accordion.Body>
-              <p style={{ fontFamily: "monospace" }}>udpsrc {this.state.multicastString}port={this.state.useUDPPort} buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! {this.state.compression.value == "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression.value == "H264" ? "h264parse" : "h265parse"} ! {this.state.compression.value == "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false</p>
+              <p style={{ fontFamily: "monospace" }}>{this.doMissionPlannerRTPString()}</p>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>

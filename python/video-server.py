@@ -63,6 +63,16 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
     if device == "testsrc":
         pipeline.append("videotestsrc pattern=ball")
         pipeline.append("video/x-raw,width={0},height={1}{2}".format(width, height, framestr))
+    elif device.startswith("rtsp://"):
+        # rtsp streaming source
+        pipeline.append("rtspsrc location=\"{0}\" is-live=true latency=0 udp-buffer-size=212992".format(device))
+        if format == "video/x-h264":
+            pipeline.append("rtph264depay")
+        elif format == "video/x-h265":
+            pipeline.append("rtph265depay")
+        else:
+            print("Error: Need to specify video/x-h264 or video/x-h265 for rtsp source in --format")
+            return ""
     elif device in ["argus0", "argus1"]:
         pipeline.append("nvarguscamerasrc sensor-id={0}".format(device[-1]))
         pipeline.append("video/x-raw(memory:NVMM),width={0},height={1},format=NV12{2}".format(width, height, framestr))
@@ -104,7 +114,7 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         return ""
 
     # now for rotations, overlays and compression, if required. Note we can't modify an x264 source stream
-    if format != "video/x-h264":
+    if format not in ["video/x-h264", "video/x-h265"] and not device.startswith("rtsp://"):
         # now add rotations for not-jetson and not-legacy-pi-camera
         if device not in ["0rpicam", "1rpicam"] and 'tegra' not in platform.uname().release:
             if rotation == 90:
@@ -172,12 +182,19 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             elif compression == "H265":
                 pipeline.append("x265enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
 
-    # final rtp formatting
-    pipeline.append("queue")
-    if compression == "H264" or format == "video/x-h264":
-        pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
-    elif compression == "H265":
-        pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
+        # final rtp formatting
+        pipeline.append("queue")
+        if compression == "H264":
+            pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
+        elif compression == "H265":
+            pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
+    else:
+        # just need to do rtp payloader for pre-compressed streams
+        pipeline.append("queue")
+        if format == "video/x-h264":
+            pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
+        elif format == "video/x-h265":
+            pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
 
     # return as full string
     print(" ! ".join(pipeline))
@@ -215,17 +232,25 @@ class GstServer():
                       compression)
         f.set_shared(True)
         m = self.server.get_mount_points()
-        name = ''.join(filter(str.isalnum, device))
+        if not device.startswith("rtsp://"):
+            name = ''.join(filter(str.isalnum, device))
+        else:
+            # remove any rtsp username or passwords, format rtsp://admin:admin@192.168.1.217:554/11
+            if "@" in device:
+                name = device.split('@')[1]
+            else:
+                name = device.replace("rtsp://", "")
+            name = ''.join(filter(str.isalnum, name))
         m.add_factory("/" + name, f)
 
         print("Added " + "rtsp://<IP>:8554/" + name)
         print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" +
-              name + " latency=0 is-live=True ! queue ! decodebin ! autovideosink")
+              name + " latency=0 is-live=True ! queue ! decodebin ! autovideosink sync=false")
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="RTSP Server using Gstreamer")
-    parser.add_argument("--videosource", help="Video Device",
+    parser.add_argument("--videosource", help="Video Device. Can be device (/dev/video0) or rtsp source (rtsp://192.168.1.100:8554/stream)",
                         default="/dev/video0", type=str)
     parser.add_argument("--height", help="Height", default=480, type=int)
     parser.add_argument("--width", help="Width", default=640, type=int)
@@ -305,10 +330,10 @@ if __name__ == '__main__':
         pipeline.set_state(Gst.State.PLAYING)
 
         print("Server sending UDP stream to " + args.udp)
-        if args.compression == "H264":
+        if args.compression == "H264" or (args.videosource.startswith("rtsp://") and args.format == "video/x-h264"):
             print(
                 "Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H264' ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
-        elif args.compression == "H265":
+        elif args.compression == "H265" or (args.videosource.startswith("rtsp://") and args.format == "video/x-h265"):
             print(
                 "Use: gst-launch-1.0 udpsrc port={0} caps='application/x-rtp, media=(string)video, clock-rate=(int)90000, encoding-name=(string)H265' ! rtpjitterbuffer ! rtph265depay ! h265parse ! avdec_h265 ! videoconvert ! autovideosink sync=false".format(args.udp.split(':')[1]))
 

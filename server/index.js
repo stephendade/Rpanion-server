@@ -709,10 +709,9 @@ app.get('/api/softwareinfo', authenticateToken, (req, res) => {
 })
 
 app.get('/api/videodevices', authenticateToken, (req, res) => {
-  vManager.populateAddresses()
   vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate,
                             selfps, SeluseUDPIP, SeluseUDPPort, timestamp,
-                            fps, FPSMax, vidres, useCameraHeartbeat, selMavURI, compression, Seltransport, transportOptions) => {
+                            fps, FPSMax, vidres, useCameraHeartbeat, selMavURI, compression, Seltransport, transportOptions, customRTSPSource) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       res.send(JSON.stringify({
@@ -736,7 +735,8 @@ app.get('/api/videodevices', authenticateToken, (req, res) => {
         FPSMax: FPSMax,
         enableCameraHeartbeat: useCameraHeartbeat,
         mavStreamSelected: selMavURI,
-        compression: compression
+        compression: compression,
+        customRTSPSource: customRTSPSource
       }))
     } else {
       res.setHeader('Content-Type', 'application/json')
@@ -1004,10 +1004,16 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
   check('useUDPPort').if(check('active').isIn([true])).isPort(),
   check('useUDPIP').if(check('active').isIn([true])).isIP(),
   check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
-  check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'image/jpeg']),
+  check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'video/x-h265', 'image/jpeg']),
   check('fps').if(check('active').isIn([true])).isInt({ min: -1, max: 100 }),
   check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])],
-  check('compression').if(check('active').isIn([true])).isIn(['H264', 'H265']), (req, res) => {
+  check('compression').if(check('active').isIn([true])).isIn(['H264', 'H265']),
+  check('customRTSPSource').if(check('active').isIn([true])).custom((value) => {
+    if (value === '' || value === null || value === undefined) {
+      return true;
+    }
+    return check('customRTSPSource').isURL().run({ body: { customRTSPSource: value } });
+  }), (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
@@ -1017,7 +1023,8 @@ app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
   // user wants to start/stop video streaming
   vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation,
                               req.body.bitrate, req.body.fps, req.body.transport, req.body.useUDPIP, req.body.useUDPPort,
-                              req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression, (err, status, addresses) => {
+                              req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression,
+                              req.body.customRTSPSource, (err, status, addresses) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       const ret = { streamingStatus: status, streamAddresses: addresses }
