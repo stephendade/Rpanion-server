@@ -844,7 +844,7 @@ class NetworkConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">SSID Name</label>
               <div className="col-sm-8">
-                <input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text" />
+                <Form.Control name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text" />
               </div>
             </div>
 
