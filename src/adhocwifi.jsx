@@ -3,7 +3,6 @@ Page for configuring Ad-hoc Wifi
 This is seperate from the network config page due to conflicts
 with nmcli used on network config
 */
-import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import React from 'react'
@@ -47,6 +46,12 @@ class AdhocConfig extends basePage {
     Promise.all([
       fetch(`/api/adhocadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); return state; })
     ]).then(() => { this.loadDone() });
+  }
+
+  handleAdapterChange = (event) => {
+    const value = event.target.value;
+    const selected = this.state.netDevice.find(device => device.value === value);
+    this.setState({ netDeviceSelected: selected });
   }
 
   getValidChannels() {
@@ -152,64 +157,68 @@ class AdhocConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Adapter</label>
               <div className="col-sm-10">
-                <Select isDisabled={this.state.curSettings.isActive} onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected} />
+                <Form.Select disabled={this.state.curSettings.isActive} onChange={this.handleAdapterChange} value={this.state.netDeviceSelected?.value || ''}>
+                  {this.state.netDevice.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">SSID</label>
               <div className="col-sm-10">
-                <input disabled={this.state.curSettings.isActive} name="ssid" onChange={this.SSIDhandler} value={this.state.curSettings.ssid} type="text" />
+                <Form.Control disabled={this.state.curSettings.isActive} name="ssid" onChange={this.SSIDhandler} value={this.state.curSettings.ssid} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Band</label>
               <div className="col-sm-10">
-                <select disabled={this.state.curSettings.isActive} name="band" onChange={this.bandhandler} value={this.state.curSettings.band}>
+                <Form.Select disabled={this.state.curSettings.isActive} name="band" onChange={this.bandhandler} value={this.state.curSettings.band}>
                   {this.state.bandTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Channel</label>
               <div className="col-sm-10">
-                <select disabled={this.state.curSettings.isActive} name="channel" onChange={this.channelhandler} value={this.state.curSettings.channel}>
+                <Form.Select disabled={this.state.curSettings.isActive} name="channel" onChange={this.channelhandler} value={this.state.curSettings.channel}>
                   {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   )) : <option></option>}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Security</label>
               <div className="col-sm-10">
-                <select disabled={this.state.curSettings.isActive} name="wpaType" value={this.state.curSettings.wpaType} onChange={this.securityhandler}>
+                <Form.Select disabled={this.state.curSettings.isActive} name="wpaType" value={this.state.curSettings.wpaType} onChange={this.securityhandler}>
                   {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Password</label>
               <div className="col-sm-10">
-                <input disabled={this.state.curSettings.isActive || this.state.curSettings.wpaType === "none"} name="password" type={this.state.showPW === true ? "text" : "password"} value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} onChange={this.passwordhandler} />
-                <label><input disabled={this.state.curSettings.wpaType === "none"} name="showpassword" type="checkbox" checked={this.state.showPW} onChange={this.togglePasswordVisible} />Show Password</label>
+                <Form.Control disabled={this.state.curSettings.isActive || this.state.curSettings.wpaType === "none"} name="password" type={this.state.showPW === true ? "text" : "password"} value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} onChange={this.passwordhandler} />
+                <Form.Check type="checkbox" disabled={this.state.curSettings.wpaType === "none"} name="showpassword" checked={this.state.showPW} onChange={this.togglePasswordVisible} label="Show Password" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">IP Address</label>
               <div className="col-sm-10">
                 {/* <IPut className="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} defaultValue={this.state.curSettings.ipaddress} value={this.state.curSettings.ipaddress} /> */}
-                <input name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} value={this.state.curSettings.ipaddress} type="text" />
+                <Form.Control name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} value={this.state.curSettings.ipaddress} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-5 col-form-label">Gateway IP Address (Optional)</label>
               <div className="col-sm-7">
                 {/* <IPut className="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.IPHandler} defaultValue={this.state.curSettings.ipaddress} value={this.state.curSettings.ipaddress} /> */}
-                <input name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.GatewayHandler} value={this.state.curSettings.gateway} type="text" />
+                <Form.Control name="ipaddress" disabled={this.state.curSettings.isActive} onChange={this.GatewayHandler} value={this.state.curSettings.gateway} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>

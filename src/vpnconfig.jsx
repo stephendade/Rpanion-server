@@ -1,5 +1,4 @@
 import Button from 'react-bootstrap/Button'
-import Select from 'react-select'
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
 import React from 'react'
@@ -31,13 +30,15 @@ class VPNPage extends basePage {
     ]).then(this.loadDone());
   }
 
-  handleVPNChange = (value) => {
-    this.setState({ selectedVPN: value });
-    if (value.value == 'zerotier') {
+  handleVPNChange = (event) => {
+    const value = event.target.value;
+    const selectedVPN = this.state.vpnOptions.find(opt => opt.value === value);
+    this.setState({ selectedVPN: selectedVPN });
+    if (value == 'zerotier') {
       this.setState({ selVPNInstalled: this.state.statusZerotier.installed });
       this.setState({ selVPNActive: this.state.statusZerotier.status });
     }
-    else if (value.value == 'wireguard') {
+    else if (value == 'wireguard') {
       this.setState({ selVPNInstalled: this.state.statusWireguard.installed });
       this.setState({ selVPNActive: this.state.statusWireguard.status });
     } 
@@ -164,7 +165,11 @@ class VPNPage extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">VPN Service</label>
           <div className="col-sm-8">
-            <Select onChange={this.handleVPNChange} options={this.state.vpnOptions} value={this.state.selectedVPN} />
+            <Form.Select onChange={this.handleVPNChange} value={this.state.selectedVPN.value}>
+              {this.state.vpnOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Form.Select>
           </div>
         </div>
         <h2>Config</h2>

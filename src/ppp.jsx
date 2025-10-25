@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
-import Select from 'react-select';
 import basePage from './basePage.jsx';
 import IPAddressInput from './components/IPAddressInput.jsx';
 
@@ -61,20 +60,24 @@ class PPPPage extends basePage {
         }));
     };
 
-    handleBaudrateChange = (value) => {
+    handleBaudrateChange = (event) => {
+        const value = event.target.value;
+        const selected = this.state.config.baudRates.find(rate => rate.value == value);
         this.setState(prevState => ({
             config: {
                 ...prevState.config,
-                selBaudRate: value
+                selBaudRate: selected
             }
         }));
     }
 
-    handleUartChange = (value) => {
+    handleUartChange = (event) => {
+        const value = event.target.value;
+        const selected = this.state.config.serialDevices.find(device => device.value === value);
         this.setState(prevState => ({
             config: {
                 ...prevState.config,
-                selDevice: value
+                selDevice: selected
             }
         }));
     }
@@ -131,13 +134,21 @@ class PPPPage extends basePage {
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-4 col-form-label">UART Port</label>
                         <div className="col-sm-7">
-                            <Select isDisabled={this.state.config.enabled === true} onChange={this.handleUartChange} options={this.state.config.serialDevices} value={this.state.config.selDevice} />
+                            <Form.Select disabled={this.state.config.enabled === true} onChange={this.handleUartChange} value={this.state.config.selDevice?.value || ''}>
+                              {this.state.config.serialDevices.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                              ))}
+                            </Form.Select>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-4 col-form-label">Baudrate</label>
                         <div className="col-sm-5">
-                            <Select isDisabled={this.state.config.enabled === true} onChange={this.handleBaudrateChange} options={this.state.config.baudRates} value={this.state.config.selBaudRate} />
+                            <Form.Select disabled={this.state.config.enabled === true} onChange={this.handleBaudrateChange} value={this.state.config.selBaudRate?.value || ''}>
+                              {this.state.config.baudRates.map((option) => (
+                                <option key={option.value} value={option.value}>{option.label}</option>
+                              ))}
+                            </Form.Select>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>

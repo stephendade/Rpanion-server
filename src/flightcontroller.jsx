@@ -1,7 +1,7 @@
-import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Accordion from 'react-bootstrap/Accordion';
+import Form from 'react-bootstrap/Form';
 
 import React from 'react'
 
@@ -50,8 +50,10 @@ class FCPage extends basePage {
     fetch(`/api/FCOutputs`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
   }
 
-  handleInputTypeChange = (value) => {
-    this.setState({ selInputType: value });
+  handleInputTypeChange = (event) => {
+    const value = event.target.value;
+    const selected = this.state.inputTypes.find(type => type.value === value);
+    this.setState({ selInputType: selected });
   }
 
   handleUDPInputPortChange = (event) => {
@@ -59,16 +61,22 @@ class FCPage extends basePage {
     this.setState({ udpInputPort: event.target.value });
   }
 
-  handleSerialPortChange = (value) => {
-    this.setState({ serialPortSelected: value });
+  handleSerialPortChange = (event) => {
+    const value = event.target.value;
+    const selected = this.state.serialPorts.find(port => port.value === value);
+    this.setState({ serialPortSelected: selected });
   }
 
-  handleBaudRateChange = (value) => {
-    this.setState({ baudRateSelected: value });
+  handleBaudRateChange = (event) => {
+    const value = event.target.value;
+    const selected = this.state.baudRates.find(rate => rate.value == value);
+    this.setState({ baudRateSelected: selected });
   }
 
-  handleMavVersionChange = (value) => {
-    this.setState({ mavVersionSelected: value });
+  handleMavVersionChange = (event) => {
+    const value = event.target.value;
+    const selected = this.state.mavVersions.find(ver => ver.value == value);
+    this.setState({ mavVersionSelected: selected });
   }
 
   handleUseHeartbeatChange = (event) => {
@@ -196,11 +204,14 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Input Type</label>
               <div className="col-sm-8">
-                <Select 
-                  value={this.state.selInputType} 
+                <Form.Select 
+                  value={this.state.selInputType?.value || ''} 
                   onChange={this.handleInputTypeChange}
-                  isDisabled={this.state.telemetryStatus}
-                  options={this.state.inputTypes} />
+                  disabled={this.state.telemetryStatus}>
+                  {this.state.inputTypes.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Form.Select>
               </div>
             </div>
             {this.state.selInputType === null || this.state.selInputType.value === 'UART' ? (
@@ -208,13 +219,21 @@ class FCPage extends basePage {
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Serial Device</label>
                   <div className="col-sm-8">
-                    <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected} />
+                    <Form.Select disabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} value={this.state.serialPortSelected?.value || ''}>
+                      {this.state.serialPorts.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
               </div>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Baud Rate</label>
                   <div className="col-sm-8">
-                    <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected} />
+                    <Form.Select disabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} value={this.state.baudRateSelected?.value || ''}>
+                      {this.state.baudRates.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
               </div>
             </>
@@ -223,7 +242,7 @@ class FCPage extends basePage {
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-5 col-form-label">UDP Input Port (NET_Pn_PORT)</label>
                   <div className="col-sm-7">
-                    <input 
+                    <Form.Control 
                       type="number" 
                       min="1000" 
                       max="65535" 
@@ -242,7 +261,11 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">MAVLink Version</label>
               <div className="col-sm-8">
-                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected} />
+                <Form.Select disabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} value={this.state.mavVersionSelected?.value || ''}>
+                  {this.state.mavVersions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Form.Select>
               </div>
             </div>
 
@@ -271,7 +294,7 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Add new destination</label>
               <div className="col-sm-8">
-                <input type="text" onChange={this.changeaddrow} disabled={this.state.telemetryStatus} value={this.state.addrow} /><Button size="sm" disabled={this.state.telemetryStatus} onClick={this.addUdpOutput}>Add</Button>
+                <Form.Control type="text" onChange={this.changeaddrow} disabled={this.state.telemetryStatus} value={this.state.addrow} /><Button size="sm" disabled={this.state.telemetryStatus} onClick={this.addUdpOutput}>Add</Button>
               </div>
             </div>
             <br />
@@ -280,13 +303,13 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Enable UDP Server</label>
               <div className="col-sm-8">
-                <input type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />
+                <Form.Check type="checkbox" checked={this.state.enableUDPB} disabled={this.state.telemetryStatus} onChange={this.handleUseUDPBChange} />
                 </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">UDP Server Port</label>
               <div className="col-sm-8">
-                <input type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
+                <Form.Control type="number" min="1000" max="20000" step="1" onChange={this.changeUDPBPort} value={this.state.UDPBPort} disabled={!this.state.enableUDPB || this.state.telemetryStatus} />
               </div>
             </div>
             <br />
@@ -295,7 +318,7 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-5 col-form-label">Enable TCP Server at port 5760</label>
               <div className="col-sm-7">
-              <input type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />
+              <Form.Check type="checkbox" checked={this.state.enableTCP} disabled={this.state.telemetryStatus} onChange={this.handleUseTCPChange} />
               </div>
             </div>
           </Accordion.Body>
@@ -307,7 +330,7 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-5 col-form-label">Enable datastream requests</label>
               <div className="col-sm-7">
-              <input type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
+              <Form.Check type="checkbox" checked={this.state.enableDSRequest} disabled={this.state.telemetryStatus} onChange={this.handleDSRequest} />
               </div>
             </div>
             <br />
@@ -315,7 +338,7 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-5 col-form-label">Enable MAVLink heartbeats</label>
               <div className="col-sm-7">
-              <input type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
+              <Form.Check type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
               </div>
             </div>
             <br />
@@ -323,7 +346,7 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-5 col-form-label">Enable telemetry logging (tlogs)</label>
               <div className="col-sm-7">
-              <input type="checkbox" checked={this.state.tlogging} disabled={this.state.telemetryStatus} onChange={this.handleTloggingChange} />
+              <Form.Check type="checkbox" checked={this.state.tlogging} disabled={this.state.telemetryStatus} onChange={this.handleTloggingChange} />
               </div>
             </div>
           </Accordion.Body>

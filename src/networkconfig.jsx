@@ -1,4 +1,3 @@
-import Select from 'react-select';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -86,23 +85,22 @@ class NetworkConfig extends basePage {
       fetch(`/api/networkconnections`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state)),
       fetch(`/api/wirelessstatus`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state)),
       fetch(`/api/networkadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.setState({ netDeviceSelected: state.netDevice[0] }); return state; })
-    ]).then(retState => { this.handleAdapterChange(retState[2].netDevice[0], { action: "select-option" }); this.loadDone() });
+    ]).then(retState => { this.handleAdapterChangeInternal(retState[2].netDevice[0]); this.loadDone() });
   }
 
-  handleAdapterChange = (value, action) => {
-    //on a device selection change, re-fill the connections dialog
-    //and open up the applicable divs
+  handleAdapterChangeInternal = (selectedDevice) => {
+    //programmatic adapter change (not from user event)
     var netConnection = [];
     var activeCon = null;
-    if (action.action === 'select-option') {
-      if (value.type === "ethernet") {
+    if (selectedDevice) {
+      if (selectedDevice.type === "ethernet") {
         this.setState(() => {
           return { showIP: true };
         });
         //filter the connections
         this.state.netConnection.forEach(function (item) {
-          if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-            if (item.state === value.value) {
+          if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
+            if (item.state === selectedDevice.value) {
               item.label = item.labelPre + " (Active)";
               netConnection.push(item);
               activeCon = item;
@@ -114,15 +112,15 @@ class NetworkConfig extends basePage {
           }
         });
       }
-      else if (value.type === "wifi") {
+      else if (selectedDevice.type === "wifi") {
         this.setState(() => {
           return { showIP: true };
         });
         //filter the connections
         this.state.netConnection.forEach(function (item) {
           if (item.type === "802-11-wireless" && (item.attachedIface === '""' || item.attachedIface === '' ||
-            item.attachedIface === "undefined" || item.attachedIface === value.value)) {
-            if (item.state === value.value) {
+            item.attachedIface === "undefined" || item.attachedIface === selectedDevice.value)) {
+            if (item.state === selectedDevice.value) {
               item.label = item.labelPre + " (Active)";
               netConnection.push(item);
               activeCon = item;
@@ -141,8 +139,8 @@ class NetworkConfig extends basePage {
         });
         //filter the connections
         this.state.netConnection.forEach(function (item) {
-          if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-            if (item.state === value.value) {
+          if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
+            if (item.state === selectedDevice.value) {
               item.label = item.labelPre + " (Active)";
               netConnection.push(item);
               activeCon = item;
@@ -165,17 +163,111 @@ class NetworkConfig extends basePage {
       // no connections in list at all. Blank settings
       else if (netConnection.length === 0)
       {
-        this.handleConnectionChange(null, { action: "select-option" });
-        return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: null };
+        this.handleConnectionChange(null);
+        return { netDeviceSelected: selectedDevice, netConnectionFiltered: netConnection, netConnectionFilteredSelected: null };
       }
       console.log(activeCon)
-      this.handleConnectionChange(activeCon, { action: "select-option" });
+      this.handleConnectionChange(activeCon);
 
-      return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
+      return { netDeviceSelected: selectedDevice, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
+    });
+  }
+
+  handleAdapterChange = (event) => {
+    //on a device selection change, re-fill the connections dialog
+    //and open up the applicable divs
+    const value = event.target.value;
+    const selectedDevice = this.state.netDevice.find(device => device.value === value);
+    var netConnection = [];
+    var activeCon = null;
+    if (selectedDevice) {
+      if (selectedDevice.type === "ethernet") {
+        this.setState(() => {
+          return { showIP: true };
+        });
+        //filter the connections
+        this.state.netConnection.forEach(function (item) {
+          if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
+            if (item.state === selectedDevice.value) {
+              item.label = item.labelPre + " (Active)";
+              netConnection.push(item);
+              activeCon = item;
+            }
+            else {
+              item.label = item.labelPre;
+              netConnection.push(item);
+            }
+          }
+        });
+      }
+      else if (selectedDevice.type === "wifi") {
+        this.setState(() => {
+          return { showIP: true };
+        });
+        //filter the connections
+        this.state.netConnection.forEach(function (item) {
+          if (item.type === "802-11-wireless" && (item.attachedIface === '""' || item.attachedIface === '' ||
+            item.attachedIface === "undefined" || item.attachedIface === selectedDevice.value)) {
+            if (item.state === selectedDevice.value) {
+              item.label = item.labelPre + " (Active)";
+              netConnection.push(item);
+              activeCon = item;
+            }
+            else {
+              item.label = item.labelPre;
+              netConnection.push(item);
+            }
+          }
+        });
+      }
+      else {
+        //tun device
+        this.setState(() => {
+          return { showIP: true };
+        });
+        //filter the connections
+        this.state.netConnection.forEach(function (item) {
+          if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
+            if (item.state === selectedDevice.value) {
+              item.label = item.labelPre + " (Active)";
+              netConnection.push(item);
+              activeCon = item;
+            }
+            else {
+              item.label = item.labelPre;
+              netConnection.push(item);
+            }
+          }
+        });
+
+      }
+    }
+
+    this.setState(() => {
+      //no active connection
+      if (activeCon === null && netConnection.length > 0) {
+        activeCon = netConnection[0];
+      }
+      // no connections in list at all. Blank settings
+      else if (netConnection.length === 0)
+      {
+        this.handleConnectionChange(null);
+        return { netDeviceSelected: selectedDevice, netConnectionFiltered: netConnection, netConnectionFilteredSelected: null };
+      }
+      console.log(activeCon)
+      this.handleConnectionChange(activeCon);
+
+      return { netDeviceSelected: selectedDevice, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
     });
   };
 
-  handleConnectionChange = (value, action) => {
+  handleConnectionChangeEvent = (event) => {
+    const value = event.target.value;
+    const selected = this.state.netConnectionFiltered.find(conn => conn.value === value);
+    this.handleConnectionChange(selected);
+  };
+
+  handleConnectionChange = (value) => {
     //on a device selection change, re-fill the connections dialog
     //and open up the applicable divs
     if (value === null) {
@@ -184,7 +276,7 @@ class NetworkConfig extends basePage {
       return;
     }
 
-    if (action.action === 'select-option') {
+    if (value) {
       fetch('/api/networkIP', {
         method: 'POST',
         headers: {
@@ -433,7 +525,7 @@ class NetworkConfig extends basePage {
   resetForm = () => {
     //if it's a new connection, go back to old connection
     if (this.state.netConnectionFilteredSelected.value === "new") {
-      this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
+      this.handleConnectionChange(this.state.netConnection[0]);
     }
     //reset the form
     this.setState({
@@ -488,7 +580,7 @@ class NetworkConfig extends basePage {
     this.setState({ showModalDelete: false });
     if (this.state.netConnectionFilteredSelected.value === "new") {
       //this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
-      this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" })
+      this.handleAdapterChangeInternal(this.state.netDeviceSelected)
     }
     else {
       this.setState({ waiting: true }, () => {
@@ -556,19 +648,19 @@ class NetworkConfig extends basePage {
   refreshConList = () => {
     this.setState({ waiting: false }, () => {
       fetch(`/api/networkconnections`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
-                                      .then(state => this.setState(state, () => { this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" }) }))
+                                      .then(state => this.setState(state, () => { this.handleAdapterChangeInternal(this.state.netDeviceSelected) }))
                                       .then(this.setState({ waiting: false }))
     })
   }
 
   refreshInfoList = () => {
-    this.handleConnectionChange(this.state.netConnectionFilteredSelected, { action: "select-option" });
+    this.handleConnectionChange(this.state.netConnectionFilteredSelected);
   }
 
   handleNewNetworkTypeCancel = () => {
     // user does not want to add a new network
     this.setState({ showModal: false });
-    this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
+    this.handleConnectionChange(this.state.netConnection[0]);
   }
 
   togglewirelessEnabled = (event) => {
@@ -617,19 +709,27 @@ class NetworkConfig extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Adapter</label>
           <div className="col-sm-8">
-            <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected} />
+            <Form.Select onChange={this.handleAdapterChange} value={this.state.netDeviceSelected?.value || ''}>
+              {this.state.netDevice.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Form.Select>
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Connection</label>
           <div className="col-sm-8">
-            <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected} />
+            <Form.Select onChange={this.handleConnectionChangeEvent} value={this.state.netConnectionFilteredSelected?.value || ''}>
+              {this.state.netConnectionFiltered.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Form.Select>
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-8">
-            <input type="checkbox" checked={this.state.wirelessEnabled} onChange={this.togglewirelessEnabled} />Wifi interfaces enabled
+            <Form.Check type="checkbox" checked={this.state.wirelessEnabled} onChange={this.togglewirelessEnabled} label="Wifi interfaces enabled" />
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
@@ -661,11 +761,11 @@ class NetworkConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Attach to Specific Adapter</label>
               <div className="col-sm-8">
-                <select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface.value}>
+                <Form.Select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface.value}>
                   {this.state.netConnectionSimilarIfaces.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
           </div>
@@ -715,25 +815,25 @@ class NetworkConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">SSID Name</label>
               <div className="col-sm-8">
-                <input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text" />
+                <Form.Control name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Security</label>
               <div className="col-sm-8">
-                <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
+                <Form.Select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
                   {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div style={{ display: (this.state.curSettings.wpaType.value !== "none") ? "block" : "none" }}>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">Password</label>
                 <div className="col-sm-8">
-                  <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                  <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                  <Form.Control name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
+                  <Form.Check name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} label="Show Password" />
                 </div>
               </div>
             </div>
@@ -751,40 +851,40 @@ class NetworkConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Band</label>
               <div className="col-sm-8">
-                <select name="band" onChange={this.changeHandler} value={this.state.curSettings.band.value}>
+                <Form.Select name="band" onChange={this.changeHandler} value={this.state.curSettings.band.value}>
                   {this.state.bandTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Channel</label>
               <div className="col-sm-8">
-                <select name="channel" onChange={this.changeHandler} value={this.state.curSettings.channel.value}>
+                <Form.Select name="channel" onChange={this.changeHandler} value={this.state.curSettings.channel.value}>
                   {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   )) : <option></option>}
-                </select>
+                </Form.Select>
               </div>
             </div>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Security</label>
               <div className="col-sm-8">
-                <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
+                <Form.Select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
                   {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Password</label>
               <div className="col-sm-8">
-                <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                <Form.Control name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
+                <Form.Check name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} label="Show Password" />
               </div>
             </div>
 
@@ -864,7 +964,7 @@ class NetworkConfig extends basePage {
 
             <Modal.Body>
               <p>Enter the name of the new network:</p>
-              <input name="newNetworkName" onChange={this.changeNetworkNameHandler} value={this.state.newNetworkName} type="text" />
+              <Form.Control name="newNetworkName" onChange={this.changeNetworkNameHandler} value={this.state.newNetworkName} type="text" />
             </Modal.Body>
 
             <Modal.Footer>
