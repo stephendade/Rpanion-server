@@ -71,7 +71,7 @@ jobs:
             done
 
         - name: Archive build
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v5
           with:
             name: rpanion-server-${{ matrix.arch }}.deb
             path: 'rpanion-server_*.deb'
@@ -83,7 +83,7 @@ jobs:
       steps:
         - uses: actions/checkout@v5
         - name: Download all artifacts
-          uses: actions/download-artifact@v5
+          uses: actions/download-artifact@v6
           with:
             path: artifacts/
         - name: Release
