@@ -318,9 +318,9 @@ class FCDetails {
   startLink (callback) {
     // start the serial link
     if (this.activeDevice.inputType === 'UDP') {
-      console.log('Opening UDP Link ' + '0.0.0.0:' + this.activeDevice.udpInputPort + ', MAV v' + this.activeDevice.mavversion.value)
+      console.log('Opening UDP Link ' + '0.0.0.0:' + this.activeDevice.udpInputPort + ', MAV v' + this.activeDevice.mavversion)
     } else {
-      console.log('Opening UART Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud.value + ', MAV v' + this.activeDevice.mavversion.value)
+      console.log('Opening UART Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud + ', MAV v' + this.activeDevice.mavversion)
     }
     // this.outputs.push({ IP: newIP, port: newPort })
 
@@ -344,7 +344,7 @@ class FCDetails {
       cmd.push('0.0.0.0:' + this.UDPBPort)
     }
     if (this.activeDevice.inputType === 'UART') {
-      cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud.value)
+      cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud)
     } else if (this.activeDevice.inputType === 'UDP') {
       cmd.push('0.0.0.0:' + this.activeDevice.udpInputPort)
     }
@@ -395,7 +395,7 @@ class FCDetails {
     // only restart the mavlink processor if it's a new link,
     // not a reconnect attempt
     if (this.m === null) {
-      this.m = new mavManager(this.activeDevice.mavversion.value, '127.0.0.1', 14540, this.enableDSRequest)
+      this.m = new mavManager(this.activeDevice.mavversion, '127.0.0.1', 14540, this.enableDSRequest)
       this.m.eventEmitter.on('gotMessage', (packet, data) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
@@ -505,20 +505,20 @@ class FCDetails {
 
     // set the active device as selected
     if (this.active && this.activeDevice && this.activeDevice.inputType === 'UART') {
-      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial,
+      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial.value,
         this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion,
         this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, this.activeDevice.udpInputPort,
-        this.inputTypes[0], this.inputTypes)
+        this.inputTypes[0].value, this.inputTypes)
     } else if (this.active && this.activeDevice && this.activeDevice.inputType === 'UDP') {
-      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0] : [], this.baudRates[3],
+      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [], this.baudRates[3].value,
         this.mavlinkVersions, this.activeDevice.mavversion, this.active, this.enableHeartbeat,
         this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, this.activeDevice.udpInputPort,
-        this.inputTypes[1], this.inputTypes)
+        this.inputTypes[1].value, this.inputTypes)
     } else {
       // no connection
-      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0] : [],
-        this.baudRates[3], this.mavlinkVersions, this.mavlinkVersions[1], this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, 9000, this.inputTypes[0], this.inputTypes)
+      return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [],
+        this.baudRates[3].value, this.mavlinkVersions, this.mavlinkVersions[1].value, this.active, this.enableHeartbeat,
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, 9000, this.inputTypes[0].value, this.inputTypes)
     }
   }
 
@@ -566,39 +566,36 @@ class FCDetails {
     // check port, mavversion and baud are valid (if starting telem)
     if (!this.active) {
       this.activeDevice = { serial: null, baud: null, inputType: 'UART', mavversion: null, udpInputPort: 9000 }
-      for (let i = 0, len = this.mavlinkVersions.length; i < len; i++) {
-        if (this.mavlinkVersions[i].value === mavversion.value) {
-          this.activeDevice.mavversion = this.mavlinkVersions[i]
-          break
-        }
-      }
+      this.activeDevice.mavversion = mavversion
 
-      if (inputType.value === 'UART') {
+      if (inputType === 'UART') {
         this.activeDevice.inputType = 'UART'
         for (let i = 0, len = this.serialDevices.length; i < len; i++) {
-          if (this.serialDevices[i].pnpId === device.pnpId) {
+          if (this.serialDevices[i].value === device) {
             this.activeDevice.serial = this.serialDevices[i]
             break
           }
         }
         for (let i = 0, len = this.baudRates.length; i < len; i++) {
-          if (this.baudRates[i].value === baud.value) {
-            this.activeDevice.baud = this.baudRates[i]
+          if (this.baudRates[i].value === baud) {
+            this.activeDevice.baud = this.baudRates[i].value
             break
           }
         }
+        console.log('Selected device: ' + device + ' @ ' + baud)
+        console.log(this.activeDevice)
 
-        if (this.activeDevice.serial === null || this.activeDevice.baud.value === null || this.activeDevice.serial.value === null || this.activeDevice.mavversion.value === null || this.enableTCP === null) {
+        if (this.activeDevice.serial === null || this.activeDevice.baud === null || this.activeDevice.serial.value === null || this.activeDevice.mavversion === null || this.enableTCP === null) {
           this.activeDevice = null
           this.active = false
           return callback(new Error('Bad serial device or baud'), false)
         }
-      } else if (inputType.value === 'UDP') {
+      } else if (inputType === 'UDP') {
         // UDP input
         this.activeDevice.inputType = 'UDP'
         this.activeDevice.serial = null
         this.activeDevice.baud = null
-        this.activeDevice.mavversion = { value: mavversion.value, label: mavversion.label }
+        this.activeDevice.mavversion = mavversion
         this.activeDevice.udpInputPort = udpInputPort
       } else {
         // unknown input type

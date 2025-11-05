@@ -36,7 +36,7 @@ class PPPConnection {
         this.isConnected = this.settings.value('ppp.enabled', false);
         this.pppProcess = null;
         this.device = this.settings.value('ppp.uart', null);
-        this.baudRate = this.settings.value('ppp.baud', { value: 921600, label: '921600' })
+        this.baudRate = this.settings.value('ppp.baud', 921600)
         this.localIP = this.settings.value('ppp.localIP', '192.168.144.14');  // default local IP
         this.remoteIP = this.settings.value('ppp.remoteIP', '192.168.144.15'); // default remote IP
         this.baudRates = [
@@ -197,6 +197,20 @@ class PPPConnection {
             });
         }
 
+        //ensure device string is valid in the serialdevices list
+        const validDevice = this.serialDevices.find(d => d.value === device);
+        if (!validDevice) {
+            return callback(new Error('Invalid device selected'), {
+                selDevice: this.device,
+                selBaudRate: this.baudRate,
+                localIP: this.localIP,
+                remoteIP: this.remoteIP,
+                enabled: this.isConnected,
+                baudRates: this.baudRates,
+                serialDevices: this.serialDevices,
+            });
+        }
+
         this.device = device;
         this.baudRate = baudRate;
         this.localIP = localIP;
@@ -204,8 +218,8 @@ class PPPConnection {
         
         const args = [
             "pppd",
-            this.device.value,
-            this.baudRate.value, // baud rate
+            this.device,
+            this.baudRate, // baud rate
             //'persist',          // enables faster termination
             //'holdoff', '1',     // minimum delay of 1 second between connection attempts
             this.localIP + ':' + this.remoteIP, // local and remote IPs
@@ -325,26 +339,30 @@ class PPPConnection {
                     baudRates: this.baudRates,
                     serialDevices: [],
                 });
-            } else {
-                this.serialDevices = devices;
-                // Set default device if not already set
-                if (!this.device && this.serialDevices.length > 0) {
-                    this.device = this.serialDevices[0]; // Set first available device as default
-                }
-                // if this.device is not in the list, set it to first available device
-                if (this.device && !this.serialDevices.some(d => d.value === this.device.value)) {
-                    this.device = this.serialDevices[0];
-                }
-                return callback(null, {
-                    selDevice: this.device,
-                    selBaudRate: this.baudRate,
-                    localIP: this.localIP,
-                    remoteIP: this.remoteIP,
-                    enabled: this.isConnected,
-                    baudRates: this.baudRates,
-                    serialDevices: this.serialDevices,
-                });
             }
+            
+            this.serialDevices = devices;
+            
+            // Set default device if not already set
+            if (!this.device && this.serialDevices.length > 0) {
+                this.device = this.serialDevices[0].value;
+            }
+            
+            // if this.device is not in the list, set it to first available device
+            if (this.device && !this.serialDevices.some(d => d.value === this.device.value)) {
+                this.device = this.serialDevices[0].value;
+            }
+            
+            // Always return callback
+            return callback(null, {
+                selDevice: this.device,
+                selBaudRate: this.baudRate,
+                localIP: this.localIP,
+                remoteIP: this.remoteIP,
+                enabled: this.isConnected,
+                baudRates: this.baudRates,
+                serialDevices: this.serialDevices,
+            });
         });
     }
 
@@ -371,8 +389,8 @@ class PPPConnection {
                     const elapsed = Date.now() - this.prevdata.timestamp; // in milliseconds
                     const rxRate = (rxBytes - this.prevdata.rxBytes) / (elapsed / 1000); // bytes per second
                     const txRate = (txBytes - this.prevdata.txBytes) / (elapsed / 1000); // bytes per second
-                    const percentusedRx = rxRate / (this.baudRate.value / 8); // percent of baud rate used
-                    const percentusedTx = txRate / (this.baudRate.value / 8); // percent of baud rate used
+                    const percentusedRx = rxRate / (this.baudRate / 8); // percent of baud rate used
+                    const percentusedTx = txRate / (this.baudRate / 8); // percent of baud rate used
                     this.prevdata = { rxBytes, txBytes, timestamp: Date.now() };
                     return { rxRate, txRate, percentusedRx, percentusedTx };
                 }
@@ -409,6 +427,9 @@ class PPPConnection {
                 status += ', No data transfer';
             }
             return status;
+        }
+        else {
+            return 'Disconnected';
         }
     }
 }

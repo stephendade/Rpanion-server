@@ -1,4 +1,3 @@
-import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Accordion from 'react-bootstrap/Accordion';
 import Form from 'react-bootstrap/Form';
@@ -16,15 +15,15 @@ class VideoPage extends basePage {
       ...this.state,
       ifaces: [],
       dev: [],
-      vidDeviceSelected: this.props.vidDeviceSelected,
+      vidDeviceSelected: this.props.vidDeviceSelected || '',
       vidres: [],
-      vidResSelected: this.props.vidResSelected,
+      vidResSelected: 0,
       streamingStatus: this.props.streamingStatus,
       streamAddresses: [],
       rotations: [{ label: "0°", value: 0 }, { label: "90°", value: 90 }, { label: "180°", value: 180 }, { label: "270°", value: 270 }],
-      rotSelected: { label: "0°", value: 0 },
+      rotSelected: 0,
       bitrate: 1000,
-      transportSelected: { label: "RTSP", value: "RTSP" },
+      transportSelected: "RTSP",
       transportOptions: [{ label: "RTP", value: "RTP" }, { label: "RTSP", value: "RTSP" }],
       useUDPIP: "127.0.0.1",
       useUDPPort: 5600,
@@ -33,41 +32,70 @@ class VideoPage extends basePage {
       fpsSelected: 1,
       timestamp: false,
       enableCameraHeartbeat: false,
-      mavStreamSelected: this.props.mavStreamSelected,
+      mavStreamSelected: this.props.mavStreamSelected || '',
       multicastString: " ",
-      compression: { value: 'H264', label: 'H.264' },
+      compression: 'H264',
       compressionOptions: [{ value: 'H264', label: 'H.264' }, { value: 'H265', label: 'H.265' }],
-      customRTSPSource: this.props.customRTSPSource
+      customRTSPSource: this.props.customRTSPSource || ''
     }
   }
 
   componentDidMount() {
-    fetch(`/api/videodevices`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.isMulticastUpdateIP(state.useUDPIP); this.loadDone() });
+    fetch(`/api/videodevices`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { 
+      this.setState(state); 
+      this.isMulticastUpdateIP(state.useUDPIP); 
+      this.loadDone() 
+    });
   }
 
-  handleVideoChange = (value) => {
+  handleVideoChange = (event) => {
     //new video device
-    this.setState({ vidDeviceSelected: value, vidres: value.caps });
-    this.handleResChange(this.state.streamingStatus !== true ? value.caps[0] : this.state.vidResSelected, "");
+    const value = event.target.value;
+    const device = this.state.dev.find(d => d.value === value);
+    
+    //this.setState({ vidDeviceSelected: value, vidres: device.caps });
+    this.handleResChange(null, this.state.streamingStatus !== true ? device.caps[0] : this.state.vidResSelected.value);
   }
 
-  handleResChange = (value) => {
+  handleResChange = (event, capsOverride) => {
     //resolution box new selected value
-    if (value.fpsmax !== 0) {
-      this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: Math.min(value.fpsmax, 10), fps: value.fps });
+    let caps = {};
+    if (event !== null) {
+      caps = event.target.value;
+    } else {
+      caps = capsOverride;
     }
-    else {
-      this.setState({ vidResSelected: value, FPSMax: value.fpsmax, fpsSelected: value.fps[0], fps: value.fps });
+    //get the corrsponding caps object
+    const device = this.state.dev.find(d => d.value === this.state.vidDeviceSelected);
+    const capsObj = device.caps.find(c => c.value === caps);
+    console.log('Selected caps: ' + JSON.stringify(capsObj));
+    
+    if (capsObj.fpsmax !== 0) {
+      this.setState({ 
+        vidResSelected: caps, 
+        FPSMax: capsObj.fpsmax,
+        fps: capsObj.fps,
+        fpsSelected: Math.min(capsObj.fpsmax, 10), 
+      });
+    } else {
+      console.log('Setting fps to first value: ' + JSON.stringify(capsObj.fps[0].value));
+      this.setState({ 
+        vidResSelected: caps, 
+        FPSMax: capsObj.fpsmax,
+        fps: capsObj.fps,
+        fpsSelected: capsObj.fps[0].value,
+      });
     }
+    
     //override if a h264 format is selected
-    if (value.format === "video/x-h264") {
-      this.setState({ compression: { value: 'H264', label: 'H.264' } });
+    if (capsObj.format === "video/x-h264") {
+      this.setState({ compression: 'H264' });
     }
   }
 
-  handleRotChange = (value) => {
-    //resolution box new selected value
-    this.setState({ rotSelected: value });
+  handleRotChange = (event) => {
+    //rotation box new selected value
+    this.setState({ rotSelected: parseInt(event.target.value) });
   }
 
   handleBitrateChange = (event) => {
@@ -96,11 +124,11 @@ class VideoPage extends basePage {
   handleUDPIPChange = (event) => {
     //IP address new value
     this.isMulticastUpdateIP(event.target.value);
-    this.setState({ useUDPIP: event.target.value,});
+    this.setState({ useUDPIP: event.target.value });
   }
 
   handleUDPPortChange = (event) => {
-    //bitrate spinner new value
+    //port spinner new value
     this.setState({ useUDPPort: event.target.value });
   }
 
@@ -109,9 +137,9 @@ class VideoPage extends basePage {
     this.setState({ fpsSelected: event.target.value });
   }
 
-  handleFPSChangeSelect = (value) => {
-    //resolution box new selected value
-    this.setState({ fpsSelected: value });
+  handleFPSChangeSelect = (event) => {
+    //fps dropdown new selected value
+    this.setState({ fpsSelected: event.target.value });
   }
 
   handleTimestampChange = () => {
@@ -124,13 +152,51 @@ class VideoPage extends basePage {
     this.setState({ enableCameraHeartbeat: !this.state.enableCameraHeartbeat });
   }
 
-  handleMavStreamChange = (value) => {
+  handleMavStreamChange = (event) => {
     //new value for selected stream IP
-    this.setState({ mavStreamSelected: value });
+    this.setState({ mavStreamSelected: event.target.value });
+  }
+
+  handleStreaming = () => {
+    //user clicked start/stop streaming
+    const device = this.state.dev.find(d => d.value === this.state.vidDeviceSelected);
+    const capsObj = device.caps.find(c => c.value === this.state.vidResSelected);
+    this.setState({ waiting: true }, () => {
+      fetch('/api/startstopvideo', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
+        },
+        body: JSON.stringify({
+          active: !this.state.streamingStatus,
+          device: this.state.vidDeviceSelected,
+          height: capsObj.height,
+          width: capsObj.width,
+          format: capsObj.format,
+          rotation: this.state.rotSelected,
+          fps: this.state.FPSMax !== 0 ? this.state.fpsSelected : Number(typeof this.state.fpsSelected === 'object' ? this.state.fpsSelected : this.state.fpsSelected),
+          //fps: this.state.fpsSelected,
+          bitrate: this.state.bitrate,
+          transport: this.state.transportSelected,
+          useUDPIP: this.state.useUDPIP,
+          useUDPPort: this.state.useUDPPort,
+          useTimestamp: this.state.timestamp,
+          useCameraHeartbeat: this.state.enableCameraHeartbeat,
+          mavStreamSelected: this.state.mavStreamSelected,
+          compression: this.state.compression,
+          customRTSPSource: this.state.customRTSPSource
+        })
+      }).then(response => response.json()).then(state => { 
+        this.setState(state); 
+        this.setState({ waiting: false }) 
+      });
+    });
   }
 
   isrtspSourceSelected() {
-    return this.state.vidDeviceSelected && (this.state.vidDeviceSelected.value === "rtspsourceh264" || this.state.vidDeviceSelected.value === "rtspsourceh265");
+    return this.state.vidDeviceSelected && (this.state.vidDeviceSelected === "rtspsourceh264" || this.state.vidDeviceSelected === "rtspsourceh265");
   }
 
   doGstreamerRTPString() {
@@ -198,44 +264,11 @@ class VideoPage extends basePage {
     return qgcstring;
   }
 
-  handleStreaming = () => {
-    //user clicked start/stop streaming
-    this.setState({ waiting: true }, () => {
-      fetch('/api/startstopvideo', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.state.token}`
-        },
-        body: JSON.stringify({
-          active: !this.state.streamingStatus,
-          device: this.state.vidDeviceSelected.value,
-          height: this.state.vidResSelected.height,
-          width: this.state.vidResSelected.width,
-          format: this.state.vidResSelected.format,
-          rotation: this.state.rotSelected.value,
-          fps: this.state.FPSMax !== 0 ? this.state.fpsSelected : Number(this.state.fpsSelected.value),
-          //fps: this.state.fpsSelected,
-          bitrate: this.state.bitrate,
-          transport: this.state.transportSelected.value,
-          useUDPIP: this.state.useUDPIP,
-          useUDPPort: this.state.useUDPPort,
-          useTimestamp: this.state.timestamp,
-          useCameraHeartbeat: this.state.enableCameraHeartbeat,
-          mavStreamSelected: this.state.mavStreamSelected.value,
-          compression: this.state.compression.value,
-          customRTSPSource: this.state.customRTSPSource
-        })
-      }).then(response => response.json()).then(state => { this.setState(state); this.setState({ waiting: false }) });
-    });
-  }
-
   renderTitle() {
     return "Video Streaming";
   }
 
-  renderContent() {
+  renderContent() {   
     return (
       <Form style={{ width: 600 }}>
         <p><i>Stream live video from any connected camera devices. Only 1 camera can be streamed at a time. Multicast IP addresses are supported in RTP mode.</i></p>
@@ -244,28 +277,47 @@ class VideoPage extends basePage {
             <Accordion.Header>Configuration</Accordion.Header>
             <Accordion.Body>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
-                    <label className="col-sm-4 col-form-label">Streaming Mode</label>
-                    <div className="col-sm-8">
-                      <Select
-                        isDisabled={this.state.streamingStatus}
-                        options={this.state.transportOptions}
-                        onChange={(value) => this.setState({ transportSelected: value })}
-                        value={this.state.transportSelected}
-                      />
-                    </div>
-                  </div>
+                <label className="col-sm-4 col-form-label">Streaming Mode</label>
+                <div className="col-sm-8">
+                  <Form.Select
+                    disabled={this.state.streamingStatus}
+                    value={this.state.transportSelected}
+                    onChange={(e) => this.setState({ transportSelected: e.target.value })}
+                  >
+                    {this.state.transportOptions.map((option, idx) => (
+                      <option key={idx} value={option.value}>{option.label}</option>
+                    ))}
+                  </Form.Select>
+                </div>
+              </div>
 
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">Device</label>
                 <div className="col-sm-8">
-                  <Select isDisabled={this.state.streamingStatus} onChange={this.handleVideoChange} options={this.state.dev} value={this.state.vidDeviceSelected} />
+                  <Form.Select 
+                    disabled={this.state.streamingStatus} 
+                    onChange={this.handleVideoChange} 
+                    value={this.state.vidDeviceSelected}
+                  >
+                    {this.state.dev.map((device, idx) => (
+                      <option key={idx} value={device.value}>{device.label}</option>
+                    ))}
+                  </Form.Select>
                 </div>
               </div>
-              <div style={{ display: (this.isrtspSourceSelected()) ? "block" : "none" }}>
+
+              <div style={{ display: this.isrtspSourceSelected() ? "block" : "none" }}>
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">RTSP Source URL</label>
                   <div className="col-sm-8">
-                    <Form.Control type="text" name="rtspsource" disabled={this.state.streamingStatus} value={this.state.customRTSPSource || ''} onChange={(e) => this.setState({ customRTSPSource: e.target.value })} placeholder="e.g. rtsp://username:password@url:port/stream" />
+                    <Form.Control 
+                      type="text" 
+                      name="rtspsource" 
+                      disabled={this.state.streamingStatus} 
+                      value={this.state.customRTSPSource} 
+                      onChange={(e) => this.setState({ customRTSPSource: e.target.value })}
+                      placeholder="e.g. rtsp://username:password@url:port/stream" 
+                    />
                   </div>
                 </div>
               </div>
@@ -273,7 +325,11 @@ class VideoPage extends basePage {
                 <div className="form-group row" style={{ marginBottom: '5px'}}>
                   <label className="col-sm-4 col-form-label">Resolution</label>
                   <div className="col-sm-8">
-                    <Select isDisabled={this.state.streamingStatus} options={this.state.vidres} onChange={this.handleResChange} value={this.state.vidResSelected} />
+                    <Form.Select disabled={this.state.streamingStatus} onChange={this.handleResChange} value={this.state.vidResSelected}>
+                      {this.state.vidres.map((res, idx) => (
+                        <option key={idx} value={res.value}>{res.width}x{res.height} ({res.format})</option>
+                      ))}
+                    </Form.Select>
                   </div>
                 </div>
               </div>
@@ -281,30 +337,58 @@ class VideoPage extends basePage {
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Rotation</label>
                   <div className="col-sm-8">
-                    <Select isDisabled={this.state.streamingStatus} options={this.state.rotations} onChange={this.handleRotChange} value={this.state.rotSelected} />
+                    <Form.Select 
+                      disabled={this.state.streamingStatus} 
+                      onChange={this.handleRotChange} 
+                      value={this.state.rotSelected}
+                    >
+                      {this.state.rotations.map((rot, idx) => (
+                        <option key={idx} value={rot.value}>{rot.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
                 </div>
+
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Maximum Bitrate</label>
                   <div className="col-sm-8">
-                    <input disabled={this.state.streamingStatus} type="number" name="bitrate" min="50" max="50000" step="10" onChange={this.handleBitrateChange} value={this.state.bitrate} />kbps
+                    <Form.Control 
+                      disabled={this.state.streamingStatus} 
+                      type="number" 
+                      name="bitrate" 
+                      min="50" 
+                      max="50000" 
+                      step="10" 
+                      onChange={this.handleBitrateChange} 
+                      value={this.state.bitrate} 
+                    /> kbps
                   </div>
                 </div>
+
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
-                <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
-                <div className="col-sm-8">
-                  <input type="checkbox" disabled={this.state.streamingStatus} onChange={this.handleTimestampChange} checked={this.state.timestamp} />
+                  <label className="col-sm-4 col-form-label">Timestamp Overlay</label>
+                  <div className="col-sm-8">
+                    <Form.Check 
+                      type="checkbox" 
+                      disabled={this.state.streamingStatus} 
+                      onChange={this.handleTimestampChange} 
+                      checked={this.state.timestamp} 
+                    />
+                  </div>
                 </div>
-                </div>
+
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Compression</label>
                   <div className="col-sm-8">
-                    <Select
-                      isDisabled={this.state.streamingStatus}
-                      options={this.state.compressionOptions}
-                      onChange={(value) => this.setState({ compression: value })}
+                    <Form.Select
+                      disabled={this.state.streamingStatus}
                       value={this.state.compression}
-                    />
+                      onChange={(e) => this.setState({ compression: e.target.value })}
+                    >
+                      {this.state.compressionOptions.map((option, idx) => (
+                        <option key={idx} value={option.value}>{option.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
                 </div>
               </div>
@@ -312,14 +396,19 @@ class VideoPage extends basePage {
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Framerate</label>
                   <div className="col-sm-8" style={{ display: (this.state.FPSMax === 0) ? "block" : "none" }}>
-                    <Select isDisabled={this.state.streamingStatus} options={this.state.fps} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect} />
+                    <Form.Select disabled={this.state.streamingStatus} value={this.state.fpsSelected} onChange={this.handleFPSChangeSelect}>
+                      {this.state.fps.map((fps, idx) => (
+                        <option key={idx} value={fps.value}>{fps.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
                   <div className="col-sm-8" style={{ display: (this.state.FPSMax !== 0) ? "block" : "none" }}>
                     <input disabled={this.state.streamingStatus} type="number" name="fps" min="1" max={this.state.FPSMax} step="1" onChange={this.handleFPSChange} value={this.state.fpsSelected} />fps (max: {this.state.FPSMax})
                   </div>
                 </div>
               </div>
-              <div style={{ display: (this.state.transportSelected.value === 'RTP') ? "block" : "none" }}>
+
+              <div style={{ display: (this.state.transportSelected === 'RTP') ? "block" : "none" }}>
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label ">Destination IP</label>
                   <div className="col-sm-7">
@@ -327,19 +416,26 @@ class VideoPage extends basePage {
                       name="ipaddress"
                       value={this.state.useUDPIP || ''}
                       onChange={this.handleUDPIPChange}
-                      disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus}
+                      disabled={!(this.state.transportSelected === 'RTP') || this.state.streamingStatus}
                     />
                   </div>
                 </div>
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Destination Port</label>
                   <div className="col-sm-8">
-                    <input type="text" name="port" disabled={!(this.state.transportSelected.value === 'RTP') || this.state.streamingStatus} value={this.state.useUDPPort} onChange={this.handleUDPPortChange} />
+                    <Form.Control 
+                      type="text" 
+                      name="port" 
+                      disabled={!(this.state.transportSelected === 'RTP') || this.state.streamingStatus} 
+                      value={this.state.useUDPPort} 
+                      onChange={this.handleUDPPortChange} 
+                    />
                   </div>
                 </div>
               </div>
             </Accordion.Body>
           </Accordion.Item>
+
           <Accordion.Item eventKey="1">
             <Accordion.Header>MAVLink Video Streaming Service</Accordion.Header>
             <Accordion.Body>
@@ -347,15 +443,28 @@ class VideoPage extends basePage {
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">Enable camera heartbeats</label>
                 <div className="col-sm-7">
-                <input type="checkbox" disabled={this.state.streamingStatus} checked={this.state.enableCameraHeartbeat} onChange={this.handleUseCameraHeartbeatChange} />
+                  <Form.Check 
+                    type="checkbox" 
+                    disabled={this.state.streamingStatus} 
+                    checked={this.state.enableCameraHeartbeat} 
+                    onChange={this.handleUseCameraHeartbeatChange} 
+                  />
                 </div>
               </div>
-              <div style={{ display: (this.state.enableCameraHeartbeat && (!(this.state.transportSelected.value === 'RTP'))) ? "block" : "none" }}>
-                <div className="form-group row" style={{ marginBottom: '5px' } }>
-                    <label className="col-sm-4 col-form-label">Video source IP Address</label>
-                    <div className="col-sm-8">
-                      <Select isDisabled={this.state.streamingStatus} onChange={this.handleMavStreamChange} options={this.state.ifaces.map((item) => ({ value: item, label: item}))} value={this.state.mavStreamSelected} />
-                    </div>
+              <div style={{ display: (this.state.enableCameraHeartbeat && (!(this.state.transportSelected === 'RTP'))) ? "block" : "none" }}>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                  <label className="col-sm-4 col-form-label">Video source IP Address</label>
+                  <div className="col-sm-8">
+                    <Form.Select 
+                      disabled={this.state.streamingStatus} 
+                      onChange={this.handleMavStreamChange} 
+                      value={this.state.mavStreamSelected}
+                    >
+                      {this.state.ifaces.map((iface, idx) => (
+                        <option key={idx} value={iface}>{iface}</option>
+                      ))}
+                    </Form.Select>
+                  </div>
                 </div>
               </div>
             </Accordion.Body>
@@ -364,14 +473,16 @@ class VideoPage extends basePage {
 
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <div className="col-sm-8">
-            <Button onClick={this.handleStreaming} className="btn btn-primary">{this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}</Button>
+            <Button onClick={this.handleStreaming} className="btn btn-primary">
+              {this.state.streamingStatus ? "Stop Streaming" : "Start Streaming"}
+            </Button>
           </div>
           <br/>
         </div>
 
         <br />
         <h3 style={{ display: (this.state.streamingStatus) ? "block" : "none" }}>Connection strings for video stream</h3>
-        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !(this.state.transportSelected.value === 'RTP')) ? "block" : "none" }}>
+        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && !(this.state.transportSelected === 'RTP')) ? "block" : "none" }}>
           <Accordion.Item eventKey="0">
             <Accordion.Header>
               + RTSP Streaming Addresses (for VLC, etc)
@@ -398,12 +509,12 @@ class VideoPage extends basePage {
             </Accordion.Header>
             <Accordion.Body>
               {this.state.streamAddresses.map((item, index) => (
-                <p key={index} style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! {this.state.compression.value == "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression.value == "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
+                <p key={index} style={{ fontFamily: "monospace" }}>rtspsrc location={item} latency=0 is-live=True ! queue ! application/x-rtp ! {this.state.compression === "H264" ? "rtph264depay" : "rtph265depay"} ! {this.state.compression === "H264" ? "avdec_h264" : "avdec_h265"} ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink</p>
               ))}
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>
-        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && (this.state.transportSelected.value === 'RTP')) ? "block" : "none" }}>
+        <Accordion defaultActiveKey="0" style={{ display: (this.state.streamingStatus && (this.state.transportSelected === 'RTP')) ? "block" : "none" }}>
           <Accordion.Item eventKey="0">
             <Accordion.Header>
               + QGroundControl
