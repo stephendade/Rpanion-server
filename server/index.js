@@ -371,8 +371,8 @@ app.get('/api/pppconfig', authenticateToken, (req, res) => {
 })
 
 app.post('/api/pppmodify', authenticateToken, [
-  check('device').isJSON(),
-  check('baudrate').isJSON(), 
+  check('device').not().isEmpty(),
+  check('baudrate').isInt(), 
   check('localIP').isIP(),
   check('remoteIP').isIP(),
   check('enabled').isBoolean()
@@ -386,7 +386,7 @@ app.post('/api/pppmodify', authenticateToken, [
   if (req.body.enabled === true) {
     console.log('Starting PPP connection');
     res.setHeader('Content-Type', 'application/json')
-    pppConnectionManager.startPPP(JSON.parse(req.body.device), JSON.parse(req.body.baudrate), req.body.localIP, req.body.remoteIP, (err, settings) => {
+    pppConnectionManager.startPPP(req.body.device, req.body.baudrate, req.body.localIP, req.body.remoteIP, (err, settings) => {
       if (err !== null) {
         console.log('Error in /api/pppmodify', { message: err })
         console.log(JSON.stringify({settings, error: err }))
@@ -835,7 +835,7 @@ app.post('/api/shutdowncc', authenticateToken, function () {
   aboutPage.shutdownCC()
 })
 
-app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
+app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -843,9 +843,9 @@ app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('b
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
-  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat,
+  fcManager.startStopTelemetry(req.body.device, req.body.baud, req.body.mavversion, req.body.enableHeartbeat,
                                req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
-                               req.body.tlogging, JSON.parse(req.body.inputType), req.body.udpInputPort, (err, isSuccess) => {
+                               req.body.tlogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);
@@ -1140,16 +1140,16 @@ app.post('/api/networkdelete', authenticateToken, [check('conName').isUUID()], (
 
 // user wants to edit network
 app.post('/api/networkedit', authenticateToken, [check('conName').isUUID(),
-  check('conSettings.ipaddresstype.value').isIn(['auto', 'manual', 'shared']),
-  check('conSettings.ipaddress.value').optional().isIP(),
-  check('conSettings.subnet.value').optional().isIP(),
-  check('conSettings.wpaType.value').optional().isIn(['none', 'wpa-psk']),
-  check('conSettings.password.value').optional().escape(),
-  check('conSettings.ssid.value').optional().escape(),
-  check('conSettings.attachedIface.value').optional().escape(),
-  check('conSettings.band.value').optional().isIn(['a', 'bg']),
-  check('conSettings.channel.value').optional().isInt(),
-  check('conSettings.mode.value').optional().isIn(['infrastructure', 'ap'])
+  check('conSettings.ipaddresstype').isIn(['auto', 'manual', 'shared']),
+  check('conSettings.ipaddress').optional().isIP(),
+  check('conSettings.subnet').optional().isIP(),
+  check('conSettings.wpaType').optional().isIn(['none', 'wpa-psk']),
+  check('conSettings.password').optional().escape(),
+  check('conSettings.ssid').optional().escape(),
+  check('conSettings.attachedIface').optional().escape(),
+  check('conSettings.band').optional().isIn(['a', 'bg']),
+  check('conSettings.channel').optional().isInt(),
+  check('conSettings.mode').optional().isIn(['infrastructure', 'ap'])
 ],
 (req, res) => {
   // Finds the validation errors in this request and wraps them in an object with handy functions

@@ -1,7 +1,7 @@
-import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Table from 'react-bootstrap/Table';
 import Accordion from 'react-bootstrap/Accordion';
+import Form from 'react-bootstrap/Form';
 
 import React from 'react'
 
@@ -50,25 +50,25 @@ class FCPage extends basePage {
     fetch(`/api/FCOutputs`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() });
   }
 
-  handleInputTypeChange = (value) => {
-    this.setState({ selInputType: value });
+  handleInputTypeChange = (event) => {
+    this.setState({ selInputType: event.target.value });
   }
 
   handleUDPInputPortChange = (event) => {
     //user changed the UDP input port
-    this.setState({ udpInputPort: event.target.value });
+    this.setState({ udpInputPort: parseInt(event.target.value) });
   }
 
-  handleSerialPortChange = (value) => {
-    this.setState({ serialPortSelected: value });
+  handleSerialPortChange = (event) => {
+    this.setState({ serialPortSelected: event.target.value });
   }
 
-  handleBaudRateChange = (value) => {
-    this.setState({ baudRateSelected: value });
+  handleBaudRateChange = (event) => {
+    this.setState({ baudRateSelected: parseInt(event.target.value) });
   }
 
-  handleMavVersionChange = (value) => {
-    this.setState({ mavVersionSelected: value });
+  handleMavVersionChange = (event) => {
+    this.setState({ mavVersionSelected: event.target.value });
   }
 
   handleUseHeartbeatChange = (event) => {
@@ -92,7 +92,7 @@ class FCPage extends basePage {
   }
 
   changeUDPBPort = (event) => {
-    this.setState({ UDPBPort: event.target.value });
+    this.setState({ UDPBPort: parseInt(event.target.value) });
   }
 
   handleSubmit = () => {
@@ -105,11 +105,11 @@ class FCPage extends basePage {
         'Authorization': `Bearer ${this.state.token}`
       },
       body: JSON.stringify({
-        inputType: JSON.stringify(this.state.selInputType),
-        device: JSON.stringify(this.state.serialPortSelected),
-        baud: JSON.stringify(this.state.baudRateSelected),
+        inputType: this.state.selInputType,
+        device: this.state.serialPortSelected,
+        baud: this.state.baudRateSelected,
         udpInputPort: this.state.udpInputPort,
-        mavversion: JSON.stringify(this.state.mavVersionSelected),
+        mavversion: this.state.mavVersionSelected,
         enableHeartbeat: this.state.enableHeartbeat,
         enableTCP: this.state.enableTCP,
         enableUDPB: this.state.enableUDPB,
@@ -196,25 +196,33 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Input Type</label>
               <div className="col-sm-8">
-                <Select 
-                  value={this.state.selInputType} 
-                  onChange={this.handleInputTypeChange}
-                  isDisabled={this.state.telemetryStatus}
-                  options={this.state.inputTypes} />
+                <Form.Select value={this.state.selInputType} onChange={this.handleInputTypeChange} isDisabled={this.state.telemetryStatus}>
+                  {this.state.inputTypes.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Form.Select>
               </div>
             </div>
-            {this.state.selInputType === null || this.state.selInputType.value === 'UART' ? (
+            {this.state.selInputType === null || this.state.selInputType === 'UART' ? (
             <>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Serial Device</label>
                   <div className="col-sm-8">
-                    <Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} options={this.state.serialPorts} value={this.state.serialPortSelected} />
+                    <Form.Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} value={this.state.serialPortSelected}>
+                      {this.state.serialPorts.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
               </div>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Baud Rate</label>
                   <div className="col-sm-8">
-                    <Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} options={this.state.baudRates} value={this.state.baudRateSelected} />
+                    <Form.Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} value={this.state.baudRateSelected}>
+                      {this.state.baudRates.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </Form.Select>
                   </div>
               </div>
             </>
@@ -242,13 +250,17 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">MAVLink Version</label>
               <div className="col-sm-8">
-                <Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} options={this.state.mavVersions} value={this.state.mavVersionSelected} />
+                <Form.Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} value={this.state.mavVersionSelected}>
+                  {this.state.mavVersions.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Form.Select>
               </div>
             </div>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <div className="col-sm-8">
-                <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType.value === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
+                <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
               </div>
             </div>
           </Accordion.Body>

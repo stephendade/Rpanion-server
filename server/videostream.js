@@ -138,11 +138,11 @@ class videoStream {
         const fpsSelected = ((this.devices.length > 0) ? (this.devices[0].caps[0].fpsmax === 0 ? this.devices[0].caps[0].fps[0] : this.devices[0].caps[0].fpsmax) : 1)
         // and return current settings
         if (!this.active) {
-          return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
-            { label: '0°', value: 0 }, 1100, fpsSelected, '127.0.0.1', 5400, false,
+          return callback(null, this.devices, this.active, this.devices[0].value, this.devices[0].caps[0].value,
+            0, 1100, fpsSelected, '127.0.0.1', 5400, false,
             (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-            this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 },
-            this.getCompressionSelect(""), this.getTransportSelect(""), this.getTransportOptions(), "")
+            this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, '127.0.0.1',
+            'H264', 'RTSP', this.getTransportOptions(), "")
         } else {
           // format saved settings
           const seldevice = this.devices.filter(it => it.value === this.savedDevice.device)
@@ -150,11 +150,11 @@ class videoStream {
             // bad settings
             console.error('Bad video settings1 Resetting')
             this.resetVideo()
-            return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
-              { label: '0°', value: 0 }, 1100, fpsSelected, '127.0.0.1', 5400, false,
+            return callback(null, this.devices, this.active, this.devices[0].value, this.devices[0].caps[0].value,
+              0, 1100, fpsSelected, '127.0.0.1', 5400, false,
               (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 },
-              this.getCompressionSelect(""), this.getTransportSelect(""), this.getTransportOptions(), "")
+              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, '127.0.0.1',
+              'H264', 'RTSP', this.getTransportOptions(), "")
           }
           const selRes = seldevice[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])
           let selFPS = this.savedDevice.fps
@@ -170,22 +170,22 @@ class videoStream {
               this.populateAddresses(seldevice[0].value.toString())
             }
             //console.log(seldevice[0])
-            return callback(null, this.devices, this.active, seldevice[0], selRes[0],
-              { label: this.savedDevice.rotation.toString() + '°', value: this.savedDevice.rotation },
+            return callback(null, this.devices, this.active, seldevice[0].value, selRes[0].value,
+              this.savedDevice.rotation,
               this.savedDevice.bitrate, selFPS, this.savedDevice.useUDPIP,
               this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, (selRes[0].fps !== undefined) ? selRes[0].fps : [],
               selRes[0].fpsmax, seldevice[0].caps, this.savedDevice.useCameraHeartbeat,
               { label: this.savedDevice.mavStreamSelected.toString(), value: this.savedDevice.mavStreamSelected },
-              this.getCompressionSelect(this.savedDevice.compression), this.getTransportSelect(this.savedDevice.transport), this.getTransportOptions(), this.savedDevice.customRTSPSource)
+              this.savedDevice.compression, this.savedDevice.transport, this.getTransportOptions(), this.savedDevice.customRTSPSource)
           } else {
             // bad settings
             console.error('Bad video settings. Resetting ' + JSON.stringify(seldevice) + ', ' + selRes.toString())
             this.resetVideo()
-            return callback(null, this.devices, this.active, this.devices[0], this.devices[0].caps[0],
-              { label: '0°', value: 0 }, 1100, fpsSelected, '127.0.0.1', 5400, false,
+            return callback(null, this.devices, this.active, this.devices[0].value, this.devices[0].caps[0].value,
+              0, 1100, fpsSelected, '127.0.0.1', 5400, false,
               (this.devices[0].caps[0].fps !== undefined) ? this.devices[0].caps[0].fps : [],
-              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, { label: '127.0.0.1', value: 0 },
-              this.getCompressionSelect(""), this.getTransportSelect(""), this.getTransportOptions(), "")
+              this.devices[0].caps[0].fpsmax, this.devices[0].caps, false, '127.0.0.1',
+              'H264', 'RTSP', this.getTransportOptions(), "")
           }
         }
       }
@@ -301,6 +301,8 @@ class videoStream {
       if (useTimestamp) {
         args.push('--timestamp')
       }
+
+      console.log('Starting video with args: ' + args.toString())
 
       this.deviceStream = spawn('python3', args)
 

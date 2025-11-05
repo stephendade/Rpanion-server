@@ -1,5 +1,4 @@
 import Button from 'react-bootstrap/Button'
-import Select from 'react-select'
 import Table from 'react-bootstrap/Table';
 import Form from 'react-bootstrap/Form';
 import React from 'react'
@@ -12,7 +11,7 @@ class VPNPage extends basePage {
       ...this.state,
       statusZerotier: {installed: false, status: false, text: []},
       statusWireguard: {installed: false, status: false, text: []},
-      selectedVPN: { label: 'Zerotier', value: 'zerotier' },
+      selectedVPN: 'zerotier',
       vpnOptions: [{ label: 'Zerotier', value: 'zerotier' }, { label: 'Wireguard', value: 'wireguard' }],
       selVPNInstalled: false,
       selVPNActive: false,
@@ -31,13 +30,14 @@ class VPNPage extends basePage {
     ]).then(this.loadDone());
   }
 
-  handleVPNChange = (value) => {
+  handleVPNChange = (event) => {
+    let value = event.target.value;
     this.setState({ selectedVPN: value });
-    if (value.value == 'zerotier') {
+    if (value == 'zerotier') {
       this.setState({ selVPNInstalled: this.state.statusZerotier.installed });
       this.setState({ selVPNActive: this.state.statusZerotier.status });
     }
-    else if (value.value == 'wireguard') {
+    else if (value == 'wireguard') {
       this.setState({ selVPNInstalled: this.state.statusWireguard.installed });
       this.setState({ selVPNActive: this.state.statusWireguard.status });
     } 
@@ -164,14 +164,18 @@ class VPNPage extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">VPN Service</label>
           <div className="col-sm-8">
-            <Select onChange={this.handleVPNChange} options={this.state.vpnOptions} value={this.state.selectedVPN} />
+            <Form.Select onChange={this.handleVPNChange} value={this.state.selectedVPN}>
+              {this.state.vpnOptions !== null ? this.state.vpnOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              )) : <option></option>}
+            </Form.Select>
           </div>
         </div>
         <h2>Config</h2>
         <p>Installed: {this.state.selVPNInstalled == true ? 'Yes' : 'No'}</p>
         <p>Active: {this.state.selVPNActive == true ? 'Yes' : 'No'}</p>
-        {/* <p>{JSON.stringify(this.state.selectedVPN.value == 'wireguard' ? this.state.statusWireguard : this.state.statusZerotier, null, 2)}</p> */}
-        <div style={{ display: (this.state.selectedVPN.value == 'zerotier' && this.state.statusZerotier != {}) ? "block" : "none"}}>
+        {/* <p>{JSON.stringify(this.state.selectedVPN == 'wireguard' ? this.state.statusWireguard : this.state.statusZerotier, null, 2)}</p> */}
+        <div style={{ display: (this.state.selectedVPN == 'zerotier' && this.state.statusZerotier != {}) ? "block" : "none"}}>
           <Table striped bordered>
             <thead>
               <tr>
@@ -197,7 +201,7 @@ class VPNPage extends basePage {
               </div>
             </div>
           </div>
-          <div style={{ display: (this.state.selectedVPN.value == 'wireguard' && this.state.statusWireguard != {}) ? "block" : "none"}}>
+          <div style={{ display: (this.state.selectedVPN == 'wireguard' && this.state.statusWireguard != {}) ? "block" : "none"}}>
             <Table striped bordered>
               <thead>
                 <tr>
