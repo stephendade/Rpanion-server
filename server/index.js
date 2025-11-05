@@ -355,7 +355,7 @@ app.get('/api/pppconfig', authenticateToken, (req, res) => {
 
 app.post('/api/pppmodify', authenticateToken, [
   check('device').isJSON(),
-  check('baudrate').isJSON(), 
+  check('baudrate').isInt(), 
   check('localIP').isIP(),
   check('remoteIP').isIP(),
   check('enabled').isBoolean()
@@ -369,7 +369,7 @@ app.post('/api/pppmodify', authenticateToken, [
   if (req.body.enabled === true) {
     console.log('Starting PPP connection');
     res.setHeader('Content-Type', 'application/json')
-    pppConnectionManager.startPPP(JSON.parse(req.body.device), JSON.parse(req.body.baudrate), req.body.localIP, req.body.remoteIP, (err, settings) => {
+    pppConnectionManager.startPPP(JSON.parse(req.body.device), req.body.baudrate, req.body.localIP, req.body.remoteIP, (err, settings) => {
       if (err !== null) {
         console.log('Error in /api/pppmodify', { message: err })
         console.log(JSON.stringify({settings, error: err }))
@@ -818,7 +818,7 @@ app.post('/api/shutdowncc', authenticateToken, function () {
   aboutPage.shutdownCC()
 })
 
-app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('baud').isJSON(), check('mavversion').isJSON(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
+app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -826,7 +826,7 @@ app.post('/api/FCModify', authenticateToken, [check('device').isJSON(), check('b
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   }
 
-  fcManager.startStopTelemetry(JSON.parse(req.body.device), JSON.parse(req.body.baud), JSON.parse(req.body.mavversion), req.body.enableHeartbeat,
+  fcManager.startStopTelemetry(JSON.parse(req.body.device), req.body.baud, req.body.mavversion, req.body.enableHeartbeat,
                                req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
                                req.body.tlogging, JSON.parse(req.body.inputType), req.body.udpInputPort, (err, isSuccess) => {
     if (!err) {

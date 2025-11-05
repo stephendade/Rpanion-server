@@ -23,9 +23,9 @@ describe('Flight Controller Functions', function () {
       assert.equal(devices.length, 0)
       assert.equal(bauds.length, 12)
       assert.equal(seldevice.length, 0)
-      assert.equal(selbaud.value, 57600)
+      assert.equal(selbaud, 57600)
       assert.equal(mavers.length, 2)
-      assert.equal(selmav.value, 2)
+      assert.equal(selmav, 2)
       assert.equal(active, false)
       assert.equal(enableHeartbeat, false)
       assert.equal(enableTCP, false)
@@ -34,7 +34,7 @@ describe('Flight Controller Functions', function () {
       assert.equal(enableDSRequest, false)
       assert.equal(active, false)
       assert.equal(udpInputPort, 9000)
-      assert.equal(selInputType.value, 'UART')
+      assert.equal(selInputType, 'UART')
       assert.equal(inputTypes.length, 2)
     })
   })
@@ -72,13 +72,13 @@ describe('Flight Controller Functions', function () {
     const FC = new FCManagerClass(settings)
     FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
 
-    FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, false, true, false, 0, false, false,
-      { value: 'UART', label: 'UART' }, 9000, (err, isSuccess) => {
+    FC.startStopTelemetry({ pnpId: '456' }, 115200, 2, false, true, false, 0, false, false,
+      'UART', 9000, (err, isSuccess) => {
       assert.equal(err, null)
       assert.equal(isSuccess, true)
 
-      FC.startStopTelemetry({ pnpId: '456' }, { value: 115200 }, { value: 2 }, false, true, false, 0, false, false,
-        { value: 'UART', label: 'UART' }, 9000, (err, isSuccess) => {
+      FC.startStopTelemetry({ pnpId: '456' }, 115200, 2 , false, true, false, 0, false, false,
+        'UART', 9000, (err, isSuccess) => {
         assert.equal(err, null)
         assert.equal(isSuccess, false)
         done()

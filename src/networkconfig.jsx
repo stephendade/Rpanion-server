@@ -1,4 +1,3 @@
-import Select from 'react-select';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -33,36 +32,16 @@ class NetworkConfig extends basePage {
       bandTypes: [{ value: 'a', text: '5 GHz' }, { value: 'bg', text: '2.4 GHz' }],
       availChannels: [],
       curSettings: {
-        ipaddresstype: {
-          value: ''
-        },
-        ipaddress: {
-          value: ''
-        },
-        subnet: {
-          value: ''
-        },
-        wpaType: {
-          value: ''
-        },
-        password: {
-          value: ''
-        },
-        ssid: {
-          value: ''
-        },
-        band: {
-          value: ''
-        },
-        mode: {
-          value: ''
-        },
-        attachedIface: {
-          value: ''
-        },
-        channel: {
-          value: ''
-        }
+        ipaddresstype: '',
+        ipaddress: '',
+        subnet: '',
+        wpaType: '',
+        password: '',
+        ssid: '',
+        band: '',
+        mode: '',
+        attachedIface: '',
+        channel: ''
       }
     };
 
@@ -72,7 +51,6 @@ class NetworkConfig extends basePage {
     this.addConnection = this.addConnection.bind(this);
     this.handleCloseModalAP = this.handleCloseModalAP.bind(this);
     this.handleCloseModalClient = this.handleCloseModalClient.bind(this);
-    //this.handleIPTypeChange = this.handleIPTypeChange.bind(this);
   }
 
   componentDidMount() {
@@ -85,142 +63,164 @@ class NetworkConfig extends basePage {
     Promise.all([
       fetch(`/api/networkconnections`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state)),
       fetch(`/api/wirelessstatus`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => this.setState(state)),
-      fetch(`/api/networkadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.setState({ netDeviceSelected: state.netDevice[0] }); return state; })
-    ]).then(retState => { this.handleAdapterChange(retState[2].netDevice[0], { action: "select-option" }); this.loadDone() });
+      fetch(`/api/networkadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { 
+        this.setState(state); 
+        if (state.netDevice && state.netDevice.length > 0) {
+          this.setState({ netDeviceSelected: state.netDevice[0].value }); 
+        }
+        return state; 
+      })
+    ]).then(retState => { 
+      if (retState[2].netDevice && retState[2].netDevice.length > 0) {
+        this.handleAdapterChange({ target: { value: retState[2].netDevice[0].value } }); 
+      }
+      this.loadDone();
+    });
   }
 
-  handleAdapterChange = (value, action) => {
+  handleAdapterChange = (event) => {
     //on a device selection change, re-fill the connections dialog
     //and open up the applicable divs
+    const selectedValue = event.target.value;
+    const selectedDevice = this.state.netDevice.find(dev => dev.value === selectedValue);
+    
+    if (!selectedDevice) return;
+    
     var netConnection = [];
     var activeCon = null;
-    if (action.action === 'select-option') {
-      if (value.type === "ethernet") {
-        this.setState(() => {
-          return { showIP: true };
-        });
-        //filter the connections
-        this.state.netConnection.forEach(function (item) {
-          if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-            if (item.state === value.value) {
-              item.label = item.labelPre + " (Active)";
-              netConnection.push(item);
-              activeCon = item;
-            }
-            else {
-              item.label = item.labelPre;
-              netConnection.push(item);
-            }
-          }
-        });
-      }
-      else if (value.type === "wifi") {
-        this.setState(() => {
-          return { showIP: true };
-        });
-        //filter the connections
-        this.state.netConnection.forEach(function (item) {
-          if (item.type === "802-11-wireless" && (item.attachedIface === '""' || item.attachedIface === '' ||
-            item.attachedIface === "undefined" || item.attachedIface === value.value)) {
-            if (item.state === value.value) {
-              item.label = item.labelPre + " (Active)";
-              netConnection.push(item);
-              activeCon = item;
-            }
-            else {
-              item.label = item.labelPre;
-              netConnection.push(item);
-            }
-          }
-        });
-      }
-      else {
-        //tun device
-        this.setState(() => {
-          return { showIP: true };
-        });
-        //filter the connections
-        this.state.netConnection.forEach(function (item) {
-          if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === value.value)) {
-            if (item.state === value.value) {
-              item.label = item.labelPre + " (Active)";
-              netConnection.push(item);
-              activeCon = item;
-            }
-            else {
-              item.label = item.labelPre;
-              netConnection.push(item);
-            }
-          }
-        });
 
-      }
+    if (selectedDevice.type === "ethernet") {
+      this.setState({ showIP: true });
+      //filter the connections
+      this.state.netConnection.forEach(function (item) {
+        if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
+          if (item.state === selectedDevice.value) {
+            item.label = item.labelPre + " (Active)";
+            netConnection.push(item);
+            activeCon = item;
+          }
+          else {
+            item.label = item.labelPre;
+            netConnection.push(item);
+          }
+        }
+      });
+    }
+    else if (selectedDevice.type === "wifi") {
+      this.setState({ showIP: true });
+      //filter the connections
+      this.state.netConnection.forEach(function (item) {
+        if (item.type === "802-11-wireless" && (item.attachedIface === '""' || item.attachedIface === '' ||
+          item.attachedIface === "undefined" || item.attachedIface === selectedDevice.value)) {
+          if (item.state === selectedDevice.value) {
+            item.label = item.labelPre + " (Active)";
+            netConnection.push(item);
+            activeCon = item;
+          }
+          else {
+            item.label = item.labelPre;
+            netConnection.push(item);
+          }
+        }
+      });
+    }
+    else {
+      //tun device
+      this.setState({ showIP: true });
+      //filter the connections
+      this.state.netConnection.forEach(function (item) {
+        if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
+          if (item.state === selectedDevice.value) {
+            item.label = item.labelPre + " (Active)";
+            netConnection.push(item);
+            activeCon = item;
+          }
+          else {
+            item.label = item.labelPre;
+            netConnection.push(item);
+          }
+        }
+      });
     }
 
-    this.setState(() => {
-      //no active connection
-      if (activeCon === null && netConnection.length > 0) {
-        activeCon = netConnection[0];
-      }
-      // no connections in list at all. Blank settings
-      else if (netConnection.length === 0)
-      {
-        this.handleConnectionChange(null, { action: "select-option" });
-        return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: null };
-      }
-      console.log(activeCon)
-      this.handleConnectionChange(activeCon, { action: "select-option" });
+    //no active connection
+    if (activeCon === null && netConnection.length > 0) {
+      activeCon = netConnection[0];
+    }
+    // no connections in list at all. Blank settings
+    else if (netConnection.length === 0) {
+      this.handleConnectionChange({ target: { value: null } });
+      this.setState({ 
+        netDeviceSelected: selectedValue, 
+        netConnectionFiltered: netConnection, 
+        netConnectionFilteredSelected: null 
+      });
+      return;
+    }
 
-      return { netDeviceSelected: value, netConnectionFiltered: netConnection, netConnectionFilteredSelected: activeCon };
+    this.handleConnectionChange({ target: { value: activeCon.value } });
+    this.setState({ 
+      netDeviceSelected: selectedValue, 
+      netConnectionFiltered: netConnection, 
+      netConnectionFilteredSelected: activeCon.value 
     });
   };
 
-  handleConnectionChange = (value, action) => {
-    //on a device selection change, re-fill the connections dialog
-    //and open up the applicable divs
-    if (value === null) {
+  handleConnectionChange = (event) => {
+    //on a connection selection change, load the connection details
+    const selectedValue = event.target.value;
+    
+    if (selectedValue === null) {
       // no selected connection. Blank fields
       this.setState({ showIP: false });
       return;
     }
 
-    if (action.action === 'select-option') {
-      fetch('/api/networkIP', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.state.token}`
-        },
-        body: JSON.stringify({
-          conName: value.value
-        })
-      }).then(response => response.json())
-        .then(state => this.setState(state, () => { 
-          this.setState({
-            curSettings: {
-              ipaddresstype: { value: this.state.netConnectionDetails.DHCP },
-              ipaddress: { value: this.state.netConnectionDetails.IP },
-              subnet: { value: this.state.netConnectionDetails.subnet },
-              wpaType: { value: this.state.netConnectionDetails.wpaType },
-              password: { value: this.state.netConnectionDetails.password },
-              ssid: { value: this.state.netConnectionDetails.ssid },
-              band: { value: this.state.netConnectionDetails.band },
-              channel: { value: this.state.netConnectionDetails.channel },
-              mode: { value: this.state.netConnectionDetails.mode },
-              attachedIface: { value: this.state.netConnectionDetails.attachedIface }
-            }
-          }, () => {
-            this.setState({ netConnectionFilteredSelected: value, netConnectionSimilarIfaces: this.getSameAdapter() })
+    const selectedConnection = this.state.netConnectionFiltered.find(con => con.value === selectedValue);
+    
+    if (!selectedConnection) return;
+
+    fetch('/api/networkIP', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
+      },
+      body: JSON.stringify({
+        conName: selectedValue
+      })
+    }).then(response => response.json())
+      .then(state => this.setState(state, () => { 
+        this.setState({
+          curSettings: {
+            ipaddresstype: this.state.netConnectionDetails.DHCP || '',
+            ipaddress: this.state.netConnectionDetails.IP || '',
+            subnet: this.state.netConnectionDetails.subnet || '',
+            wpaType: this.state.netConnectionDetails.wpaType || '',
+            password: this.state.netConnectionDetails.password || '',
+            ssid: this.state.netConnectionDetails.ssid || '',
+            band: this.state.netConnectionDetails.band || '',
+            channel: this.state.netConnectionDetails.channel || '',
+            mode: this.state.netConnectionDetails.mode || '',
+            attachedIface: this.state.netConnectionDetails.attachedIface || ''
+          }
+        }, () => {
+          this.setState({ 
+            netConnectionFilteredSelected: selectedValue, 
+            netConnectionSimilarIfaces: this.getSameAdapter() 
           })
-        }));
-    }
+        })
+      }));
   };
 
   getSameAdapter = () => {
     //get all adapter names of the same device class as selected adapter
     var ret = [{ value: '""', text: '(None)' }];
-    var selType = this.state.netDeviceSelected.type;
+    const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+    if (!selectedDevice) return ret;
+    
+    var selType = selectedDevice.type;
     this.state.netDevice.forEach(function (item) {
       if (item.type === selType) {
         ret.push({ value: item.value, text: item.value });
@@ -230,9 +230,17 @@ class NetworkConfig extends basePage {
   }
 
   handleNetworkSubmit = (event) => {
+    event.preventDefault();
+    
     //save network button clicked - so edit or add
-    if (this.state.netConnectionFilteredSelected.value === 'new') {
+    const selectedConnection = this.state.netConnectionFiltered.find(
+      con => con.value === this.state.netConnectionFilteredSelected
+    );
+    
+    if (selectedConnection && selectedConnection.value === 'new') {
       this.setState({ waiting: true }, () => {
+        const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+        
         fetch('/api/networkadd', {
           method: 'POST',
           headers: {
@@ -242,9 +250,9 @@ class NetworkConfig extends basePage {
           },
           body: JSON.stringify({
             conSettings: this.state.curSettings,
-            conName: this.state.netConnectionFilteredSelected.label,
-            conType: this.state.netDeviceSelected.type,
-            conAdapter: this.state.netDeviceSelected.value
+            conName: selectedConnection.label,
+            conType: selectedDevice ? selectedDevice.type : '',
+            conAdapter: this.state.netDeviceSelected
           }, (key, value) => {
             if (value !== '') return value
           })
@@ -274,7 +282,7 @@ class NetworkConfig extends basePage {
             'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
-            conName: this.state.netConnectionFilteredSelected.value,
+            conName: this.state.netConnectionFilteredSelected,
             conSettings: this.state.curSettings,
           }, (key, value) => {
             if (value !== '') return value
@@ -295,38 +303,39 @@ class NetworkConfig extends basePage {
           });
       });
     }
-    event.preventDefault();
   };
 
   deleteConnection = (event) => {
     //delete network button clicked
     this.setState({ showModalDelete: true });
-
     event.preventDefault();
   };
 
   addConnection = () => {
     //add new network button clicked
-    if(this.state.netDeviceSelected.type === "wifi") {
+    const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+    
+    if(selectedDevice && selectedDevice.type === "wifi") {
       this.setState({ waiting: true }, () => {
         fetch(`/api/wifiscan`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
-                                                                                        .then(state => this.setState(state))
-                                                                                        .then(this.setState({ newNetworkName: '' }))
-                                                                                        .then(this.setState({ showModalNewNetworkName: true }))
-                                                                                        .then(this.setState({ waiting: false }))
+          .then(state => this.setState(state))
+          .then(() => this.setState({ newNetworkName: '' }))
+          .then(() => this.setState({ showModalNewNetworkName: true }))
+          .then(() => this.setState({ waiting: false }))
       })
     }
     else {
-      this.setState({ newNetworkName: '' })
-      this.setState({ showModalNewNetworkName: true })
+      this.setState({ newNetworkName: '', showModalNewNetworkName: true })
     }
   };
 
   activateConnection = (event) => {
+    event.preventDefault();
+    
     //add activate network button clicked
     //if it's a new connection, don't activate
     //and refresh network information when done
-    if (this.state.netConnectionFilteredSelected.value !== "new") {
+    if (this.state.netConnectionFilteredSelected !== "new") {
       this.setState({ waiting: true }, () => {
         fetch('/api/networkactivate', {
           method: 'POST',
@@ -336,7 +345,7 @@ class NetworkConfig extends basePage {
             'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
-            conName: this.state.netConnectionFilteredSelected.value,
+            conName: this.state.netConnectionFilteredSelected,
           })
         }).then(response => response.json())
           .then(data => {
@@ -354,14 +363,15 @@ class NetworkConfig extends basePage {
           });
       });
     }
-    event.preventDefault();
   };
 
   deactivateConnection = (event) => {
+    event.preventDefault();
+    
     //add deactivate network button clicked
     //and refresh network information when done
     //don't do anything if a new (unsaved) network
-    if (this.state.netConnectionFilteredSelected.value !== "new") {
+    if (this.state.netConnectionFilteredSelected !== "new") {
       this.setState({ waiting: true }, () => {
         fetch('/api/networkdeactivate', {
           method: 'POST',
@@ -371,7 +381,7 @@ class NetworkConfig extends basePage {
             'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
-            conName: this.state.netConnectionFilteredSelected.value,
+            conName: this.state.netConnectionFilteredSelected,
           })
         }).then(response => response.json())
           .then(data => {
@@ -389,7 +399,6 @@ class NetworkConfig extends basePage {
           });
       });
     }
-    event.preventDefault();
   };
 
   changeHandler = event => {
@@ -402,14 +411,8 @@ class NetworkConfig extends basePage {
       this.setState({
         curSettings: {
           ...this.state.curSettings,
-          [name]: {
-            ...this.state.curSettings[name],
-            value
-          },
-          ['channel']: {
-            ...this.state.curSettings['channel'],
-            value: '0'
-          }
+          [name]: value,
+          channel: '0'
         }
       });
     }
@@ -417,10 +420,7 @@ class NetworkConfig extends basePage {
       this.setState({
         curSettings: {
           ...this.state.curSettings,
-          [name]: {
-            ...this.state.curSettings[name],
-            value
-          }
+          [name]: value
         }
       });
     }
@@ -432,22 +432,29 @@ class NetworkConfig extends basePage {
 
   resetForm = () => {
     //if it's a new connection, go back to old connection
-    if (this.state.netConnectionFilteredSelected.value === "new") {
-      this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
+    const selectedConnection = this.state.netConnectionFiltered.find(
+      con => con.value === this.state.netConnectionFilteredSelected
+    );
+    
+    if (selectedConnection && selectedConnection.value === "new") {
+      if (this.state.netConnection.length > 0) {
+        this.handleConnectionChange({ target: { value: this.state.netConnection[0].value } });
+      }
     }
+    
     //reset the form
     this.setState({
       curSettings: {
-        ipaddresstype: { value: this.state.netConnectionDetails.DHCP },
-        ipaddress: { value: this.state.netConnectionDetails.IP },
-        subnet: { value: this.state.netConnectionDetails.subnet },
-        wpaType: { value: this.state.netConnectionDetails.wpaType },
-        password: { value: this.state.netConnectionDetails.password },
-        ssid: { value: this.state.netConnectionDetails.ssid },
-        band: { value: this.state.netConnectionDetails.band },
-        channel: { value: this.state.netConnectionDetails.channel },
-        mode: { value: this.state.netConnectionDetails.mode },
-        attachedIface: { value: this.state.netConnectionDetails.attachedIface }
+        ipaddresstype: this.state.netConnectionDetails.DHCP || '',
+        ipaddress: this.state.netConnectionDetails.IP || '',
+        subnet: this.state.netConnectionDetails.subnet || '',
+        wpaType: this.state.netConnectionDetails.wpaType || '',
+        password: this.state.netConnectionDetails.password || '',
+        ssid: this.state.netConnectionDetails.ssid || '',
+        band: this.state.netConnectionDetails.band || '',
+        channel: this.state.netConnectionDetails.channel || '',
+        mode: this.state.netConnectionDetails.mode || '',
+        attachedIface: this.state.netConnectionDetails.attachedIface || ''
       }
     });
   }
@@ -460,10 +467,32 @@ class NetworkConfig extends basePage {
     // user has selected AP new Wifi connection
     this.setState({ showModal: false });
     this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
-    var nm = this.state.netConnectionFilteredSelected.label;
+    
+    const selectedConnection = this.state.netConnectionFiltered.find(
+      con => con.value === this.state.netConnectionFilteredSelected
+    );
+    const nm = selectedConnection ? selectedConnection.label : '';
+    
+    const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+    
     this.setState({
-      netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
-      curSettings: { mode: { value: "ap" }, ipaddresstype: { value: "shared" }, band: { value: "bg" }, channel: { value: '0' }, ssid: { value: "" }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: "wpa-psk" }, password: { value: "" }, attachedIface: { value: '""' } }
+      netConnectionFilteredSelected: 'new',
+      netConnectionFiltered: [
+        ...this.state.netConnectionFiltered,
+        { value: 'new', label: nm, labelPre: nm, type: selectedDevice ? selectedDevice.type : '', state: "" }
+      ],
+      curSettings: { 
+        mode: "ap", 
+        ipaddresstype: "shared", 
+        band: "bg", 
+        channel: '0', 
+        ssid: "", 
+        ipaddress: "", 
+        subnet: "", 
+        wpaType: "wpa-psk", 
+        password: "", 
+        attachedIface: '""' 
+      }
     });
   }
 
@@ -471,10 +500,32 @@ class NetworkConfig extends basePage {
     // user has selected client new Wifi connection
     this.setState({ showModal: false });
     this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
-    var nm = this.state.netConnectionFilteredSelected.label;
+    
+    const selectedConnection = this.state.netConnectionFiltered.find(
+      con => con.value === this.state.netConnectionFilteredSelected
+    );
+    const nm = selectedConnection ? selectedConnection.label : '';
+    
+    const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+    
     this.setState({
-      netConnectionFilteredSelected: { value: 'new', label: nm, type: this.state.netDeviceSelected.type, state: "" },
-      curSettings: { mode: { value: "infrastructure" }, ipaddresstype: { value: "auto" }, band: { value: "" }, channel: { value: '0' }, ssid: { value: selssid }, ipaddress: { value: "" }, subnet: { value: "" }, wpaType: { value: selsecurity === '' ? 'none' : 'wpa-psk' }, password: { value: "" }, attachedIface: { value: '""' } }
+      netConnectionFilteredSelected: 'new',
+      netConnectionFiltered: [
+        ...this.state.netConnectionFiltered,
+        { value: 'new', label: nm, labelPre: nm, type: selectedDevice ? selectedDevice.type : '', state: "" }
+      ],
+      curSettings: { 
+        mode: "infrastructure", 
+        ipaddresstype: "auto", 
+        band: "", 
+        channel: '0', 
+        ssid: selssid, 
+        ipaddress: "", 
+        subnet: "", 
+        wpaType: selsecurity === '' ? 'none' : 'wpa-psk', 
+        password: "", 
+        attachedIface: '""' 
+      }
     });
   }
 
@@ -486,9 +537,9 @@ class NetworkConfig extends basePage {
   handleDelete = () => {
     // user DOES want to delete network
     this.setState({ showModalDelete: false });
-    if (this.state.netConnectionFilteredSelected.value === "new") {
-      //this.handleConnectionChange(this.state.netConnection[0], {action: "select-option"});
-      this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" })
+    
+    if (this.state.netConnectionFilteredSelected === "new") {
+      this.handleAdapterChange({ target: { value: this.state.netDeviceSelected } })
     }
     else {
       this.setState({ waiting: true }, () => {
@@ -500,7 +551,7 @@ class NetworkConfig extends basePage {
             'Authorization': `Bearer ${this.state.token}`
           },
           body: JSON.stringify({
-            conName: this.state.netConnectionFilteredSelected.value,
+            conName: this.state.netConnectionFilteredSelected,
           })
         }).then(response => response.json())
           .then(data => {
@@ -510,8 +561,7 @@ class NetworkConfig extends basePage {
             else {
               this.setState({ waiting: false, error: "Error deleting network: " + data.error });
             }
-            // and refresh connections list after 500millisec. Sometimes the Rpi doesn't delete the network fast enough
-            // that it's still there when we grab a new conneciton list!
+            // and refresh connections list after 500millisec
             setTimeout(() => {
               this.refreshConList();
             }, 500);
@@ -531,9 +581,25 @@ class NetworkConfig extends basePage {
   handleCloseModalNewNetworkName = () => {
     // user DOES want to add a new network
     this.setState({ showModalNewNetworkName: false });
+    
     if (this.state.newNetworkName !== '' && this.state.newNetworkName !== null) {
-      this.setState({ netConnectionFilteredSelected: { value: 'new', label: this.state.newNetworkName, type: this.state.netDeviceSelected.type, state: "" } });
-      if(this.state.netDeviceSelected.type === "wifi") {
+      const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+      
+      // Add the new connection to the filtered list
+      const newCon = { 
+        value: 'new', 
+        label: this.state.newNetworkName, 
+        labelPre: this.state.newNetworkName,
+        type: selectedDevice ? selectedDevice.type : '', 
+        state: "" 
+      };
+      
+      this.setState({ 
+        netConnectionFiltered: [...this.state.netConnectionFiltered, newCon],
+        netConnectionFilteredSelected: 'new'
+      });
+      
+      if(selectedDevice && selectedDevice.type === "wifi") {
         this.setState({ showModal: true });
       }
     }
@@ -542,33 +608,36 @@ class NetworkConfig extends basePage {
   changeNetworkNameHandler = (event) => {
     const value = event.target.value;
     this.setState({ newNetworkName: value });
-
   }
 
   refreshWifi = () => {
-    this.setState({ waiting: false }, () => {
+    this.setState({ waiting: true }, () => {
       fetch(`/api/wifiscan`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
-                            .then(state => this.setState(state))
-                            .then(this.setState({ waiting: false }))
+        .then(state => this.setState(state))
+        .then(() => this.setState({ waiting: false }))
     })
   }
 
   refreshConList = () => {
-    this.setState({ waiting: false }, () => {
+    this.setState({ waiting: true }, () => {
       fetch(`/api/networkconnections`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json())
-                                      .then(state => this.setState(state, () => { this.handleAdapterChange(this.state.netDeviceSelected, { action: "select-option" }) }))
-                                      .then(this.setState({ waiting: false }))
+        .then(state => this.setState(state, () => { 
+          this.handleAdapterChange({ target: { value: this.state.netDeviceSelected } }) 
+        }))
+        .then(() => this.setState({ waiting: false }))
     })
   }
 
   refreshInfoList = () => {
-    this.handleConnectionChange(this.state.netConnectionFilteredSelected, { action: "select-option" });
+    this.handleConnectionChange({ target: { value: this.state.netConnectionFilteredSelected } });
   }
 
   handleNewNetworkTypeCancel = () => {
     // user does not want to add a new network
     this.setState({ showModal: false });
-    this.handleConnectionChange(this.state.netConnection[0], { action: "select-option" });
+    if (this.state.netConnection.length > 0) {
+      this.handleConnectionChange({ target: { value: this.state.netConnection[0].value } });
+    }
   }
 
   togglewirelessEnabled = (event) => {
@@ -599,16 +668,30 @@ class NetworkConfig extends basePage {
 
   getValidChannels() {
     // filter valid wifi channels
+    const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+    if (!selectedDevice || !selectedDevice.channels) return [];
+    
     var opt = [];
-    for (var i = 0, len = this.state.netDeviceSelected.channels.length; i < len; i++) {
-      if (this.state.netDeviceSelected.channels[i].band === this.state.curSettings.band.value || this.state.netDeviceSelected.channels[i].band === 0) {
-        opt.push(this.state.netDeviceSelected.channels[i]);
+    for (var i = 0, len = selectedDevice.channels.length; i < len; i++) {
+      if (selectedDevice.channels[i].band === this.state.curSettings.band || selectedDevice.channels[i].band === 0) {
+        opt.push(selectedDevice.channels[i]);
       }
     }
     return opt;
   }
 
+  getSelectedDevice() {
+    return this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
+  }
+
+  getSelectedConnection() {
+    return this.state.netConnectionFiltered.find(con => con.value === this.state.netConnectionFilteredSelected);
+  }
+
   renderContent() {
+    const selectedDevice = this.getSelectedDevice();
+    const selectedConnection = this.getSelectedConnection();
+    
     return (
       <div style={{ width: 500 }}>
         <p><i>Create, view, edit and delete network connections</i></p>
@@ -617,83 +700,97 @@ class NetworkConfig extends basePage {
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Adapter</label>
           <div className="col-sm-8">
-            <Select onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected} />
+            <Form.Select onChange={this.handleAdapterChange} value={this.state.netDeviceSelected || ''}>
+              {this.state.netDevice.map((option) => (
+                <option key={option.value} value={option.value}>{option.text}</option>
+              ))}
+            </Form.Select>
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label">Connection</label>
           <div className="col-sm-8">
-            <Select onChange={this.handleConnectionChange} options={this.state.netConnectionFiltered} value={this.state.netConnectionFilteredSelected} />
+            <Form.Select onChange={this.handleConnectionChange} value={this.state.netConnectionFilteredSelected || ''}>
+              <option value="">Select a connection...</option>
+              {this.state.netConnectionFiltered.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </Form.Select>
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-8">
-            <input type="checkbox" checked={this.state.wirelessEnabled} onChange={this.togglewirelessEnabled} />Wifi interfaces enabled
+            <Form.Check 
+              type="checkbox" 
+              label="Wifi interfaces enabled"
+              checked={this.state.wirelessEnabled} 
+              onChange={this.togglewirelessEnabled} 
+            />
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-8">
-            <Button size="sm" variant="primary" onClick={this.deleteConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} className="deleteConnection">Delete</Button>{' '}
-            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} className="addConnection">Add new</Button>{' '}
-            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.state !== ""} className="activateConnection">Activate</Button>{' '}
-            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.state === ""} className="deactivateConnection">Deactivate</Button>{' '}
+            <Button size="sm" variant="primary" onClick={this.deleteConnection} disabled={!selectedConnection || selectedConnection.type === "tun"} className="deleteConnection">Delete</Button>{' '}
+            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={selectedConnection && selectedConnection.type === "tun"} className="addConnection">Add new</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={!selectedConnection || selectedConnection.state !== ""} className="activateConnection">Activate</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={!selectedConnection || selectedConnection.state === ""} className="deactivateConnection">Deactivate</Button>{' '}
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-7">
-            <Button size="sm" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"} onClick={this.refreshConList}>Refresh Connection List</Button>{' '}
+            <Button size="sm" disabled={selectedConnection && selectedConnection.type === "tun"} onClick={this.refreshConList}>Refresh Connection List</Button>{' '}
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-7">
-            <Button size="sm" disabled={this.state.netConnectionFilteredSelected == null || this.state.netConnectionFilteredSelected.type === "tun"} onClick={this.refreshInfoList}>Refresh Connection Information</Button>
+            <Button size="sm" disabled={!selectedConnection || selectedConnection.type === "tun"} onClick={this.refreshInfoList}>Refresh Connection Information</Button>
           </div>
         </div>
 
         <br />
         <h2>Edit Connection</h2>
-        <Form onSubmit={this.handleNetworkSubmit} style={{ display: (this.state.netConnectionFilteredSelected !== null) ? "block" : "none" }}>
-          <div className="adapterattach" style={{ display: this.state.netConnectionFilteredSelected && this.state.netConnectionFilteredSelected.type === "tun" ? "none" : "block" }}>
+        <Form onSubmit={this.handleNetworkSubmit} style={{ display: selectedConnection ? "block" : "none" }}>
+          <div className="adapterattach" style={{ display: selectedConnection && selectedConnection.type === "tun" ? "none" : "block" }}>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Attach to Specific Adapter</label>
               <div className="col-sm-8">
-                <select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface.value}>
+                <Form.Select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface}>
                   {this.state.netConnectionSimilarIfaces.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
           </div>
 
-          <div className="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode.value !== "adhoc" && this.state.curSettings.mode.value !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
+          <div className="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode !== "adhoc" && this.state.curSettings.mode !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">IP Address Type</label>
               <div className="col-sm-8">
                 <div className="form-check">
-                  <input className="form-check-input" type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "auto"} />
+                  <input className="form-check-input" type="radio" name="ipaddresstype" value="auto" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype === "auto"} />
                   <label className="form-check-label">DHCP</label>
                 </div>
                 <div className="form-check">
-                  <input className="form-check-input" type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype.value === "manual"} />
+                  <input className="form-check-input" type="radio" name="ipaddresstype" value="manual" onChange={this.changeHandler} checked={this.state.curSettings.ipaddresstype === "manual"} />
                   <label className="form-check-label">Static IP</label>
                 </div>
               </div>
             </div>
-            <div style={{ display: (this.state.curSettings.ipaddresstype.value !== "auto") ? "block" : "none" }}>
+            <div style={{ display: (this.state.curSettings.ipaddresstype !== "auto") ? "block" : "none" }}>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">IP Address</label>
                 <div className="col-sm-8">
                   <IPAddressInput
                     name="ipaddress"
-                    value={this.state.curSettings.ipaddress.value || ''}
+                    value={this.state.curSettings.ipaddress || ''}
                     onChange={this.changeHandler}
-                    disabled={this.state.curSettings.ipaddresstype.value === "auto"}
+                    disabled={this.state.curSettings.ipaddresstype === "auto"}
                   />
                 </div>
               </div>
@@ -702,89 +799,116 @@ class NetworkConfig extends basePage {
                 <div className="col-sm-8">
                   <IPAddressInput
                     name="subnet"
-                    value={this.state.curSettings.subnet.value || ''}
+                    value={this.state.curSettings.subnet || ''}
                     onChange={this.changeHandler}
-                    disabled={this.state.curSettings.ipaddresstype.value === "auto"}
+                    disabled={this.state.curSettings.ipaddresstype === "auto"}
                   />
                 </div>
               </div>
-              </div>
+            </div>
 
           </div>
-          <div className="wificlientconfig" style={{ display: this.state.curSettings.mode.value === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
+          
+          <div className="wificlientconfig" style={{ display: this.state.curSettings.mode === "infrastructure" ? "block" : "none" }}><h3>Wifi Client</h3>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">SSID Name</label>
               <div className="col-sm-8">
-                <input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text" />
+                <Form.Control name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid} type="text" />
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Security</label>
               <div className="col-sm-8">
-                <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
+                <Form.Select name="wpaType" value={this.state.curSettings.wpaType} onChange={this.changeHandler}>
                   {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
-            <div style={{ display: (this.state.curSettings.wpaType.value !== "none") ? "block" : "none" }}>
+            <div style={{ display: (this.state.curSettings.wpaType !== "none") ? "block" : "none" }}>
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                 <label className="col-sm-4 col-form-label">Password</label>
                 <div className="col-sm-8">
-                  <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                  <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                  <Form.Control 
+                    name="password" 
+                    type={this.state.showPW === true ? "text" : "password"} 
+                    disabled={this.state.curSettings.wpaType === "none"} 
+                    value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} 
+                    onChange={this.changeHandler} 
+                  /><br />
+                  <Form.Check 
+                    type="checkbox" 
+                    name="showpassword" 
+                    label="Show Password"
+                    checked={this.state.showPW} 
+                    disabled={this.state.curSettings.wpaType === "none"} 
+                    onChange={this.togglePasswordVisible} 
+                  />
                 </div>
               </div>
             </div>
 
           </div>
 
-          <div className="wifiapconfig" style={{ display: (this.state.curSettings.mode.value === "ap" || this.state.curSettings.mode.value === "adhoc") ? "block" : "none" }}><h3>Wifi Access Point</h3>
+          <div className="wifiapconfig" style={{ display: (this.state.curSettings.mode === "ap" || this.state.curSettings.mode === "adhoc") ? "block" : "none" }}><h3>Wifi Access Point</h3>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">SSID Name</label>
               <div className="col-sm-8">
-                <input name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid.value} type="text" />
+                <Form.Control name="ssid" onChange={this.changeHandler} value={this.state.curSettings.ssid} type="text" />
               </div>
             </div>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Band</label>
               <div className="col-sm-8">
-                <select name="band" onChange={this.changeHandler} value={this.state.curSettings.band.value}>
+                <Form.Select name="band" onChange={this.changeHandler} value={this.state.curSettings.band}>
                   {this.state.bandTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Channel</label>
               <div className="col-sm-8">
-                <select name="channel" onChange={this.changeHandler} value={this.state.curSettings.channel.value}>
-                  {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option) => (
+                <Form.Select name="channel" onChange={this.changeHandler} value={this.state.curSettings.channel}>
+                  {this.getValidChannels().map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
-                  )) : <option></option>}
-                </select>
+                  ))}
+                </Form.Select>
               </div>
             </div>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Security</label>
               <div className="col-sm-8">
-                <select name="wpaType" value={this.state.curSettings.wpaType.value} onChange={this.changeHandler}>
+                <Form.Select name="wpaType" value={this.state.curSettings.wpaType} onChange={this.changeHandler}>
                   {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Password</label>
               <div className="col-sm-8">
-                <input name="password" type={this.state.showPW === true ? "text" : "password"} disabled={this.state.curSettings.wpaType.value === "none"} value={this.state.curSettings.wpaType.value === "none" ? '' : this.state.curSettings.password.value} onChange={this.changeHandler} /><br />
-                <input name="showpassword" type="checkbox" checked={this.state.showPW} disabled={this.state.curSettings.wpaType.value === "none"} onChange={this.togglePasswordVisible} /><label>Show Password</label>
+                <Form.Control 
+                  name="password" 
+                  type={this.state.showPW === true ? "text" : "password"} 
+                  disabled={this.state.curSettings.wpaType === "none"} 
+                  value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} 
+                  onChange={this.changeHandler} 
+                /><br />
+                <Form.Check 
+                  type="checkbox" 
+                  name="showpassword" 
+                  label="Show Password"
+                  checked={this.state.showPW} 
+                  disabled={this.state.curSettings.wpaType === "none"} 
+                  onChange={this.togglePasswordVisible} 
+                />
               </div>
             </div>
 
@@ -793,7 +917,7 @@ class NetworkConfig extends basePage {
               <div className="col-sm-8">
                 <IPAddressInput
                   name="ipaddress"
-                  value={this.state.curSettings.ipaddress.value || ''}
+                  value={this.state.curSettings.ipaddress || ''}
                   onChange={this.changeHandler}
                 />
               </div>
@@ -804,7 +928,7 @@ class NetworkConfig extends basePage {
           <div className="form-group row" style={{ marginBottom: '5px' }}>
             <label className="col-sm-4 col-form-label"></label>
             <div className="col-sm-8">
-              <Button size="sm" variant="primary" type="submit" disabled={this.state.netConnectionFilteredSelected !== null && this.state.netConnectionFilteredSelected.type === "tun"}>Save Changes</Button>{' '}
+              <Button size="sm" variant="primary" type="submit" disabled={selectedConnection && selectedConnection.type === "tun"}>Save Changes</Button>{' '}
               <Button size="sm" variant="secondary" onClick={this.resetForm}>Discard Changes</Button>{' '}
             </div>
           </div>
@@ -827,7 +951,7 @@ class NetworkConfig extends basePage {
                   </thead>
                   <tbody>
                     {this.state.detWifi.map((item, index) => (
-                      <tr key={index}><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
+                      <tr key={index}><td onClick={() => this.handleCloseModalClient(item.ssid, item.security)} style={{ cursor: 'pointer' }}>{item.ssid}</td><td>{item.signal}</td><td>{item.security}</td></tr>
                     ))}
                   </tbody>
                 </Table>
@@ -837,7 +961,7 @@ class NetworkConfig extends basePage {
             <Modal.Footer>
               <Button variant="primary" onClick={this.handleCloseModalAP}>Create new Wifi hotspot</Button>
               <Button variant="primary" onClick={() => this.handleCloseModalClient('', '')}>Connect to hidden WiFi</Button>
-              <Button bsSize="small" onClick={this.refreshWifi}>Refresh Wifi list</Button>
+              <Button variant="secondary" onClick={this.refreshWifi}>Refresh Wifi list</Button>
               <Button variant="secondary" onClick={this.handleNewNetworkTypeCancel}>Cancel</Button>
             </Modal.Footer>
           </Modal>
@@ -848,7 +972,7 @@ class NetworkConfig extends basePage {
             </Modal.Header>
 
             <Modal.Body>
-              <p>Are you sure you want to Delete the &apos;{this.state.netConnectionFilteredSelected === null ? "" : this.state.netConnectionFilteredSelected.label}&apos; network?</p>
+              <p>Are you sure you want to Delete the &apos;{selectedConnection ? selectedConnection.label : ""}&apos; network?</p>
             </Modal.Body>
 
             <Modal.Footer>
@@ -864,7 +988,7 @@ class NetworkConfig extends basePage {
 
             <Modal.Body>
               <p>Enter the name of the new network:</p>
-              <input name="newNetworkName" onChange={this.changeNetworkNameHandler} value={this.state.newNetworkName} type="text" />
+              <Form.Control name="newNetworkName" onChange={this.changeNetworkNameHandler} value={this.state.newNetworkName} type="text" />
             </Modal.Body>
 
             <Modal.Footer>

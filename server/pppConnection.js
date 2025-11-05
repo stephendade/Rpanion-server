@@ -36,7 +36,7 @@ class PPPConnection {
         this.isConnected = this.settings.value('ppp.enabled', false);
         this.pppProcess = null;
         this.device = this.settings.value('ppp.uart', null);
-        this.baudRate = this.settings.value('ppp.baud', { value: 921600, label: '921600' })
+        this.baudRate = this.settings.value('ppp.baud', 921600)
         this.localIP = this.settings.value('ppp.localIP', '192.168.144.14');  // default local IP
         this.remoteIP = this.settings.value('ppp.remoteIP', '192.168.144.15'); // default remote IP
         this.baudRates = [
@@ -205,7 +205,7 @@ class PPPConnection {
         const args = [
             "pppd",
             this.device.value,
-            this.baudRate.value, // baud rate
+            this.baudRate, // baud rate
             //'persist',          // enables faster termination
             //'holdoff', '1',     // minimum delay of 1 second between connection attempts
             this.localIP + ':' + this.remoteIP, // local and remote IPs
@@ -372,8 +372,8 @@ class PPPConnection {
                     const elapsed = Date.now() - this.prevdata.timestamp; // in milliseconds
                     const rxRate = (rxBytes - this.prevdata.rxBytes) / (elapsed / 1000); // bytes per second
                     const txRate = (txBytes - this.prevdata.txBytes) / (elapsed / 1000); // bytes per second
-                    const percentusedRx = rxRate / (this.baudRate.value / 8); // percent of baud rate used
-                    const percentusedTx = txRate / (this.baudRate.value / 8); // percent of baud rate used
+                    const percentusedRx = rxRate / (this.baudRate / 8); // percent of baud rate used
+                    const percentusedTx = txRate / (this.baudRate / 8); // percent of baud rate used
                     this.prevdata = { rxBytes, txBytes, timestamp: Date.now() };
                     return { rxRate, txRate, percentusedRx, percentusedTx };
                 }

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, Form, Button, Alert } from 'react-bootstrap';
-import Select from 'react-select';
 import basePage from './basePage.jsx';
 import IPAddressInput from './components/IPAddressInput.jsx';
 
@@ -61,20 +60,20 @@ class PPPPage extends basePage {
         }));
     };
 
-    handleBaudrateChange = (value) => {
+    handleBaudrateChange = (event) => {
         this.setState(prevState => ({
             config: {
                 ...prevState.config,
-                selBaudRate: value
+                selBaudRate: event.target.value
             }
         }));
     }
 
-    handleUartChange = (value) => {
+    handleUartChange = (event) => {
         this.setState(prevState => ({
             config: {
                 ...prevState.config,
-                selDevice: value
+                selDevice: event.target.value
             }
         }));
     }
@@ -82,6 +81,9 @@ class PPPPage extends basePage {
     handleSubmit = async (event) => {
         event.preventDefault();
         try {
+            //get the pnpid of the selected device
+            let selectedDevice = this.state.config.serialDevices.find(device => device.value === this.state.config.selDevice);
+
             const response = await fetch('/api/pppmodify', {
                 method: 'POST',
                 headers: {
@@ -90,8 +92,8 @@ class PPPPage extends basePage {
                     'Authorization': `Bearer ${this.state.token}`
                 },
                 body: JSON.stringify({
-                    device: JSON.stringify(this.state.config.selDevice),
-                    baudrate: JSON.stringify(this.state.config.selBaudRate),
+                    device: json.stringify(selectedDevice),
+                    baudrate: this.state.config.selBaudRate,
                     localIP: this.state.config.localIP,
                     remoteIP: this.state.config.remoteIP,
                     enabled: !this.state.config.enabled
@@ -131,13 +133,21 @@ class PPPPage extends basePage {
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-4 col-form-label">UART Port</label>
                         <div className="col-sm-7">
-                            <Select isDisabled={this.state.config.enabled === true} onChange={this.handleUartChange} options={this.state.config.serialDevices} value={this.state.config.selDevice} />
+                            <Form.Select isDisabled={this.state.config.enabled === true} onChange={this.handleUartChange} value={this.state.config.selDevice}>
+                                {this.state.config.serialDevices.map((device, index) => (
+                                    <option key={index} value={device.value}>{device.label}</option>
+                                ))}
+                            </Form.Select>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-4 col-form-label">Baudrate</label>
                         <div className="col-sm-5">
-                            <Select isDisabled={this.state.config.enabled === true} onChange={this.handleBaudrateChange} options={this.state.config.baudRates} value={this.state.config.selBaudRate} />
+                            <Form.Select isDisabled={this.state.config.enabled === true} onChange={this.handleBaudrateChange} options={this.state.config.baudRates} value={this.state.config.selBaudRate}>
+                                {this.state.config.baudRates.map((rate, index) => (
+                                    <option key={index} value={rate}>{rate}</option>
+                                ))}
+                            </Form.Select>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>

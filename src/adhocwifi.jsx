@@ -3,7 +3,6 @@ Page for configuring Ad-hoc Wifi
 This is seperate from the network config page due to conflicts
 with nmcli used on network config
 */
-import Select from 'react-select';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import React from 'react'
@@ -117,7 +116,7 @@ class AdhocConfig extends basePage {
           'Authorization': `Bearer ${this.state.token}`
         },
         body: JSON.stringify({
-          netDeviceSelected: this.state.netDeviceSelected.value,
+          netDeviceSelected: this.state.netDeviceSelected,
           settings: this.state.curSettings,
           toState: !this.state.curSettings.isActive,
         })
@@ -152,7 +151,11 @@ class AdhocConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Adapter</label>
               <div className="col-sm-10">
-                <Select isDisabled={this.state.curSettings.isActive} onChange={this.handleAdapterChange} options={this.state.netDevice} value={this.state.netDeviceSelected} />
+                <Form.Select isDisabled={this.state.curSettings.isActive} onChange={this.handleAdapterChange} value={this.state.netDeviceSelected}>
+                  {this.state.netDevice.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
@@ -164,31 +167,31 @@ class AdhocConfig extends basePage {
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Band</label>
               <div className="col-sm-10">
-                <select disabled={this.state.curSettings.isActive} name="band" onChange={this.bandhandler} value={this.state.curSettings.band}>
+                <Form.Select disabled={this.state.curSettings.isActive} name="band" onChange={this.bandhandler} value={this.state.curSettings.band}>
                   {this.state.bandTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Channel</label>
               <div className="col-sm-10">
-                <select disabled={this.state.curSettings.isActive} name="channel" onChange={this.channelhandler} value={this.state.curSettings.channel}>
+                <Form.Select disabled={this.state.curSettings.isActive} name="channel" onChange={this.channelhandler} value={this.state.curSettings.channel}>
                   {this.state.netDeviceSelected !== null ? this.getValidChannels().map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   )) : <option></option>}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
               <label className="col-sm-2 col-form-label">Security</label>
               <div className="col-sm-10">
-                <select disabled={this.state.curSettings.isActive} name="wpaType" value={this.state.curSettings.wpaType} onChange={this.securityhandler}>
+                <Form.Select disabled={this.state.curSettings.isActive} name="wpaType" value={this.state.curSettings.wpaType} onChange={this.securityhandler}>
                   {this.state.wpaTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.text}</option>
                   ))}
-                </select>
+                </Form.Select>
               </div>
             </div>
             <div className="form-group row" style={{ marginBottom: '0px' }}>
