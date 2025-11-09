@@ -108,7 +108,10 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         pipeline.append("videorate")
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
         pipeline.append("queue max-size-buffers=3 leaky=downstream")
-        pipeline.append("v4l2jpegdec")
+        if Gst.ElementFactory.find("v4l2jpegdec"):
+            pipeline.append("v4l2jpegdec")
+        else:
+            pipeline.append("jpegdec")
     else:
         print("Bad camera")
         return ""
