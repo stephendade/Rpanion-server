@@ -53,7 +53,7 @@
       "daemon": "./server/index.js"
     },
     "init": "systemd",
-    "dependencies": "nodejs (>= 20.0.0), gstreamer1.0-plugins-good (>= 1.20.0), libgstrtspserver-1.0-0 (>= 1.20.0), gir1.2-gst-rtsp-server-1.0 (>= 1.20.0), gstreamer1.0-plugins-base-apps (>= 1.20.0), gstreamer1.0-plugins-ugly (>= 1.20.0), gstreamer1.0-plugins-bad (>= 1.20.0), network-manager (>= 1.30.0), python3 (>= 3.9.0), python3-dev (>= 3.9.0), python3-gst-1.0 (>= 1.20.0), python3-pip (>= 20.0.0), dnsmasq (>= 2.85), python3-lxml (>= 4.8.0), python3-numpy (>= 1.21.0), wireless-tools (>= 29), gpsbabel (>= 1.5.0), zip (>= 3.0), iw (>= 5.16)",
+    "dependencies": "nodejs (>= 20.0.0), gstreamer1.0-plugins-good (>= 1.20.0), libgstrtspserver-1.0-0 (>= 1.20.0), gir1.2-gst-rtsp-server-1.0 (>= 1.20.0), gstreamer1.0-plugins-base-apps (>= 1.20.0), gstreamer1.0-plugins-ugly (>= 1.20.0), gstreamer1.0-plugins-bad (>= 1.20.0), network-manager (>= 1.30.0), python3 (>= 3.9.0), python3-dev (>= 3.9.0), python3-gst-1.0 (>= 1.20.0), python3-pip (>= 20.0.0), dnsmasq (>= 2.85), python3-lxml (>= 4.8.0), python3-numpy (>= 1.21.0), wireless-tools (>= 29), gpsbabel (>= 1.5.0), zip (>= 3.0), iw (>= 5.16), python3-dev (>= 3.9.0), gstreamer1.0-x (>= 1.20.0)",
     "user": "rpanion",
     "group": "rpanion",
     "install_strategy": "copy",
