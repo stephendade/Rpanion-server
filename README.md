@@ -19,11 +19,14 @@ This is a node.js based server for companion computers used in Mavlink-based veh
 It presents a web-based interface (running on the companion computer), where system settings such as network,
 telemetry and video streaming can be configured from.
 
-On the Raspberry Pi, Rpanion-server is compatible with the Raspberry Pi OS and Ubuntu 20.04 LTS.
+## Supported Boards
 
-On the Nvidia Jetson, Rpanion-server is compatible with Ubuntu 18.04 LTS.
-
-On the Nvidia Jetson Orin, Rpanion-server is compatible with Ubuntu 22.04 LTS.
+| Board | Compatible OS |
+|-------|--------------|
+| Raspberry Pi 3B or later| Raspberry Pi OS, Ubuntu 22.04 LTS |
+| Nvidia Jetson Orin | Ubuntu 22.04 LTS |
+| Orange Pi Zero 3 | Ubuntu 24.04 LTS |
+| Libre Computer Le Potato | Raspberry Pi OS |
 
 On the [Libre Computer Le Potato](https://libre.computer/products/aml-s905x-cc/), Rpanion-server is compatible with their flavor of [Raspberry Pi OS](https://distro.libre.computer/ci/raspbian/).
 
