@@ -323,6 +323,7 @@ class NetworkConfig extends basePage {
           .then(() => this.setState({ newNetworkName: '' }))
           .then(() => this.setState({ showModalNewNetworkName: true }))
           .then(() => this.setState({ waiting: false }))
+          .then(() => this.setState({ showIP: true }))
       })
     }
     else {
