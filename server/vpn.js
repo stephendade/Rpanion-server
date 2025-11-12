@@ -5,22 +5,29 @@ const path = require('path')
 const { exec, execFile } = require('child_process')
 
 function getVPNStatusZerotier (errpass, callback) {
-  // get status of VPN
-  exec('sudo zerotier-cli info && sudo zerotier-cli listnetworks -j', (error, stdout, stderr) => {
-    if (stderr.toString().trim() !== '') {
-      console.error(`exec error: ${error}`)
-      return callback(stderr.toString().trim(), { installed: false, status: false, text: JSON.parse('[]') })
-    } else {
-      // zerotier's in JSON format anyway, so just pipe through
-      if (stdout.search('connection failed') > -1) {
-        return callback(errpass, { installed: true, status: false, text: JSON.parse('[]') })
-      } else {
-        const infoout = stdout.slice(0, stdout.indexOf('[\n]'))
-        const networkout = stdout.slice(stdout.indexOf('\n') + 1)
-        const isOnline = infoout.search('ONLINE') > -1 || infoout.search('TUNNELED') > -1
-        return callback(errpass, { installed: true, status: isOnline, text: JSON.parse(networkout) })
-      }
+  execFile('which', ['zerotier-cli'], (errorzt, stdoutzt, stderrzt) => {
+    // which returns exit code 1 when binary not found (stderr is empty)
+    if (errorzt !== null || stdoutzt.toString().trim() === '') {
+      console.log('ZT not installed:', errorzt?.code || 'binary not found')
+      return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
     }
+    
+    exec('sudo zerotier-cli info && sudo zerotier-cli listnetworks -j', (error, stdout, stderr) => {
+      if (stderr.toString().trim() !== '') {
+        console.log(`exec error3: ${error}`)
+        return callback(stderr.toString().trim(), { installed: false, status: false, text: JSON.parse('[]') })
+      } else {
+        // zerotier's in JSON format anyway, so just pipe through
+        if (stdout.search('connection failed') > -1) {
+          return callback(error, { installed: true, status: false, text: JSON.parse('[]') })
+        } else {
+          const infoout = stdout.slice(0, stdout.indexOf('[\n]'))
+          const networkout = stdout.slice(stdout.indexOf('\n') + 1)
+          const isOnline = infoout.search('ONLINE') > -1 || infoout.search('TUNNELED') > -1
+          return callback(errpass, { installed: true, status: isOnline, text: JSON.parse(networkout) })
+        }
+      }
+    })
   })
 }
 
@@ -158,11 +165,8 @@ function getVPNStatusWireguard (errpass, callback) {
   // get status of VPN
   execFile('which', ['wg-quick'], (errorwg, stdoutwg, stderrwg) => {
     // check if installed
-    if (errorwg !== null) {
-      console.error(`exec error: ${stderrwg}`)
-      return callback(stderrwg, { installed: false, status: false, text: JSON.parse('[]') })
-    }
-    if (stdoutwg.toString().trim() === '') {
+    if (errorwg !== null || stdoutwg.toString().trim() === '') {
+      console.log('Wireguard not installed:', errorwg?.code || 'binary not found')
       return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
     } else {
       execFile('python', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
