@@ -66,7 +66,7 @@ First install the required packages:
 sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-0 gir1.2-gst-rtsp-server-1.0 
 sudo apt install -y gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
 sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq wireless-tools iw
-sudo apt install -y python3-lxml python3-numpy gpsbabel zip
+sudo apt install -y python3-lxml python3-numpy gpsbabel zip python3-dev gstreamer1.0-x
 ```
 
 If running on RasPiOS, install the libcamera drivers:
