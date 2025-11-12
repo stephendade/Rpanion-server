@@ -30,6 +30,18 @@ function isPi () {
   return model[0] === 'raspberrypi'
 }
 
+function isOrangePi () {
+  let cpuInfo = ''
+  try {
+    cpuInfo = fs.readFileSync('/proc/device-tree/compatible', { encoding: 'utf8' })
+  } catch (e) {
+    // if this fails, this is probably not an Orange Pi
+    return false
+  }
+
+  return cpuInfo.toLowerCase().includes('orangepi')
+}
+
 class PPPConnection {
     constructor(settings) {
         this.settings = settings
@@ -157,7 +169,13 @@ class PPPConnection {
         if (fs.existsSync('/dev/ttyTHS3')) {
         this.serialDevices.push({ value: '/dev/ttyTHS3', label: '/dev/ttyTHS3', pnpId: '/dev/ttyTHS3' })
         }
-
+        // Orange Pi Zero3 serial ports
+        if (fs.existsSync('/dev/ttyS5') && isOrangePi()) {
+        this.serialDevices.push({ value: '/dev/ttyS5', label: '/dev/ttyS5', pnpId: '/dev/ttyS5' })
+        }
+        if (fs.existsSync('/dev/ttyAS5') && isOrangePi()) {
+        this.serialDevices.push({ value: '/dev/ttyAS5', label: '/dev/ttyAS5', pnpId: '/dev/ttyAS5' })
+        }
         return callback(retError, this.serialDevices);
     }
 
