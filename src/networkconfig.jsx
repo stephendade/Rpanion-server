@@ -493,7 +493,7 @@ class NetworkConfig extends basePage {
         subnet: "", 
         wpaType: "wpa-psk", 
         password: "", 
-        attachedIface: '""' 
+        attachedIface: this.state.netConnectionSimilarIfaces[0].value
       }
     });
   }
@@ -526,7 +526,7 @@ class NetworkConfig extends basePage {
         subnet: "", 
         wpaType: selsecurity === '' ? 'none' : 'wpa-psk', 
         password: "", 
-        attachedIface: '""' 
+        attachedIface: this.state.netConnectionSimilarIfaces[0].value
       }
     });
   }
