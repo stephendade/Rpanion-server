@@ -196,12 +196,28 @@ function addConnection (conNameStr, conType, conAdapter, conSettings, callback) 
   // nmcli connection add type wifi ifname $IFNAME con-name $APNAME ssid $SSID
   // due to the multiple edits, we need to set autoconnect to "no"
   if (conType === 'wifi') {
-    exec('sudo nmcli connection add type ' + conType + ' ifname ' + conAdapter +
-             ' con-name ' + conNameStr + ' ssid \'' + conSettings.ssid + '\' 802-11-wireless.mode ' +
-             conSettings.mode + (Object.keys(conSettings.band).length ? (' 802-11-wireless.band ' + conSettings.band) : '') +
-             (Object.keys(conSettings.channel).length ? (' 802-11-wireless.channel ' + (conSettings.channel === '0' ? '\'\'' : conSettings.channel)) : '') +
-             ' ipv4.method ' + conSettings.ipaddresstype + ' connection.autoconnect no ' + ' && ' +
-             'sudo nmcli -g connection.uuid con show ' + conNameStr, (error, stdout, stderr) => {
+    // Build nmcli command gradually for readability
+    let cmd = 'sudo nmcli connection add'
+    cmd += ' type ' + conType
+    cmd += ' ifname ' + conAdapter
+    cmd += ' con-name ' + conNameStr
+    cmd += ' ssid \'' + conSettings.ssid + '\''
+    cmd += ' 802-11-wireless.mode ' + conSettings.mode
+    
+    if (conSettings.band !== undefined && conSettings.band !== null) {
+      cmd += ' 802-11-wireless.band ' + conSettings.band
+    }
+    
+    if (conSettings.channel !== undefined && conSettings.channel !== null) {
+      const channelValue = conSettings.channel === '0' ? '\'\'' : conSettings.channel
+      cmd += ' 802-11-wireless.channel ' + channelValue
+    }
+    
+    cmd += ' ipv4.method ' + conSettings.ipaddresstype
+    cmd += ' connection.autoconnect no'
+    cmd += ' && sudo nmcli -g connection.uuid con show ' + conNameStr
+    
+    exec(cmd, (error, stdout, stderr) => {
       if (stderr) {
         console.error(`exec error: ${error}`)
         return callback(stderr)
