@@ -96,22 +96,36 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
         pipeline.append("capsfilter caps=video/x-raw,width={0},height={1},format={3}{2}".format(width, height, framestr, format))
         pipeline.append("queue max-size-buffers=3 leaky=downstream")
     elif format == "video/x-raw":
-        pipeline.append("v4l2src device={0}".format(device))
-        pipeline.append("videorate")
+        # Use io-mode=2 (mmap) for better performance
+        pipeline.append("v4l2src device={0} io-mode=2".format(device))
+        pipeline.append("videorate drop-only=true")
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
-        pipeline.append("queue max-size-buffers=3 leaky=downstream")
+        pipeline.append("queue max-size-buffers=2 leaky=downstream")
     elif format == "video/x-h264":
         pipeline.append("v4l2src device={0}".format(device))
         pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
     elif format == "image/jpeg":
-        pipeline.append("v4l2src device={0}".format(device))
-        pipeline.append("videorate")
-        pipeline.append("{2},width={0},height={1}{3}".format(width, height, format, framestr))
-        pipeline.append("queue max-size-buffers=3 leaky=downstream")
+        # Use io-mode=2 (mmap) for better performance with JPEG sources
+        pipeline.append("v4l2src device={0} io-mode=2".format(device))
+        # Drop frames immediately if processing can't keep up
+        pipeline.append("videorate drop-only=true max-rate={0}".format(
+            framerate if framerate != -1 else 30))
+        pipeline.append("{2},width={0},height={1}{3}".format(
+            width, height, format, framestr))
+        # Reduce buffer to 2 and make it leaky to drop old frames faster
+        pipeline.append("queue max-size-buffers=2 leaky=downstream")
+        # Use hardware JPEG decoder if available, otherwise software
         if Gst.ElementFactory.find("v4l2jpegdec"):
-            pipeline.append("v4l2jpegdec")
+            # Hardware decoder with output buffer optimization
+            pipeline.append("v4l2jpegdec capture-io-mode=4")
         else:
-            pipeline.append("jpegdec")
+            # Software decoder - allow error recovery
+            pipeline.append("jpegdec max-errors=-1")
+        # Output format from decoder - use I420 for better encoder compatibility
+        pipeline.append("videoconvert n-threads=4")
+        pipeline.append("video/x-raw,format=I420")
+        # Add another small queue after decode to prevent blocking
+        pipeline.append("queue max-size-buffers=2 leaky=downstream")
     else:
         print("Bad camera")
         return ""
@@ -177,11 +191,12 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 pipeline.append("video/x-raw,format=I420")
             # testcamerasrc doesn't like leaky queues
             if device != "testsrc":
-                pipeline.append("queue max-size-buffers=3 leaky=downstream")
+                pipeline.append("queue max-size-buffers=2 leaky=downstream")
             else:
-                pipeline.append("queue max-size-buffers=3")
+                pipeline.append("queue max-size-buffers=2")
             if compression == "H264":
-                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
+                # Use multiple threads for software encoding
+                pipeline.append("x264enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25 threads=0".format(bitrate))
             elif compression == "H265":
                 pipeline.append("x265enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
 
