@@ -53,8 +53,10 @@ class VideoPage extends basePage {
     const value = event.target.value;
     const device = this.state.dev.find(d => d.value === value);
     
-    //this.setState({ vidDeviceSelected: value, vidres: device.caps });
-    this.handleResChange(null, this.state.streamingStatus !== true ? device.caps[0] : this.state.vidResSelected.value);
+    this.setState({ vidDeviceSelected: value, vidres: device.caps }, () => {
+      this.handleResChange(null, this.state.streamingStatus !== true ? device.caps[0].value : this.state.vidResSelected.value);
+    });
+    
   }
 
   handleResChange = (event, capsOverride) => {
@@ -203,7 +205,7 @@ class VideoPage extends basePage {
     //generate gstreamer RTP string for UDP streaming
     let gststring = "gst-launch-1.0 udpsrc " + this.state.multicastString + "port=" + this.state.useUDPPort + " buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! ";
     if (!this.isrtspSourceSelected()) {
-      if (this.state.compression.value === "H264") {
+      if (this.state.compression === "H264") {
         gststring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false";
       }
       else {
@@ -211,7 +213,7 @@ class VideoPage extends basePage {
       }
     }
     else {
-      if (this.state.vidDeviceSelected.value === "rtspsourceh264") {
+      if (this.state.vidDeviceSelected === "rtspsourceh264") {
         gststring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! autovideosink sync=false";
       }
       else {
@@ -225,7 +227,7 @@ class VideoPage extends basePage {
     //generate mission planner RTP string for UDP streaming
     let mpstring = "udpsrc " + this.state.multicastString + "port=" + this.state.useUDPPort + " buffer-size=90000 ! application/x-rtp ! rtpjitterbuffer ! ";
     if (!this.isrtspSourceSelected()) {
-      if (this.state.compression.value === "H264") {
+      if (this.state.compression === "H264") {
         mpstring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false";
       }
       else {
@@ -233,7 +235,7 @@ class VideoPage extends basePage {
       }
     }
     else {
-      if (this.state.vidDeviceSelected.value === "rtspsourceh264") {
+      if (this.state.vidDeviceSelected === "rtspsourceh264") {
         mpstring += "rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGRA ! appsink name=outsink sync=false";
       }
       else {
@@ -247,14 +249,14 @@ class VideoPage extends basePage {
     //generate QGC format selection string
     let qgcstring = "Video Source: UDP ";
     if (!this.isrtspSourceSelected()) {
-      if (this.state.compression.value === "H264") {
+      if (this.state.compression === "H264") {
         qgcstring += "h.264 Video Stream";
       }
       else {
         qgcstring += "h.265 Video Stream";
       }
     } else {
-      if (this.state.vidDeviceSelected.value === "rtspsourceh264") {
+      if (this.state.vidDeviceSelected === "rtspsourceh264") {
         qgcstring += "h.264 Video Stream";
       }
       else {
