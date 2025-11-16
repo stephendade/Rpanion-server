@@ -66,7 +66,7 @@ class NetworkConfig extends basePage {
       fetch(`/api/networkadapters`, {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { 
         return new Promise(resolve => {
           this.setState(state, () => {
-            if (state.netDevice && state.netDevice.length > 0) {
+            if (state.netDevice && state.netDevice.length > 0 && !this.state.netDeviceSelected) {
               this.setState({ netDeviceSelected: state.netDevice[0].value }); 
             }
             resolve(state);
@@ -75,7 +75,9 @@ class NetworkConfig extends basePage {
       })
     ]).then(retState => { 
       if (retState[2].netDevice && retState[2].netDevice.length > 0) {
-        this.handleAdapterChange({ target: { value: retState[2].netDevice[0].value } }); 
+        // Use currently selected adapter if available, otherwise use first one
+        const adapterToUse = this.state.netDeviceSelected || retState[2].netDevice[0].value;
+        this.handleAdapterChange({ target: { value: adapterToUse } }); 
       }
       this.loadDone();
     });
@@ -99,13 +101,12 @@ class NetworkConfig extends basePage {
         if (item.type === "802-3-ethernet" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
           if (item.state === selectedDevice.value) {
             item.label = item.labelPre + " (Active)";
-            netConnection.push(item);
             activeCon = item;
           }
           else {
             item.label = item.labelPre;
-            netConnection.push(item);
           }
+          netConnection.push(item);
         }
       });
     }
@@ -117,13 +118,12 @@ class NetworkConfig extends basePage {
           item.attachedIface === "undefined" || item.attachedIface === selectedDevice.value)) {
           if (item.state === selectedDevice.value) {
             item.label = item.labelPre + " (Active)";
-            netConnection.push(item);
             activeCon = item;
           }
           else {
             item.label = item.labelPre;
-            netConnection.push(item);
           }
+          netConnection.push(item);
         }
       });
     }
@@ -135,13 +135,12 @@ class NetworkConfig extends basePage {
         if (item.type === "tun" && (item.attachedIface === "" || item.attachedIface === selectedDevice.value)) {
           if (item.state === selectedDevice.value) {
             item.label = item.labelPre + " (Active)";
-            netConnection.push(item);
             activeCon = item;
           }
           else {
             item.label = item.labelPre;
-            netConnection.push(item);
           }
+          netConnection.push(item);
         }
       });
     }
@@ -161,10 +160,14 @@ class NetworkConfig extends basePage {
       return;
     }
 
-    this.state.netDeviceSelected = selectedValue;
-    this.state.netConnectionFiltered = netConnection;
-    this.state.netConnectionFilteredSelected = activeCon.value;
-    this.handleConnectionChange({ target: { value: activeCon.value } });
+    this.setState({ 
+      netDeviceSelected: selectedValue,
+      netConnectionFiltered: netConnection,
+      netConnectionFilteredSelected: activeCon.value
+    }, () => {
+      console.log(this.state.netConnectionFiltered);
+      this.handleConnectionChange({ target: { value: activeCon.value } });
+    });
   };
 
   handleConnectionChange = (event) => {
@@ -178,6 +181,8 @@ class NetworkConfig extends basePage {
     }
 
     const selectedConnection = this.state.netConnectionFiltered.find(con => con.value === selectedValue);
+    console.log(selectedConnection);
+    console.log(selectedValue);
     
     if (!selectedConnection) return;
 
@@ -477,10 +482,13 @@ class NetworkConfig extends basePage {
     
     const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
     
+    // Remove any existing "new" entry before adding
+    const filteredWithoutNew = this.state.netConnectionFiltered.filter(con => con.value !== 'new');
+    
     this.setState({
       netConnectionFilteredSelected: 'new',
       netConnectionFiltered: [
-        ...this.state.netConnectionFiltered,
+        ...filteredWithoutNew,
         { value: 'new', label: nm, labelPre: nm, type: selectedDevice ? selectedDevice.type : '', state: "" }
       ],
       curSettings: { 
@@ -510,10 +518,13 @@ class NetworkConfig extends basePage {
     
     const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
     
+    // Remove any existing "new" entry before adding
+    const filteredWithoutNew = this.state.netConnectionFiltered.filter(con => con.value !== 'new');
+    
     this.setState({
       netConnectionFilteredSelected: 'new',
       netConnectionFiltered: [
-        ...this.state.netConnectionFiltered,
+        ...filteredWithoutNew,
         { value: 'new', label: nm, labelPre: nm, type: selectedDevice ? selectedDevice.type : '', state: "" }
       ],
       curSettings: { 
@@ -587,6 +598,9 @@ class NetworkConfig extends basePage {
     if (this.state.newNetworkName !== '' && this.state.newNetworkName !== null) {
       const selectedDevice = this.state.netDevice.find(dev => dev.value === this.state.netDeviceSelected);
       
+      // Remove any existing "new" entry before adding
+      const filteredWithoutNew = this.state.netConnectionFiltered.filter(con => con.value !== 'new');
+      
       // Add the new connection to the filtered list
       const newCon = { 
         value: 'new', 
@@ -597,7 +611,7 @@ class NetworkConfig extends basePage {
       };
       
       this.setState({ 
-        netConnectionFiltered: [...this.state.netConnectionFiltered, newCon],
+        netConnectionFiltered: [...filteredWithoutNew, newCon],
         netConnectionFilteredSelected: 'new'
       });
       
