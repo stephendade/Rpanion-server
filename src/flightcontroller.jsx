@@ -196,7 +196,7 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Input Type</label>
               <div className="col-sm-8">
-                <Form.Select value={this.state.selInputType} onChange={this.handleInputTypeChange} isDisabled={this.state.telemetryStatus}>
+                <Form.Select value={this.state.selInputType} onChange={this.handleInputTypeChange} disabled={this.state.telemetryStatus}>
                   {this.state.inputTypes.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
@@ -208,7 +208,7 @@ class FCPage extends basePage {
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Serial Device</label>
                   <div className="col-sm-8">
-                    <Form.Select isDisabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} value={this.state.serialPortSelected}>
+                    <Form.Select disabled={this.state.telemetryStatus} onChange={this.handleSerialPortChange} value={this.state.serialPortSelected}>
                       {this.state.serialPorts.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
@@ -218,7 +218,7 @@ class FCPage extends basePage {
               <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Baud Rate</label>
                   <div className="col-sm-8">
-                    <Form.Select isDisabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} value={this.state.baudRateSelected}>
+                    <Form.Select disabled={this.state.telemetryStatus} onChange={this.handleBaudRateChange} value={this.state.baudRateSelected}>
                       {this.state.baudRates.map((option) => (
                         <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
@@ -250,17 +250,11 @@ class FCPage extends basePage {
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">MAVLink Version</label>
               <div className="col-sm-8">
-                <Form.Select isDisabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} value={this.state.mavVersionSelected}>
+                <Form.Select disabled={this.state.telemetryStatus} onChange={this.handleMavVersionChange} value={this.state.mavVersionSelected}>
                   {this.state.mavVersions.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </Form.Select>
-              </div>
-            </div>
-
-            <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <div className="col-sm-8">
-                <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
               </div>
             </div>
           </Accordion.Body>
@@ -340,6 +334,12 @@ class FCPage extends basePage {
             </div>
           </Accordion.Body>
         </Accordion.Item>
+        </Accordion>
+        <div className="form-group row" style={{ marginBottom: '5px' }}>
+          <div className="col-sm-8">
+            <Button disabled={this.state.selInputType === null || (this.state.serialPorts.length === 0 && this.state.selInputType === 'UART')} onClick={this.handleSubmit}>{this.state.telemetryStatus ? "Stop Telemetry" : "Start Telemetry"}</Button>
+          </div>
+        </div>
         <h2>Status</h2>
         <p>Packets Received: {this.state.FCStatus.numpackets} ({this.state.FCStatus.byteRate} bytes/sec)</p>
         <p>Connection Status: {this.state.FCStatus.conStatus}</p>
@@ -350,7 +350,6 @@ class FCPage extends basePage {
         </label>
         <br />
         <Button size="sm" disabled={!this.state.telemetryStatus} onClick={this.handleFCReboot}>Reboot Flight Controller</Button>
-      </Accordion>
       </div>
     );
   }
