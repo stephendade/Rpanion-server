@@ -128,6 +128,7 @@ class PPPPage extends basePage {
         <div>
             <p><i>Configure a PPP connection to the flight controller. Requires SERIALn_PROTOCOL=48</i></p>
             <p><i>Hardware flow control support is required on the Companion UART</i></p>
+            <p><i>Higher baud rates may not be supported on some UARTS</i></p>
             <h2>Configuration</h2>
                 <Form style={{ width: 600 }}>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>

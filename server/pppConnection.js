@@ -52,6 +52,9 @@ class PPPConnection {
         this.localIP = this.settings.value('ppp.localIP', '192.168.144.14');  // default local IP
         this.remoteIP = this.settings.value('ppp.remoteIP', '192.168.144.15'); // default remote IP
         this.baudRates = [
+            { value: 115200, label: '115200' },
+            { value: 230400, label: '230400' },
+            { value: 460800, label: '460800' },
             { value: 921600, label: '921600' },
             { value: 1500000, label: '1.5 MBaud' },
             { value: 2000000, label: '2 MBaud' },
