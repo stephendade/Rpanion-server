@@ -473,7 +473,11 @@ class NetworkConfig extends basePage {
   handleCloseModalAP() {
     // user has selected AP new Wifi connection
     this.setState({ showModal: false });
-    this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
+    
+    const sameAdapters = this.getSameAdapter();
+    const defaultAttachedIface = sameAdapters.length > 0 ? sameAdapters[0].value : this.state.netDeviceSelected;
+    
+    this.setState({ netConnectionSimilarIfaces: sameAdapters });
     
     const selectedConnection = this.state.netConnectionFiltered.find(
       con => con.value === this.state.netConnectionFilteredSelected
@@ -501,7 +505,7 @@ class NetworkConfig extends basePage {
         subnet: "", 
         wpaType: "wpa-psk", 
         password: "", 
-        attachedIface: this.state.netConnectionSimilarIfaces[0].value
+        attachedIface: defaultAttachedIface
       }
     });
   }
@@ -509,7 +513,11 @@ class NetworkConfig extends basePage {
   handleCloseModalClient(selssid, selsecurity) {
     // user has selected client new Wifi connection
     this.setState({ showModal: false });
-    this.setState({ netConnectionSimilarIfaces: this.getSameAdapter() });
+    
+    const sameAdapters = this.getSameAdapter();
+    const defaultAttachedIface = sameAdapters.length > 0 ? sameAdapters[0].value : this.state.netDeviceSelected;
+    
+    this.setState({ netConnectionSimilarIfaces: sameAdapters });
     
     const selectedConnection = this.state.netConnectionFiltered.find(
       con => con.value === this.state.netConnectionFilteredSelected
@@ -537,7 +545,7 @@ class NetworkConfig extends basePage {
         subnet: "", 
         wpaType: selsecurity === '' ? 'none' : 'wpa-psk', 
         password: "", 
-        attachedIface: this.state.netConnectionSimilarIfaces[0].value
+        attachedIface: defaultAttachedIface
       }
     });
   }
