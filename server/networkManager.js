@@ -197,49 +197,51 @@ function addConnection (conNameStr, conType, conAdapter, conSettings, callback) 
   // due to the multiple edits, we need to set autoconnect to "no"
   if (conType === 'wifi') {
     // Build nmcli command gradually for readability
-    let cmd = 'sudo nmcli connection add'
-    cmd += ' type ' + conType
-    cmd += ' ifname ' + conAdapter
-    cmd += ' con-name ' + conNameStr
-    cmd += ' ssid \'' + conSettings.ssid + '\''
-    cmd += ' 802-11-wireless.mode ' + conSettings.mode
-    
+    // Build argument array for nmcli command
+    let nmcliArgs = ['connection', 'add', 'type', conType, 'ifname', conAdapter, 'con-name', conNameStr, 'ssid', conSettings.ssid, '802-11-wireless.mode', conSettings.mode];
+
     if (conSettings.band !== undefined && conSettings.band !== null) {
-      cmd += ' 802-11-wireless.band ' + conSettings.band
+      nmcliArgs.push('802-11-wireless.band', conSettings.band);
     }
-    
+
     if (conSettings.channel !== undefined && conSettings.channel !== null) {
-      const channelValue = conSettings.channel === '0' ? '\'\'' : conSettings.channel
-      cmd += ' 802-11-wireless.channel ' + channelValue
+      const channelValue = conSettings.channel === '0' ? '' : conSettings.channel;
+      nmcliArgs.push('802-11-wireless.channel', channelValue);
     }
-    
-    cmd += ' ipv4.method ' + conSettings.ipaddresstype
-    cmd += ' connection.autoconnect no'
-    cmd += ' && sudo nmcli -g connection.uuid con show ' + conNameStr
-    
-    exec(cmd, (error, stdout, stderr) => {
-      if (stderr) {
-        console.error(`exec error: ${error}`)
-        return callback(stderr)
+
+    nmcliArgs.push('ipv4.method', conSettings.ipaddresstype, 'connection.autoconnect', 'no');
+
+    // run nmcli connection add safely
+    execFile('sudo', ['nmcli', ...nmcliArgs], (error, stdout, stderr) => {
+      if (error || stderr) {
+        console.error(`execFile error: ${error || stderr}`);
+        return callback(error || stderr);
       } else {
-        // once the network is created, add in the settings
-        const conUUID = stdout.split('\n')[stdout.split('\n').length - 2]
-        console.log('Added network Wifi: ' + conNameStr + ' - ' + conAdapter + ' - ' + conUUID)
-        this.editConnection(conUUID, conSettings, (err) => {
-          // set autoconnect back to "yes"
-          exec('sudo nmcli connection mod ' + conUUID + ' connection.autoconnect yes', (error, stdout, stderr) => {
-            if (!err && !stderr) {
-              console.log('addConnection() wifi OK')
-              return callback(null, 'AddOK')
-            } else {
-              console.log('Error in editConnection() wifi addcon ', { message: err })
-              console.log('Error in editConnection() wifi addcon ', { message: stderr })
-              return callback(err)
-            }
-          })
-        })
+        // After connection added, get the connection UUID.
+        execFile('sudo', ['nmcli', '-g', 'connection.uuid', 'con', 'show', conNameStr], (error2, stdout2, stderr2) => {
+          if (error2 || stderr2) {
+            console.error(`execFile error (uuid): ${error2 || stderr2}`);
+            return callback(error2 || stderr2);
+          } else {
+            const conUUID = stdout2.split('\n')[stdout2.split('\n').length - 2];
+            console.log('Added network Wifi: ' + conNameStr + ' - ' + conAdapter + ' - ' + conUUID);
+            this.editConnection(conUUID, conSettings, (err) => {
+              // set autoconnect back to "yes"
+              execFile('sudo', ['nmcli', 'connection', 'mod', conUUID, 'connection.autoconnect', 'yes'], (error3, stdout3, stderr3) => {
+                if (!err && !error3 && !stderr3) {
+                  console.log('addConnection() wifi OK');
+                  return callback(null, 'AddOK');
+                } else {
+                  console.log('Error in editConnection() wifi addcon ', { message: err });
+                  console.log('Error in editConnection() wifi addcon ', { message: error3 || stderr3 });
+                  return callback(err || error3 || stderr3);
+                }
+              });
+            });
+          }
+        });
       }
-    })
+    });
   } else {
     exec('sudo nmcli connection add type ' + conType + ' ifname ' + conAdapter +
              ' con-name ' + conNameStr + ' connection.autoconnect no ' + '&&' +
