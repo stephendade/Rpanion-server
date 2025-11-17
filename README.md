@@ -78,6 +78,11 @@ If running on RasPiOS, install the libcamera drivers:
 sudo apt install -y gstreamer1.0-libcamera python3-picamera2 python3-libcamera python3-kms++
 ```
 
+If running on a NVIDIA Jetson Orin, install the hardware accelerated gstreamer packages:
+```
+sudo apt install -y nvidia-l4t-gstreamer
+```
+
 Install Nodejs:
 ```
 sudo apt install -y ca-certificates curl gnupg
