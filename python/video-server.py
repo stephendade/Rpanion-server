@@ -232,15 +232,29 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.timestamp = timestamp
         self.compression = compression
 
+        # Configure for low latency streaming
+        self.set_latency(0)  # Minimize latency
+        self.set_buffer_size(0)  # Use default but don't accumulate
+        self.set_transport_mode(GstRtspServer.RTSPTransportMode.PLAY)
+
     def do_create_element(self, url):
         pipeline_str = getPipeline(self.device, self.height, self.width, self.bitrate, self.format, self.rotation,
                                    self.framerate, self.timestamp, self.compression)
         return Gst.parse_launch(pipeline_str)
 
+    def do_configure(self, media):
+        # Configure the media for each client connection
+        # This is called when a client connects
+        self.set_eos_shutdown(True)  # Clean shutdown on EOS
+
 
 class GstServer():
     def __init__(self):
         self.server = GstRtspServer.RTSPServer()
+
+        # Configure server for low-latency streaming
+        self.server.set_backlog(5)  # Limit queued connections
+
         self.sourceID = self.server.attach(None)
         print("Server available on rtsp://<IP>:8554")
 
@@ -248,7 +262,14 @@ class GstServer():
         f = MyFactory(device, h, w, bitrate, format,
                       rotation, framerate, timestamp,
                       compression)
-        f.set_shared(True)
+
+        # Don't share the media pipeline - each client gets their own
+        # This prevents one slow client from affecting others
+        f.set_shared(False)
+
+        # Enable clock synchronization for smoother playback
+        f.set_clock(None)  # Use default system clock
+
         m = self.server.get_mount_points()
         if not device.startswith("rtsp://"):
             name = ''.join(filter(str.isalnum, device))
@@ -263,7 +284,7 @@ class GstServer():
 
         print("Added " + "rtsp://<IP>:8554/" + name)
         print("Use: gst-launch-1.0 rtspsrc location=rtsp://<IP>:8554/" +
-              name + " latency=0 is-live=True ! queue ! decodebin ! autovideosink sync=false")
+              name + " latency=0 ! queue ! decodebin ! autovideosink sync=false")
 
 
 if __name__ == '__main__':
