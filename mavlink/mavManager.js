@@ -140,8 +140,8 @@ class mavManager {
       } else if (packet.header.msgid === common.StatusText.MSG_ID) {
         // Remove whitespace
         this.statusText += data.text.trim().replace(/[^ -~]+/g, '') + '\n'
-      } else if (packet.header.msgid === common.AutopilotVersion.MSG_ID) {
-        // decode Ardupilot version
+      } else if (packet.header.msgid === 148) {
+        // decode Ardupilot version (AUTOPILOT_VERSION message)
         this.fcVersion = this.decodeFlightSwVersion(data.flightSwVersion)
         console.log(this.fcVersion)
       }
@@ -333,7 +333,7 @@ class mavManager {
   sendVersionRequest () {
     // request ArduPilot version
     const command = new common.RequestMessageCommand(this.targetSystem, this.targetComponent)
-    command.messageId = common.AutopilotVersion.MSG_ID
+    command.messageId = 148 // AUTOPILOT_VERSION message ID
     command.confirmation = 1
     this.sendData(command)
   }
