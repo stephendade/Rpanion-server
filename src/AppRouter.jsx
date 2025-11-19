@@ -1,5 +1,5 @@
-import { Route, Routes, Link, useLocation } from 'react-router-dom'
-import React from 'react'
+import { Route, Routes, Link, useLocation, Navigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
 
 import About from './about.jsx'
 import Home from './home.jsx'
@@ -17,11 +17,51 @@ import UserManagement from './userManagement.jsx'
 import PPPPage from './ppp.jsx'
 
 function AppRouter () {
+  const [isAuthenticated, setIsAuthenticated] = useState(null)
+  const location = useLocation()
+
+  useEffect(() => {
+    // Check authentication on mount and when location changes
+    const tokenString = localStorage.getItem('token')
+    const userToken = JSON.parse(tokenString)
+    const token = userToken?.token
+
+    if (token) {
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((response) => {
+        if (!response.ok) {
+          setIsAuthenticated(false)
+        } else {
+          setIsAuthenticated(true)
+        }
+      })
+      .catch(() => {
+        setIsAuthenticated(false)
+      })
+    } else {
+      setIsAuthenticated(false)
+    }
+  }, [location.pathname])
+
+  // Show nothing while checking authentication
+  if (isAuthenticated === null) {
+    return null
+  }
+
+  // If not authenticated and not on home page, redirect to home
+  if (!isAuthenticated && location.pathname !== '/') {
+    return <Navigate to="/" replace />
+  }
 
   return (
     <div id="wrapper" className="d-flex">
       <div id="sidebar-wrapper" className="bg-light border-right">
-      <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
+        <div id="sidebarheading" className="sidebar-heading">Rpanion Web UI</div>
         <div id="sidebar-items" className="list-group list-group-flush">
           <Link className='list-group-item list-group-item-action bg-light' to="/">Home</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/flightlogs">Flight Logs</Link>
