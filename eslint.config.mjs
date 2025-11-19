@@ -1,15 +1,15 @@
-const react = require('eslint-plugin-react');
-const globals = require('globals');
-const mochaPlugin = require('eslint-plugin-mocha');
+import react from 'eslint-plugin-react';
+import globals from 'globals';
+import mochaPlugin from 'eslint-plugin-mocha';
 
-module.exports = [
+export default [
   {
     files: ["src/*.jsx"],
     ...react.configs.flat.recommended,
   },
   {
     files: ["server/*.js", "mavlink/*.js"],
-    ...mochaPlugin.configs.flat.recommended,
+    ...mochaPlugin.configs.recommended,
     languageOptions: {
       parserOptions: {
         ecmaVersion: 2020,
