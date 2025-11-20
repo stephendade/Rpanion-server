@@ -1,7 +1,6 @@
 const express = require('express')
 const fileUpload = require('express-fileupload')
 const compression = require('compression')
-const bodyParser = require('body-parser')
 const pino = require('pino-http')()
 const process = require('process')
 const jwt = require('jsonwebtoken');
@@ -180,12 +179,12 @@ fcManager.eventEmitter.on('disarmed', () => {
 
 let FCStatusLoop = null
 
-app.use(bodyParser.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }))
 app.use(pino)
 
 // Simply pass `compression` as an Express middleware!
 app.use(compression())
-app.use(bodyParser.json())
+app.use(express.json())
 
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, '..', '/build')))
