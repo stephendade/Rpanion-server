@@ -1,8 +1,34 @@
 {
   "name": "rpanion-server",
   "version": "0.11.4",
+  "description": "A node.js based server for companion computers used in Mavlink-based vehicles (ie Ardupilot, PX4). It presents a web-based interface (running on the companion computer), where system settings such as network, telemetry and video streaming can be configured from.",
   "private": true,
   "secure": false,
+  "license": "GPL-3.0",
+  "author": "Stephen Dade <stephen_dade@hotmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stephendade/Rpanion-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/stephendade/Rpanion-server/issues"
+  },
+  "homepage": "https://www.docs.rpanion.com/software/rpanion-server",
+  "keywords": [
+    "mavlink",
+    "ardupilot",
+    "px4",
+    "companion-computer",
+    "drone",
+    "uav",
+    "gstreamer",
+    "rtsp",
+    "telemetry"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=10.0.0"
+  },
   "dependencies": {
     "app-root-path": "3.1.0",
     "bcryptjs": "3.0.3",
