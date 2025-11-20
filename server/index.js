@@ -68,43 +68,103 @@ const adhocManager = new Adhoc(settings)
 const userMgmt = new userLogin()
 const pppConnectionManager = new pppConnection(settings)
 
-// Add graceful shutdown handlers
+// Graceful shutdown implementation
+let isShuttingDown = false
+const SHUTDOWN_TIMEOUT = 10000 // 10 seconds
+
+async function gracefulShutdown(signal, exitCode = 0) {
+  if (isShuttingDown) {
+    console.log('Shutdown already in progress...')
+    return
+  }
+  
+  isShuttingDown = true
+  console.log(`Received ${signal}. Shutting down gracefully...`)
+  
+  // Set a timeout to force shutdown if graceful shutdown takes too long
+  const forceShutdownTimer = setTimeout(() => {
+    console.error('Graceful shutdown timeout exceeded. Forcing shutdown...')
+    process.exit(1)
+  }, SHUTDOWN_TIMEOUT)
+  
+  try {
+    // Stop accepting new connections
+    if (http && http.listening) {
+      console.log('Closing HTTP server...')
+      console.log(`Waiting for ${activeConnections.size} active connections to finish...`)
+      
+      await new Promise((resolve, reject) => {
+        http.close((err) => {
+          if (err) {
+            console.error('Error closing HTTP server:', err)
+            reject(err)
+          } else {
+            console.log('HTTP server closed')
+            resolve()
+          }
+        })
+      })
+    }
+    
+    // Stop Socket.IO connections
+    if (io) {
+      console.log('Closing Socket.IO connections...')
+      io.close()
+      console.log('Socket.IO closed')
+    }
+    
+    // Clear intervals
+    if (FCStatusLoop) {
+      clearInterval(FCStatusLoop)
+      FCStatusLoop = null
+      console.log('Status loop cleared')
+    }
+    
+    // Stop all managed services
+    console.log('Stopping managed services...')
+    pppConnectionManager.quitting()
+    cloud.quitting()
+    logConversion.quitting()
+    console.log('All services stopped')
+    
+    clearTimeout(forceShutdownTimer)
+    console.log('---Shutdown Rpanion Complete---')
+    process.exit(exitCode)
+  } catch (err) {
+    console.error('Error during graceful shutdown:', err)
+    clearTimeout(forceShutdownTimer)
+    process.exit(1)
+  }
+}
+
+// Handle SIGINT (Ctrl+C)
 process.on('SIGINT', () => {
-  console.log('Received SIGINT. Shutting down gracefully...')
-  pppConnectionManager.quitting()
-  cloud.quitting()
-  logConversion.quitting()
-  console.log('---Shutdown Rpanion---')
-  process.exit(0)
+  gracefulShutdown('SIGINT', 0)
 })
 
+// Handle SIGTERM (systemd stop)
 process.on('SIGTERM', () => {
-  console.log('Received SIGTERM. Shutting down gracefully...')
-  pppConnectionManager.quitting()
-  cloud.quitting()
-  logConversion.quitting()
-  console.log('---Shutdown Rpanion---')
-  process.exit(0)
+  gracefulShutdown('SIGTERM', 0)
 })
 
-// Also good to handle uncaught exceptions
+// Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err)
-  pppConnectionManager.quitting()
-  cloud.quitting()
-  logConversion.quitting()
-  console.log('---Shutdown Rpanion---')
-  process.exit(1)
+  gracefulShutdown('uncaughtException', 1)
 })
 
-// Handle nodemon restarts
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled rejection at:', promise, 'reason:', reason)
+  gracefulShutdown('unhandledRejection', 1)
+})
+
+// Handle nodemon restarts (SIGUSR2)
 process.once('SIGUSR2', () => {
   console.log('Received SIGUSR2. Shutting down gracefully...')
-  pppConnectionManager.quitting()
-  cloud.quitting()
-  logConversion.quitting()
-  console.log('---Shutdown Rpanion---')
-  process.kill(process.pid, 'SIGUSR2')
+  gracefulShutdown('SIGUSR2', 0).then(() => {
+    process.kill(process.pid, 'SIGUSR2')
+  })
 })
 
 // Got an RTCM message, send to flight controller
@@ -1226,6 +1286,32 @@ if (process.env.NODE_ENV !== 'development')
   })
 }
 
+// Track active connections for graceful shutdown
+const activeConnections = new Set()
+
+// Add connection tracking middleware
+app.use((req, res, next) => {
+  // Return 503 if shutting down
+  if (isShuttingDown) {
+    res.set('Connection', 'close')
+    return res.status(503).json({ error: 'Server is shutting down' })
+  }
+  
+  // Track this connection
+  activeConnections.add(res)
+  
+  // Remove when done
+  res.on('finish', () => {
+    activeConnections.delete(res)
+  })
+  
+  res.on('close', () => {
+    activeConnections.delete(res)
+  })
+  
+  next()
+})
+
 module.exports = app;
 
 // Only start the server if this file is being run directly (not imported)
@@ -1233,6 +1319,8 @@ if (require.main === module) {
   const port = process.env.PORT || 3001;
   http.listen(port, () => {
     console.log(`Server running on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+    console.log('Press Ctrl+C to stop');
   });
 }
 
