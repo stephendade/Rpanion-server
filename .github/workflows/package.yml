@@ -9,7 +9,7 @@ jobs:
           matrix:
             arch: [amd64, arm64]
         steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v6
 
         - name: Use Node.js 20.x
           uses: actions/setup-node@v6
@@ -81,7 +81,7 @@ jobs:
       needs: build  # This ensures deploy only runs after all matrix builds complete
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v5
+        - uses: actions/checkout@v6
         - name: Download all artifacts
           uses: actions/download-artifact@v6
           with:
