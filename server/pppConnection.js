@@ -5,42 +5,8 @@
     * starting and stopping the PPP connection, and retrieving data transfer stats.
     * Used for the PPP feature in ArduPilot
 */
-const { autoDetect } = require('@serialport/bindings-cpp')
-const si = require('systeminformation')
-const fs = require('fs');
 const { spawn, execSync } = require('child_process');
-
-function isPi () {
-  let cpuInfo = ''
-  try {
-    cpuInfo = fs.readFileSync('/proc/device-tree/compatible', { encoding: 'utf8' })
-  } catch (e) {
-    // if this fails, this is probably not a pi
-    return false
-  }
-
-  const model = cpuInfo
-    .split(',')
-    .filter(line => line.length > 0)
-
-  if (!model || model.length === 0) {
-    return false
-  }
-
-  return model[0] === 'raspberrypi'
-}
-
-function isOrangePi () {
-  let cpuInfo = ''
-  try {
-    cpuInfo = fs.readFileSync('/proc/device-tree/compatible', { encoding: 'utf8' })
-  } catch (e) {
-    // if this fails, this is probably not an Orange Pi
-    return false
-  }
-
-  return cpuInfo.toLowerCase().includes('orangepi')
-}
+const { detectSerialDevices, getSerialPathFromValue } = require('./serialDetection.js')
 
 class PPPConnection {
     constructor(settings) {
@@ -110,76 +76,14 @@ class PPPConnection {
     }
 
     async getDevices (callback) {
-        // get all serial devices
-        this.serialDevices = []
-        let retError = null
-
-        const Binding = autoDetect()
-        const ports = await Binding.list()
-
-        for (let i = 0, len = ports.length; i < len; i++) {
-            if (ports[i].pnpId !== undefined) {
-                // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
-                // console.log("Port: ", ports[i].pnpID);
-                let namePorts = ''
-                if (ports[i].pnpId.split('_').length > 2) {
-                namePorts = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
-                } else {
-                namePorts = ports[i].manufacturer + ' (' + ports[i].path + ')'
-                }
-                // console.log("Port: ", ports[i].pnpID);
-                this.serialDevices.push({ value: ports[i].path, label: namePorts, pnpId: ports[i].pnpId })
-            } else if (ports[i].manufacturer !== undefined) {
-                // on recent RasPiOS, the pnpID is undefined :(
-                const nameports = ports[i].manufacturer + ' (' + ports[i].path + ')'
-                this.serialDevices.push({ value: ports[i].path, label: nameports, pnpId: nameports })
-            }
+        // get all serial devices using hardwareDetection module
+        try {
+            this.serialDevices = await detectSerialDevices()
+            return callback(null, this.serialDevices);
+        } catch (error) {
+            console.error('Error detecting serial devices:', error)
+            return callback(error, []);
         }
-
-        // for the Ras Pi's inbuilt UART
-        if (fs.existsSync('/dev/serial0') && isPi()) {
-        this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '/dev/serial0' })
-        }
-        if (fs.existsSync('/dev/ttyAMA0') && isPi()) {
-        //Pi5 uses a different UART name. See https://forums.raspberrypi.com/viewtopic.php?t=359132
-        this.serialDevices.push({ value: '/dev/ttyAMA0', label: '/dev/ttyAMA0', pnpId: '/dev/ttyAMA0' })
-        }
-        if (fs.existsSync('/dev/ttyAMA1') && isPi()) {
-        this.serialDevices.push({ value: '/dev/ttyAMA1', label: '/dev/ttyAMA1', pnpId: '/dev/ttyAMA1' })
-        }
-        if (fs.existsSync('/dev/ttyAMA2') && isPi()) {
-        this.serialDevices.push({ value: '/dev/ttyAMA2', label: '/dev/ttyAMA2', pnpId: '/dev/ttyAMA2' })
-        }
-        if (fs.existsSync('/dev/ttyAMA3') && isPi()) {
-        this.serialDevices.push({ value: '/dev/ttyAMA3', label: '/dev/ttyAMA3', pnpId: '/dev/ttyAMA3' })
-        }
-        if (fs.existsSync('/dev/ttyAMA4') && isPi()) {
-        this.serialDevices.push({ value: '/dev/ttyAMA4', label: '/dev/ttyAMA4', pnpId: '/dev/ttyAMA4' })
-        }
-        // rpi uart has different name under Ubuntu
-        const data = await si.osInfo()
-        if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
-        // console.log("Running Ubuntu")
-        this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '/dev/ttyS0' })
-        }
-        // jetson serial ports
-        if (fs.existsSync('/dev/ttyTHS1')) {
-        this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '/dev/ttyTHS1' })
-        }
-        if (fs.existsSync('/dev/ttyTHS2')) {
-        this.serialDevices.push({ value: '/dev/ttyTHS2', label: '/dev/ttyTHS2', pnpId: '/dev/ttyTHS2' })
-        }
-        if (fs.existsSync('/dev/ttyTHS3')) {
-        this.serialDevices.push({ value: '/dev/ttyTHS3', label: '/dev/ttyTHS3', pnpId: '/dev/ttyTHS3' })
-        }
-        // Orange Pi Zero3 serial ports
-        if (fs.existsSync('/dev/ttyS5') && isOrangePi()) {
-        this.serialDevices.push({ value: '/dev/ttyS5', label: '/dev/ttyS5', pnpId: '/dev/ttyS5' })
-        }
-        if (fs.existsSync('/dev/ttyAS5') && isOrangePi()) {
-        this.serialDevices.push({ value: '/dev/ttyAS5', label: '/dev/ttyAS5', pnpId: '/dev/ttyAS5' })
-        }
-        return callback(retError, this.serialDevices);
     }
 
     startPPP(device, baudRate, localIP, remoteIP, callback) {
@@ -219,8 +123,8 @@ class PPPConnection {
         }
 
         //ensure device string is valid in the serialdevices list
-        const validDevice = this.serialDevices.find(d => d.value === device);
-        if (!validDevice) {
+        const devicePath = getSerialPathFromValue(device, this.serialDevices);
+        if (!devicePath) {
             return callback(new Error('Invalid device selected'), {
                 selDevice: this.device,
                 selBaudRate: this.baudRate,
@@ -239,7 +143,7 @@ class PPPConnection {
         
         const args = [
             "pppd",
-            this.device,
+            devicePath,
             this.baudRate, // baud rate
             //'persist',          // enables faster termination
             //'holdoff', '1',     // minimum delay of 1 second between connection attempts
@@ -370,7 +274,7 @@ class PPPConnection {
             }
             
             // if this.device is not in the list, set it to first available device
-            if (this.device && !this.serialDevices.some(d => d.value === this.device.value)) {
+            if (this.device && !this.serialDevices.some(d => d.value === this.device)) {
                 this.device = this.serialDevices[0].value;
             }
             
