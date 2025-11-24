@@ -1,44 +1,11 @@
-const { autoDetect } = require('@serialport/bindings-cpp')
 const fs = require('fs')
 const events = require('events')
 const path = require('path')
 const { spawn, spawnSync } = require('child_process')
-const si = require('systeminformation')
 
 const mavManager = require('../mavlink/mavManager.js')
 const logpaths = require('./paths.js')
-
-function isPi () {
-  let cpuInfo = ''
-  try {
-    cpuInfo = fs.readFileSync('/proc/device-tree/compatible', { encoding: 'utf8' })
-  } catch (e) {
-    // if this fails, this is probably not a pi
-    return false
-  }
-
-  const model = cpuInfo
-    .split(',')
-    .filter(line => line.length > 0)
-
-  if (!model || model.length === 0) {
-    return false
-  }
-
-  return model[0] === 'raspberrypi'
-}
-
-function isOrangePi () {
-  let cpuInfo = ''
-  try {
-    cpuInfo = fs.readFileSync('/proc/device-tree/compatible', { encoding: 'utf8' })
-  } catch (e) {
-    // if this fails, this is probably not an Orange Pi
-    return false
-  }
-
-  return cpuInfo.toLowerCase().includes('orangepi')
-}
+const { detectSerialDevices, isModemManagerInstalled, isPi, getSerialPathFromValue } = require('./serialDetection.js')
 
 class FCDetails {
   constructor (settings) {
@@ -125,11 +92,11 @@ class FCDetails {
         if (this.activeDevice.inputType === 'UART') {
           let found = false
           for (let i = 0, len = devices.length; i < len; i++) {
-            if (this.activeDevice.serial.value === devices[i].value) {
+            if (this.activeDevice.serial === devices[i].value) {
               found = true
               this.startLink((err) => {
                 if (err) {
-                  console.log("Can't open found FC " + this.activeDevice.serial.value + ', resetting link')
+                  console.log("Can't open found FC " + this.activeDevice.serial + ', resetting link')
                   this.activeDevice = null
                   this.active = false
                 }
@@ -179,16 +146,7 @@ class FCDetails {
     }
   }
 
-  isModemManagerInstalled () {
-    // check ModemManager is installed
-    const ls = spawnSync('which', ['ModemManager'])
-    console.log(ls.stdout.toString())
-    if (ls.stdout.toString().includes('ModemManager')) {
-      return true
-    } else {
-      return false
-    }
-  }
+
 
   getUDPOutputs () {
     // get list of current UDP outputs
@@ -332,7 +290,7 @@ class FCDetails {
     if (this.activeDevice.inputType === 'UDP') {
       console.log('Opening UDP Link ' + '0.0.0.0:' + this.activeDevice.udpInputPort + ', MAV v' + this.activeDevice.mavversion)
     } else {
-      console.log('Opening UART Link ' + this.activeDevice.serial.value + ' @ ' + this.activeDevice.baud + ', MAV v' + this.activeDevice.mavversion)
+      console.log('Opening UART Link ' + this.activeDevice.serial + ' @ ' + this.activeDevice.baud + ', MAV v' + this.activeDevice.mavversion)
     }
     // this.outputs.push({ IP: newIP, port: newPort })
 
@@ -356,7 +314,8 @@ class FCDetails {
       cmd.push('0.0.0.0:' + this.UDPBPort)
     }
     if (this.activeDevice.inputType === 'UART') {
-      cmd.push(this.activeDevice.serial.value + ':' + this.activeDevice.baud)
+      const serialPath = getSerialPathFromValue(this.activeDevice.serial, this.serialDevices)
+      cmd.push(serialPath + ':' + this.activeDevice.baud)
     } else if (this.activeDevice.inputType === 'UDP') {
       cmd.push('0.0.0.0:' + this.activeDevice.udpInputPort)
     }
@@ -442,88 +401,37 @@ class FCDetails {
     }
   }
 
+  checkSerialPortIssues () {
+    // Check if ModemManager is installed
+    if (isModemManagerInstalled()) {
+      return new Error('The ModemManager package is installed. This must be uninstalled (via sudo apt remove modemmanager), due to conflicts with serial ports')
+    }
+
+    // Check if serial console is active on Raspberry Pi
+    if (fs.existsSync('/boot/cmdline.txt') && isPi()) {
+      const data = fs.readFileSync('/boot/cmdline.txt', { encoding: 'utf8', flag: 'r' })
+      if (data.includes('console=serial0')) {
+        return new Error('Serial console is active on /dev/serial0. Use raspi-config to deactivate it')
+      }
+    }
+
+    return null
+  }
+
   async getDeviceSettings (callback) {
     // get all serial devices
     this.serialDevices = []
     let retError = null
 
-    const Binding = autoDetect()
-    const ports = await Binding.list()
+    // Detect all serial devices using hardwareDetection module
+    this.serialDevices = await detectSerialDevices()
 
-    for (let i = 0, len = ports.length; i < len; i++) {
-      if (ports[i].pnpId !== undefined) {
-        // usb-ArduPilot_Pixhawk1-1M_32002A000847323433353231-if00
-        // console.log("Port: ", ports[i].pnpID);
-        let namePorts = ''
-        if (ports[i].pnpId.split('_').length > 2) {
-          namePorts = ports[i].pnpId.split('_')[1] + ' (' + ports[i].path + ')'
-        } else {
-          namePorts = ports[i].manufacturer + ' (' + ports[i].path + ')'
-        }
-        // console.log("Port: ", ports[i].pnpID);
-        this.serialDevices.push({ value: ports[i].path, label: namePorts, pnpId: ports[i].pnpId })
-      } else if (ports[i].manufacturer !== undefined) {
-        // on recent RasPiOS, the pnpID is undefined :(
-        const nameports = ports[i].manufacturer + ' (' + ports[i].path + ')'
-        this.serialDevices.push({ value: ports[i].path, label: nameports, pnpId: nameports })
-      }
-    }
-    // if the serial console or modemmanager are active on the Pi, return error
-    if (this.isModemManagerInstalled()) {
-      retError = Error('The ModemManager package is installed. This must be uninstalled (via sudo apt remove modemmanager), due to conflicts with serial ports')
-    }
-    if (fs.existsSync('/boot/cmdline.txt') && isPi()) {
-      const data = fs.readFileSync('/boot/cmdline.txt', { encoding: 'utf8', flag: 'r' })
-      if (data.includes('console=serial0')) {
-        retError = Error('Serial console is active on /dev/serial0. Use raspi-config to deactivate it')
-      }
-    }
-    // for the Ras Pi's inbuilt UART
-    if (fs.existsSync('/dev/serial0') && isPi()) {
-      this.serialDevices.push({ value: '/dev/serial0', label: '/dev/serial0', pnpId: '/dev/serial0' })
-    }
-    if (fs.existsSync('/dev/ttyAMA0') && isPi()) {
-      //Pi5 uses a different UART name. See https://forums.raspberrypi.com/viewtopic.php?t=359132
-      this.serialDevices.push({ value: '/dev/ttyAMA0', label: '/dev/ttyAMA0', pnpId: '/dev/ttyAMA0' })
-    }
-    if (fs.existsSync('/dev/ttyAMA1') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA1', label: '/dev/ttyAMA1', pnpId: '/dev/ttyAMA1' })
-    }
-    if (fs.existsSync('/dev/ttyAMA2') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA2', label: '/dev/ttyAMA2', pnpId: '/dev/ttyAMA2' })
-    }
-    if (fs.existsSync('/dev/ttyAMA3') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA3', label: '/dev/ttyAMA3', pnpId: '/dev/ttyAMA3' })
-    }
-    if (fs.existsSync('/dev/ttyAMA4') && isPi()) {
-      this.serialDevices.push({ value: '/dev/ttyAMA4', label: '/dev/ttyAMA4', pnpId: '/dev/ttyAMA4' })
-    }
-    // rpi uart has different name under Ubuntu
-    const data = await si.osInfo()
-    if (data.distro.toString().includes('Ubuntu') && fs.existsSync('/dev/ttyS0') && isPi()) {
-      // console.log("Running Ubuntu")
-      this.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '/dev/ttyS0' })
-    }
-    // jetson serial ports
-    if (fs.existsSync('/dev/ttyTHS1')) {
-      this.serialDevices.push({ value: '/dev/ttyTHS1', label: '/dev/ttyTHS1', pnpId: '/dev/ttyTHS1' })
-    }
-    if (fs.existsSync('/dev/ttyTHS2')) {
-      this.serialDevices.push({ value: '/dev/ttyTHS2', label: '/dev/ttyTHS2', pnpId: '/dev/ttyTHS2' })
-    }
-    if (fs.existsSync('/dev/ttyTHS3')) {
-      this.serialDevices.push({ value: '/dev/ttyTHS3', label: '/dev/ttyTHS3', pnpId: '/dev/ttyTHS3' })
-    }
-    // Orange Pi Zero3 serial ports
-    if (fs.existsSync('/dev/ttyS5') && isOrangePi()) {
-      this.serialDevices.push({ value: '/dev/ttyS5', label: '/dev/ttyS5', pnpId: '/dev/ttyS5' })
-    }
-    if (fs.existsSync('/dev/ttyAS5') && isOrangePi()) {
-      this.serialDevices.push({ value: '/dev/ttyAS5', label: '/dev/ttyAS5', pnpId: '/dev/ttyAS5' })
-    }
+    // Check for configuration issues
+    retError = this.checkSerialPortIssues()
+
     // set the active device as selected
     if (this.active && this.activeDevice && this.activeDevice.inputType === 'UART') {
-      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial.value,
+      return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial,
         this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion,
         this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, this.activeDevice.udpInputPort,
         this.inputTypes[0].value, this.inputTypes)
@@ -590,7 +498,7 @@ class FCDetails {
         this.activeDevice.inputType = 'UART'
         for (let i = 0, len = this.serialDevices.length; i < len; i++) {
           if (this.serialDevices[i].value === device) {
-            this.activeDevice.serial = this.serialDevices[i]
+            this.activeDevice.serial = this.serialDevices[i].value
             break
           }
         }
