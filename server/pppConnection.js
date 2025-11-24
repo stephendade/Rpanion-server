@@ -28,28 +28,34 @@ class PPPConnection {
         this.serialDevices = [];
         this.badbaudRate = false; // flag to indicate if the baud rate is not supported
         this.prevdata = null; // previous data for comparison
+        this.isQuitting  = false;
+        this.isManualStop = false; // flag to distinguish manual stop from process crash
 
         if (this.isConnected) {
-            const attemptPPPStart = () => {
-                this.startPPP(this.device, this.baudRate, this.localIP, this.remoteIP, (err, result) => {
-                    if (err) {
-                        if (err.message.includes('already connected')) {
-                            console.log('PPP connection is already established. Retrying in 1 second...');
-                            this.isConnected = false;
-                            this.setSettings();
-                            setTimeout(attemptPPPStart, 1000); // Retry after 1 second
+            // populate serial devices list and start PPP connection
+            this.getDevices((err, devices) => {
+                this.devices = devices;
+                const attemptPPPStart = () => {
+                    this.startPPP(this.device, this.baudRate, this.localIP, this.remoteIP, (err, result) => {
+                        if (err) {
+                            if (err.message.includes('already connected')) {
+                                console.log('PPP connection is already established. Retrying in 1 second...');
+                                this.isConnected = false;
+                                this.setSettings();
+                                setTimeout(attemptPPPStart, 1000); // Retry after 1 second
+                            } else {
+                                console.error('Error starting PPP connection:', err);
+                                this.isConnected = false;
+                                this.setSettings();
+                            }
                         } else {
-                            console.error('Error starting PPP connection:', err);
-                            this.isConnected = false;
-                            this.setSettings();
+                            console.log('PPP connection started successfully');
                         }
-                    } else {
-                        console.log('PPP connection started successfully');
-                    }
-                });
-            };
+                    });
+                };
 
-            attemptPPPStart();
+                attemptPPPStart();
+            });
         }
     }
 
@@ -63,16 +69,19 @@ class PPPConnection {
 
     quitting() {
         // stop the PPP connection if rpanion is quitting
+        this.isQuitting = true;
         if (this.pppProcess) {
             console.log('Stopping PPP connection on quit...');
+            // Remove all event listeners to prevent close handler from firing
+            this.pppProcess.removeAllListeners();
             this.pppProcess.kill();
+            this.pppProcess = null;
             try {
                 execSync('sudo pkill -SIGTERM pppd && sleep 1');
             } catch (error) {
                 console.error('Error stopping PPP connection on shutdown:', error);
             }
         }
-        console.log('PPPConnection quitting');
     }
 
     async getDevices (callback) {
@@ -177,11 +186,17 @@ class PPPConnection {
         this.pppProcess.stderr.on('data', (data) => {
             console.log("PPP Error: ", data.toString().trim());
         });
-        this.pppProcess.on('close', (code) => {
-            console.log("PPP process exited with code: ", code.toString().trim());
-            this.isConnected = false;
+        this.pppProcess.on('close', (code, signal) => {
+            console.log(`PPP process exited with code: ${code}, signal: ${signal} (isQuitting: ${this.isQuitting}, isManualStop: ${this.isManualStop})`);
+            // Don't treat signal-based terminations as unexpected (code 5 is typical for SIGTERM/SIGINT)
+            // These usually happen during application shutdown when Ctrl+C is pressed
+            const isSignalTermination = signal !== null || code === 5 || code === 2;
+            if (!this.isQuitting && !this.isManualStop && !isSignalTermination) {
+                this.isConnected = false;
+                this.setSettings();
+            }
             this.pppProcess = null; // reset the process reference
-            this.setSettings();
+            this.isManualStop = false; // reset flag for next connection
         });
         this.isConnected = true;
         this.setSettings();
@@ -211,6 +226,8 @@ class PPPConnection {
         if (this.pppProcess) {
             // Gracefully kill the PPP process
             console.log('Stopping PPP connection...');
+            // Set flag to prevent the close event handler from updating state
+            this.isManualStop = true;
             this.pppProcess.kill();
             execSync('sudo pkill -SIGTERM pppd');
             this.isConnected = false;
