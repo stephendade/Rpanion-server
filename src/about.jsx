@@ -19,6 +19,8 @@ class AboutPage extends basePage {
       diskSpaceStatus: '',
       showModal: false,
       showModalResult: "",
+      showResetModal: false,
+      resetMessage: ""
     }
 
   }
@@ -50,6 +52,52 @@ class AboutPage extends basePage {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${this.state.token}`
       }
+    });
+  }
+
+  confirmResetSettings = () => {
+    // user clicked the reset settings button
+    this.setState({ showResetModal: true });
+  }
+
+  handleCloseResetModal = () => {
+    // user does not want to reset settings
+    this.setState({ showResetModal: false, resetMessage: "" });
+  }
+
+  handleResetSettings = () => {
+    // user does want to reset settings
+    fetch('/api/resetsettings', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.state.token}`
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        this.setState({ 
+          resetMessage: data.message,
+          showResetModal: false 
+        });
+        // Show success message for a few seconds
+        setTimeout(() => {
+          this.setState({ resetMessage: "" });
+        }, 5000);
+      } else {
+        this.setState({ 
+          resetMessage: data.error || 'Failed to reset settings',
+          showResetModal: false 
+        });
+      }
+    })
+    .catch(error => {
+      this.setState({ 
+        resetMessage: 'Error resetting settings: ' + error.message,
+        showResetModal: false 
+      });
     });
   }
 
@@ -104,10 +152,16 @@ class AboutPage extends basePage {
         <p><Button size="sm" onClick={this.getlogs}>Download Logs</Button></p>
         <h2>Controls</h2>
         <p><Button size="sm" onClick={this.confirmShutdown}>Shutdown Companion Computer</Button></p>
+        <p><Button size="sm" variant="warning" onClick={this.confirmResetSettings}>Reset All Settings</Button></p>
+        {this.state.resetMessage && (
+          <div className="alert alert-info" role="alert">
+            {this.state.resetMessage}
+          </div>
+        )}
 
         <Modal show={this.state.showModal} onHide={this.handleCloseModal}>
           <Modal.Header closeButton>
-            <Modal.Title>Confirm</Modal.Title>
+            <Modal.Title>Confirm Shutdown</Modal.Title>
           </Modal.Header>
 
           <Modal.Body>
@@ -117,6 +171,29 @@ class AboutPage extends basePage {
           <Modal.Footer>
             <Button variant="secondary" onClick={this.handleShutdown}>Yes</Button>
             <Button variant="primary" onClick={this.handleCloseModal}>No</Button>
+          </Modal.Footer>
+        </Modal>
+
+        <Modal show={this.state.showResetModal} onHide={this.handleCloseResetModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Confirm Reset Settings</Modal.Title>
+          </Modal.Header>
+
+          <Modal.Body>
+            <p>Are you sure you want to reset all settings to defaults?</p>
+            <p className="text-warning">This will clear all configuration including:</p>
+            <ul>
+              <li>Flight controller settings</li>
+              <li>Video stream settings</li>
+              <li>PPP settings</li>
+              <li>NTRIP settings</li>
+            </ul>
+            <p className="text-danger"><strong>You will need to restart the application for changes to take effect.</strong></p>
+          </Modal.Body>
+
+          <Modal.Footer>
+            <Button variant="danger" onClick={this.handleResetSettings}>Yes, Reset All Settings</Button>
+            <Button variant="primary" onClick={this.handleCloseResetModal}>Cancel</Button>
           </Modal.Footer>
         </Modal>
 

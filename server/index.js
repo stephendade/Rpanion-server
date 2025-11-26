@@ -894,6 +894,30 @@ app.post('/api/shutdowncc', authenticateToken, function () {
   aboutPage.shutdownCC()
 })
 
+app.post('/api/resetsettings', authenticateToken, function (req, res) {
+  // User wants to reset all settings to defaults
+  try {
+    const fs = require('fs')
+    const settingsPath = logpaths.settingsFile
+    
+    // Delete the settings file
+    if (fs.existsSync(settingsPath)) {
+      fs.unlinkSync(settingsPath)
+      console.log('Settings file deleted:', settingsPath)
+    }
+    
+    // Create empty settings object
+    fs.writeFileSync(settingsPath, '{}')
+    console.log('Settings reset to defaults')
+    
+    res.setHeader('Content-Type', 'application/json')
+    res.send(JSON.stringify({ success: true, message: 'Settings have been reset. Please restart the application for changes to take effect.' }))
+  } catch (error) {
+    console.error('Error resetting settings:', error)
+    res.status(500).send(JSON.stringify({ error: 'Failed to reset settings: ' + error.message }))
+  }
+})
+
 app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
