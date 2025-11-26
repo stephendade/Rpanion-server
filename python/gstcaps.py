@@ -145,7 +145,7 @@ for device in devices:
         caps.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'width': 640,
                      'format': 'video/x-raw', 'fpsmax': '90', 'fps': []})
 
-        path = "/dev/video0"
+        # path = "/dev/video0"
         name = "CSI Port Camera"
     # If legacy camera stack on RasPiOS
     elif "mmal service" in name:
