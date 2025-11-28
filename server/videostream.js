@@ -27,27 +27,63 @@ class videoStream {
     // need to scan for video devices first though
     if (this.active) {
       this.active = false
+      this.initializeVideo()
+    }
+  }
+
+  async initializeVideo() {
+    // Initialize video streaming on startup using promises to avoid race conditions
+    try {
+      await this.getVideoDevicesPromise()
+      await this.startStopStreamingPromise(
+        true,
+        this.savedDevice.device,
+        this.savedDevice.height,
+        this.savedDevice.width,
+        this.savedDevice.format,
+        this.savedDevice.rotation,
+        this.savedDevice.bitrate,
+        this.savedDevice.fps,
+        this.savedDevice.transport,
+        this.savedDevice.useUDPIP,
+        this.savedDevice.useUDPPort,
+        this.savedDevice.useTimestamp,
+        this.savedDevice.useCameraHeartbeat,
+        this.savedDevice.mavStreamSelected,
+        this.savedDevice.compression,
+        this.savedDevice.customRTSPSource
+      )
+    } catch (error) {
+      // failed setup, reset settings
+      console.log('Reset video - initialization failed:', error)
+      this.resetVideo()
+    }
+  }
+
+  getVideoDevicesPromise() {
+    // Promise wrapper for getVideoDevices
+    return new Promise((resolve, reject) => {
       this.getVideoDevices((error) => {
-        if (!error) {
-          this.startStopStreaming(true, this.savedDevice.device, this.savedDevice.height,
-            this.savedDevice.width, this.savedDevice.format,
-            this.savedDevice.rotation, this.savedDevice.bitrate, this.savedDevice.fps, this.savedDevice.transport,
-            this.savedDevice.useUDPIP, this.savedDevice.useUDPPort, this.savedDevice.useTimestamp, this.savedDevice.useCameraHeartbeat,
-            this.savedDevice.mavStreamSelected, this.savedDevice.compression, this.savedDevice.customRTSPSource, (err) => {
-              if (err) {
-                // failed setup, reset settings
-                console.log('Reset video4')
-                this.resetVideo()
-              }
-            })
+        if (error) {
+          reject(error)
         } else {
-          // failed setup, reset settings
-          console.log('Reset video3')
-          this.resetVideo()
-          console.log(error)
+          resolve()
         }
       })
-    }
+    })
+  }
+
+  startStopStreamingPromise(active, device, height, width, format, rotation, bitrate, fps, transport, useUDPIP, useUDPPort, useTimestamp, useCameraHeartbeat, mavStreamSelected, compression, customRTSPSource) {
+    // Promise wrapper for startStopStreaming
+    return new Promise((resolve, reject) => {
+      this.startStopStreaming(active, device, height, width, format, rotation, bitrate, fps, transport, useUDPIP, useUDPPort, useTimestamp, useCameraHeartbeat, mavStreamSelected, compression, customRTSPSource, (err, active, addresses) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve({ active, addresses })
+        }
+      })
+    })
   }
 
   // Format and store all the possible rtsp addresses
@@ -110,6 +146,25 @@ class videoStream {
   // video streaming
   getVideoDevices (callback) {
     // get all video device details
+    //dont update if streaming is running, as some camera won't be detected if in use
+    if (this.deviceStream !== null) {
+      return callback(null, this.devices, this.active, this.savedDevice.device, this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1],
+        this.savedDevice.rotation,
+        this.savedDevice.bitrate,
+        this.savedDevice.fps,
+        this.savedDevice.useUDPIP,
+        this.savedDevice.useUDPPort,
+        this.savedDevice.useTimestamp,
+        (this.devices.filter(it => it.value === this.savedDevice.device)[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])[0].fps !== undefined) ? this.devices.filter(it => it.value === this.savedDevice.device)[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])[0].fps : [],
+        this.devices.filter(it => it.value === this.savedDevice.device)[0].caps.filter(it => it.value === this.savedDevice.width.toString() + 'x' + this.savedDevice.height.toString() + 'x' + this.savedDevice.format.toString().split('/')[1])[0].fpsmax,
+        this.devices.filter(it => it.value === this.savedDevice.device)[0].caps,
+        this.savedDevice.useCameraHeartbeat,
+        { label: this.savedDevice.mavStreamSelected.toString(), value: this.savedDevice.mavStreamSelected },
+        this.savedDevice.compression,
+        this.savedDevice.transport,
+        this.getTransportOptions(),
+        this.savedDevice.customRTSPSource)
+    }
     // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, cameraHeartbeat, selMavURI, compression, transport, transportOptions, customRTSPSource
     exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
@@ -149,6 +204,13 @@ class videoStream {
           if (seldevice.length !== 1) {
             // bad settings
             console.error('Bad video settings1 Resetting')
+            // if video is active but bad settings, reset
+            if (this.active) {
+              //stop streaming
+              this.startStopStreaming(false, '', 0, 0, '', 0, 0, 0, '', '', 0, false, false, '', '', '', () => {
+                console.log('Stopped streaming due to bad settings')
+              })
+            }
             this.resetVideo()
             return callback(null, this.devices, this.active, this.devices[0].value, this.devices[0].caps[0].value,
               0, 1100, fpsSelected, '127.0.0.1', 5400, false,
