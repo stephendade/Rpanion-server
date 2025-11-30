@@ -169,7 +169,7 @@ function getVPNStatusWireguard (errpass, callback) {
       console.log('Wireguard not installed:', errorwg?.code || 'binary not found')
       return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
     } else {
-      execFile('python', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
+      execFile('python3', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
         if (error !== null) {
           console.error(`exec error: ${error}`)
           return callback(stderr, { installed: false, status: false, text: JSON.parse('[]') })
