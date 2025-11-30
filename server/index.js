@@ -49,7 +49,7 @@ let tokenBlacklist = [];
 app.use(limiter)
 
 // use file uploader for Wireguard profiles
-app.use(fileUpload({ limits: { fileSize: 500 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
+app.use(fileUpload({ limits: { fileSize: 1000 }, abortOnLimit: true, useTempFiles: true, tempFileDir: '/tmp/', safeFileNames: true, preserveExtension: 4 }))
 
 // Init settings before running the other classes
 settings.init({
