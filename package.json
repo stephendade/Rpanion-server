@@ -8,7 +8,7 @@
     "bcryptjs": "3.0.2",
     "bootstrap": "5.3.1",
     "compression": "1.8.1",
-    "express": "5.1.0",
+    "express": "5.2.1",
     "express-fileupload": "1.4.0",
     "express-rate-limit": "7.4.1",
     "express-validator": "7.0.1",
