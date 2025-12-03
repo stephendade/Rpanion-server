@@ -32,7 +32,7 @@ class FCPage extends basePage {
       enableUDPB: false,
       UDPBPort: 14550,
       enableDSRequest: false,
-      tlogging: false
+      doLogging: false
     }
 
     // Socket.io client for reading in analog update values
@@ -79,8 +79,8 @@ class FCPage extends basePage {
     this.setState({ enableTCP: event.target.checked });
   }
 
-  handleTloggingChange = (event) => {
-    this.setState({ tlogging: event.target.checked });
+  handleLoggingChange = (event) => {
+    this.setState({ doLogging: event.target.checked });
   }
 
   handleDSRequest = (event) => {
@@ -115,7 +115,7 @@ class FCPage extends basePage {
         enableUDPB: this.state.enableUDPB,
         UDPBPort: this.state.UDPBPort,
         enableDSRequest: this.state.enableDSRequest,
-        tlogging: this.state.tlogging
+        doLogging: this.state.doLogging
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
   }
@@ -325,11 +325,11 @@ class FCPage extends basePage {
               </div>
             </div>
             <br />
-            <p><i>Record MAVLink telemetry stream to logfile</i></p>
+            <p><i>Record logs (binlog and tlog)</i></p>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-5 col-form-label">Enable telemetry logging (tlogs)</label>
+              <label className="col-sm-5 col-form-label">Enable flight controller logging</label>
               <div className="col-sm-7">
-              <input type="checkbox" checked={this.state.tlogging} disabled={this.state.telemetryStatus} onChange={this.handleTloggingChange} />
+              <input type="checkbox" checked={this.state.doLogging} disabled={this.state.telemetryStatus} onChange={this.handleLoggingChange} />
               </div>
             </div>
           </Accordion.Body>
