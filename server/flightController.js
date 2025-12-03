@@ -66,7 +66,10 @@ class FCDetails {
     // Current binlog via mavlink-router
     this.binlog = null
 
-    this.tlogging = false
+    this.doLogging = false
+
+    // DataFlash logger process
+    this.dflogger = null
 
     // Is the connection active?
     this.active = false
@@ -83,7 +86,7 @@ class FCDetails {
     this.enableUDPB = this.settings.value('flightcontroller.enableUDPB', true)
     this.UDPBPort = this.settings.value('flightcontroller.UDPBPort', 14550)
     this.enableDSRequest = this.settings.value('flightcontroller.enableDSRequest', false)
-    this.tlogging = this.settings.value('flightcontroller.tlogging', false)
+    this.doLogging = this.settings.value('flightcontroller.doLogging', false)
     this.active = this.settings.value('flightcontroller.active', false)
 
     if (this.active) {
@@ -285,6 +288,57 @@ class FCDetails {
     }
   }
 
+  startDFLogger () {
+    // Start the dataflash logger Python process
+    if (this.dflogger !== null) {
+      console.log('DFLogger already running')
+      return
+    }
+
+    console.log('Starting DataFlash logger')
+    const pythonPath = 'python3'
+    const dfloggerPath = path.join(__dirname, '..', 'python', 'dflogger.py')
+    
+    this.dflogger = spawn(pythonPath, [
+      dfloggerPath,
+      '--connection', 'udp:127.0.0.1:14541',
+      '--logdir', logpaths.flightsLogsDir,
+      '--rotate-on-disarm'
+    ])
+
+    this.dflogger.stdout.on('data', (data) => {
+      console.log(`DFLogger: ${data}`)
+    })
+
+    this.dflogger.stderr.on('data', (data) => {
+      console.error(`DFLogger stderr: ${data}`)
+    })
+
+    this.dflogger.on('close', (code) => {
+      console.log(`DFLogger exited with code ${code}`)
+      this.dflogger = null
+    })
+  }
+
+  stopDFLogger () {
+    // Stop the dataflash logger Python process
+    if (this.dflogger === null) {
+      console.log('DFLogger not running')
+      return
+    }
+
+    console.log('Stopping DataFlash logger')
+    this.dflogger.kill('SIGTERM')
+    this.dflogger = null
+  }
+
+  getDFLoggerStatus () {
+    // Get the current status of the dataflash logger
+    return {
+      running: this.dflogger !== null
+    }
+  }
+
   startLink (callback) {
     // start the serial link
     if (this.activeDevice.inputType === 'UDP') {
@@ -295,7 +349,7 @@ class FCDetails {
     // this.outputs.push({ IP: newIP, port: newPort })
 
     // build up the commandline for mavlink-router
-    const cmd = ['-e', '127.0.0.1:14540', '--tcp-port']
+    const cmd = ['-e', '127.0.0.1:14540', '-e', '127.0.0.1:14541', '--tcp-port']
     if (this.enableTCP === true) {
       cmd.push('5760')
     } else {
@@ -305,11 +359,11 @@ class FCDetails {
       cmd.push('-e')
       cmd.push(this.UDPoutputs[i].IP + ':' + this.UDPoutputs[i].port)
     }
-    cmd.push('--log')
-    cmd.push(logpaths.flightsLogsDir)
-    if (this.tlogging === true) {
-      cmd.push('--telemetry-log')
-    }
+    //cmd.push('--log')
+    //cmd.push(logpaths.flightsLogsDir)
+    //if (this.doLogging === true) {
+    //  cmd.push('--telemetry-log')
+    //}
     if (this.enableUDPB === true) {
       cmd.push('0.0.0.0:' + this.UDPBPort)
     }
@@ -383,6 +437,11 @@ class FCDetails {
     })
     this.eventEmitter.emit('newLink')
 
+    // Start dataflash logger if logging enabled
+    if (this.doLogging === true) {
+      this.startDFLogger()
+    }
+
     this.active = true
     return callback(null, true)
   }
@@ -390,6 +449,12 @@ class FCDetails {
   closeLink (callback) {
     // stop the serial link
     this.active = false
+    
+    // Stop dataflash logger if running
+    if (this.dflogger !== null) {
+      this.stopDFLogger()
+    }
+    
     if (this.router && this.router.exitCode === null) {
       this.router.kill('SIGINT')
       console.log('Trying to close router')
@@ -433,18 +498,18 @@ class FCDetails {
     if (this.active && this.activeDevice && this.activeDevice.inputType === 'UART') {
       return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial,
         this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion,
-        this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, this.activeDevice.udpInputPort,
+        this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.doLogging, this.activeDevice.udpInputPort,
         this.inputTypes[0].value, this.inputTypes)
     } else if (this.active && this.activeDevice && this.activeDevice.inputType === 'UDP') {
       return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [], this.baudRates[3].value,
         this.mavlinkVersions, this.activeDevice.mavversion, this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, this.activeDevice.udpInputPort,
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.doLogging, this.activeDevice.udpInputPort,
         this.inputTypes[1].value, this.inputTypes)
     } else {
       // no connection
       return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [],
         this.baudRates[3].value, this.mavlinkVersions, this.mavlinkVersions[1].value, this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.tlogging, 9000, this.inputTypes[0].value, this.inputTypes)
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.doLogging, 9000, this.inputTypes[0].value, this.inputTypes)
     }
   }
 
@@ -474,7 +539,7 @@ class FCDetails {
   }
 
   startStopTelemetry (device, baud, mavversion, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest,
-                      tlogging, inputType, udpInputPort, callback) {
+                      doLogging, inputType, udpInputPort, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
@@ -483,7 +548,7 @@ class FCDetails {
     this.enableUDPB = enableUDPB
     this.UDPBPort = UDPBPort
     this.enableDSRequest = enableDSRequest
-    this.tlogging = tlogging
+    this.doLogging = doLogging
 
     if (this.m) {
       this.m.enableDSRequest = enableDSRequest
@@ -565,7 +630,7 @@ class FCDetails {
       this.settings.setValue('flightcontroller.enableUDPB', this.enableUDPB)
       this.settings.setValue('flightcontroller.UDPBPort', this.UDPBPort)
       this.settings.setValue('flightcontroller.enableDSRequest', this.enableDSRequest)
-      this.settings.setValue('flightcontroller.tlogging', this.tlogging)
+      this.settings.setValue('flightcontroller.doLogging', this.doLogging)
       this.settings.setValue('flightcontroller.active', this.active)
       console.log('Saved FC settings')
     } catch (e) {

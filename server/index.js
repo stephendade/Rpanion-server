@@ -74,7 +74,6 @@ const SHUTDOWN_TIMEOUT = 10000 // 10 seconds
 
 async function gracefulShutdown(signal, exitCode = 0) {
   if (isShuttingDown) {
-    console.log('Shutdown already in progress...')
     return
   }
   
@@ -99,7 +98,6 @@ async function gracefulShutdown(signal, exitCode = 0) {
             console.error('Error closing HTTP server:', err)
             reject(err)
           } else {
-            console.log('HTTP server closed')
             resolve()
           }
         })
@@ -839,7 +837,7 @@ app.get('/api/FCOutputs', authenticateToken, (req, res) => {
 app.get('/api/FCDetails', authenticateToken, (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   fcManager.getDeviceSettings((err, devices, bauds, seldevice, selbaud, mavers, selmav,
-    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, tlogging,
+    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, doLogging,
     udpInputPort, selInputType, inputTypes) => {
     // hacky way to pass through the
     if (!err) {
@@ -858,7 +856,7 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         enableUDPB,
         UDPBPort,
         enableDSRequest,
-        tlogging,
+        doLogging,
         udpInputPort,
         selInputType,
         inputTypes
@@ -879,7 +877,7 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         enableUDPB,
         UDPBPort,
         enableDSRequest,
-        tlogging,
+        doLogging,
         udpInputPort,
         selInputType,
         inputTypes
@@ -918,7 +916,7 @@ app.post('/api/resetsettings', authenticateToken, function (req, res) {
   }
 })
 
-app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('tlogging').isBoolean()], function (req, res) {
+app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('doLogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -928,7 +926,7 @@ app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isI
 
   fcManager.startStopTelemetry(req.body.device, req.body.baud, req.body.mavversion, req.body.enableHeartbeat,
                                req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
-                               req.body.tlogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
+                               req.body.doLogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);
