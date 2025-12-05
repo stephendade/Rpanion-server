@@ -1,6 +1,6 @@
 {
   "name": "rpanion-server",
-  "version": "0.11.4",
+  "version": "0.12.0",
   "description": "A node.js based server for companion computers used in Mavlink-based vehicles (ie Ardupilot, PX4). It presents a web-based interface (running on the companion computer), where system settings such as network, telemetry and video streaming can be configured from.",
   "private": true,
   "secure": false,

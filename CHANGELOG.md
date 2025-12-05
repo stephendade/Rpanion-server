@@ -1,6 +1,21 @@
 ### Changelog
+#### [v0.12.0](https://github.com/stephendade/Rpanion-server/compare/v0.11.4...v0.12.0)
+ - Flight Controller: Add UDP (network) support
+ - PPP: Add PPP link management to flight controller
+ - Build: Include mavlink-router as a binary instead of compiling from source
+ - Network: Fix nmcli permissions
+ - Build: remove unused packages
+ - Network: Better Wifi scanning
+ - GUI: Use accordian controls, better IP address controls and select controls
+ - Video: Add support for RTSP sources
+ - GUI: Better standardisation on react-bootstrap controls
+ - Build: Add support for Orange Pi Zero 3
+ - Video: Large latency improvements
+ - Video: Fix cameras not being enabled on boot
+ - VPN: Fix Wireguard and Zerotier permissions
+ - Logging: Use purpose-built dflogger instead of mavlink-router for logging
 
-#### [v0.11.1](https://github.com/stephendade/Rpanion-server/compare/v0.11.0...v0.11.1)
+#### [v0.11.4](https://github.com/stephendade/Rpanion-server/compare/v0.11.0...v0.11.4)
  - Migrate to using debian packages for release
  - Use specific "rpanion" user with proper permissions for networking and vpn management
  - Use ``/etc/rpanion-server`` to store logs and user files when running from deb package
