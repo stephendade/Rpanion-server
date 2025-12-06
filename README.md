@@ -102,11 +102,10 @@ curl -s https://install.zerotier.com | sudo bash
 sudo apt install wireguard wireguard-tools
 ```
 
-Download Rpanion-server from the releases page.
-
-Then install Rpanion-server:
+Download Rpanion-server from the releases page, then install Rpanion-server:
 ```
-sudo dpkg -i rpanion-server-xxx.deb
+wget https://github.com/stephendade/Rpanion-server/releases/download/v0.12.0/rpanion-server_0.12.0_arm64.deb
+sudo dpkg -i rpanion-server_0.12.0_arm64.deb
 ```
 
 For device-specific configurations, see the ``./deploy`` folder for Jetson, X86 and Raspberry Pi (RasPiOS and Ubuntu) scripts.
