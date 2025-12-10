@@ -19,6 +19,8 @@ This is a node.js based server for companion computers used in Mavlink-based veh
 It presents a web-based interface (running on the companion computer), where system settings such as network,
 telemetry and video streaming can be configured from.
 
+Other functions such as log file management, NTRIP input and PPP connections are also supported.
+
 ## Supported Boards
 
 | Board | Compatible OS |
