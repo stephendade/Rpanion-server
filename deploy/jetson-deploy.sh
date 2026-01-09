@@ -15,14 +15,13 @@ sudo systemctl disable nvgetty.service
 
 sudo systemctl disable dnsmasq
 
-sudo apt-get install -y ca-certificates curl gnupg nvidia-l4t-gstreamer
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 #Ubuntu 18 (Jetson) doesn't like modern nodejs
 if [ "$ID" == "ubuntu" ] && [ "$VERSION_CODENAME" == "bionic" ]; then
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_16.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+    curl -fsSL https://deb.nodesource.com/setup_16.x | sudo bash -
+    sudo apt-get install -y nodejs
 else
-    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+    sudo apt-get install -y nodejs
 fi
 
 
