@@ -15,16 +15,6 @@ sudo systemctl disable nvgetty.service
 
 sudo systemctl disable dnsmasq
 
-#Ubuntu 18 (Jetson) doesn't like modern nodejs
-if [ "$ID" == "ubuntu" ] && [ "$VERSION_CODENAME" == "bionic" ]; then
-    curl -fsSL https://deb.nodesource.com/setup_16.x | sudo bash -
-    sudo apt-get install -y nodejs
-else
-    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
-    sudo apt-get install -y nodejs
-fi
-
-
 sudo apt update
 sudo apt install -y nodejs
 

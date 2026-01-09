@@ -41,9 +41,6 @@ sudo apt -y install python3-picamera2 python3-libcamera python3-kms++
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
 
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
-sudo apt-get install -y nodejs
-
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
 
