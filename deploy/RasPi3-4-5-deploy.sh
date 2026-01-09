@@ -21,7 +21,7 @@ fi
 # See https://forums.raspberrypi.com/viewtopic.php?t=359132
 if [ -e "/proc/device-tree/compatible" ]; then
     if grep -q "5-model-bbrcm" "/proc/device-tree/compatible"; then
-        echo "dtparam=uart0=on" | sudo tee -a /boot/config.txt >/dev/null
+        echo "dtparam=uart0=on" | sudo tee -a /boot/firmware/config.txt >/dev/null
     else
         # Enable serial, disable console
         sudo raspi-config nonint do_serial 2
@@ -41,13 +41,8 @@ sudo apt -y install python3-picamera2 python3-libcamera python3-kms++
 sudo systemctl disable dnsmasq
 sudo systemctl enable NetworkManager
 
-sudo apt install -y ca-certificates curl gnupg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
-sudo apt update
-sudo apt install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
+sudo apt-get install -y nodejs
 
 ## Configure nmcli to not need sudo
 sudo sed -i.bak -e '/^\[main\]/aauth-polkit=false' /etc/NetworkManager/NetworkManager.conf
