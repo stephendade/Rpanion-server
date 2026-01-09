@@ -462,9 +462,9 @@ class videoStream {
       return
     }
 
-    if (data.targetComponent === minimal.MavComponent.CAMERA &&
-      packet.header.msgid === common.CommandLong.MSG_ID &&
-      data._param1 === common.CameraInformation.MSG_ID) {
+    if (packet.header.msgid === common.CommandLong.MSG_ID &&
+      data._param1 === common.CameraInformation.MSG_ID && 
+      data.targetComponent === minimal.MavComponent.CAMERA) {
       console.log('Responding to MAVLink request for CameraInformation')
 
       const senderSysId = packet.header.sysid
@@ -492,8 +492,8 @@ class videoStream {
       msg.gimbalDeviceId = 0
       this.eventEmitter.emit('camerainfo', msg, senderSysId, senderCompId, targetComponent)
 
-    } else if (data.targetComponent === minimal.MavComponent.CAMERA &&
-      packet.header.msgid === common.CommandLong.MSG_ID &&
+    } else if (packet.header.msgid === common.CommandLong.MSG_ID &&
+      data.targetComponent === minimal.MavComponent.CAMERA &&
       data._param1 === common.VideoStreamInformation.MSG_ID) {
 
       console.log('Responding to MAVLink request for VideoStreamInformation')
