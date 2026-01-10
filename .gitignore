@@ -9,6 +9,9 @@
 # production
 /build
 
+# photo/video media
+/media
+
 # misc
 .DS_Store
 .env
