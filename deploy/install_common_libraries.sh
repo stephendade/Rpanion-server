@@ -7,7 +7,7 @@ set -x
 sudo apt update
 sudo apt upgrade -y
 sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-0 gir1.2-gst-rtsp-server-1.0 gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
-sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq wireless-tools iw python3-dev gstreamer1.0-x ppp
+sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq wireless-tools iw python3-dev gstreamer1.0-x ppp python3-venv
 
 ## Pymavlink
 sudo apt install -y python3-lxml python3-numpy
@@ -27,6 +27,11 @@ if command -v node &> /dev/null; then
     fi
 fi
 
+# Check if running in github CI. If so, don't install nodejs here
+if [ "$GITHUB_ACTIONS" == "true" ]; then
+    SKIP_NODE_INSTALL=true
+fi
+
 # Get OS info for version check
 source /etc/os-release
 if [ "$SKIP_NODE_INSTALL" != "true" ]; then
@@ -43,3 +48,6 @@ fi
 ## Zerotier and wireguard
 curl -s https://install.zerotier.com | sudo bash
 sudo apt install -y wireguard wireguard-tools
+
+## Python virtualenv
+../python/setup-venv.sh

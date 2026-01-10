@@ -2,7 +2,7 @@
 # Setup system user
 if ! getent passwd "rpanion" >/dev/null
 then
-    adduser --system --group --home /home/rpanion --quiet rpanion
+    adduser --system --group --quiet rpanion
 fi
 
 sudo usermod -a -G plugdev rpanion
@@ -45,9 +45,4 @@ EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control
 
-
-#install pymavlink
-echo "Installing pymavlink Python package to rpanion..."
-sudo -u rpanion PIP_BREAK_SYSTEM_PACKAGES=1 pip install pymavlink --user
-sudo -u rpanion echo "export PATH=\$PATH:/home/rpanion/.local/bin" >> /home/rpanion/.profile
 

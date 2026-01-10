@@ -3,6 +3,7 @@
 */
 const path = require('path')
 const { exec, execFile } = require('child_process')
+const logpaths = require('./paths.js')
 
 function getVPNStatusZerotier (errpass, callback) {
   execFile('which', ['zerotier-cli'], (errorzt, stdoutzt, stderrzt) => {
@@ -169,7 +170,8 @@ function getVPNStatusWireguard (errpass, callback) {
       console.log('Wireguard not installed:', errorwg?.code || 'binary not found')
       return callback(null, { installed: false, status: false, text: JSON.parse('[]') })
     } else {
-      execFile('python3', ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
+      const pythonPath = logpaths.getPythonPath()
+      execFile(pythonPath, ['./python/wireguardconfig.py'], (error, stdout, stderr) => {
         if (error !== null) {
           console.error(`exec error: ${error}`)
           return callback(stderr, { installed: false, status: false, text: JSON.parse('[]') })

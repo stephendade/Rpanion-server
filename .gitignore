@@ -31,3 +31,5 @@ settingsTest.json
 /local_modules/long/node_modules
 
 /rpanion-server_*
+
+/python/.venv
