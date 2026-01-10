@@ -296,7 +296,7 @@ class FCDetails {
     }
 
     console.log('Starting DataFlash logger')
-    const pythonPath = 'python3'
+    const pythonPath = logpaths.getPythonPath()
     const dfloggerPath = path.join(__dirname, '..', 'python', 'dflogger.py')
     
     this.dflogger = spawn(pythonPath, [

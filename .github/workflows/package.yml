@@ -11,6 +11,10 @@ jobs:
         steps:
         - uses: actions/checkout@v6
 
+        - name: Install packages
+          run: |
+            cd ./deploy && ./install_common_libraries.sh
+            
         - name: Use Node.js 24.x
           uses: actions/setup-node@v6
           with:

@@ -3,6 +3,7 @@ const os = require('os')
 const si = require('systeminformation')
 const events = require('events')
 const { minimal, common } = require('node-mavlink')
+const logpaths = require('./paths.js')
 
 class videoStream {
   constructor (settings) {
@@ -166,7 +167,8 @@ class videoStream {
         this.savedDevice.customRTSPSource)
     }
     // callback is: err, devices, active, seldevice, selRes, selRot, selbitrate, selfps, SeluseUDPIP, SeluseUDPPort, timestamp, fps, FPSMax, vidres, cameraHeartbeat, selMavURI, compression, transport, transportOptions, customRTSPSource
-    exec('python3 ./python/gstcaps.py', (error, stdout, stderr) => {
+    const pythonPath = logpaths.getPythonPath()
+    exec(`${pythonPath} ./python/gstcaps.py`, (error, stdout, stderr) => {
       const warnstrings = ['DeprecationWarning', 'gst_element_message_full_with_details', 'camera_manager.cpp', 'Unsupported V4L2 pixel format']
       if (stderr && !warnstrings.some(wrn => stderr.includes(wrn))) {
         console.error(`exec error: ${error}`)
@@ -366,7 +368,8 @@ class videoStream {
 
       console.log('Starting video with args: ' + args.toString())
 
-      this.deviceStream = spawn('python3', args)
+      const pythonPath = logpaths.getPythonPath()
+      this.deviceStream = spawn(pythonPath, args)
 
       try {
         if (this.deviceStream === null) {
