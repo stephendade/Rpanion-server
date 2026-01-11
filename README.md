@@ -71,7 +71,7 @@ First install the required packages:
 sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-0 gir1.2-gst-rtsp-server-1.0 
 sudo apt install -y gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
 sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq wireless-tools iw
-sudo apt install -y python3-lxml python3-numpy gpsbabel zip python3-dev gstreamer1.0-x ppp
+sudo apt install -y python3-lxml python3-numpy gpsbabel zip python3-dev gstreamer1.0-x ppp python3-venv
 ```
 
 If running on RasPiOS, install the libcamera drivers:
@@ -85,15 +85,10 @@ If running on a NVIDIA Jetson Orin, install the hardware accelerated gstreamer p
 sudo apt install -y nvidia-l4t-gstreamer
 ```
 
-Install Nodejs:
+Install Nodejs (from https://deb.nodesource.com/):
 ```
-sudo apt install -y ca-certificates curl gnupg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
-
-sudo apt update
-sudo apt install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
+sudo apt-get install -y nodejs
 ```
 
 
@@ -145,7 +140,7 @@ https://www.xmodulo.com/change-usb-device-permission-linux.html
 The mavlink-router (https://github.com/mavlink/mavlink-router) software is used for backend routing and is required to be installed.
 
 Follow the scripts in the ``/deploy`` folder for your selected platform to set up the
-development environment. The ``./deploy/devExtras.sh`` contains additional packages to install.
+development environment.
 
 Running in development mode allows for any code changes to trigger a restart of Rpanion-server. 
 

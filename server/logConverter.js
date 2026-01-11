@@ -26,7 +26,8 @@ class logConverter {
       if (this.options.doLogConversion) {
         try {
           console.log('Doing log conversion...')
-          this.converterPid = spawn('python3', [this.pythonScript, logpaths.flightsLogsDir])
+          const pythonPath = logpaths.getPythonPath()
+          this.converterPid = spawn(pythonPath, [this.pythonScript, logpaths.flightsLogsDir])
           this.converterPid.stdout.on('data', (data) => {
             console.log(`stdout from log converter: ${data}`)
           })
