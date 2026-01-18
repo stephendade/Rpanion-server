@@ -137,10 +137,10 @@ https://www.xmodulo.com/change-usb-device-permission-linux.html
 
 ## Building and Running in development mode
 
-The mavlink-router (https://github.com/mavlink/mavlink-router) software is used for backend routing and is required to be installed.
-
 Follow the scripts in the ``/deploy`` folder for your selected platform to set up the
 development environment.
+
+Then run the ``devExtras.sh`` file to download a compiled ``mavlink-router`` binary.
 
 Running in development mode allows for any code changes to trigger a restart of Rpanion-server. 
 
