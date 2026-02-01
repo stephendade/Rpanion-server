@@ -330,7 +330,7 @@ function editConnectionAttached (conName, conSettings, callback) {
 
 function editConnectionIP (conName, conSettings, callback) {
   // first sort out the IP Addressing (DHCP/static) for LAN and Wifi Client
-  if (Object.keys(conSettings.ssid).length === 0 || conSettings.mode === 'infrastructure') {
+  if (!conSettings.ssid || Object.keys(conSettings.ssid).length === 0 || conSettings.mode === 'infrastructure') {
     if (conSettings.ipaddresstype === 'auto') {
       execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'ipv4.method', 'auto', 'ipv4.addresses', ''], (error, stdout, stderr) => {
         if (stderr) {
@@ -341,7 +341,7 @@ function editConnectionIP (conName, conSettings, callback) {
           return callback(null, 'EditOK')
         }
       })
-    } else if (Object.keys(conSettings.ipaddress).length !== 0 && Object.keys(conSettings.subnet).length !== 0) {
+    } else if (conSettings.ipaddress && Object.keys(conSettings.ipaddress).length !== 0 && conSettings.subnet && Object.keys(conSettings.subnet).length !== 0) {
       execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'ipv4.addresses', conSettings.ipaddress + '/' +
         netmask2CIDR(conSettings.subnet), 'ipv4.method', conSettings.ipaddresstype], (error, stdout, stderr) => {
         if (stderr) {
@@ -361,14 +361,14 @@ function editConnectionIP (conName, conSettings, callback) {
 
 function editConnectionPSK (conName, conSettings, callback) {
   // now sort out Wifi client/ap settings - password and security type
-  if (Object.keys(conSettings.mode).length === 0) {
+  if (!conSettings.mode || Object.keys(conSettings.mode).length === 0) {
     return callback(null, 'EditNotRequired')
   }
   if (conSettings.mode === 'infrastructure' || conSettings.mode === 'ap') {
     // psk network
     if (conSettings.wpaType !== 'none' &&
-            Object.keys(conSettings.ssid).length !== 0 &&
-            Object.keys(conSettings.password).length !== 0) {
+            conSettings.ssid && Object.keys(conSettings.ssid).length !== 0 &&
+            conSettings.password && Object.keys(conSettings.password).length !== 0) {
             execFile('sudo', ['nmcli', 'connection', 'mod', conName, '802-11-wireless-security.key-mgmt', conSettings.wpaType], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
@@ -387,7 +387,7 @@ function editConnectionPSK (conName, conSettings, callback) {
       })
     }
     else if (conSettings.wpaType === 'none' &&
-                 Object.keys(conSettings.ssid).length !== 0) {
+                 conSettings.ssid && Object.keys(conSettings.ssid).length !== 0) {
       execFile('sudo', ['nmcli', 'connection', 'mod', conName, 'remove', '802-11-wireless-security'], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
@@ -406,14 +406,14 @@ function editConnectionPSK (conName, conSettings, callback) {
 
 function editConnectionAPClient (conName, conSettings, callback) {
   // now sort out Wifi ap or client settings - ssid, band, starting ip
-  if (Object.keys(conSettings.mode).length === 0) {
+  if (!conSettings.mode || Object.keys(conSettings.mode).length === 0) {
     return callback(null, 'EditNotRequired')
   }
   if (conSettings.mode === 'ap') {
-    if (Object.keys(conSettings.ssid).length !== 0 &&
-            Object.keys(conSettings.band).length !== 0 &&
-            Object.keys(conSettings.channel).length !== 0 &&
-            Object.keys(conSettings.ipaddress).length !== 0) {
+    if (conSettings.ssid && Object.keys(conSettings.ssid).length !== 0 &&
+            conSettings.band && Object.keys(conSettings.band).length !== 0 &&
+            conSettings.channel && Object.keys(conSettings.channel).length !== 0 &&
+            conSettings.ipaddress && Object.keys(conSettings.ipaddress).length !== 0) {
       const cmds = ['nmcli', 'connection', 'mod', conName, '802-11-wireless.ssid', conSettings.ssid,
         '802-11-wireless.band', conSettings.band, 'ipv4.addresses', conSettings.ipaddress + '/24']
       if (conSettings.channel !== '0') {
@@ -438,7 +438,7 @@ function editConnectionAPClient (conName, conSettings, callback) {
     }
   } else {
     // client connection - edit ssid if required
-    if (Object.keys(conSettings.ssid).length !== 0) {
+    if (conSettings.ssid && Object.keys(conSettings.ssid).length !== 0) {
       execFile('sudo', ['nmcli', 'connection', 'mod', conName, '802-11-wireless.ssid', conSettings.ssid], (error, stdout, stderr) => {
         if (stderr) {
           console.error(`exec error: ${error}`)
