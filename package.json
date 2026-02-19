@@ -54,7 +54,7 @@
     "socket.io": "4.8.1",
     "socket.io-client": "4.8.1",
     "startbootstrap-simple-sidebar": "6.0.6",
-    "systeminformation": "5.27.14",
+    "systeminformation": "5.30.8",
     "vite": "6.4.1"
   },
   "bin": {
