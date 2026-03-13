@@ -41,6 +41,7 @@
     "jsonwebtoken": "9.0.2",
     "moment": "2.30.1",
     "node-mavlink": "2.3.0",
+    "ntrip-client": "github:codeceptsDE/ntrip-client#feat-tls-support",
     "npm": "11.6.4",
     "prop-types": "15.8.1",
     "react": "19.2.0",
