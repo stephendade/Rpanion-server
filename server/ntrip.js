@@ -1,235 +1,10 @@
 // NTRIP Manager
+const { NtripClient } = require('ntrip-client')
+const { geoToEcef } = require('ntrip-client/lib/nmea/ecef')
+const { UNKOWN_HEADER_ERROR } = require('ntrip-decoder/lib/config'); // NOTE: depends on internal path of ntrip-client's dependency ntrip-decoder
 const events = require('events')
 const os = require('os')
 const { common } = require('node-mavlink')
-const net = require('net')
-const tls = require('tls')
-
-
-const pad = (n, width, z) => {
-  n = n + ''
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n
-}
-
-/**
- * Get checksum from raw data
- *
- * @param {string} data - raw data
- * @return {string} checksum en hex
- */
-const getChecksum = (data) => {
-  let checksum
-  data = data.toString()
-  const idx1 = data.indexOf('$G')
-  const idx2 = data.indexOf('*')
-  checksum = data
-    .slice(idx1 + 1, idx2)
-    .split('')
-    .reduce((y, x) => y ^ x.charCodeAt(0), 0)
-  return checksum
-};
-
-const toHexString = (checksum) => {
-  const buf = Buffer.allocUnsafe(1)
-  buf.fill(checksum)
-  return buf.toString('hex')
-};
-
-const encodeTime = (time) => {
-  const date = new Date(time)
-
-  const hours = pad(date.getUTCHours(), 2, 0)
-  const minutes = pad(date.getUTCMinutes(), 2, 0)
-  const secs = pad(date.getUTCSeconds(), 2, 0)
-  const msecs = pad(date.getUTCMilliseconds(), 3, 0)
-  return `${hours}${minutes}${secs}.${msecs}`
-};
-
-/**
- * Decimal latitude to degree [dmm]
- *
- * @param {string} data - raw data
- * @return {string} degree [dmm]
- */
-const latToDmm = (data) => {
-  const tmp = data.toString().split('.')
-  const deg = pad(Math.abs(tmp[0]), 2, '0')
-  const fixed = (('0.' + (tmp[1] || 0)) * 60).toFixed(6)
-  const fixedArr = fixed.toString().split('.')
-  const mim = pad(fixedArr[0], 2, 0) + '.' + fixedArr[1]
-  // const mim = pad((('0.' + (tmp[1] || 0)) * 60).toFixed(4), 7, '0');
-  const sign = data < 0 ? 'S' : 'N'
-  return `${deg}${mim},${sign}`
-};
-
-/**
- * Decimal longitude to degree [dmm]
- *
- * @param {string} data - raw data
- * @return {string} degree [dmm]
- */
-const lngToDmm = (data) => {
-  const tmp = data.toString().split('.')
-  const deg = pad(Math.abs(tmp[0]), 3, '0')
-  const fixed = (('0.' + (tmp[1] || 0)) * 60).toFixed(6)
-  const fixedArr = fixed.toString().split('.')
-  const mim = pad(fixedArr[0], 2, 0) + '.' + fixedArr[1]
-  const sign = data < 0 ? 'W' : 'E'
-  return `${deg}${mim},${sign}`
-};
-
-/**
- * encode data to GGA
- * @param {*} data
- */
-const encodeGGA = (data) => {
-  const result = ['$' + data.type]
-  result.push(encodeTime(data.datetime))
-
-  result.push(latToDmm(data.loc[0]))
-  result.push(lngToDmm(data.loc[1]))
-  result.push(data.gpsQuality)
-  result.push(pad(data.satellites, 2, 0))
-  result.push(data.hdop.toFixed(3))
-  result.push(data.altitude)
-  result.push(data.altitudeUnit || 'M')
-  result.push(data.geoidalSeparation)
-  result.push(data.geoidalSeparationUnit || 'M')
-  if (data.ageGpsData) {
-    result.push(data.ageGpsData ? data.ageGpsData.toFixed(3) : data.ageGpsData)
-  }
-  if (data.refStationId) {
-    result.push(
-      data.refStationId
-        ? pad(parseInt(data.refStationId), 4, 0)
-        : data.refStationId
-    );
-  }
-
-  const resultMsg = result.join(',') + '*'
-  return resultMsg + toHexString(getChecksum(resultMsg)).toUpperCase()
-};
-
-class NtripClientWrapper extends events.EventEmitter {
-  constructor(options) {
-    super()
-    this.options = options
-    this.client = null
-    this.ggaInterval = null
-    this.loc = [0, 0]
-    this.status = "Offline"
-  }
-
-  startSendingGGA() {
-    this.ggaInterval = setInterval(() => {
-      if (this.client && this.client.writable) {
-        const ggaMessage = this.generateGGAMessage()
-        this.client.write(ggaMessage)
-      }
-    }, 60000)
-  }
-
-  stopSendingGGA() {
-    if (this.ggaInterval) {
-      clearInterval(this.ggaInterval)
-      this.ggaInterval = null
-    }
-  }
-
-  generateGGAMessage() {
-    // Generate a GGA message here
-    return encodeGGA({
-      datetime: Date.now(),
-      loc: this.loc,
-      gpsQuality: 1,
-      satellites: 0,
-      hdop: 0,
-      altitude: 0,
-      geoidalSeparation: 0,
-      ageGpsData: 1,
-      refStationId: 1,
-      type: 'GPGGA'
-    })
-  }
-
-  connect() {
-    const { host, port, username, password, mountpoint, useTls } = this.options
-    const auth = Buffer.from(`${username}:${password}`, 'utf8').toString('base64')
-    const headers = {
-      'Ntrip-Version': 'Ntrip/2.0',
-      'User-Agent': 'NTRIP rpanion-server',
-      'Authorization': `Basic ${auth}`,
-      'Host': os.hostname()
-    }
-
-    const requestOptions = {
-      host,
-      port
-    }
-
-    const connectCallback = (client) => {
-      client.on('error', (err) => {
-        this.emit('error', err)
-        this.status = toString(err)
-      })
-
-      client.on('end', () => {
-        this.emit('close')
-        this.stopSendingGGA()
-      })
-
-      let customHeader = '';
-      for (const key in headers) {
-        customHeader += `${key}: ${headers[key]}\r\n`
-      }
-      const data = `GET /${mountpoint} HTTP/1.1\r\n${customHeader}\n\r\n`
-      client.write(data)
-
-      client.on('data', (data) => {
-        // print data as ascii
-        let header_lines = data.toString().split("\r\n")
-        for (let line of header_lines) {
-          // check for 401 and 404 errors
-          if (line.includes('401 Unauthorized')) {
-            this.emit('error', '401 Unauthorized')
-            this.stopSendingGGA()
-            this.status = "Incorrect credentials"
-            return
-          } else if (line.includes('404 Not Found')) {
-            this.emit('error', '404 Not Found')
-            this.stopSendingGGA()
-            this.status = "Mount point not found"
-            return
-          }
-        }
-        this.emit('data', data)
-        this.status = "Online"
-      })
-
-      this.startSendingGGA()
-    }
-
-    if (useTls) {
-      this.client = tls.connect(requestOptions, () => connectCallback(this.client))
-    } else {
-      this.client = net.connect(requestOptions)
-      this.client.on('error', (err) => {
-        this.emit('error', err)
-        this.status = "Bad Host/Port or network error"
-      })
-      this.client.on('connect', () => connectCallback(this.client))
-    }
-  }
-
-  disconnect() {
-    if (this.client) {
-      this.stopSendingGGA()
-      this.client.end()
-      this.client = null
-      
-    }
-  }
-}
 
 class ntrip {
   constructor (settings) {
@@ -239,6 +14,8 @@ class ntrip {
       mountpoint: '',
       username: '',
       password: '',
+      // ECEF format!
+      xyz: [0, 0, 0],
       // the interval of send nmea, unit is millisecond
       interval: 2000,
       active: false,
@@ -248,6 +25,9 @@ class ntrip {
     // status. 0=not active, 1=waiting for FC, 2=waiting for GPS lock, 3=waiting for NTRIP server, 4=getting packets
     // -1=ntrip error
     this.status = 0
+
+    // additional error description to be displayed next to the status
+    this.errorDescription = ""
 
     // time of last RTCM packet. Used for detecting loss of connection
     this.timeofLastPacket = 0
@@ -267,6 +47,8 @@ class ntrip {
     this.options.password = this.settings.value('ntrip.password', '')
     this.options.active = this.settings.value('ntrip.active', false)
     this.options.useTls = this.settings.value('ntrip.useTls', false)
+    //NOTE: can allow untrusted/self-signed TLS by setting environment variable NODE_TLS_REJECT_UNAUTHORIZED='0'. 
+    // Adding this as option rejectUnauthorized to settings would also be possible.
 
     this.client = null
     this.startStopNTRIP()
@@ -284,62 +66,50 @@ class ntrip {
   }
 
   startStopNTRIP () {
-    if (this.options.active) {
-      this.client = new NtripClientWrapper(this.options)
+    if (this.options.active) { // NTRIP enabled
+      this.errorDescription = "Offline";
+      this.client = new NtripClient(this.options)
+      this.client.headers['Host'] = os.hostname()
+      this.client.headers['Ntrip-Version'] = 'Ntrip/2.0'
+      this.client.userAgent = 'NTRIP Rpanion-server'
       this.seq = 0
 
       this.client.on('data', (data) => {
+        this.errorDescription = "Online"
         if (this.options.active) {
-          try {
-            this.status = 4
-            this.timeofLastPacket = (Date.now().valueOf())
-            this.eventEmitter.emit('rtcmpacket', data, this.seq)
-            this.seq = this.seq + 1
-          } catch (e) {
-            console.log('Bad ntrip data')
-          }
+          // console.log('Received NTRIP data:' + data.toString('hex'))
+          this.status = 4
+          this.timeofLastPacket = (Date.now().valueOf())
+          this.eventEmitter.emit('rtcmpacket', data, this.seq)
+          this.seq = this.seq + 1
         }
       })
 
       this.client.on('close', () => {
-        console.log('NTRIP client close')
+        console.log('NTRIP client closed')
       })
 
       this.client.on('error', (err) => {
-        // halt on error
+        this.errorDescription = "Network Error: " + this.formatError(err)
+        console.log('[NTRIP] ' + this.errorDescription)
         if (this.options.active) {
-          console.log('NTRIP error ' + err)
           this.status = -1
         }
       })
 
-      this.client.connect()
-      console.log('NTRIP started')
+      this.client.run()
+      console.log('NTRIP started')  // Note: connect() is not actually blocking...
       this.status = 1
-    } else {
+    } else { // NTRIP disabled
+      this.errorDescription = "Disabled";
       // stop the client
       if (this.client) {
-        if (this.client.client) {
-          this.client.client.removeAllListeners()
-          this.client.client.destroy()
-          this.client.client = null
-        }
+        this.client.close() // close NTRIP-client's socket and stop its loop
+        this.client = null
       }
 
       this.status = 0
       console.log('NTRIP stopped')
-    }
-  }
-
-  // for running tests only
-  generateGGAMessage (loc) {
-    if (this.client) {
-      this.client.loc = loc
-      return this.client.generateGGAMessage()
-    } else {
-      let client = new NtripClientWrapper(this.options)
-      client.loc = loc
-      return client.generateGGAMessage()
     }
   }
 
@@ -382,8 +152,10 @@ class ntrip {
 
     // new MAVLink packet recieved - get the lat/lon
     if (packet.header.msgid === common.GpsRawInt.MSG_ID && data.fixType >= 2) {
+      // note conversion from lat/lon/alt to ECEF
+      this.options.xyz = geoToEcef([data.lat / 1E7, data.lon / 1E7, data.alt / 1E3])
       if (this.client) {
-        this.client.loc = [data.lat / 1E7, data.lon / 1E7]
+        this.client.setXYZ(this.options.xyz)
       }
       if (this.status === 2) {
         this.status = 3
@@ -391,27 +163,58 @@ class ntrip {
     }
   }
 
+  formatError(err) {
+    if (err instanceof Error) {
+      return `[${err.name}] ${err.message}`;
+    }
+    if (err && typeof err.message === 'string') {
+      return `[Error] ${err.message}`;
+    }
+    let errString = String(err)
+
+    // if we receive an unexpected HTTP header, we can try to parse it to give some hints
+    if (errString.startsWith(UNKOWN_HEADER_ERROR)) {
+        const rest = errString.slice(UNKOWN_HEADER_ERROR.length).trim(); // Remove prefix
+        const m = rest.match(/^HTTP\/\d+\.\d+\s+(\d{3})/); // Match HTTP status line
+        if (m) {
+            const code = Number(m[1]);
+            switch (code) {
+              case 401:
+                console.log("[NTRIP] Identified header as HTTP 401:" + errString);
+                errString = "Unauthorized (401). Incorrect credentials?";
+              case 404:
+                console.log("[NTRIP] Identified header as HTTP 404:" + errString);
+                errString = "Mountpoint not found (404)";
+              default:
+                console.log("[NTRIP] HTTP header indicates failure:" + errString);
+                errString = "Connection failed"  // err comes from a 3rd party server, we should not print it to UI directly, to avoid XSS
+            }
+        }
+    }
+    return errString;
+  }
+
   conStatusStr () {
+    let msg = ''
     // connection status - connected, not connected, no packets for x sec
     if ((Date.now().valueOf()) - this.timeofLastPacket < 2000 && this.status === 4) {
-      return 'Active - receiving RTCM packets'
+      msg = 'Active - receiving RTCM packets'
     } else if (this.timeofLastPacket > 0 && this.status === 4) {
       this.status = 3
-      let errDesc = this.client.status
-      return 'No RTCM server connection - ' + errDesc
+      msg = 'No RTCM server connection'
     } else if (this.status === 3) {
-      let errDesc = this.client.status
-      return 'No RTCM server connection - ' + errDesc
+      msg = 'No RTCM server connection'
     } else if (this.status >= 2) {
-      return 'Waiting for GPS lock'
+      msg = 'Waiting for GPS lock'
     } else if (this.status === 1) {
-      return 'Waiting for flight controller packets'
+      msg = 'Waiting for flight controller packets'
     } else if (this.status === 0) {
-      return 'Not active'
+      msg = 'Not active'
     } else if (this.status === -1) {
-      let errDesc = this.client.status
-      return 'Error - unable to connect to NTRIP server - ' + errDesc
+      msg = 'Error - unable to connect to NTRIP server'
+      // NOTE: this status is not permanent. this.client may retry and eventually emit 'data' Events, or onMavPacket may trigger.
     }
+    return msg + ' | ' + this.errorDescription
   }
 }
 
