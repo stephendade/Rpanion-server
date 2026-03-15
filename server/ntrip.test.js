@@ -19,7 +19,7 @@ describe('NTRIP Functions', function () {
     // ntripClient.setSettings ("auscors.ga.gov.au", 2101, "MNT", "name", "pwd", true)
 
     // check initial status
-    assert.equal(ntripClient.conStatusStr(), 'Not active')
+    assert.equal(ntripClient.conStatusStr(), 'Not active | Disabled')
 
     // ntripClient.client.xyz = [5000, 5000, 0]
     // ntripClient.status = 3
@@ -28,6 +28,6 @@ describe('NTRIP Functions', function () {
 
     ntripClient.setSettings('auscors.ga.gov.au', 2101, 'MNT', 'name', 'pwd', false, false)
 
-    assert.equal(ntripClient.conStatusStr(), 'Not active')
+    assert.equal(ntripClient.conStatusStr(), 'Not active | Disabled')
   })
 })
