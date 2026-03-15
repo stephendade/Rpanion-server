@@ -180,13 +180,13 @@ class ntrip {
             const code = Number(m[1]);
             switch (code) {
               case 401:
-                console.log("[NTRIP] Identified header as HTTP 401:" + errString);
+                console.log("[NTRIP] Identified header as HTTP 401: " + errString);
                 errString = "Unauthorized (401). Incorrect credentials?";
               case 404:
-                console.log("[NTRIP] Identified header as HTTP 404:" + errString);
+                console.log("[NTRIP] Identified header as HTTP 404: " + errString);
                 errString = "Mountpoint not found (404)";
               default:
-                console.log("[NTRIP] HTTP header indicates failure:" + errString);
+                console.log("[NTRIP] HTTP header indicates failure: " + errString);
                 errString = "Connection failed"  // err comes from a 3rd party server, we should not print it to UI directly, to avoid XSS
             }
         }
