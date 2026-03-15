@@ -26,26 +26,22 @@ function AppRouter () {
     const userToken = JSON.parse(tokenString)
     const token = userToken?.token
 
-    if (token) {
-      fetch('/api/auth', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        if (!response.ok) {
-          setIsAuthenticated(false)
-        } else {
-          setIsAuthenticated(true)
-        }
-      })
-      .catch(() => {
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {}, // always try the /api/auth endpoint, even with no token: maybe authRequired is false
+    })
+    .then((response) => {
+      if (!response.ok) {
         setIsAuthenticated(false)
-      })
-    } else {
+      } else {
+        setIsAuthenticated(true)
+      }
+    })
+    .catch(() => {
       setIsAuthenticated(false)
-    }
+    })
   }, [location.pathname])
 
   // Show nothing while checking authentication
@@ -83,7 +79,7 @@ function AppRouter () {
       <div className="page-content-wrapper" style={{ width: '100%' }}>
         <div className="container-fluid">
           <Routes>
-            <Route exact path="/" element={<Home />} />
+            <Route exact path="/" element={<Home showLogin={!isAuthenticated} />} />
             <Route exact path="/controller" element={<FCConfig />} />
             <Route exact path="/ppp" element={<PPPPage />} />
             <Route exact path="/network" element={<NetworkConfig />} />

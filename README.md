@@ -175,6 +175,8 @@ on the "User Management" page.
 Usernames and passwords are stored in the ``user.json`` file in the Rpanion-server folder. Resetting this file (via ``git checkout user.json``)
 will reset the usernames/passwords back to it's defaults.
 
+If Rpanion-server runs in a trusted network or you ensure access control by other means, you can choose to disable the built-in access control by adding the member `"authRequired": false` to `settings.json`.
+
 ## Tests
 
 Unit tests are split into separate commands for the frontend (ReactJS) and backend.
