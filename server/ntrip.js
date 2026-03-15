@@ -69,7 +69,6 @@ class ntrip {
     if (this.options.active) { // NTRIP enabled
       this.errorDescription = "Offline";
       this.client = new NtripClient(this.options)
-      this.client.headers['Host'] = os.hostname()
       this.client.headers['Ntrip-Version'] = 'Ntrip/2.0'
       this.client.userAgent = 'NTRIP Rpanion-server'
       this.seq = 0
