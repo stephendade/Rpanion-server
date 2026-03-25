@@ -61,6 +61,11 @@ jobs:
             # Verify the downloaded binary
             file ./additional/usr/share/rpanion-server/app/mavlink-routerd
 
+        - name: Add dev suffix to version is this is running for a PR
+          if: github.event_name == 'pull_request'
+          run: |
+            jq '.version = (.version + "-dev")' package.json > tmp.json && mv tmp.json package.json
+
         - name: Build package
           run: npm run package
 
