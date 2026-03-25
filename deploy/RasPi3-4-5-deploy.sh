@@ -34,6 +34,7 @@ fi
 source /etc/os-release
 if [[ "$ID" == "debian" || "$ID" == "raspbian" ]] && [ "$VERSION_CODENAME" == "bookworm" ]; then
     sudo apt install -y  gstreamer1.0-libcamera
+fi
 
 ## Only install picamera2 on RaspiOS
 sudo apt -y install python3-picamera2 python3-libcamera python3-kms++

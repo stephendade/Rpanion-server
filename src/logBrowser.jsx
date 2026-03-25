@@ -15,14 +15,19 @@ class LoggerPage extends basePage {
       TlogFiles: [],
       BinlogFiles: [],
       KMZlogFiles: [],
+      MediaFiles: [],
       diskSpaceStatus: "",
       conversionLogStatus: 'N/A',
+      videoStreamStatus: 'N/A',
       doLogConversion: true
     }
 
     //Socket.io client for reading update values
     this.socket.on('LogConversionStatus', function (msg) {
       this.setState({ conversionLogStatus: msg })
+    }.bind(this))
+    this.socket.on('VideoStreamStatus', function (msg) {
+    this.setState({ videoStreamStatus: msg })
     }.bind(this))
     this.socket.on('reconnect', function () {
       //refresh state
@@ -55,9 +60,27 @@ class LoggerPage extends basePage {
     return "Flight Log Browser";
   }
 
-  //create a html table from a list of logfiles
+  // create an html table from a list of logfiles
   renderLogTableData(logfilelist) {
     return logfilelist.map((log) => {
+      return (
+        <tr key={log.key}>
+          <td><a href={this.state.url + "/logdownload/" + log.key} download>{log.name}</a></td>
+          <td>{log.size} KB</td>
+          <td>{log.modified}</td>
+        </tr>
+      )
+    });
+  }
+
+  // create an html table from a list of media files, sorted from newest to oldest
+  renderMediaTableData(logfilelist) {
+    // clone the list and sort with newest first
+    const sorted = [...logfilelist].sort((a, b) => {
+      return new Date(b.modified) - new Date(a.modified);
+    });
+
+    return sorted.map((log) => {
       return (
         <tr key={log.key}>
           <td><a href={this.state.url + "/logdownload/" + log.key} download>{log.name}</a></td>
@@ -97,7 +120,7 @@ class LoggerPage extends basePage {
   renderContent() {
     return (
       <div style={{ width: 600 }}>
-        <p><i>Save and download flight logs</i></p>
+        <p><i>Save and download flight logs and saved photos/videos</i></p>
         <p>Disk Space: {this.state.diskSpaceStatus}</p>
         <Accordion defaultActiveKey="0">
           <Accordion.Item eventKey="0">
@@ -162,6 +185,38 @@ class LoggerPage extends basePage {
                   {this.renderLogTableData(this.state.KMZlogFiles)}
                 </tbody>
               </Table>
+            </Accordion.Body>
+          </Accordion.Item>
+          <Accordion.Item eventKey="3">
+            <Accordion.Header>Photo and Video Files</Accordion.Header>
+            <Accordion.Body>
+              <p>Photos and video files recorded by Rpanion</p>
+              
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="col-sm-8">
+                  <p>Status: {this.state.videoStreamStatus}</p>
+                </div>
+              </div>
+              <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="form-group row" style={{ marginBottom: '5px' }}>
+                <div className="col-sm-8">
+                <Button id='media' onClick={this.clearLogs}>Delete all media files</Button>
+                </div>
+              </div>
+              </div>
+              <Table id='Mediafile' striped bordered hover size="sm">
+                <thead>
+                  <tr><th>File Name</th><th>Size</th><th>Modified</th></tr>
+                </thead>
+              </Table>
+
+              <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                <Table striped bordered hover size="sm">
+                  <tbody>
+                    {this.renderMediaTableData(this.state.MediaFiles)}
+                  </tbody>
+                </Table>
+              </div>
             </Accordion.Body>
           </Accordion.Item>
         </Accordion>

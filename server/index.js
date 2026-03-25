@@ -25,6 +25,13 @@ const settings = require('settings-store')
 const app = express()
 const http = require('http').Server(app)
 const path = require('path')
+const os = require('os')
+const appRoot = require('app-root-path')  // for resolving relative paths
+
+// MEDIA_ROOT is the default storage area used by the Python helpers.
+// For security, user-provided paths are required to live within it.
+const MEDIA_ROOT = logpaths.mediaDir; // absolute path to rpanion-server/media
+
 
 const io = require('socket.io')(http, { cookie: false })
 const { check, validationResult } = require('express-validator')
@@ -61,7 +68,7 @@ settings.init({
 const vManager = new videoStream(settings)
 const fcManager = new fcManagerClass(settings)
 const logManager = new flightLogger()
-const ntripClient = new ntrip(settings, )
+const ntripClient = new ntrip(settings)
 const cloud = new cloudManager(settings)
 const logConversion = new logConversionManager(settings)
 const adhocManager = new Adhoc(settings)
@@ -120,6 +127,13 @@ async function gracefulShutdown(signal, exitCode = 0) {
     
     // Stop all managed services
     console.log('Stopping managed services...')
+
+    // Stop camera processes cleanly
+    if (vManager) {
+      vManager.stopCamera();
+      console.log('Camera processes stopped');
+    }
+
     pppConnectionManager.quitting()
     cloud.quitting()
     logConversion.quitting()
@@ -177,6 +191,56 @@ ntripClient.eventEmitter.on('rtcmpacket', (msg, seq) => {
   }
 })
 
+
+// Capture a single still photo when in photo mode
+// This code responds to the button on the web interface
+app.post('/api/capturestillphoto', authenticateToken, function (req, res) {
+  if (vManager.active && vManager.cameraMode === 'photo') {
+    console.log("[API /api/capturestillphoto] Conditions met. Calling vManager.captureStillPhoto()");
+    const currentPosition = fcManager.getSystemStatus().vehiclePosition;
+    
+    // Call without MAVLink sender/target info as it's a UI trigger
+    vManager.captureStillPhoto(null, null, null, currentPosition);
+    res.status(200).send({ message: 'Capture signal sent.' });
+  } else {
+    console.log("[API /api/capturestillphoto] Conditions NOT met. Sending 400.");
+    res.status(400).send({ error: 'Camera not active or not in photo mode.' });
+  }
+})
+
+// Toggle local video recording on/off
+// This code responds to the button on the web interface
+app.post('/api/togglevideorecording', authenticateToken, function (req, res) {
+  console.log(`[API /togglevideorecording] Received request. Server state: vManager.active=${vManager.active}, vManager.cameraMode=${vManager.cameraMode}`);
+
+  // Check if active and in the correct mode
+  if (vManager.active && vManager.cameraMode === 'video') {
+    try {
+      vManager.toggleVideoRecording(); // Use the new method name
+      console.log('Toggled video recording via API.');
+      res.status(200).send({ success: true, message: 'Toggle signal sent.' });
+    } catch (err) {
+      console.log('Error toggling video recording:', err);
+      res.status(500).send({ error: 'Failed to send toggle signal.' });
+    }
+  } else {
+    console.log(`[API /togglevideorecording] Condition NOT met (active=${vManager.active}, mode=${vManager.cameraMode}). Sending 400.`);
+    res.status(400).send({ error: 'Camera is not active in video recording mode.' });
+  }
+})
+
+// This function responds to a MAVLink command to capture a photo.
+vManager.eventEmitter.on('digicamcontrol', (senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the MAV_CMD_DO_DIGICAM_CONTROL command
+      fcManager.m.sendCommandAck(203, 0, senderSysId, senderCompId, targetComponent)
+    }
+  } catch (err) {
+    console.log('Error acknowledging DoDigicamControl:', err);
+  }
+})
+
 // Got a camera heartbeat event, send to flight controller
 vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
   try {
@@ -184,7 +248,7 @@ vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
       fcManager.m.sendHeartbeat(mavType, autopilot, component)
     }
   } catch (err) {
-    console.log(err)
+    console.log('Error sending camera heartbeat:', err);
   }
 })
 
@@ -192,11 +256,12 @@ vManager.eventEmitter.on('cameraheartbeat', (mavType, autopilot, component) => {
 vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetComponent) => {
   try {
     if (fcManager.m) {
+      // Acknowledge the CAMERA_INFORMATION request
       fcManager.m.sendCommandAck(common.CameraInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
-    console.log(err)
+    console.log('Error sending CameraInformation:', err);
   }
 })
 
@@ -204,13 +269,49 @@ vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetCo
 vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId, targetComponent) => {
   try {
     if (fcManager.m) {
+      // Acknowledge the VIDEO_STREAM_INFORMATION request
       fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
-    console.log(err)
+    console.log('Error sending VideoStreamInformation:', err);
   }
 })
+
+// Got a CAMERA_SETTINGS event, send to flight controller
+vManager.eventEmitter.on('camerasettings', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the CAMERA_SETTINGS request
+      fcManager.m.sendCommandAck(common.CameraSettings.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log('Error sending CameraSettings:', err);
+    // console.log(err)
+  }
+})
+
+// Got a CAMERA_TRIGGER event, send to flight controller
+vManager.eventEmitter.on('cameratrigger', (msg, senderCompId) => {
+  try {
+    if (fcManager.m) {
+      // Send the CAMERA_TRIGGER message to the flight controller
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log('Error sending CameraTrigger:', err);
+  }
+})
+
+vManager.eventEmitter.on('filesaved', (filepath) => {
+  try {
+    io.sockets.emit('camera:filesaved', { filename: filepath });
+    console.log('Pushed filesaved to clients:', filepath);
+  } catch (e) {
+    console.error('Failed to emit filesaved:', e);
+  }
+});
 
 // Connecting the flight controller datastream to the logger
 // and ntrip and video
@@ -219,7 +320,7 @@ fcManager.eventEmitter.on('gotMessage', (packet, data) => {
     ntripClient.onMavPacket(packet, data)
     vManager.onMavPacket(packet, data)
   } catch (err) {
-    console.log(err)
+    console.log('Error processing MAVLink message in listener:', err);
   }
 })
 
@@ -733,13 +834,13 @@ app.get('/api/networkclients', authenticateToken, (req, res) => {
 app.use('/logdownload', express.static(logpaths.flightsLogsDir))
 
 app.get('/api/logfiles', authenticateToken, (req, res) => {
-  logManager.getLogs((err, tlogs, binlogs, kmzlogs) => {
+  logManager.getLogs((err, tlogs, binlogs, kmzlogs, media) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ TlogFiles: tlogs, BinlogFiles: binlogs, KMZlogFiles: kmzlogs, url: req.protocol + '://' + req.headers.host }))
+    res.send(JSON.stringify({ TlogFiles: tlogs, BinlogFiles: binlogs, KMZlogFiles: kmzlogs, MediaFiles: media, url: req.protocol + '://' + req.headers.host }))
   })
 })
 
-app.post('/api/deletelogfiles', authenticateToken, [check('logtype').isIn(['tlog', 'binlog', 'kmzlog'])], (req, res) => {
+app.post('/api/deletelogfiles', authenticateToken, [check('logtype').isIn(['tlog', 'binlog', 'kmzlog', 'media'])], (req, res) => {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log('Bad POST vars in /api/deletelogfiles', { message: JSON.stringify(errors.array()) })
@@ -749,6 +850,11 @@ app.post('/api/deletelogfiles', authenticateToken, [check('logtype').isIn(['tlog
   logManager.clearlogs(req.body.logtype, fcManager.binlog)
   res.setHeader('Content-Type', 'application/json')
   res.send(JSON.stringify({}))
+})
+
+app.get('/api/approot', authenticateToken, (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(JSON.stringify({ appRoot: appRoot.toString() }))
 })
 
 app.get('/api/softwareinfo', authenticateToken, (req, res) => {
@@ -766,42 +872,44 @@ app.get('/api/softwareinfo', authenticateToken, (req, res) => {
 })
 
 app.get('/api/videodevices', authenticateToken, (req, res) => {
-  vManager.getVideoDevices((err, devices, active, seldevice, selRes, selRot, selbitrate,
-                            selfps, SeluseUDPIP, SeluseUDPPort, timestamp,
-                            fps, FPSMax, vidres, useCameraHeartbeat, selMavURI, compression, Seltransport, transportOptions, customRTSPSource) => {
-    if (!err) {
-      res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({
-        ifaces: vManager.ifaces,
-        dev: devices,
-        vidDeviceSelected: seldevice,
-        vidres: vidres,
-        vidResSelected: selRes,
-        streamingStatus: active,
-        streamAddresses: vManager.deviceAddresses,
-        rotSelected: selRot,
-        bitrate: selbitrate,
-        fpsSelected: selfps,
-        transportSelected: Seltransport,
-        transportOptions: transportOptions,
-        useUDPIP: SeluseUDPIP,
-        useUDPPort: SeluseUDPPort,
-        timestamp,
-        error: null,
-        fps: fps,
-        FPSMax: FPSMax,
-        enableCameraHeartbeat: useCameraHeartbeat,
-        mavStreamSelected: selMavURI,
-        compression: compression,
-        customRTSPSource: customRTSPSource
-      }))
-    } else {
-      res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ error: err }))
-      console.log('Error in /api/videodevices ', { message: err })
+
+  vManager.getVideoDevices((err, responseData) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (err) {
+      console.error('Error getting video devices /api/videodevices:', err);
+      // Determine appropriate status code and send minimal fallback data
+      const status = (err === 'No video devices found') ? 404 : 500;
+      return res.status(status).json({
+        error: `Failed to get video devices: ${err}`,
+        active: vManager.active,
+        cameraMode: vManager.cameraMode,
+        networkInterfaces: vManager.scanInterfaces()
+      });
     }
-  })
-})
+    // Send the whole responseData object directly
+    res.send(JSON.stringify(responseData));
+  });
+});
+
+// GET Still Camera Device information
+app.get('/api/camera/still_devices', authenticateToken, (req, res) => {
+  vManager.getStillDevices((err, stillData) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (err) {
+      console.error('Error getting still devices:', err);
+      return res.status(500).json({
+        error: `Failed to get still camera devices: ${err}`,
+        devices: []
+      });
+    }
+
+    // stillData contains { devices, selectedDevice, selectedCap }
+    res.send(JSON.stringify({
+      ...stillData,
+      error: null
+    }));
+  });
+});
 
 app.get('/api/hardwareinfo', authenticateToken, (req, res) => {
   aboutPage.getHardwareInfo((RAM, CPU, hatData, sysData, err) => {
@@ -1075,49 +1183,142 @@ app.get('/api/networkconnections', authenticateToken, (req, res) => {
   })
 })
 
-app.post('/api/startstopvideo', authenticateToken, [check('active').isBoolean(),
-  check('device').if(check('active').isIn([true])).isLength({ min: 2 }),
-  check('height').if(check('active').isIn([true])).isInt({ min: 1 }),
-  check('width').if(check('active').isIn([true])).isInt({ min: 1 }),
-  check('transport').if(check('active').isIn([true])).isIn(['RTP', 'RTSP']),
-  check('useTimestamp').if(check('active').isIn([true])).isBoolean(),
-  check('useCameraHeartbeat').if(check('active').isIn([true])).isBoolean(),
-  check('useUDPPort').if(check('active').isIn([true])).isPort(),
-  check('useUDPIP').if(check('active').isIn([true])).isIP(),
-  check('bitrate').if(check('active').isIn([true])).isInt({ min: 50, max: 50000 }),
-  check('format').if(check('active').isIn([true])).isIn(['video/x-raw', 'video/x-h264', 'video/x-h265', 'image/jpeg']),
-  check('fps').if(check('active').isIn([true])).isInt({ min: -1, max: 100 }),
-  check('rotation').if(check('active').isIn([true])).isInt().isIn([0, 90, 180, 270])],
-  check('compression').if(check('active').isIn([true])).isIn(['H264', 'H265']),
-  check('customRTSPSource').if(check('active').isIn([true])).custom((value) => {
-    if (value === '' || value === null || value === undefined) {
+// POST to START a specific camera mode (streaming, photo, video)
+app.post('/api/camera/start', authenticateToken, [
+  check('cameraMode').isIn(['streaming', 'photo', 'video']),
+  check('useCameraHeartbeat').isBoolean(),
+  // Validation for modes that use a video pipeline ('streaming' or 'video')
+  check('videoDevice').if(check('cameraMode').isIn(['streaming', 'video'])).isString().notEmpty(),
+  check('height').if(check('cameraMode').isIn(['streaming', 'video'])).isInt({ min: 1 }),
+  check('width').if(check('cameraMode').isIn(['streaming', 'video'])).isInt({ min: 1 }),
+  check('bitrate').if(check('cameraMode').isIn(['streaming', 'video'])).isInt({ min: 50, max: 50000 }),
+  check('fps').if(check('cameraMode').isIn(['streaming', 'video'])).isInt({ min: 0, max: 120 }),
+  check('rotation').if(check('cameraMode').isIn(['streaming', 'video'])).isInt().isIn([0, 90, 180, 270]),
+  // Validation ONLY for 'photo' mode
+  check('stillDevice').if(check('cameraMode').equals('photo')).isString().notEmpty(),
+  check('stillWidth').if(check('cameraMode').equals('photo')).isInt({ min: 1 }),
+  check('stillHeight').if(check('cameraMode').equals('photo')).isInt({ min: 1 }),
+  // Media destination for photo and video modes (optional, but validate if provided)
+  check('mediaDestination')
+    .if(check('cameraMode').isIn(['photo', 'video']))
+    .optional({ checkFalsy: true }) // Allow blank inputs (to save to MEDIA_ROOT without a subdir)
+    .isString()
+    .trim()
+    .customSanitizer(dest => {
+      // For ease of use:
+      // If the user pasted the full absolute media path, strip it down to just the folder name
+      if (dest.startsWith(MEDIA_ROOT)) {
+        dest = dest.slice(MEDIA_ROOT.length);
+      }
+      // Also for ease of use:
+      // Strip leading slashes so that if an absolute path is entered
+      // by mistake, it's converted to a relative path instead of being rejected
+      return dest.replace(/^[\/\\]+/, '');
+    })
+      // Check for path traversal attemptsa and null characters
+    .custom(dest => {
+      if (dest.includes('\0')) {
+        throw new Error('Media Destination contains invalid characters');
+      }
+      if (dest.includes('..')) {
+        throw new Error('Directory traversal is not allowed');
+      }
+      // Final check that an absolute path didn't make it through the sanitizer
+      if (path.isAbsolute(dest)) {
+        throw new Error('Media Destination must be a relativefolder name, not an absolute path');
+      }
       return true;
-    }
-    return check('customRTSPSource').isURL().run({ body: { customRTSPSource: value } });
-  }), (req, res) => {
-  const errors = validationResult(req)
+    })
+], (req, res) => {
+  console.log("--- Received /api/camera/start request ---");
+  const errors = validationResult(req);
+
   if (!errors.isEmpty()) {
-    console.log('Bad POST vars in /api/startstopvideo ', { message: errors.array() })
-    const ret = { streamingStatus: false, streamAddresses: [], error: ['Error ' + JSON.stringify(errors.array())] }
-    return res.status(422).json(ret)
+ console.error('Validation failed for /api/camera/start:', errors.array());
+    return res.status(422).json({ error: 'Invalid media destination', details: errors.array() });
   }
-  // user wants to start/stop video streaming
-  vManager.startStopStreaming(req.body.active, req.body.device, req.body.height, req.body.width, req.body.format, req.body.rotation,
-                              req.body.bitrate, req.body.fps, req.body.transport, req.body.useUDPIP, req.body.useUDPPort,
-                              req.body.useTimestamp, req.body.useCameraHeartbeat, req.body.mavStreamSelected, req.body.compression,
-                              req.body.customRTSPSource, (err, status, addresses) => {
-    if (!err) {
-      res.setHeader('Content-Type', 'application/json')
-      const ret = { streamingStatus: status, streamAddresses: addresses }
-      res.send(JSON.stringify(ret))
-    } else {
-      res.setHeader('Content-Type', 'application/json')
-      const ret = { streamingStatus: false, streamAddresses: ['Error ' + err] }
-      res.send(JSON.stringify(ret))
-      console.log('Error in /api/startstopvideo ', { message: err })
+
+  const mode = req.body.cameraMode;
+  vManager.cameraMode = mode;
+  vManager.useCameraHeartbeat = req.body.useCameraHeartbeat;
+
+// Sanitize the user-provided media destination
+  let safeMediaDestination = null;
+    if (req.body.mediaDestination) {
+
+      // Force the input into a string format
+      const userInput = String(req.body.mediaDestination);
+
+      // Explicitly check for traversal strings inline
+      if (userInput.includes('..') || userInput.includes('\0')) {
+        return res.status(403).json({ error: 'Path traversal characters detected' });
+      }
+
+      const targetPath = path.join(MEDIA_ROOT, userInput);
+
+      const relative = path.relative(MEDIA_ROOT, targetPath);
+      // Double-check strict path boundaries to prevent any evasion
+      if (relative.startsWith('..') || path.isAbsolute(relative)) {
+        return res.status(403).json({ error: 'Invalid media destination path boundaries' });
+      }
+
+      safeMediaDestination = targetPath;
+      
     }
-  })
-})
+
+  // Map incoming request to the internal settings objects used by videostream.js
+  if (mode === 'streaming' || mode === 'video') {
+    vManager.videoSettings = {
+      device: req.body.videoDevice,
+      isRecording: req.body.isRecording === false || req.body.isRecording === 'false',
+      height: parseInt(req.body.height, 10),
+      width: parseInt(req.body.width, 10),
+      format: req.body.format,
+      bitrate: parseInt(req.body.bitrate, 10),
+      fps: parseInt(req.body.fps, 10),
+      rotation: parseInt(req.body.rotation, 10),
+      useUDP: req.body.useUDP === true || req.body.useUDP === 'true',
+      useUDPIP: req.body.useUDPIP,
+      useUDPPort: parseInt(req.body.useUDPPort, 10),
+      useTimestamp: req.body.useTimestamp === true || req.body.useTimestamp === 'true',
+      mavStreamSelected: req.body.mavStreamSelected,
+      compression: req.body.compression,
+      mediaDestination: safeMediaDestination
+    };
+    vManager.stillSettings = null;
+  } else if (mode === 'photo') {
+    vManager.stillSettings = {
+      device: req.body.stillDevice,
+      width: parseInt(req.body.stillWidth, 10),
+      height: parseInt(req.body.stillHeight, 10),
+      format: req.body.stillFormat,
+      mediaDestination: safeMediaDestination
+    };
+    vManager.videoSettings = null;
+  }
+
+  vManager.startCamera((err, result) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (err) {
+      // Use %s for the mode variable so it is treated as data, not a format string
+      console.error(`Error starting camera in %s mode:`, mode, err);
+      return res.status(500).json({ error: err.message || err });
+    }
+    res.send(JSON.stringify({ ...result, error: null }));
+  });
+});
+
+// POST to STOP the currently active camera mode
+app.post('/api/camera/stop', authenticateToken, (req, res) => {
+  vManager.stopCamera((err, active) => {
+    res.setHeader('Content-Type', 'application/json');
+    if (err) {
+      console.error('Error stopping camera:', err);
+      return res.status(500).json({ error: 'Failed to stop camera cleanly' });
+    }
+    res.send(JSON.stringify({ active: active, error: null }));
+  });
+});
 
 // Get details of a network connection by connection ID
 app.post('/api/networkIP', authenticateToken, [check('conName').isUUID()], (req, res) => {
