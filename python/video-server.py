@@ -170,10 +170,11 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             elif compression == "H264":
                 pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
                 pipeline.append("h264parse")
-        elif Gst.ElementFactory.find("v4l2h264enc") and compression == "H264":
+        elif Gst.ElementFactory.find("v4l2h264enc") and compression == "H264" and not (device == "testsrc" or device.startswith("/dev/video")):
             # Pi or similar arm platforms running on RasPiOS. Note that Pi5 onwards don't support hardware encoding
             # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
             # crashy sometimes.
+            # The hardware encoder doesn't support USB or testvideo sources realiably, so use software x264 instead
             if bitrate > 20000:
                 level = "4.1"
             else:
