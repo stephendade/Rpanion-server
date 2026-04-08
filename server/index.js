@@ -371,7 +371,7 @@ app.post('/api/auth', authenticateToken, async (req, res) => {
 // Middleware to check if the request has a valid token
 function authenticateToken(req, res, next) {
   // Skip authentication in development mode
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development' || process.env.DISABLE_AUTH === '1') {
     return next();
   }
 
