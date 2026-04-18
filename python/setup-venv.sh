@@ -27,3 +27,6 @@ pip install --upgrade pip
 echo -e "Installing pymavlink..."
 DISABLE_MAVNATIVE=True pip install pymavlink
 
+# Install piexif library for writing image metadata
+echo -e "Installing piexif..."
+pip install piexif
