@@ -30,7 +30,7 @@ function AppRouter () {
       method: 'POST',
       headers: token
         ? { Authorization: `Bearer ${token}` }
-        : {}, // always try the /api/auth endpoint, even with no token: maybe authRequired is false
+        : {}, // always try the /api/auth endpoint, even with no token: maybe DISABLE_AUTH is set
     })
     .then((response) => {
       if (!response.ok) {
