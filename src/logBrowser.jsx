@@ -62,10 +62,11 @@ class LoggerPage extends basePage {
 
   // create an html table from a list of logfiles
   renderLogTableData(logfilelist) {
+    const baseUrl = window.location.origin;
     return logfilelist.map((log) => {
       return (
         <tr key={log.key}>
-          <td><a href={this.state.url + "/logdownload/" + log.key} download={log.name}>{log.key}</a></td>
+          <td><a href={baseUrl + "/logdownload/" + log.key} download={log.name}>{log.key}</a></td>
           <td>{log.size} KB</td>
           <td>{log.modified}</td>
         </tr>
@@ -76,6 +77,7 @@ class LoggerPage extends basePage {
   // create an html table from a list of media files, sorted from newest to oldest
   renderMediaTableData(logfilelist) {
     // clone the list and sort with newest first
+    const baseUrl = window.location.origin;
     const sorted = [...logfilelist].sort((a, b) => {
       return new Date(b.modified) - new Date(a.modified);
     });
@@ -83,7 +85,7 @@ class LoggerPage extends basePage {
     return sorted.map((log) => {
       return (
         <tr key={log.key}>
-          <td><a href={this.state.url + "/media/" + log.key} download={log.name}>{log.key}</a></td>
+          <td><a href={baseUrl + "/media/" + log.key} download={log.name}>{log.key}</a></td>
           <td>{log.size} KB</td>
           <td>{log.modified}</td>
         </tr>
