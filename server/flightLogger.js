@@ -4,7 +4,6 @@
 
 const path = require('path')
 const fs = require('fs')
-const moment = require('moment')
 const logpaths = require('./paths.js')
 
 class flightLogger {
@@ -113,7 +112,7 @@ class flightLogger {
           scanDirectory(filePath)
         } else if (extensions.some(ext => filePath.toLowerCase().endsWith(ext.toLowerCase()))) {
           const relpath = path.relative(topFolder, filePath)
-          const mTime = moment(filemTime).format('LLL')
+          const mTime = filemTime.toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })
           fileList.push({ key: relpath, name: path.basename(filePath), modified: mTime, size: Math.round(fileStat.size / 1024) })
         }
       })
