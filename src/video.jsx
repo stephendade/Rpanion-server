@@ -4,7 +4,6 @@ import Form from 'react-bootstrap/Form';
 import React from 'react'
 import { Link } from 'react-router-dom';
 import IPAddressInput from './components/IPAddressInput.jsx';
-import { io as ioClient } from 'socket.io-client';
 
 import basePage from './basePage.jsx';
 
@@ -12,7 +11,7 @@ import './css/styles.css';
 
 class VideoPage extends basePage {
   constructor(props) {
-    super(props);
+    super(props, true) // Enable Socket.IO;
     this.state = {
       ...this.state,
       appRoot: '',
@@ -204,7 +203,6 @@ class VideoPage extends basePage {
         this.loadDone();
 
         // Open socket and listen for file saves
-        this.socket = ioClient();
         this.socket.on('camera:filesaved', (data) => {
           const fname = data && (data.filename || data.file);
           if (fname) {
@@ -242,8 +240,6 @@ class VideoPage extends basePage {
 componentWillUnmount() {
   if (this.socket) {
     this.socket.off('camera:filesaved');
-    this.socket.disconnect();
-    this.socket = null;
   }
   if (super.componentWillUnmount) super.componentWillUnmount();
 }
