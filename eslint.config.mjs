@@ -45,6 +45,7 @@ export default [
       // ... any rules you want
       'react/jsx-uses-react': 'error',
       'react/jsx-uses-vars': 'error',
+      'react/prop-types': 'off',
      },
     settings: {
       react: {
