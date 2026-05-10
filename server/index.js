@@ -364,8 +364,12 @@ app.post('/api/logout', authenticateToken, async (req, res) => {
 
 // Simple token authentication call
 app.post('/api/auth', authenticateToken, async (req, res) => {
+  const authEnabled = !(process.env.NODE_ENV === 'development' || process.env.DISABLE_AUTH === '1')
+
   res.setHeader('Content-Type', 'application/json')
-  res.send(JSON.stringify({error: null}))
+  res.send(JSON.stringify({
+    authEnabled
+  }))
 })
 
 // Middleware to check if the request has a valid token

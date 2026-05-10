@@ -18,6 +18,7 @@ import PPPPage from './ppp.jsx'
 
 function AppRouter () {
   const [isAuthenticated, setIsAuthenticated] = useState(null)
+  const [isAuthEnabled, setIsAuthEnabled] = useState(true)
   const location = useLocation()
 
   useEffect(() => {
@@ -32,11 +33,16 @@ function AppRouter () {
         ? { Authorization: `Bearer ${token}` }
         : {}, // always try the /api/auth endpoint, even with no token: maybe DISABLE_AUTH is set
     })
-    .then((response) => {
+    .then(async (response) => {      
       if (!response.ok) {
         setIsAuthenticated(false)
       } else {
         setIsAuthenticated(true)
+
+        const data = await response.json()
+        if (data?.authEnabled === false) {
+          setIsAuthEnabled(false)
+        }
       }
     })
     .catch(() => {
@@ -72,7 +78,9 @@ function AppRouter () {
           <Link className='list-group-item list-group-item-action bg-light' to="/vpn">VPN Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/users">User Management</Link>
-          <Link className='list-group-item list-group-item-action bg-light' to="/logoutconfirm">Logout</Link>
+          {isAuthEnabled && (
+            <Link className='list-group-item list-group-item-action bg-light' to="/logoutconfirm">Logout</Link>
+          )}
         </div>
       </div>
 
@@ -91,7 +99,9 @@ function AppRouter () {
             <Route exact path="/adhoc" element={<AdhocConfig />} />
             <Route exact path="/cloud" element={<CloudConfig />} />
             <Route exact path="/vpn" element={<VPN/>} />
-            <Route exact path="/logoutconfirm" element={<Logout/>} />
+            {isAuthEnabled && (
+              <Route path="/logoutconfirm" element={<Logout />} />
+            )}
             <Route exact path="/users" element={<UserManagement/>} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
