@@ -24,7 +24,7 @@ systemctl enable rpanion-server
 systemctl start rpanion-server
 
 # Allow relevant services to be disabled or enabled without password
-cat <<EOF > /etc/sudoers.d/allow-vpn-control
+cat <<'EOF' > /etc/sudoers.d/allow-vpn-control
 rpanion ALL=(ALL) NOPASSWD: \
   /usr/bin/systemctl disable wg-quick@*, \
   /usr/bin/systemctl enable wg-quick@*, \
@@ -40,7 +40,7 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/sbin/pppd *, \
   /usr/sbin/iw dev * scan ap-force, \
   /usr/bin/pkill -SIGTERM pppd, \
-  /usr/bin/cat /var/lib/NetworkManager/dnsmasq-*, \
+  /usr/bin/cat /var/lib/NetworkManager/dnsmasq-*
 EOF
 
 chmod 440 /etc/sudoers.d/allow-vpn-control
