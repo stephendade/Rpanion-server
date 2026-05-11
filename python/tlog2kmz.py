@@ -8,10 +8,10 @@ Requires mav2gpx from pymavlink
 
 import glob
 import os
+import shutil
 import subprocess
+import sys
 import timeit
-from os.path import exists
-
 from datetime import datetime
 import argparse
 
@@ -37,10 +37,15 @@ def run_cmd(cmd, directory=".", show=True, output=False, checkfail=True):
 
 def mavtogpx_filepath():
     """Get mavtogpx script path."""
-    if exists("/usr/local/bin/mavtogpx.py"):
-        return "/usr/local/bin/mavtogpx.py"
-    else:
-        return "~/.local/bin/mavtogpx.py"  # relies on pymavlink instalation and path in ubuntu
+    # Check same bin dir as the running Python first (covers venv usage)
+    candidate = os.path.join(os.path.dirname(sys.executable), 'mavtogpx.py')
+    if os.path.exists(candidate):
+        return candidate
+    # Fall back to PATH search (covers system/user installs)
+    found = shutil.which('mavtogpx.py')
+    if found:
+        return found
+    raise FileNotFoundError("mavtogpx.py not found. Install pymavlink: pip install pymavlink")
 
 
 def convert_tlog_files(folder):
@@ -65,7 +70,7 @@ def convert_tlog_files(folder):
             continue
 
         try:
-            run_cmd(mavtogpx_filepath() + " " + m)
+            run_cmd([sys.executable, mavtogpx_filepath(), m], show=True)
             gpx = m + '.gpx'
             kml = m + '.kml'    
             run_cmd('gpsbabel -i gpx -f %s '
