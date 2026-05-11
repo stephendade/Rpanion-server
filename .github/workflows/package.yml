@@ -4,10 +4,14 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
     build:
-        runs-on: ubuntu-24.04
+        runs-on: ${{ matrix.runs-on }}
         strategy:
           matrix:
-            arch: [amd64, arm64]
+            include:
+              - arch: amd64
+                runs-on: ubuntu-latest
+              - arch: arm64
+                runs-on: ubuntu-24.04-arm
         steps:
         - uses: actions/checkout@v6
 
@@ -20,14 +24,6 @@ jobs:
           with:
             node-version: 24.x
             cache: 'npm'
-
-        - name: Regenerate package-lock.json for arm64
-          if: matrix.arch == 'arm64'
-          run: |
-            if [ -f package-lock.json ]; then
-              rm package-lock.json
-            fi
-            npm install --package-lock-only
 
         - name: Install dependencies
           run: npm ci
