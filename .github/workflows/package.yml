@@ -62,6 +62,15 @@ jobs:
           run: |
             jq '.version = (.version + "-dev")' package.json > tmp.json && mv tmp.json package.json
 
+        - name: Vite build
+          run: npm run build
+
+        - name: Remove dev dependencies (keeping node-deb for packaging)
+          run: |
+            NODE_DEB_VERSION=$(node -p "require('./package.json').devDependencies['node-deb']")
+            npm install -g "node-deb@${NODE_DEB_VERSION}"
+            npm prune --production
+
         - name: Build package
           run: npm run package
 

@@ -160,7 +160,7 @@ At this point, the website will be active at ``http://<ip of device>:3000``
 
 ## Packaging
 
-To produce a deb package, run ``npm run package``.
+To produce a deb package, run ``npm run build && npm run package``.
 
 ## Default username and password
 

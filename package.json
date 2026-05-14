@@ -42,6 +42,7 @@
     "node-mavlink": "2.3.0",
     "npm": "11.14.1",
     "ntrip-client": "github:codeceptsDE/ntrip-client#feat-tls-support",
+    "pino-http": "^11.0.0",
     "react": "19.2.6",
     "react-bootstrap": "2.10.10",
     "react-dom": "19.2.6",
@@ -70,7 +71,7 @@
     "serviceDev": "npm run build && NODE_ENV=development node ./server/index.js",
     "dev": "NODE_ENV=development run-p server start",
     "preview": "vite preview",
-    "package": "npm run build && rm -rf ./python/.venv && mkdir -p ./additional/etc/rpanion-server/config && cp ./config/user.json ./additional/etc/rpanion-server/config && mkdir -p ./additional/usr/share/rpanion-server/app/server && node-deb --verbose --extra-files additional -- server mavlink build python && rm -r ./additional"
+    "package": "rm -rf ./python/.venv && mkdir -p ./additional/etc/rpanion-server/config && cp ./config/user.json ./additional/etc/rpanion-server/config && mkdir -p ./additional/usr/share/rpanion-server/app/server && node-deb --verbose --extra-files additional -- server mavlink build python && rm -r ./additional"
   },
   "node_deb": {
     "entrypoints": {
@@ -116,7 +117,6 @@
     "npm-run-all": "^4.1.5",
     "nyc": "^18.0.0",
     "pino-colada": "^2.2.2",
-    "pino-http": "^11.0.0",
     "sinon": "^22.0.0",
     "vite": "6.4.1",
     "vite-plugin-eslint": "^1.8.1",
