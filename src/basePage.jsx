@@ -6,6 +6,7 @@ import Button from 'react-bootstrap/Button';
 import Spinner from 'react-bootstrap/Spinner';
 import React from 'react'
 import Login from './login.jsx'
+import PropTypes from 'prop-types';
 
 class basePage extends Component {
   constructor(props, useSocketIO = false) {
@@ -35,12 +36,8 @@ class basePage extends Component {
       })
       .then((response) => {
         if (!response.ok) {
-          // Handle HTTP errors
-          return response.json().then((errorData) => {
-            if (errorData) {
-              this.setState({ token: null })
-            }
-          });
+          this.setState({ token: null })
+          return
         }
         return response.json();
       })
@@ -97,7 +94,7 @@ class basePage extends Component {
   }
 
   render() {
-    if(!this.state.token) {
+    if(this.props.showLogin) {
       return (
         <div>
           <title>{this.renderTitle()}</title>
@@ -165,6 +162,11 @@ class basePage extends Component {
     }
   }
 
+}
+
+// PropTypes validation
+basePage.propTypes = {
+  showLogin: PropTypes.bool,
 }
 
 export default basePage;

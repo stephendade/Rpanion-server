@@ -18,6 +18,7 @@ import PPPPage from './ppp.jsx'
 
 function AppRouter () {
   const [isAuthenticated, setIsAuthenticated] = useState(null)
+  const [isAuthEnabled, setIsAuthEnabled] = useState(true)
   const location = useLocation()
 
   useEffect(() => {
@@ -26,26 +27,27 @@ function AppRouter () {
     const userToken = JSON.parse(tokenString)
     const token = userToken?.token
 
-    if (token) {
-      fetch('/api/auth', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((response) => {
-        if (!response.ok) {
-          setIsAuthenticated(false)
-        } else {
-          setIsAuthenticated(true)
-        }
-      })
-      .catch(() => {
+    fetch('/api/auth', {
+      method: 'POST',
+      headers: token
+        ? { Authorization: `Bearer ${token}` }
+        : {}, // always try the /api/auth endpoint, even with no token: maybe DISABLE_AUTH is set
+    })
+    .then(async (response) => {      
+      if (!response.ok) {
         setIsAuthenticated(false)
-      })
-    } else {
+      } else {
+        setIsAuthenticated(true)
+
+        const data = await response.json()
+        if (data?.authEnabled === false) {
+          setIsAuthEnabled(false)
+        }
+      }
+    })
+    .catch(() => {
       setIsAuthenticated(false)
-    }
+    })
   }, [location.pathname])
 
   // Show nothing while checking authentication
@@ -76,14 +78,16 @@ function AppRouter () {
           <Link className='list-group-item list-group-item-action bg-light' to="/vpn">VPN Config</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/about">About</Link>
           <Link className='list-group-item list-group-item-action bg-light' to="/users">User Management</Link>
-          <Link className='list-group-item list-group-item-action bg-light' to="/logoutconfirm">Logout</Link>
+          {isAuthEnabled && (
+            <Link className='list-group-item list-group-item-action bg-light' to="/logoutconfirm">Logout</Link>
+          )}
         </div>
       </div>
 
       <div className="page-content-wrapper" style={{ width: '100%' }}>
         <div className="container-fluid">
           <Routes>
-            <Route exact path="/" element={<Home />} />
+            <Route exact path="/" element={<Home showLogin={!isAuthenticated} />} />
             <Route exact path="/controller" element={<FCConfig />} />
             <Route exact path="/ppp" element={<PPPPage />} />
             <Route exact path="/network" element={<NetworkConfig />} />
@@ -95,7 +99,9 @@ function AppRouter () {
             <Route exact path="/adhoc" element={<AdhocConfig />} />
             <Route exact path="/cloud" element={<CloudConfig />} />
             <Route exact path="/vpn" element={<VPN/>} />
-            <Route exact path="/logoutconfirm" element={<Logout/>} />
+            {isAuthEnabled && (
+              <Route path="/logoutconfirm" element={<Logout />} />
+            )}
             <Route exact path="/users" element={<UserManagement/>} />
             <Route path="*" element={<NoMatch />} />
           </Routes>
