@@ -309,6 +309,13 @@ if [[ $prep == true ]]; then
   mountdir=$(mktemp -d)
   mount "$loopback" "$mountdir"
   rm -rf "$mountdir/var/cache/apt/archives/*" "$mountdir/var/lib/dhcpcd5/*" "$mountdir/var/log/*" "$mountdir/var/tmp/*" "$mountdir/tmp/*" "$mountdir/etc/ssh/*_host_*"
+  if [ -d "$mountdir/var/lib/zerotier-one" ]; then
+    info "Syspreping: Removing ZeroTier identity so each cloned device gets a unique node ID"
+    rm -f "$mountdir/var/lib/zerotier-one/identity.secret" \
+          "$mountdir/var/lib/zerotier-one/identity.public" \
+          "$mountdir/var/lib/zerotier-one/authtoken.secret"
+    rm -f "$mountdir/var/lib/zerotier-one/networks.d/"*
+  fi
   umount "$mountdir"
 fi
 
