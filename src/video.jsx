@@ -131,21 +131,23 @@ class VideoPage extends basePage {
         let initialFps = selFps;
         
         if (cameraModeToUse === 'video') {
+            // Video recording mode now uses the same device/cap source as streaming mode
+            // so both modes offer the same resolution list.
             const savedDeviceValue = videoData.selectedDevice ? videoData.selectedDevice.value : null;
-            let matchingStillDev = stillDevs.find(d => d.id === savedDeviceValue);
+            let matchingVidDev = vidDevs.find(d => d.value === savedDeviceValue);
             
-            if (!matchingStillDev && stillDevs.length > 0) {
-                matchingStillDev = stillDevs[0];
+            if (!matchingVidDev && vidDevs.length > 0) {
+                matchingVidDev = vidDevs[0];
             }
 
-            if (matchingStillDev) {
-                initialVidDevSel = matchingStillDev.id;
-                initialVidCaps = matchingStillDev.caps ||[];
+            if (matchingVidDev) {
+                initialVidDevSel = matchingVidDev.value;
+                initialVidCaps = matchingVidDev.caps ||[];
                 const matchedCap = initialVidCaps.length > 0 ? initialVidCaps[0] : null;
-                initialVidCapSel = matchedCap ? this.getStillCapValue(matchedCap) : '';
-                initialFpsOpts =[];
-                initialFpsMax = 120; // Allow typing manual FPS up to 120
-                initialFps = selFps || 30;
+                initialVidCapSel = matchedCap ? matchedCap.value : '';
+                initialFpsOpts = matchedCap ? (matchedCap.fps || []) : [];
+                initialFpsMax = matchedCap ? (matchedCap.fpsmax || 0) : 0;
+                initialFps = initialFpsMax > 0 ? initialFpsMax : (initialFpsOpts.length > 0 ? initialFpsOpts[0].value : 30);
             } else {
                 initialVidDevSel = '';
                 initialVidCaps = [];
@@ -257,15 +259,16 @@ componentWillUnmount() {
 
     // Reset device/resolution selections when switching between streaming and video modes
     if (newMode === 'video') {
-      const firstStillDevice = this.state.stillDevices.length > 0 ? this.state.stillDevices[0] : null;
-      const firstCap = firstStillDevice && firstStillDevice.caps.length > 0 ? firstStillDevice.caps[0] : null;
+      // Video recording mode now uses the same device/cap source as streaming mode
+      const firstVidDevice = this.state.videoDevices.length > 0 ? this.state.videoDevices[0] : null;
+      const firstCap = firstVidDevice && firstVidDevice.caps.length > 0 ? firstVidDevice.caps[0] : null;
 
-      updates.vidDeviceSelected = firstStillDevice ? firstStillDevice.id : '';
-      updates.videoCaps = firstStillDevice ? firstStillDevice.caps :[];
-      updates.vidCapSelected = firstCap ? this.getStillCapValue(firstCap) : '';
-      updates.FPSMax = 120;
-      updates.fpsOptions =[];
-      updates.fpsSelected = 30;
+      updates.vidDeviceSelected = firstVidDevice ? firstVidDevice.value : '';
+      updates.videoCaps = firstVidDevice ? firstVidDevice.caps : [];
+      updates.vidCapSelected = firstCap ? firstCap.value : '';
+      updates.fpsOptions = firstCap ? (firstCap.fps || []) : [];
+      updates.FPSMax = firstCap ? (firstCap.fpsmax || 0) : 0;
+      updates.fpsSelected = updates.FPSMax > 0 ? updates.FPSMax : (updates.fpsOptions.length > 0 ? updates.fpsOptions[0].value : 30);
     } else if (newMode === 'streaming') {
       // Reset back to Streaming capabilities
       const firstVidDevice = this.state.videoDevices.length > 0 ? this.state.videoDevices[0] : null;
@@ -562,11 +565,11 @@ componentWillUnmount() {
         };
 
       } else if (cameraMode === 'video') {
-        // Video recording mode: use stillDevices
-        const device = stillDevices.find(d => d.id === vidDeviceSelected);
+        // Video recording mode now uses videoDevices instead of stillDevices
+        const device = videoDevices.find(d => d.value === vidDeviceSelected);
         if (!device) throw new Error("Video device not found. Please select a device from the list.");
 
-        const capObj = device.caps.find(c => this.getStillCapValue(c) === vidCapSelected);
+        const capObj = device.caps.find(c => c.value === vidCapSelected);
         if (!capObj) throw new Error("Selected resolution is not valid for this device.");
 
         body = {
@@ -827,17 +830,12 @@ renderContent() {
                 <div className="form-group row" style={{ marginBottom: '5px' }}>
                   <label className="col-sm-4 col-form-label">Video Device</label>
                   <div className="col-sm-8">
-                    {isVideo ? (
-                      // Video recording mode: use still devices
-                      <Form.Select disabled={active} onChange={this.handleVideoRecordingDeviceChange} value={this.state.vidDeviceSelected}>
-                        {this.state.stillDevices.map((d, idx) => <option key={idx} value={d.id}>{d.type}: {d.card_name}</option>)}
-                      </Form.Select>
-                    ) : (
-                      // Streaming mode: use video devices
-                      <Form.Select disabled={active} onChange={this.handleVideoDeviceChange} value={this.state.vidDeviceSelected}>
-                        {this.state.videoDevices.map((d, idx) => <option key={idx} value={d.value}>{d.label}</option>)}
-                      </Form.Select>
-                    )}
+                    {/* Both streaming and video recording modes now use
+                        videoDevices/handleVideoDeviceChange,
+                        so they share the same resolution list. */}
+                    <Form.Select disabled={active} onChange={this.handleVideoDeviceChange} value={this.state.vidDeviceSelected}>
+                      {this.state.videoDevices.map((d, idx) => <option key={idx} value={d.value}>{d.label}</option>)}
+                    </Form.Select>
                   </div>
                 </div>
 
@@ -856,17 +854,11 @@ renderContent() {
                   <div className="form-group row" style={{ marginBottom: '5px' }}>
                     <label className="col-sm-4 col-form-label">Resolution</label>
                     <div className="col-sm-8">
-                      {isVideo ? (
-                        // Video recording mode: use still device caps format
-                        <Form.Select disabled={active} onChange={this.handleVideoRecordingResChange} value={this.state.vidCapSelected}>
-                          {this.state.videoCaps.map((c, idx) => <option key={idx} value={this.getStillCapValue(c)}>{c.width}x{c.height} ({c.format})</option>)}
-                        </Form.Select>
-                      ) : (
-                        // Streaming mode: use video device caps format
-                        <Form.Select disabled={active} onChange={this.handleVideoResChange} value={this.state.vidCapSelected}>
-                          {this.state.videoCaps.map((c, idx) => <option key={idx} value={c.value}>{c.width}x{c.height} ({c.format})</option>)}
-                        </Form.Select>
-                      )}
+                      {/* Video and streaming modes now use the same videoCaps format (handleVideoResChange, c.value),
+                          since videoCaps is sourced from videoDevices in both modes. */}
+                      <Form.Select disabled={active} onChange={this.handleVideoResChange} value={this.state.vidCapSelected}>
+                        {this.state.videoCaps.map((c, idx) => <option key={idx} value={c.value}>{c.width}x{c.height} ({c.format})</option>)}
+                      </Form.Select>
                     </div>
                   </div>
                 )}
