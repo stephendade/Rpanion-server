@@ -27,6 +27,7 @@ class videoStream {
     this.stillDevices = null; // Still devices
     this.videoSettings = null;
     this.stillSettings = null;
+    this.fcManager = null;    // Flight controller manager reference, set externally if available
 
     // Load saved settings from the 'camera' namespace
     this.active = this.settings.value('camera.active', false);
@@ -66,6 +67,11 @@ class videoStream {
     return dest ? path.join(logpaths.mediaDir, dest) : logpaths.mediaDir;
   }
 
+  // Reference the fcManager so we can access position data for geotagging
+  setFlightControllerManager(fcManager) {
+    this.fcManager = fcManager;
+  }
+
   async initialize() {
     try {
       // Discover Video Hardware and wait for data
@@ -80,8 +86,7 @@ class videoStream {
         });
       });
 
-      // 2. Discover Still Photo Hardware (We will add this function in Step 2)
-      // For now, we wrap it in a try/catch so it doesn't crash if the helper isn't there yet
+      // Discover Still Photo Hardware
       try {
         await new Promise((resolve, reject) => {
           this.getStillDevices((err) => err ? reject(err) : resolve());
@@ -90,7 +95,7 @@ class videoStream {
         console.log("Still hardware discovery skipped or failed.");
       }
 
-      // 3. Start the camera in the last saved mode
+      // Start the camera in the last saved mode
       this.startCamera((err) => {
         if (err) {
           console.error('Camera start error during init:', err);
@@ -129,7 +134,6 @@ class videoStream {
       })
     })
   }
-
 
   // Format and store all the possible rtsp addresses
   populateAddresses (factory) {
@@ -197,8 +201,8 @@ class videoStream {
 
   // video streaming
   getVideoDevices (callback) {
-    // get all video device details
-    //dont update if streaming is running, as some camera won't be detected if in use
+    // Get all video device details
+    // dont update if streaming is running, as some cameras won't be detected if in use
     const networkInterfaces = this.scanInterfaces();
 
     // Don't re-scan hardware if a stream is already running
@@ -218,7 +222,7 @@ class videoStream {
         fpsMax: 0
       };
 
-      // 1. Find the device and capability currently being used
+      // Find the device and capability currently being used
       if (this.videoSettings && this.devices) {
         responseData.selectedDevice = this.devices.find(d => d.value === this.videoSettings.device);
         if (responseData.selectedDevice) {
@@ -233,7 +237,7 @@ class videoStream {
           responseData.fpsOptions = responseData.selectedCap?.fps || [];
         }
 
-        // 2. Map raw numbers back to the UI's Object format
+        // Map raw numbers back to the UI's Object format
         responseData.selectedRotation = {
           label: (this.videoSettings.rotation || 0) + '°',
           value: (this.videoSettings.rotation || 0)
@@ -243,7 +247,7 @@ class videoStream {
           value: this.videoSettings.mavStreamSelected || '127.0.0.1'
         };
 
-        // 3. Map simple values
+        // Map simple values
         responseData.selectedisRecording = this.videoSettings.isRecording || false;
         responseData.selectedBitrate = this.videoSettings.bitrate || 1100;
         responseData.selectedFps = this.videoSettings.fps || 30;
@@ -355,7 +359,6 @@ class videoStream {
       }
     });
   }
-
 
   saveSettings() {
     try {
@@ -510,7 +513,7 @@ class videoStream {
 
     const dest = this.toAbsolutePath(this.videoSettings.mediaDestination);
 
-    // Convert bitrate from kbps to bps Picamera2
+    // Convert bitrate from kbps to bps for Picamera2
     const bitrateBps = this.videoSettings.bitrate * 1000;
 
     const args = [
@@ -557,7 +560,7 @@ class videoStream {
 
       if (!callbackCalled) {
         callbackCalled = true;
-        console.log(`${modeName}: No response from script after 60s, assuming start.`);
+        console.log(`${modeName}: No response from script after 90s, assuming start.`);
         this.active = true;
         this.saveSettings();
         callback(null, { active: true, addresses: this.deviceAddresses });
@@ -715,17 +718,20 @@ class videoStream {
   }
 
   startHeartbeatInterval () {
+
     // start the 1-sec loop to send heartbeat events
     this.intervalObj = setInterval(() => {
       const mavType = minimal.MavType.CAMERA
       const autopilot = minimal.MavAutopilot.INVALID
       const component = minimal.MavComponent.CAMERA
 
+      // Emit the 1Hz camera heartbeat
       this.eventEmitter.emit('cameraheartbeat', mavType, autopilot, component)
+
     }, 1000)
   }
 
-  captureStillPhoto(senderSysId, senderCompId, targetComponent, positionData = null) {
+  captureStillPhoto(senderSysId, senderCompId, targetComponent, positionData = null, commandId = null) {
     console.log('Attempting captureStillPhoto. Internal state: active=', this.active, 'mode=', this.cameraMode, 'deviceStream exists=', !!this.deviceStream);
 
     // Capture a single still photo
@@ -747,6 +753,7 @@ class videoStream {
         console.error('Failed to write GPS temp file:', e);
       }
     } else {
+      console.error('GPS data not available for geotagging. Check that "Enable datastream requests" is enabled on the Flight Controller page.');
       // Clean up old file to prevent stale tags
       if (fs.existsSync('/tmp/rpanion_gps.json')) {
         fs.unlinkSync('/tmp/rpanion_gps.json');
@@ -763,8 +770,19 @@ class videoStream {
     // Increment the photo counter
     msg.seq = this.photoSeq++
 
-    this.eventEmitter.emit('digicamcontrol', senderSysId, senderCompId, targetComponent)
+    // If triggered by a MAVLink command, emit a generalized ACK event
+    if (commandId && senderSysId !== null) {
+      this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent)
+    } else {
+      // Fallback for legacy listeners or safety
+      this.eventEmitter.emit('digicamcontrol', senderSysId, senderCompId, targetComponent)
+    }
+    
+    // Advertise that an image was captured
     this.eventEmitter.emit('cameratrigger', msg, senderCompId)
+
+    // Send updated storage availability
+    this.sendStorageInfo(senderSysId, senderCompId, targetComponent)
   }
 
   toggleVideoRecording() {
@@ -786,14 +804,11 @@ class videoStream {
     this.saveSettings();
   }
 
-  // Helper to convert JS strings to the Array<string> format node-mavlink expects for char[]
-  toMavChars(str, length) {
-    const buf = new Uint8Array(length);
-    if (!str) return buf;
-
-    const encoded = new TextEncoder().encode(str);
-    buf.set(encoded.slice(0, length));
-    return buf;
+  // Helper to safely format and truncate string fields for node-mavlink serialization
+  toMavString(str, length) {
+    if (!str) return "";
+    // Truncate to length - 1 to guarantee at least one trailing null byte (0) when serialized
+    return str.toString().slice(0, length - 1);
   }
 
   sendCameraInformation(senderSysId, senderCompId, targetComponent) {
@@ -823,15 +838,16 @@ class videoStream {
       }
     }
 
-    msg.vendorName = this.toMavChars("Rpanion", 32);
-    msg.modelName = this.toMavChars(extractedModel, 32);
+    msg.vendorName = this.toMavString("Rpanion", 32);
+    msg.modelName = this.toMavString(extractedModel, 32);
     msg.firmwareVersion = 0;
     msg.focalLength = 0;
     msg.sensorSizeH = 0;
     msg.sensorSizeV = 0;
     msg.lensId = 0;
     msg.camDefinitionVersion = 0;
-    msg.camDefinitionUri = ""; // send zero-length string if not known
+    // msg.camDefinitionUri = ""; // send zero-length string if not known
+    msg.camDefinitionUri = this.toMavString("", 140);
     msg.gimbalDeviceId = 0;
 
     // Mode-specific Configuration
@@ -877,7 +893,8 @@ class videoStream {
   }
 
   sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
-    console.log('Responding to MAVLink request for VideoStreamInformation')
+    // Log the SysID and CompID of the requester
+    console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
 
     // build a VIDEO_STREAM_INFORMATION packet
     const msg = new common.VideoStreamInformation()
@@ -886,13 +903,15 @@ class videoStream {
     msg.streamId = 1
     msg.count = 1
 
+    let uriString = "";
+
     // msg.type and msg.uri need to be different depending on whether RTP or RTSP is selected
     if (this.videoSettings && this.videoSettings.useUDP) {
       // msg.type = 0 = VIDEO_STREAM_TYPE_RTSP
       // msg.type = 1 = VIDEO_STREAM_TYPE_RTPUDP
       msg.type = 1
       // For RTP, just send the destination UDP port instead of a full URI
-      msg.uri = this.videoSettings.useUDPPort.toString();
+      uriString  = this.videoSettings.useUDPPort.toString();
     } else {
       msg.type = 0
       msg.encoding = this.videoSettings.compression === 'H264' ? 1 : (this.videoSettings.compression === 'H265' ? 2 : 0);
@@ -903,44 +922,172 @@ class videoStream {
         addr.includes(this.videoSettings.mavStreamSelected)
       );
 
-      msg.uri = matchedAddress || "";
+      uriString  = matchedAddress || "";
 
     }
+
+    // Convert URI string to a fixed-size Uint8Array of 230 bytes
+    msg.uri = this.toMavString(uriString, 230);
 
     // 1 = VIDEO_STREAM_STATUS_FLAGS_RUNNING
     msg.flags = 1;
     msg.framerate = this.videoSettings.fps;
     msg.resolutionH = this.videoSettings.width;
     msg.resolutionV = this.videoSettings.height;
-    msg.bitrate = this.videoSettings.bitrate;
+    // Convert bitrate from kbps (shown in Web UI) to bps (as per MAVLink spec)
+    msg.bitrate = this.videoSettings.bitrate * 1000;
     msg.rotation = this.videoSettings.rotation;
     // Rpanion doesn't collect field of view values, so set to zero
     msg.hfov = 0;
-    // Set the stream name (usually the device path)
-    msg.name = this.videoSettings.device;
+    // Convert the device name string to a fixed-size Uint8Array of 32 bytes
+    msg.name = this.toMavString(this.videoSettings.device || "", 32);
 
     this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
   }
 
-  onMavPacket(packet, data) {
+  // Find how much media space there is in total, and how much is available
+  async getStorageStats() {
+    try {
+      const s = await fs.promises.statfs(logpaths.mediaDir);
+      const total = BigInt(s.bsize) * BigInt(s.blocks);
+      const free = BigInt(s.bsize) * BigInt(s.bfree);
+      const avail = BigInt(s.bsize) * BigInt(s.bavail);
+      const used = total - free;
+      const totalMiB = Number(total / BigInt(1024 * 1024));
+      const usedMiB = Number(used / BigInt(1024 * 1024));
+      const availableMiB = Number(avail / BigInt(1024 * 1024));
+      return { totalMiB, usedMiB, availableMiB };
+    } catch (e) {
+      return { totalMiB: 0, usedMiB: 0, availableMiB: 0 };
+    }
+  }
+
+  async sendStorageInfo(senderSysId, senderCompId, targetComponent) {
+    console.log('Sending MAVLink StorageInformation packet')
+
+    // Build a STORAGE_INFORMATION packet
+    const msg = new common.StorageInformation()
+
+    // Try to get real storage stats for mediaDir; fall back to safe defaults
+    const stats = await this.getStorageStats().catch(() => ({ totalMiB: 0, usedMiB: 0 }));
+
+    msg.timeBootMs = 0
+    msg.storageId = 1;           // First storage device
+    msg.storageCount = 1;       // One storage device available
+    msg.status = common.StorageStatus.STORAGE_STATUS_READY;
+    msg.totalCapacity = stats.totalMiB;   // Capacity in MiB
+    msg.usedCapacity = stats.usedMiB;
+    msg.availableCapacity = Math.max(0, stats.availableMiB || 0);
+    msg.readSpeed = 0;         // Speeds in MiB/s, just send zeroes for now
+    msg.writeSpeed = 0;
+    msg.type = common.StorageType.STORAGE_TYPE_MICROSD;
+    msg.name = this.toMavString('Rpanion Storage', 32);
+    msg.storageUsage = 6; // Usage bitmask; 2 = Photo, 4 = Video
+
+    this.eventEmitter.emit('storageinfo', msg, senderSysId, senderCompId, targetComponent)
+  }
+
+  // Helper to log and emit an UNSUPPORTED ACK for MAVLink commands/messages we haven't implemented
+  sendUnsupportedAck(emittedCommand, sysid, compid) {
+    console.log(`MAVLink command ${emittedCommand} is unsupported. Sending UNSUPPORTED ACK.`)
+    this.eventEmitter.emit('camera_command_ack', emittedCommand, sysid, minimal.MavComponent.CAMERA, compid, 3);
+  }
+
+onMavPacket(packet, data) {
     if (packet.header.msgid === common.CommandLong.MSG_ID &&
       data.targetComponent === minimal.MavComponent.CAMERA) {
-      if (data._param1 === common.CameraInformation.MSG_ID) {
-        console.log('Responding to MAVLink request for CameraInformation')
-        this.sendCameraInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
+
+      let handled = false;
+
+      // Get the vehicle position if fcManager is available,
+      // for operations that need it (e.g., photo geotagging).
+      const currentPosition = this.fcManager?.getSystemStatus?.()?.vehiclePosition || null;
+      
+      // Handle message request commands (MAV_CMD_REQUEST_MESSAGE = 512)
+      if (data.command === 512) {
+        const requestedMsgId = data._param1;
+
+        // This if-else block handles information requests
+        if (requestedMsgId === common.CameraInformation.MSG_ID) {
+          // Log the SysID and CompID of the requester
+          console.log(`Responding to MAVLink request for CameraInformation from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendCameraInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
+          handled = true;
+        }
+        else if (requestedMsgId === common.VideoStreamInformation.MSG_ID && this.cameraMode === "streaming") {
+          console.log('Responding to MAVLink request for VideoStreamInformation')
+          this.sendVideoStreamInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
+          handled = true;
+        }
+        else if (requestedMsgId === common.CameraSettings.MSG_ID) {
+          // Log the SysID and CompID of the requester
+          console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendCameraSettings(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          handled = true;
+        }
+        else if (requestedMsgId === common.StorageInformation.MSG_ID) {
+          // Log the SysID and CompID of the requester
+          console.log(`Responding to MAVLink request for StorageInformation from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendStorageInfo(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          handled = true;
+        }
+
+        if (!handled) {
+          this.sendUnsupportedAck(packet.header.sysid, packet.header.compid, `MAVLink requested message ${requestedMsgId} is unsupported.`)
+          handled = true;
+        }
+      } // Closes data.command === 512
+      
+      // Handle message rate requests (MAV_CMD_SET_MESSAGE_INTERVAL = 511)
+      else if (data.command === 511) {
+        console.log(`Received SET_MESSAGE_INTERVAL command for msgId: ${data._param1}. Replying with ACCEPTED.`);
+        this.eventEmitter.emit('camera_command_ack', 511, packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, 0); // 0 is MAV_RESULT_ACCEPTED
+        handled = true;
       }
-      else if (data._param1 === common.VideoStreamInformation.MSG_ID && this.cameraMode === "streaming") {
-        console.log('Responding to MAVLink request for VideoStreamInformation')
-        this.sendVideoStreamInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
-      }
-      else if (data._param1 === common.CameraSettings.MSG_ID) {
-        console.log('Responding to MAVLink request for CameraSettings')
-        this.sendCameraSettings(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
-      }
+
       // 203 = MAV_CMD_DO_DIGICAM_CONTROL
       else if (data.command === 203) {
-        console.log('Received DoDigicamControl command')
-        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        console.log('Received MAV_CMD_DO_DIGICAM_CONTROL command')
+        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, 203)
+        handled = true;
+      }
+      // Handle MAVLink camera protocol v2 image capture commands (2000, 2001)
+      else if (data.command === 2000) {
+        // MAV_CMD_IMAGE_START_CAPTURE - Take picture
+        console.log('Received IMAGE_START_CAPTURE command')
+        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, 2000)
+        handled = true;
+      }
+      else if (data.command === 2001) {
+        console.log('Received IMAGE_STOP_CAPTURE command')
+        this.eventEmitter.emit('camera_command_ack', 2001, packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        handled = true;
+      }
+      // Handle MAVLink camera protocol v2 video commands (2500, 2501)
+      else if (data.command === 2500) {
+        // MAV_CMD_VIDEO_START_CAPTURE - Start recording video
+        console.log('Received VIDEO_START_CAPTURE command')
+        if (this.cameraMode === 'video' && !this.videoSettings.isRecording) {
+          this.toggleVideoRecording()
+        }
+        // Emit general ACK for starting video capture
+        this.eventEmitter.emit('camera_command_ack', 2500, packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        handled = true;
+      }
+      else if (data.command === 2501) {
+        // MAV_CMD_VIDEO_STOP_CAPTURE - Stop recording video
+        console.log('Received VIDEO_STOP_CAPTURE command')
+        if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+          this.toggleVideoRecording()
+        }
+        // Emit general ACK for stopping video capture
+        this.eventEmitter.emit('camera_command_ack', 2501, packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        handled = true;
+      }
+
+      // If any unsupported camera-targeted commands are received, explicitly ACK it with MAV_RESULT_UNSUPPORTED (3)
+      if (!handled) {
+        this.sendUnsupportedAck(data.command, packet.header.sysid, packet.header.compid)
       }
     }
   }

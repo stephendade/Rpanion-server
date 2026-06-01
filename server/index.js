@@ -70,6 +70,11 @@ const fcManager = new fcManagerClass(settings)
 const logManager = new flightLogger()
 const ntripClient = new ntrip(settings)
 const cloud = new cloudManager(settings)
+
+// Pass the fcManager instance to the videoStream,
+// so it can access position data for geotagging photos
+vManager.setFlightControllerManager(fcManager)
+
 const logConversion = new logConversionManager(settings)
 const adhocManager = new Adhoc(settings)
 const userMgmt = new userLogin()
@@ -203,7 +208,6 @@ app.post('/api/capturestillphoto', authenticateToken, function (req, res) {
     vManager.captureStillPhoto(null, null, null, currentPosition);
     res.status(200).send({ message: 'Capture signal sent.' });
   } else {
-    console.log("[API /api/capturestillphoto] Conditions NOT met. Sending 400.");
     res.status(400).send({ error: 'Camera not active or not in photo mode.' });
   }
 })
@@ -225,7 +229,18 @@ app.post('/api/togglevideorecording', authenticateToken, function (req, res) {
     }
   } else {
     console.log(`[API /togglevideorecording] Condition NOT met (active=${vManager.active}, mode=${vManager.cameraMode}). Sending 400.`);
-    res.status(400).send({ error: 'Camera is not active in video recording mode.' });
+    res.status(400).send({ error: 'Camera is not active or not in video recording mode.' });
+  }
+})
+
+// General command ack response with optional result code (default 0 = ACCEPTED)
+vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result = 0) => {
+  try {
+    if (fcManager.m) {
+      fcManager.m.sendCommandAck(commandId, 0, senderSysId, senderCompId, targetComponent)
+    }
+  } catch (err) {
+    console.log(`Error sending ACK for command ${commandId}:`, err);
   }
 })
 
@@ -257,7 +272,8 @@ vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetCo
   try {
     if (fcManager.m) {
       // Acknowledge the CAMERA_INFORMATION request
-      fcManager.m.sendCommandAck(common.CameraInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(512, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
@@ -270,7 +286,9 @@ vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId, tar
   try {
     if (fcManager.m) {
       // Acknowledge the VIDEO_STREAM_INFORMATION request
-      fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(512, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
@@ -283,11 +301,28 @@ vManager.eventEmitter.on('camerasettings', (msg, senderSysId, senderCompId, targ
   try {
     if (fcManager.m) {
       // Acknowledge the CAMERA_SETTINGS request
-      fcManager.m.sendCommandAck(common.CameraSettings.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // fcManager.m.sendCommandAck(common.CameraSettings.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(512, 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
     console.log('Error sending CameraSettings:', err);
+    // console.log(err)
+  }
+})
+
+// Got a STORAGE_INFORMATION event, send to flight controller
+vManager.eventEmitter.on('storageinfo', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the STORAGE_INFORMATION request
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(512, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log('Error sending StorageInformation:', err);
     // console.log(err)
   }
 })
