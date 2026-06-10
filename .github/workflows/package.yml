@@ -113,6 +113,27 @@ jobs:
           if: github.ref == 'refs/heads/master'
           run: |
             gh release delete latest --yes || true
+            git push origin :refs/tags/latest || true
           env:
             GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Create latest pre-release
+          if: github.ref == 'refs/heads/master'
+          uses: "softprops/action-gh-release@v3"
+          with:
+            tag_name: latest
+            name: "Latest Build (master)"
+            prerelease: true
+            target_commitish: ${{ github.sha }} 
+            body: |
+              This is an automated pre-release of the latest successful build from the `master` branch.
+
+              **Commit:** ${{ github.sha }}
+              **Built:** ${{ github.run_id }}
+
+              > This release is updated on every push to master and is not a stable release.
+            files: |
+              artifacts/rpanion-server-amd64.deb/rpanion-server_*.deb
+              artifacts/rpanion-server-arm64.deb/rpanion-server_*.deb
+            token: "${{ secrets.GITHUB_TOKEN }}"
 
