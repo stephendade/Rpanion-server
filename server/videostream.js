@@ -1149,6 +1149,9 @@ class videoStream {
           this.sendUnsupportedAck(data.command, packet.header.sysid, packet.header.compid)
         }
       }
+      else {
+        console.log('Received Unhandled MAVLink packet for camera:', packet.header.msgid, data);
+      }
     }
 }
 
