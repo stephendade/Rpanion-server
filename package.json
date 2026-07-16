@@ -53,7 +53,7 @@
     "socket.io": "4.8.3",
     "socket.io-client": "4.8.3",
     "startbootstrap-simple-sidebar": "6.0.6",
-    "systeminformation": "5.31.6"
+    "systeminformation": "5.31.7"
   },
   "bin": {
     "coveralls": "./bin/coveralls.js"
