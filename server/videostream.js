@@ -1049,46 +1049,83 @@ class videoStream {
     this.eventEmitter.emit('storageinfo', msg, senderSysId, senderCompId, targetComponent)
   }
 
+  // Helper to log and emit an UNSUPPORTED ACK for MAVLink commands/messages we haven't implemented
+  sendUnsupportedAck(emittedCommand, sysid, compid) {
+    console.log(`MAVLink command ${emittedCommand} is unsupported. Sending UNSUPPORTED ACK.`)
+    this.eventEmitter.emit('camera_command_ack', emittedCommand, sysid, minimal.MavComponent.CAMERA, compid, 3);
+  }
+
   onMavPacket(packet, data) {
     if (packet.header.msgid === common.CommandLong.MSG_ID &&
       data.targetComponent === minimal.MavComponent.CAMERA) {
-      // Ardupilot camera mavlinkv2
-      if (data.command === common.RequestMessageCommand.MSG_ID && data.param1 === common.MavMsgId['CAMERA_INFORMATION']) {
-        console.log('Responding to MAVLink request for CameraInformation')
-        this.sendCameraInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
+
+      // Get the vehicle position if fcManager is available,
+      // for operations that need it (e.g., photo geotagging).
+      const currentPosition = this.fcManager?.getSystemStatus?.()?.vehiclePosition || null;
+
+      // Handle message request commands (MAV_CMD_REQUEST_MESSAGE)
+      if (data.command === common.MavCmd['REQUEST_MESSAGE']) {
+        const requestedMsgId = data._param1;
+
+        if (requestedMsgId === common.CameraInformation.MSG_ID) {
+          console.log(`Responding to MAVLink request for CameraInformation from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendCameraInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
+        }
+        else if (requestedMsgId === common.VideoStreamInformation.MSG_ID && this.cameraMode === "streaming") {
+          console.log('Responding to MAVLink request for VideoStreamInformation')
+          this.sendVideoStreamInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
+        }
+        else if (requestedMsgId === common.CameraSettings.MSG_ID) {
+          console.log(`Responding to MAVLink request for CameraSettings from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendCameraSettings(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        }
+        else if (requestedMsgId === common.StorageInformation.MSG_ID) {
+          console.log(`Responding to MAVLink request for StorageInformation from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendStorageInfo(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        }
+        else {
+          this.sendUnsupportedAck(common.MavCmd['REQUEST_MESSAGE'], packet.header.sysid, packet.header.compid)
+        }
+      }
+      // Handle message rate requests (MAV_CMD_SET_MESSAGE_INTERVAL)
+      else if (data.command === common.MavCmd['SET_MESSAGE_INTERVAL']) {
+        console.log(`Received SET_MESSAGE_INTERVAL command for msgId: ${data._param1}. Replying with ACCEPTED.`);
+        // 0 is MAV_RESULT_ACCEPTED
+        this.eventEmitter.emit('camera_command_ack', common.MavCmd['SET_MESSAGE_INTERVAL'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, 0);
       }
       else if (data.command === common.MavCmd['IMAGE_START_CAPTURE']) {
         console.log('Received MAVLink command to start image capture')
-        this.captureStillPhoto(packet.header.sysid, packet.header.compid, minimal.MavComponent.CAMERA)
+        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['IMAGE_START_CAPTURE'])
+      }
+      else if (data.command === common.MavCmd['IMAGE_STOP_CAPTURE']) {
+        console.log('Received IMAGE_STOP_CAPTURE command')
+        this.eventEmitter.emit('camera_command_ack', common.MavCmd['IMAGE_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
       }
       else if (data.command === common.MavCmd['VIDEO_START_CAPTURE']) {
         console.log('Received MAVLink command to start video capture')
-        this.toggleVideoRecording()
+        if (this.cameraMode === 'video' && !this.videoSettings.isRecording) {
+          this.toggleVideoRecording()
+        }
+        this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
       }
       else if (data.command === common.MavCmd['VIDEO_STOP_CAPTURE']) {
         console.log('Received MAVLink command to stop video capture')
-        this.toggleVideoRecording()
+        if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+          this.toggleVideoRecording()
+        }
+        this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
       }
-      // Mission Planner???
-      else if (data._param1 === common.VideoStreamInformation.MSG_ID && this.cameraMode === "streaming") {
-        console.log('Responding to MAVLink request for VideoStreamInformation')
-        this.sendVideoStreamInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
-      }
-      else if (data.command === common.MavCmd['CAMERA_SETTINGS']) {
-        console.log('Responding to MAVLink request for CameraSettings')
-        this.sendCameraSettings(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
-      }
-      //MAVProxy
+      // MAVProxy: responds to DO_DIGICAM_CONFIGURE by requesting our capabilities
       else if (data.command === common.MavCmd['DO_DIGICAM_CONFIGURE']) {
         console.log('Received DoDigicamConfigureCommand command')
         this.sendCameraInformation(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
       }
       else if (data.command === common.MavCmd['DO_DIGICAM_CONTROL']) {
-        console.log('Received DoDigicamControl command')
-        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        console.log('Received MAV_CMD_DO_DIGICAM_CONTROL command')
+        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['DO_DIGICAM_CONTROL'])
       }
       else {
-        console.log('Received Unhandled MAVLink packet for camera:', packet.header.msgid, data);
+        this.sendUnsupportedAck(data.command, packet.header.sysid, packet.header.compid)
       }
     }
   }
