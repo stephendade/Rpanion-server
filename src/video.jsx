@@ -323,27 +323,6 @@ componentWillUnmount() {
     }
   }
 
-  handleVideoRecordingDeviceChange = (event) => {
-    // Handler for video recording mode using still devices
-    const value = event.target.value;
-    const device = this.state.stillDevices.find(d => d.id === value);
-
-    if (device) {
-      const newCaps = device.caps || [];
-      const defaultCap = newCaps.length > 0 ? newCaps[0] : null;
-
-      this.setState({
-        vidDeviceSelected: value,
-        videoCaps: newCaps,
-        vidCapSelected: defaultCap ? this.getStillCapValue(defaultCap) : '',
-        fpsSelected: 30,
-        // Allow manual FPS inputs:
-        FPSMax: 120,
-        fpsOptions:[]
-      });
-    }
-  }
-
   handleVideoResChange = (event) => {
     const value = event.target.value;
     const cap = this.state.videoCaps.find(c => c.value === value);
@@ -362,18 +341,6 @@ componentWillUnmount() {
     if (cap.format === "video/x-h264") {
         this.setState({ compression: 'H264' });
       }
-    }
-  }
-
-  handleVideoRecordingResChange = (event) => {
-    // Resolution change for video recording mode using still device caps
-    const value = event.target.value;
-    const cap = this.state.videoCaps.find(c => this.getStillCapValue(c) === value);
-
-    if (cap) {
-      this.setState({
-        vidCapSelected: value
-      });
     }
   }
 
