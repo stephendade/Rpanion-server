@@ -136,6 +136,7 @@ def geotag_image(filepath):
 
     gps_file = '/tmp/rpanion_gps.json'
     if not os.path.exists(gps_file):
+        print("GPS coordinate data not found in /tmp/rpanion_gps.json")
         return
 
     try:
