@@ -800,14 +800,23 @@ class videoStream {
     this.saveSettings();
   }
 
-  // Helper to convert JS strings to the Array<string> format node-mavlink expects for char[]
-  toMavChars(str, length) {
-    const buf = new Uint8Array(length);
-    if (!str) return buf;
+  // Helper to format uint8_t[] fields (e.g., vendorName, modelName) for mavlink messages
+  toMavUint8Array(str, length) {
+    const out = new Array(length).fill(0);
+    const s = (str || "").toString();
+    // Bound the loop by length directly (not just s.length) so a very
+    // long input string can't drive an unbounded number of iterations.
+    const n = Math.min(s.length, length);
+    for (let i = 0; i < n; i++) {
+      out[i] = s.charCodeAt(i);
+    }
+    return out;
+  }
 
-    const encoded = new TextEncoder().encode(str);
-    buf.set(encoded.slice(0, length));
-    return buf;
+  // Helper to format char[] fields (e.g., camDefinitionUri) for mavlink messages
+  toMavString(str, length) {
+    if (!str) return "";
+    return str.toString().slice(0, length - 1);
   }
 
   sendCameraInformation(senderSysId, senderCompId, targetComponent) {
@@ -837,16 +846,18 @@ class videoStream {
       }
     }
 
-    msg.vendorName = this.toMavChars("Rpanion", 32);
-    msg.modelName = this.toMavChars(extractedModel, 32);
+    msg.timeBootMs = process.uptime()*1000;
+    msg.vendorName = this.toMavUint8Array("Rpanion", 32);
+    msg.modelName = this.toMavUint8Array(extractedModel, 32);
     msg.firmwareVersion = 0;
     msg.focalLength = 0;
     msg.sensorSizeH = 0;
     msg.sensorSizeV = 0;
     msg.lensId = 0;
     msg.camDefinitionVersion = 0;
-    msg.camDefinitionUri = ""; // send zero-length string if not known
-    msg.gimbalDeviceId = 0;
+    msg.camDefinitionUri = this.toMavString("", 140);
+    msg.gimbalDeviceId = 0; // No gimbal
+    msg.cameraDeviceId = 0; // 0 = MAVLink Camera with its own component ID
 
     // Mode-specific Configuration
     if (this.cameraMode === 'photo') {
@@ -857,7 +868,7 @@ class videoStream {
     else if (this.cameraMode === 'video') {
       msg.resolutionH = this.videoSettings?.width || 0;
       msg.resolutionV = this.videoSettings?.height || 0;
-      msg.flags = 4; // CAMERA_CAP_FLAGS_CAPTURE_VIDEO
+      msg.flags = 1; // CAMERA_CAP_FLAGS_CAPTURE_VIDEO
     }
     else {
       // Default: streaming
@@ -875,7 +886,7 @@ class videoStream {
     // build a CAMERA_SETTINGS packet
     const msg = new common.CameraSettings()
 
-    msg.timeBootMs = 0
+    msg.timeBootMs = process.uptime()*1000;
 
     // Camera modes: 0 = IMAGE, 1 = VIDEO, 2 = IMAGE_SURVEY
     if (this.cameraMode === 'photo') {
@@ -891,7 +902,8 @@ class videoStream {
   }
 
   sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
-    console.log('Responding to MAVLink request for VideoStreamInformation')
+    // Log the SysID and CompID of the requester
+    console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
 
     // build a VIDEO_STREAM_INFORMATION packet
     const msg = new common.VideoStreamInformation()
@@ -900,13 +912,15 @@ class videoStream {
     msg.streamId = 1
     msg.count = 1
 
+    let uriString = "";
+
     // msg.type and msg.uri need to be different depending on whether RTP or RTSP is selected
     if (this.videoSettings && this.videoSettings.useUDP) {
       // msg.type = 0 = VIDEO_STREAM_TYPE_RTSP
       // msg.type = 1 = VIDEO_STREAM_TYPE_RTPUDP
       msg.type = 1
       // For RTP, just send the destination UDP port instead of a full URI
-      msg.uri = this.videoSettings.useUDPPort.toString();
+      uriString = this.videoSettings.useUDPPort.toString();
     } else {
       msg.type = 0
       msg.encoding = this.videoSettings.compression === 'H264' ? 1 : (this.videoSettings.compression === 'H265' ? 2 : 0);
@@ -917,21 +931,25 @@ class videoStream {
         addr.includes(this.videoSettings.mavStreamSelected)
       );
 
-      msg.uri = matchedAddress || "";
+      uriString = matchedAddress || "";
 
     }
+
+    // Convert URI string to the field's declared max length (160 bytes)
+    msg.uri = this.toMavString(uriString, 160);
 
     // 1 = VIDEO_STREAM_STATUS_FLAGS_RUNNING
     msg.flags = 1;
     msg.framerate = this.videoSettings.fps;
     msg.resolutionH = this.videoSettings.width;
     msg.resolutionV = this.videoSettings.height;
-    msg.bitrate = this.videoSettings.bitrate;
+    // Convert bitrate from kbps (shown in Web UI) to bps (as per MAVLink spec)
+    msg.bitrate = this.videoSettings.bitrate * 1000;
     msg.rotation = this.videoSettings.rotation;
     // Rpanion doesn't collect field of view values, so set to zero
     msg.hfov = 0;
-    // Set the stream name (usually the device path)
-    msg.name = this.videoSettings.device;
+    // Convert the device name string to the field's declared max length (32 bytes)
+    msg.name = this.toMavString(this.videoSettings.device || "", 32);
 
     this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
   }
