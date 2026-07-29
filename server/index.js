@@ -323,6 +323,18 @@ vManager.eventEmitter.on('cameratrigger', (msg, senderCompId) => {
   }
 })
 
+// Got a CAMERA_IMAGE_CAPTURED event, send to flight controller
+vManager.eventEmitter.on('cameraimagecaptured', (msg, senderCompId) => {
+  try {
+    if (fcManager.m) {
+      // Send the CAMERA_IMAGE_CAPTURED message to the flight controller
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log('Error sending CameraImageCaptured:', err);
+  }
+})
+
 vManager.eventEmitter.on('filesaved', (filepath) => {
   try {
     io.sockets.emit('camera:filesaved', { filename: filepath });

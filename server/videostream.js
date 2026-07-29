@@ -739,7 +739,7 @@ class videoStream {
     }, 1000)
   }
 
-  captureStillPhoto(senderSysId, senderCompId, targetComponent, positionData = null) {
+  captureStillPhoto(senderSysId, senderCompId, targetComponent, positionData = null, commandId = null) {
     console.log('Attempting captureStillPhoto. Internal state: active=', this.active, 'mode=', this.cameraMode, 'deviceStream exists=', !!this.deviceStream);
 
     // Capture a single still photo
@@ -761,6 +761,7 @@ class videoStream {
         console.error('Failed to write GPS temp file:', e);
       }
     } else {
+      console.error('GPS data not available for geotagging. Check that "Enable datastream requests" is enabled on the Flight Controller page.');
       // Clean up old file to prevent stale tags
       if (fs.existsSync('/tmp/rpanion_gps.json')) {
         fs.unlinkSync('/tmp/rpanion_gps.json');
@@ -774,11 +775,63 @@ class videoStream {
     const msg = new common.CameraTrigger()
     // Date.now() returns time in milliseconds
     msg.timeUsec = BigInt(Date.now() * 1000)
-    // Increment the photo counter
-    msg.seq = this.photoSeq++
+    // Pre-increment the photo counter so that it's correct for
+    // both the CameraTrigger and the CameraImageCaptured messages
+    msg.seq = ++this.photoSeq
 
-    this.eventEmitter.emit('digicamcontrol', senderSysId, senderCompId, targetComponent)
+    // If triggered by a MAVLink command, emit a generalized ACK event
+    if (commandId && senderSysId !== null) {
+      this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent)
+    } else {
+      // Fallback for legacy listeners or safety
+      this.eventEmitter.emit('digicamcontrol', senderSysId, senderCompId, targetComponent)
+    }
+
+    // Advertise that an image was captured
     this.eventEmitter.emit('cameratrigger', msg, senderCompId)
+    this.sendCameraImageCaptured(senderCompId)
+
+    // Send updated storage availability
+    this.sendStorageInfo(senderSysId, senderCompId, targetComponent)
+  }
+
+  sendCameraImageCaptured(senderCompId) {
+    const msg = new common.CameraImageCaptured();
+
+    // Import the most recently saved GPS coordinates
+    let latitude = null, longitude = null, altitude = null, relative_altitude = null;
+    if (fs.existsSync('/tmp/rpanion_gps.json')) {
+      try {
+        const data = JSON.parse(fs.readFileSync('/tmp/rpanion_gps.json', 'utf8'));
+        latitude = data.lat;
+        longitude = data.lon;
+        altitude = data.alt;
+        relative_altitude = data.relAlt;
+      } catch (e) {
+        console.error('sendCameraImageCaptured: Failed to read GPS file:', e);
+      }
+    } else {
+      console.log('sendCameraImageCaptured: GPS file not found, skipping geotagging.');
+    }
+
+    msg.timeBootMs = Math.floor(process.uptime() * 1000);
+    msg.timeUtc = BigInt(Date.now()) * 1000n;
+    msg.cameraId = 0;
+    // for the mavlink message, lat/lon need to be int32_t in degrees * 1e7
+    msg.lat = latitude !== null ? Math.round(latitude * 1e7) : 0;
+    msg.lon = longitude !== null ? Math.round(longitude * 1e7) : 0;
+    // alt/relativeAlt are int32_t in millimeters
+    msg.alt = altitude !== null ? Math.round(altitude * 1000) : 0;
+    msg.relativeAlt = relative_altitude !== null ? Math.round(relative_altitude * 1000) : 0;
+
+    msg.q = [1,0,0,0]; // [1,0,0,0] for zero rotation
+    msg.imageIndex = this.photoSeq;
+    msg.captureResult = 1;          // Hard-code that capture was a success (for now)
+    msg.fileUrl = '';               // Leave blank for now; not used
+
+    console.log('Sending MAVLink CameraImageCaptured packet.');
+
+    this.eventEmitter.emit('cameraimagecaptured', msg, senderCompId);
   }
 
   toggleVideoRecording() {

@@ -176,7 +176,7 @@ describe('Video Functions', function () {
     vManager.eventEmitter.on('cameratrigger', (msg, compId) => {
       triggerReceived = true
       assert.ok(msg.timeUsec > 0)
-      assert.equal(msg.seq, 0) // First photo
+      assert.equal(msg.seq, 1) // First photo (photoSeq is pre-incremented)
     })
 
     vManager.captureStillPhoto(1, 1, 1)
