@@ -81,67 +81,52 @@ def get_card_name(dev_path):
 
     return None
 
-def get_libcamera_models():
-    """Get CSI camera model names from libcamera"""
+def get_subdev_name(dev_path):
+    """Read sensor model name from sysfs — fast file read, no subprocess."""
+    dev_name = os.path.basename(dev_path)  # e.g. v4l-subdev0
+    sysfs_path = f"/sys/class/video4linux/{dev_name}/name"
     try:
-        from picamera2 import Picamera2
-        models = {}
-        camera_info = Picamera2.global_camera_info()
-        
-        for idx, info in enumerate(camera_info):
-            model = info.get('Model', None)
-            if model and "usb@" not in info.get('Id', ''):
-                models[idx] = model
-        
-        return list(models.values())
-    except:
-        return []
+        with open(sysfs_path, 'r') as f:
+            # sysfs name is e.g. "imx219 10-0010" — take just the model part
+            return f.read().strip().split()[0]
+    except (FileNotFoundError, IndexError):
+        return None
 
+# picamera2 is checked via find_spec() rather than actually imported, since
+# importing it triggers a slow libcamera init (~10s on a Pi Zero 2W). cv2 has
+# no such cost, so it's actually imported to correctly detect broken installs
+# (e.g. present on disk but missing native .so dependencies) that find_spec()
+# would otherwise report as available.
 def get_capabilities():
-    """Check for availability of required libraries for photo/video modes"""
-    capabilities = {
-        'cv2': False,
-        'picamera2': False
-    }
-    
+    """Check cv2 and picamera2 availability."""
     try:
-        import cv2
-        capabilities['cv2'] = True
+        import cv2  # noqa: F401
+        has_cv2 = True
     except ImportError:
-        pass
-    
-    try:
-        from picamera2 import Picamera2
-        capabilities['picamera2'] = True
-    except (ImportError, OSError):
-        pass
-    
-    return capabilities
+        has_cv2 = False
+
+    import importlib.util
+    return {
+        'cv2': has_cv2,
+        'picamera2': importlib.util.find_spec('picamera2') is not None,
+    }
 
 check_if_v4l2_ctl_avail()
-
 devices = []
 
-# Get libcamera model names first
-libcamera_models = get_libcamera_models()
-model_idx = 0
-
-# Process CSI cameras
+# Enumerate CSI camera capabilities via v4l2-ctl/sysfs only. libcamera is
+# never initialized by this script (see get_capabilities()), so there's no
+# separate libcamera pass to reconcile these against.
+csi_devices = []
 for dev_path in get_subdev_paths():
     mbus_codes = get_mbus_codes(dev_path)
     if not mbus_codes:
         continue
-    
-    # Use libcamera model name if available, otherwise fall back to the v4l2 name
-    if model_idx < len(libcamera_models):
-        card_name = libcamera_models[model_idx]
-        model_idx += 1
-    else:
-        card_name = get_card_name(dev_path) or "Unnamed CSI Camera"
+
+    # Get card name here via v4l2 — avoids needing libcamera later
+    card_name = get_subdev_name(dev_path) or "Unnamed CSI Camera"
 
     device_caps = {
-        # Don't specify a device path for CSI cameras,
-        # but generate a unique ID for them.
         'id': f"CSI-{re.sub(r'[^a-zA-Z0-9]', '_', card_name)}",
         'device': None,
         'type': 'CSI',
@@ -149,22 +134,26 @@ for dev_path in get_subdev_paths():
         'caps': []
     }
 
+    seen = set()
     for mbus_code, pixel_format in mbus_codes:
         resolutions = get_resolutions(dev_path, mbus_code)
-
         for res in resolutions:
-            fmt = pixel_format.split("MEDIA_BUS_FMT_")[1] if "MEDIA_BUS_FMT_" in pixel_format else pixel_format
-            cap_info = {
-                'format': fmt,
+            key = (res['width'], res['height'])
+            if key in seen:
+                continue
+            seen.add(key)
+            device_caps['caps'].append({
+                'format': 'YUV420',
                 'width': res['width'],
                 'height': res['height'],
-                'label': f"{res['width']}x{res['height']}_{fmt}",
-                'value': f"{mbus_code}_{fmt}_{res['width']}x{res['height']}"
-            }
-            device_caps['caps'].append(cap_info)
+                'label': f"{res['width']}x{res['height']}",
+                'value': f"{res['width']}x{res['height']}_YUV420"
+            })
 
     if device_caps['caps']:
-        devices.append(device_caps)
+        csi_devices.append(device_caps)
+
+devices.extend(csi_devices)
 
 # Process UVC cameras
 for dev_path in get_video_device_paths():
@@ -178,12 +167,9 @@ for dev_path in get_video_device_paths():
             'caps': caps
         })
 
-# Get library capabilities and output as a single JSON object
-capabilities = get_capabilities()
-
 output = {
     'devices': devices,
-    'capabilities': capabilities
+    'capabilities': get_capabilities()
 }
 
 print(json.dumps(output, indent=4))
