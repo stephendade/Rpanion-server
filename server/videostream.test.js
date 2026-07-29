@@ -214,8 +214,8 @@ describe('Video Functions', function () {
     vManager.videoSettings = { device: 'imx219' }
 
     vManager.eventEmitter.on('camerainfo', (msg, sysId, compId) => {
-      // Decode vendor name (Uint8Array to string)
-      const vendorText = new TextDecoder().decode(msg.vendorName).replace(/\0/g, '')
+      // Decode vendor name (plain byte array to string)
+      const vendorText = String.fromCharCode(...msg.vendorName).replace(/\0/g, '')
       assert.equal(vendorText, 'Rpanion')
       assert.equal(msg.flags, 256) // Default streaming flag
       done()
