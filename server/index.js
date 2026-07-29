@@ -230,7 +230,18 @@ app.post('/api/togglevideorecording', authenticateToken, function (req, res) {
     }
   } else {
     console.log(`[API /togglevideorecording] Condition NOT met (active=${vManager.active}, mode=${vManager.cameraMode}). Sending 400.`);
-    res.status(400).send({ error: 'Camera is not active in video recording mode.' });
+    res.status(400).send({ error: 'Camera is not active or not in video recording mode.' });
+  }
+})
+
+// General command ack response with optional result code (default 0 = ACCEPTED)
+vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result = 0) => {
+  try {
+    if (fcManager.m) {
+      fcManager.m.sendCommandAck(commandId, result, senderSysId, senderCompId, targetComponent)
+    }
+  } catch (err) {
+    console.log(`Error sending ACK for command ${commandId}:`, err);
   }
 })
 
@@ -262,7 +273,8 @@ vManager.eventEmitter.on('camerainfo', (msg, senderSysId, senderCompId, targetCo
   try {
     if (fcManager.m) {
       // Acknowledge the CAMERA_INFORMATION request
-      fcManager.m.sendCommandAck(common.CameraInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(common.MavCmd['REQUEST_MESSAGE'], 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
@@ -275,7 +287,8 @@ vManager.eventEmitter.on('videostreaminfo', (msg, senderSysId, senderCompId, tar
   try {
     if (fcManager.m) {
       // Acknowledge the VIDEO_STREAM_INFORMATION request
-      fcManager.m.sendCommandAck(common.VideoStreamInformation.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(common.MavCmd['REQUEST_MESSAGE'], 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
@@ -288,7 +301,8 @@ vManager.eventEmitter.on('camerasettings', (msg, senderSysId, senderCompId, targ
   try {
     if (fcManager.m) {
       // Acknowledge the CAMERA_SETTINGS request
-      fcManager.m.sendCommandAck(common.CameraSettings.MSG_ID, 0, senderSysId, senderCompId, targetComponent)
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(common.MavCmd['REQUEST_MESSAGE'], 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
@@ -303,7 +317,7 @@ vManager.eventEmitter.on('storageinfo', (msg, senderSysId, senderCompId, targetC
     if (fcManager.m) {
       // Acknowledge the STORAGE_INFORMATION request
       // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
-      fcManager.m.sendCommandAck(512, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendCommandAck(common.MavCmd['REQUEST_MESSAGE'], 0, senderSysId, senderCompId, targetComponent)
       fcManager.m.sendData(msg, senderCompId)
     }
   } catch (err) {
