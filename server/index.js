@@ -297,6 +297,20 @@ vManager.eventEmitter.on('camerasettings', (msg, senderSysId, senderCompId, targ
   }
 })
 
+// Got a STORAGE_INFORMATION event, send to flight controller
+vManager.eventEmitter.on('storageinfo', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the STORAGE_INFORMATION request
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(512, 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log('Error sending StorageInformation:', err);
+  }
+})
+
 // Got a CAMERA_TRIGGER event, send to flight controller
 vManager.eventEmitter.on('cameratrigger', (msg, senderCompId) => {
   try {
