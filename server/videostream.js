@@ -27,6 +27,7 @@ class videoStream {
     this.stillDevices = null; // Still devices
     this.videoSettings = null;
     this.stillSettings = null;
+    this.fcManager = null;    // Flight controller manager reference, set externally if available
 
     // Load saved settings from the 'camera' namespace
     this.active = this.settings.value('camera.active', false);
@@ -64,6 +65,11 @@ class videoStream {
   toAbsolutePath(dest) {
     dest = this.toRelativePath(dest);
     return dest ? path.join(logpaths.mediaDir, dest) : logpaths.mediaDir;
+  }
+
+  // Reference the fcManager so we can access position data for geotagging
+  setFlightControllerManager(fcManager) {
+    this.fcManager = fcManager;
   }
 
   async initialize() {
