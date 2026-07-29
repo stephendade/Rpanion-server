@@ -149,9 +149,10 @@ class VideoPage extends basePage {
                     matchedCap = initialVidCaps[0];
                 }
                 initialVidCapSel = matchedCap ? matchedCap.value : '';
-                initialFpsOpts =[];
-                initialFpsMax = 120; // Allow typing manual FPS up to 120
-                initialFps = selFps || 30;
+                initialFpsOpts = matchedCap ? (matchedCap.fps || []) : [];
+                initialFpsMax = matchedCap ? (matchedCap.fpsmax || 0) : 0;
+                const savedFps = videoData.selectedFps;
+                initialFps = savedFps != null ? savedFps : (initialFpsMax > 0 ? initialFpsMax : (initialFpsOpts.length > 0 ? initialFpsOpts[0].value : 30));
             } else {
                 initialVidDevSel = '';
                 initialVidCaps = [];
@@ -270,9 +271,9 @@ componentWillUnmount() {
       updates.vidDeviceSelected = firstVidDevice ? firstVidDevice.value : '';
       updates.videoCaps = firstVidDevice ? firstVidDevice.caps : [];
       updates.vidCapSelected = firstCap ? firstCap.value : '';
-      updates.FPSMax = 120;
-      updates.fpsOptions =[];
-      updates.fpsSelected = 30;
+      updates.fpsOptions = firstCap ? (firstCap.fps || []) : [];
+      updates.FPSMax = firstCap ? (firstCap.fpsmax || 0) : 0;
+      updates.fpsSelected = updates.FPSMax > 0 ? updates.FPSMax : (updates.fpsOptions.length > 0 ? updates.fpsOptions[0].value : 30);
     } else if (newMode === 'streaming') {
       // Reset back to Streaming capabilities
       const firstVidDevice = this.state.videoDevices.length > 0 ? this.state.videoDevices[0] : null;
