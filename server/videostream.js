@@ -472,6 +472,8 @@ class videoStream {
 
     // Start MAVLink heartbeats if enabled
     if (this.useCameraHeartbeat) {
+      // Send one immediate heartbeat before starting the timer
+      this.eventEmitter.emit('cameraheartbeat', minimal.MavType.CAMERA, minimal.MavAutopilot.INVALID, minimal.MavComponent.CAMERA);
       this.startHeartbeatInterval();
       this.sendVideoStreamInformation(null, minimal.MavComponent.CAMERA, null);
     }
@@ -506,8 +508,11 @@ class videoStream {
 
     // Start MAVLink heartbeats if enabled
     if (this.useCameraHeartbeat) {
+      // Send one immediate heartbeat before starting the timer
+      this.eventEmitter.emit('cameraheartbeat', minimal.MavType.CAMERA, minimal.MavAutopilot.INVALID, minimal.MavComponent.CAMERA);
       this.startHeartbeatInterval();
       this.sendCameraInformation(null, minimal.MavComponent.CAMERA, null);
+      this.sendCameraSettings(null, minimal.MavComponent.CAMERA, null);
     }
   }
 
@@ -548,8 +553,11 @@ class videoStream {
 
     // Start MAVLink heartbeats if enabled
     if (this.useCameraHeartbeat) {
+      // Send one immediate heartbeat before starting the timer
+      this.eventEmitter.emit('cameraheartbeat', minimal.MavType.CAMERA, minimal.MavAutopilot.INVALID, minimal.MavComponent.CAMERA);
       this.startHeartbeatInterval();
       this.sendCameraInformation(null, minimal.MavComponent.CAMERA, null);
+      this.sendCameraSettings(null, minimal.MavComponent.CAMERA, null);
     }
   }
 
@@ -563,7 +571,7 @@ class videoStream {
 
       if (!callbackCalled) {
         callbackCalled = true;
-        console.log(`${modeName}: No response from script after 60s, assuming start.`);
+        console.log(`${modeName}: No response from script after 90s, assuming start.`);
         this.active = true;
         this.saveSettings();
         callback(null, { active: true, addresses: this.deviceAddresses });
