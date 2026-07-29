@@ -233,8 +233,13 @@ class mavManager {
       return
     }
 
+    // Get the Message ID
+    const msgId = msg.constructor.MSG_ID
+
     let protocol = null
-    if (this.version === 2) {
+    // Switch to V2 for messages >255
+    // Don't use strict equality ("===") because version might be stored as a string
+    if (this.version == 2 || (msgId && msgId > 255)) {
       protocol = new MavLinkProtocolV2(this.targetSystem, component)
     } else {
       protocol = new MavLinkProtocolV1(this.targetSystem, component)
