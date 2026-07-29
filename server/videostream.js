@@ -954,6 +954,48 @@ class videoStream {
     this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
   }
 
+  // Find how much media space there is in total, and how much is available
+  async getStorageStats() {
+    try {
+      const s = await fs.promises.statfs(logpaths.mediaDir);
+      const total = BigInt(s.bsize) * BigInt(s.blocks);
+      const free = BigInt(s.bsize) * BigInt(s.bfree);
+      const avail = BigInt(s.bsize) * BigInt(s.bavail);
+      const used = total - free;
+      const totalMiB = Number(total / BigInt(1024 * 1024));
+      const usedMiB = Number(used / BigInt(1024 * 1024));
+      const availableMiB = Number(avail / BigInt(1024 * 1024));
+      return { totalMiB, usedMiB, availableMiB };
+    } catch (e) {
+      return { totalMiB: 0, usedMiB: 0, availableMiB: 0 };
+    }
+  }
+
+  async sendStorageInfo(senderSysId, senderCompId, targetComponent) {
+    console.log('Sending MAVLink StorageInformation packet')
+
+    // Build a STORAGE_INFORMATION packet
+    const msg = new common.StorageInformation()
+
+    // Try to get real storage stats for mediaDir; fall back to safe defaults
+    const stats = await this.getStorageStats().catch(() => ({ totalMiB: 0, usedMiB: 0 }));
+
+    msg.timeBootMs = process.uptime()*1000;
+    msg.storageId = 1;           // First storage device
+    msg.storageCount = 1;       // One storage device available
+    msg.status = common.StorageStatus.READY;
+    msg.totalCapacity = stats.totalMiB;   // Capacity in MiB
+    msg.usedCapacity = stats.usedMiB;
+    msg.availableCapacity = Math.max(0, stats.availableMiB || 0);
+    msg.readSpeed = 0;         // Speeds in MiB/s, just send zeroes for now
+    msg.writeSpeed = 0;
+    msg.type = common.StorageType.MICROSD;
+    msg.name = this.toMavString('Rpanion Storage', 32);
+    msg.storageUsage = 7; // Usage bitmask; 1 = Set (required), 2 = Photo, 4 = Video
+
+    this.eventEmitter.emit('storageinfo', msg, senderSysId, senderCompId, targetComponent)
+  }
+
   onMavPacket(packet, data) {
     if (packet.header.msgid === common.CommandLong.MSG_ID &&
       data.targetComponent === minimal.MavComponent.CAMERA) {
