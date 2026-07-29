@@ -250,8 +250,7 @@ class mavManager {
 
     this.udpStream.send(buffer, this.RinudpPort, this.RinudpIP, function (error) {
       if (error) {
-        this.udpStream.close()
-        console.log(error)
+        console.error("MAVLink UDP Send Error:", error)
       } else {
         // console.log(msgbuf)
         // console.log(buf)
