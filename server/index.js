@@ -70,6 +70,11 @@ const fcManager = new fcManagerClass(settings)
 const logManager = new flightLogger()
 const ntripClient = new ntrip(settings)
 const cloud = new cloudManager(settings)
+
+// Pass the fcManager instance to the videoStream,
+// so it can access position data for geotagging photos
+vManager.setFlightControllerManager(fcManager)
+
 const logConversion = new logConversionManager(settings)
 const adhocManager = new Adhoc(settings)
 const userMgmt = new userLogin()
