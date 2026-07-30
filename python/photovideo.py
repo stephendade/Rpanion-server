@@ -2,6 +2,7 @@
 # -*- coding:utf-8 vi:ts=4:noexpandtab
 
 import argparse
+import inspect
 import time, signal, os, sys, shutil, traceback
 import json
 
@@ -244,16 +245,43 @@ elif captureMode == "video":
             print(f"Mapping format '{args.vidFormat}' to 'YUV420' for Picamera2", flush=True)
             args.vidFormat = "YUV420"
             
+        # FrameRate alone only requests a nominal rate - auto-exposure can still
+        # stretch each frame's actual duration in low light, so the real
+        # capture rate can drift below what was requested. Pinning
+        # FrameDurationLimits to a fixed value prevents that drift.
+        video_controls = {"FrameRate": args.vidFps}
+        if args.vidFps > 0:
+            frame_duration_us = int(1_000_000 / args.vidFps)
+            video_controls["FrameDurationLimits"] = (frame_duration_us, frame_duration_us)
+
         picam2_vid = Picamera2()
         video_config = picam2_vid.create_video_configuration(
             main={
                 "size": (args.vidWidth, args.vidHeight),
                 "format": args.vidFormat},
-                controls={"FrameRate": args.vidFps},
+                controls=video_controls,
                 transform=Transform(rotation=args.imageRotation)
             )
         picam2_vid.configure(video_config)
-        encoder = H264Encoder(bitrate=args.vidBitrate)
+        # The recording is a raw elementary .h264 stream (no container/
+        # timestamps), so a player has no way to know the real playback rate
+        # unless it's embedded in-band. enable_sps_framerate writes the actual
+        # (now-fixed) framerate into the stream's SPS/VUI metadata.
+        #
+        # H264Encoder() picks its actual implementation based on hardware:
+        # boards with a hardware H264 block (e.g. Pi4/CM4) get the hardware
+        # encoder, but boards without one (e.g. Pi5/CM5) transparently get
+        # LibavH264Encoder instead - a different class that doesn't accept
+        # enable_sps_framerate. Only pass it if this build's encoder actually
+        # supports it, rather than assuming a specific backend.
+        encoder_kwargs = {"bitrate": args.vidBitrate, "framerate": args.vidFps}
+        if "enable_sps_framerate" in inspect.signature(H264Encoder.__init__).parameters:
+            encoder_kwargs["enable_sps_framerate"] = True
+        else:
+            print("H264 encoder backend doesn't support enable_sps_framerate - recorded video's "
+                  "framerate won't be embedded in-band (playback speed may still be affected on "
+                  "players that can't infer it from FrameDurationLimits alone).", flush=True)
+        encoder = H264Encoder(**encoder_kwargs)
         picam2_vid.start()
         print(f"Camera is ready in Picamera2 video mode. Capturing {args.vidWidth}x{args.vidHeight} {args.vidFormat} @ {args.vidFps} fps, {args.imageRotation}° rotation")
     else:
