@@ -974,53 +974,9 @@ class videoStream {
     this.eventEmitter.emit('camerasettings', msg, senderSysId, senderCompId, targetComponent)
   }
 
-  sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
-    // Log the SysID and CompID of the requester
-    console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
-
-    // build a VIDEO_STREAM_INFORMATION packet
-    const msg = new common.VideoStreamInformation()
-
-    // rpanion only supports a single stream, so streamId and count will always be 1
-    msg.streamId = 1
-    msg.count = 1
-
-    let uriString = "";
-
-    // msg.type and msg.uri need to be different depending on whether RTP or RTSP is selected
-    if (this.videoSettings && this.videoSettings.useUDP) {
-      // msg.type = 0 = VIDEO_STREAM_TYPE_RTSP
-      // msg.type = 1 = VIDEO_STREAM_TYPE_RTPUDP
-      msg.type = 1
-      // For RTP, just send the destination UDP port instead of a full URI
-      uriString = this.videoSettings.useUDPPort.toString();
-    } else {
-      msg.type = 0
-      msg.encoding = this.videoSettings.compression === 'H264' ? 1 : (this.videoSettings.compression === 'H265' ? 2 : 0);
-
-      // Find the address in the list that matches the selected MAVLink interface IP
-      // This uses the array populated in populateAddresses() to ensure 1:1 consistency with Web UI
-      let matchedAddress = this.deviceAddresses.find(addr =>
-        addr.includes(this.videoSettings.mavStreamSelected)
-      );
-
-      // Loopback is never reachable by a remote GCS. If that's what matched
-      // (or nothing matched at all), prefer the first non-loopback address
-      // instead of advertising something guaranteed to be useless.
-      if (!matchedAddress || /:\/\/127\./.test(matchedAddress)) {
-        const nonLoopback = this.deviceAddresses.find(addr => !/:\/\/127\./.test(addr));
-        if (nonLoopback) {
-          matchedAddress = nonLoopback;
-        }
-      }
-
-      uriString = matchedAddress || "";
-
-    }
-
-    // Convert URI string to the field's declared max length (160 bytes)
-    msg.uri = this.toMavString(uriString, 160);
-
+  // Fields shared by every VIDEO_STREAM_INFORMATION message for the current stream,
+  // regardless of which address/stream_id it's advertised under.
+  populateVideoStreamCommonFields(msg) {
     // 1 = VIDEO_STREAM_STATUS_FLAGS_RUNNING
     msg.flags = 1;
     msg.framerate = this.videoSettings.fps;
@@ -1033,8 +989,65 @@ class videoStream {
     msg.hfov = 0;
     // Convert the device name string to the field's declared max length (32 bytes)
     msg.name = this.toMavString(this.videoSettings.device || "", 32);
+  }
 
-    this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
+  sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
+    // Log the SysID and CompID of the requester
+    console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
+
+    // RTP push mode has exactly one meaningful destination (useUDPIP), so there's
+    // only ever a single stream to advertise - unlike RTSP, a GCS can't just try
+    // a different address, since Rpanion is the one pushing to a fixed destination.
+    if (this.videoSettings && this.videoSettings.useUDP) {
+      const msg = new common.VideoStreamInformation()
+      msg.streamId = 1
+      msg.count = 1
+      msg.type = 1
+      // For RTP, just send the destination UDP port instead of a full URI
+      msg.uri = this.toMavString(this.videoSettings.useUDPPort.toString(), 160);
+      this.populateVideoStreamCommonFields(msg);
+      this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
+      return
+    }
+
+    // RTSP: the same stream is reachable via every address this device has, so
+    // advertise all of them as separate stream_ids instead of just the one
+    // configured as the "MAVLink video source IP" - a GCS on a different
+    // interface can still find a working URI this way.
+    const isLoopback = (addr) => /:\/\/127\./.test(addr);
+    const matchedAddress = this.deviceAddresses.find(addr =>
+      addr.includes(this.videoSettings.mavStreamSelected)
+    );
+
+    // Order: the explicitly-selected address first (if non-loopback), then any
+    // other non-loopback addresses, then loopback last as a final fallback.
+    const addresses = [];
+    if (matchedAddress && !isLoopback(matchedAddress)) {
+      addresses.push(matchedAddress);
+    }
+    for (const addr of this.deviceAddresses) {
+      if (!isLoopback(addr) && !addresses.includes(addr)) addresses.push(addr);
+    }
+    for (const addr of this.deviceAddresses) {
+      if (!addresses.includes(addr)) addresses.push(addr);
+    }
+    if (addresses.length === 0) {
+      addresses.push(matchedAddress || "");
+    }
+
+    const encoding = this.videoSettings.compression === 'H264' ? 1 : (this.videoSettings.compression === 'H265' ? 2 : 0);
+
+    addresses.forEach((addr, idx) => {
+      const msg = new common.VideoStreamInformation()
+      msg.streamId = idx + 1
+      msg.count = addresses.length
+      msg.type = 0
+      msg.encoding = encoding
+      // Convert URI string to the field's declared max length (160 bytes)
+      msg.uri = this.toMavString(addr, 160);
+      this.populateVideoStreamCommonFields(msg);
+      this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
+    });
   }
 
   // Find how much media space there is in total, and how much is available
