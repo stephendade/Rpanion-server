@@ -6,6 +6,7 @@ const events = require('events')
 const { minimal, common } = require('node-mavlink')
 const logpaths = require('./paths.js')
 const fs = require('fs')
+const rpanionVersion = require('../package.json').version
 
 class videoStream {
   constructor (settings) {
@@ -872,6 +873,21 @@ class videoStream {
     return str.toString().slice(0, length - 1);
   }
 
+  // Encode Rpanion's own package.json version (e.g. "0.12.0") for
+  // CAMERA_INFORMATION.firmware_version, which per the MAVLink spec is packed
+  // as (Dev << 24) | (Patch << 16) | (Minor << 8) | Major - i.e. Major is the
+  // *least* significant byte. This is the opposite byte order to
+  // AUTOPILOT_VERSION.flight_sw_version (major is the most significant byte
+  // there), so don't reuse decodeFlightSwVersion()'s logic for this field.
+  encodeFirmwareVersion(versionStr) {
+    const parts = (versionStr || "").split('.').map(n => parseInt(n, 10) || 0);
+    const major = parts[0] || 0;
+    const minor = parts[1] || 0;
+    const patch = parts[2] || 0;
+    const dev = 0; // Not used/unspecified
+    return ((dev & 0xff) << 24) | ((patch & 0xff) << 16) | ((minor & 0xff) << 8) | (major & 0xff);
+  }
+
   sendCameraInformation(senderSysId, senderCompId, targetComponent) {
     console.log('Sending MAVLink CameraInformation packet')
 
@@ -906,7 +922,7 @@ class videoStream {
     msg.timeBootMs = process.uptime()*1000;
     msg.vendorName = this.toMavUint8Array("Rpanion", 32);
     msg.modelName = this.toMavUint8Array(extractedModel, 32);
-    msg.firmwareVersion = 0;
+    msg.firmwareVersion = this.encodeFirmwareVersion(rpanionVersion);
     msg.focalLength = 0;
     msg.sensorSizeH = 0;
     msg.sensorSizeV = 0;
