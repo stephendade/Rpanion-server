@@ -888,36 +888,36 @@ class videoStream {
     return ((dev & 0xff) << 24) | ((patch & 0xff) << 16) | ((minor & 0xff) << 8) | (major & 0xff);
   }
 
+  // Extract a clean, short model name from a device/still-image ID string, e.g.
+  // /base/soc/i2c0mux/i2c@1/imx415@1a -> imx415, CSI-imx415 -> imx415 (the
+  // latter is a synthetic still-device ID from get_camera_caps.py).
+  extractModelName(devicePath) {
+    if (!devicePath) return "Unknown";
+    if (devicePath.includes('rtspsource')) {
+      return "RTSP Source";
+    } else if (devicePath.includes('/')) {
+      const parts = devicePath.split('/');
+      const leaf = parts[parts.length - 1];
+      return leaf.split('@')[0];
+    } else if (devicePath.startsWith('CSI-')) {
+      return devicePath.slice('CSI-'.length);
+    }
+    return devicePath;
+  }
+
   sendCameraInformation(senderSysId, senderCompId, targetComponent) {
     console.log('Sending MAVLink CameraInformation packet')
 
     const msg = new common.CameraInformation();
 
     // Get the camera model name, and handle cases where settings might be null
-    let devicePath = "Unknown";
+    let devicePath = null;
     if (this.cameraMode === 'photo' && this.stillSettings && this.stillSettings.device) {
       devicePath = this.stillSettings.device;
     } else if (this.videoSettings && this.videoSettings.device) {
       devicePath = this.videoSettings.device;
     }
-
-    let extractedModel = "Unknown";
-    if (devicePath !== "Unknown") {
-      if (devicePath.includes('rtspsource')) {
-        extractedModel = "RTSP Source";
-      } else if (devicePath.includes('/')) {
-        // e.g. /base/soc/i2c0mux/i2c@1/imx219@10 -> imx219
-        const parts = devicePath.split('/');
-        const leaf = parts[parts.length - 1];
-        extractedModel = leaf.split('@')[0];
-      } else if (devicePath.startsWith('CSI-')) {
-        // Still-photo device IDs are synthetic, from get_camera_caps.py:
-        // e.g. CSI-imx415 -> imx415
-        extractedModel = devicePath.slice('CSI-'.length);
-      } else {
-        extractedModel = devicePath;
-      }
-    }
+    const extractedModel = this.extractModelName(devicePath);
 
     msg.timeBootMs = process.uptime()*1000;
     msg.vendorName = this.toMavUint8Array("Rpanion", 32);
@@ -975,7 +975,9 @@ class videoStream {
   }
 
   // Fields shared by every VIDEO_STREAM_INFORMATION message for the current stream,
-  // regardless of which address/stream_id it's advertised under.
+  // regardless of which address/stream_id it's advertised under. Does NOT include
+  // `name` - when advertising multiple addresses, each needs its own distinguishing
+  // name so a GCS's stream picker doesn't show several identical-looking entries.
   populateVideoStreamCommonFields(msg) {
     // 1 = VIDEO_STREAM_STATUS_FLAGS_RUNNING
     msg.flags = 1;
@@ -987,13 +989,13 @@ class videoStream {
     msg.rotation = this.videoSettings.rotation;
     // Rpanion doesn't collect field of view values, so set to zero
     msg.hfov = 0;
-    // Convert the device name string to the field's declared max length (32 bytes)
-    msg.name = this.toMavString(this.videoSettings.device || "", 32);
   }
 
   sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
     // Log the SysID and CompID of the requester
     console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
+
+    const modelName = this.extractModelName(this.videoSettings && this.videoSettings.device);
 
     // RTP push mode has exactly one meaningful destination (useUDPIP), so there's
     // only ever a single stream to advertise - unlike RTSP, a GCS can't just try
@@ -1006,6 +1008,7 @@ class videoStream {
       // For RTP, just send the destination UDP port instead of a full URI
       msg.uri = this.toMavString(this.videoSettings.useUDPPort.toString(), 160);
       this.populateVideoStreamCommonFields(msg);
+      msg.name = this.toMavString(modelName, 32);
       this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
       return
     }
@@ -1046,6 +1049,10 @@ class videoStream {
       // Convert URI string to the field's declared max length (160 bytes)
       msg.uri = this.toMavString(addr, 160);
       this.populateVideoStreamCommonFields(msg);
+      // Distinguish each stream by its address, e.g. "imx415 (10.0.2.100)" -
+      // otherwise every entry would show the same name in a GCS's stream picker.
+      const ip = (addr.match(/^rtsp:\/\/([^:]+):/) || [])[1];
+      msg.name = this.toMavString(ip ? `${modelName} (${ip})` : modelName, 32);
       this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
     });
   }

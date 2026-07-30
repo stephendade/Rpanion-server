@@ -266,7 +266,8 @@ describe('Video Functions', function () {
       rotation: 0,
       compression: 'H264',
       useUDP: false,
-      mavStreamSelected: '127.0.0.1' // deliberately select the loopback address
+      mavStreamSelected: '127.0.0.1', // deliberately select the loopback address
+      device: 'CSI-imx415'
     }
 
     // A loopback address plus a real, reachable one
@@ -284,8 +285,12 @@ describe('Video Functions', function () {
     // the real, reachable address should be advertised first...
     assert.equal(received[0].streamId, 1)
     assert.ok(received[0].uri.includes('10.0.2.100'))
+    // ...and each stream's name should be distinguishable (clean model name + its
+    // own address), not identical entries a user can't tell apart in a GCS dropdown
+    assert.equal(received[0].name, 'imx415 (10.0.2.100)')
     // ...and loopback last, as a fallback rather than the primary choice
     assert.equal(received[1].streamId, 2)
+    assert.equal(received[1].name, 'imx415 (127.0.0.1)')
     assert.ok(received[1].uri.includes('127.0.0.1'))
   })
 
