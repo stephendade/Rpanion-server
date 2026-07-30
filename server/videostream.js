@@ -18,6 +18,7 @@ class videoStream {
     this.deviceAddresses = []
     this.cameraMode = null; // 'streaming', 'photo', or 'video'
     this.photoSeq = 0;
+    this.modeSwitchInProgress = false; // true while switchCameraModeAndTakeAction() is mid-switch
 
     // Interval to send camera heartbeat events
     this.intervalObj = null;
@@ -437,6 +438,50 @@ class videoStream {
     }
   }
 
+  // Switch to targetMode (stopping whatever's currently running and starting
+  // targetMode's process) if not already there, then call action(). Used so a
+  // MAVLink command (e.g. take a photo) can be serviced regardless of which
+  // mode the camera happens to be in when it arrives, rather than rejecting it.
+  //
+  // Starting a new mode's process can take a while (spawning
+  // photovideo.py/video-server.py, camera library init, etc.), so a
+  // MAV_RESULT_IN_PROGRESS ack is sent immediately if a switch is actually
+  // needed, to avoid the GCS timing out while it waits - followed by a final
+  // MAV_RESULT_FAILED ack if the switch itself fails. On success, action() is
+  // called and is responsible for its own ack.
+  switchCameraModeAndTakeAction(targetMode, commandId, senderSysId, senderCompId, targetComponent, action) {
+    if (this.active && this.cameraMode === targetMode) {
+      action();
+      return;
+    }
+
+    if (this.modeSwitchInProgress) {
+      console.log(`Cannot switch to '${targetMode}' mode - another mode switch is already in progress`)
+      // 1 = MAV_RESULT_TEMPORARILY_REJECTED
+      this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 1)
+      return
+    }
+
+    console.log(`Switching camera mode from '${this.cameraMode}' to '${targetMode}' to service command ${commandId}`)
+    this.modeSwitchInProgress = true
+    // 5 = MAV_RESULT_IN_PROGRESS
+    this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 5)
+
+    this.stopCamera(() => {
+      this.cameraMode = targetMode
+      this.startCamera((err) => {
+        this.modeSwitchInProgress = false
+        if (err) {
+          console.log(`Failed to switch to '${targetMode}' mode:`, err)
+          // 4 = MAV_RESULT_FAILED
+          this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 4)
+          return
+        }
+        action()
+      })
+    })
+  }
+
   async startVideoStreaming(callback) {
     if (!this.videoSettings) return callback(new Error('No video settings provided'));
 
@@ -563,6 +608,13 @@ class videoStream {
   }
 
   setupStreamEvents(modeName, callback) {
+    // Capture the specific process this setup call is for. A process killed
+    // during a mode switch (stopCamera() followed immediately by
+    // startCamera()) doesn't exit instantly - its listeners can still fire
+    // well after a newer process has already started and been marked active.
+    // Guard every shared-state mutation below with `this.deviceStream === proc`
+    // so a stale, superseded process can't clobber the current mode's state.
+    const proc = this.deviceStream;
     let callbackCalled = false;
     let stdoutBuffer = ''; // Buffer for accumulating data chunks
 
@@ -573,13 +625,15 @@ class videoStream {
       if (!callbackCalled) {
         callbackCalled = true;
         console.log(`${modeName}: No response from script after 90s, assuming start.`);
-        this.active = true;
-        this.saveSettings();
+        if (this.deviceStream === proc) {
+          this.active = true;
+          this.saveSettings();
+        }
         callback(null, { active: true, addresses: this.deviceAddresses });
       }
     }, 90000);
 
-    this.deviceStream.on('error', (err) => {
+    proc.on('error', (err) => {
       clearTimeout(timeout);
       console.error(`Failed to spawn ${modeName}:`, err);
       if (!callbackCalled) {
@@ -590,30 +644,33 @@ class videoStream {
 
     // Listen continuously until we hear "Camera is ready"
     // or in streaming mode
-    this.deviceStream.stdout.on('data', (data) => {
+    proc.stdout.on('data', (data) => {
 
       const chunk = data.toString();
       stdoutBuffer += chunk;
 
-      // Detect the video recording start/stop messages from photovideo.py and update the recording flag
-      const lower = chunk.toLowerCase();
-      // start patterns printed by photovideo.py:
-      // "Picamera2 recording started to <path>"
-      // "V4L2 recording started to <path>"
-      // also generic "recording started"
-      if (lower.includes('recording started') || lower.includes('recording started to')) {
-        this.setRecordingFlag(true);
-        this.saveSettings();
-        console.log('Detected recorder START; isRecording=true');
-      }
-      // stop patterns printed by photovideo.py:
-      // "Picamera2 recording stopped."
-      // "V4L2 recording stopped."
-      // also generic "recording stopped"
-      if (lower.includes('recording stopped')) {
-        this.setRecordingFlag(false);
-        this.saveSettings();
-        console.log('Detected recorder STOP; isRecording=false');
+      // Detect the video recording start/stop messages from photovideo.py and
+      // update the recording flag - only if this is still the current process.
+      if (this.deviceStream === proc) {
+        const lower = chunk.toLowerCase();
+        // start patterns printed by photovideo.py:
+        // "Picamera2 recording started to <path>"
+        // "V4L2 recording started to <path>"
+        // also generic "recording started"
+        if (lower.includes('recording started') || lower.includes('recording started to')) {
+          this.setRecordingFlag(true);
+          this.saveSettings();
+          console.log('Detected recorder START; isRecording=true');
+        }
+        // stop patterns printed by photovideo.py:
+        // "Picamera2 recording stopped."
+        // "V4L2 recording stopped."
+        // also generic "recording stopped"
+        if (lower.includes('recording stopped')) {
+          this.setRecordingFlag(false);
+          this.saveSettings();
+          console.log('Detected recorder STOP; isRecording=false');
+        }
       }
 
       // find file paths printed by photovideo.py
@@ -648,27 +705,34 @@ class videoStream {
         if (isReady) {
           clearTimeout(timeout);
           console.log(`${modeName} process is fully initialized.`);
-          this.active = true;
-          this.saveSettings();
+          if (this.deviceStream === proc) {
+            this.active = true;
+            this.saveSettings();
+          }
           callbackCalled = true;
           callback(null, { active: true, addresses: this.deviceAddresses });
         }
       }
     });
 
-    this.deviceStream.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
       const msg = data.toString().trim();
       if (msg) console.error(`${modeName} error: ${msg}`);
     });
 
-    this.deviceStream.on('close', (code) => {
+    proc.on('close', (code) => {
       clearTimeout(timeout);
       console.log(`${modeName} exited with code ${code}`);
-      this.active = false;
-      // Clear the video recording flag
-      if (this.videoSettings) {
-        this.setRecordingFlag(false);
-        this.saveSettings();
+      // Only update shared state if this is still the current process - a
+      // stale, already-superseded process exiting late must not clobber the
+      // new mode's state (see comment at the top of this method).
+      if (this.deviceStream === proc) {
+        this.active = false;
+        // Clear the video recording flag
+        if (this.videoSettings) {
+          this.setRecordingFlag(false);
+          this.saveSettings();
+        }
       }
       if (!callbackCalled) {
         callbackCalled = true;
@@ -1159,7 +1223,9 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['IMAGE_START_CAPTURE']) {
         console.log('Received MAVLink command to start image capture')
-        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['IMAGE_START_CAPTURE'])
+        this.switchCameraModeAndTakeAction('photo', common.MavCmd['IMAGE_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['IMAGE_START_CAPTURE'])
+        })
       }
       else if (data.command === common.MavCmd['IMAGE_STOP_CAPTURE']) {
         console.log('Received IMAGE_STOP_CAPTURE command')
@@ -1167,30 +1233,58 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['VIDEO_START_CAPTURE']) {
         console.log('Received MAVLink command to start video capture')
-        if (this.cameraMode !== 'video') {
-          console.log(`Cannot start video capture - camera is in '${this.cameraMode}' mode, not 'video'`)
-          // 1 = MAV_RESULT_TEMPORARILY_REJECTED
-          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, 1)
-        } else {
+        this.switchCameraModeAndTakeAction('video', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
           if (!this.videoSettings.isRecording) {
             this.toggleVideoRecording()
           }
           // Already recording, or just started - either way the requested state now holds
           this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
-        }
+        })
       }
       else if (data.command === common.MavCmd['VIDEO_STOP_CAPTURE']) {
         console.log('Received MAVLink command to stop video capture')
-        if (this.cameraMode !== 'video') {
-          console.log(`Cannot stop video capture - camera is in '${this.cameraMode}' mode, not 'video'`)
-          // 1 = MAV_RESULT_TEMPORARILY_REJECTED
-          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, 1)
+        if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+          this.toggleVideoRecording()
+        }
+        // Not recording (whether because we were never in video mode, or
+        // already stopped) - the requested state already holds either way.
+        // Unlike START, there's nothing sensible to auto-switch mode for here.
+        this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+      }
+      else if (data.command === common.MavCmd['VIDEO_START_STREAMING']) {
+        console.log('Received MAVLink command to start video streaming')
+        this.switchCameraModeAndTakeAction('streaming', common.MavCmd['VIDEO_START_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        })
+      }
+      else if (data.command === common.MavCmd['VIDEO_STOP_STREAMING']) {
+        console.log('Received MAVLink command to stop video streaming')
+        if (this.cameraMode === 'streaming' && this.active) {
+          this.stopCamera(() => {
+            this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          })
         } else {
-          if (this.videoSettings.isRecording) {
-            this.toggleVideoRecording()
-          }
-          // Already stopped, or just stopped - either way the requested state now holds
-          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          // Not streaming - the requested state already holds
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        }
+      }
+      else if (data.command === common.MavCmd['SET_CAMERA_MODE']) {
+        console.log('Received MAVLink command to set camera mode')
+        const requestedMode = data._param2;
+        let targetMode = null;
+        if (requestedMode === common.CameraMode.IMAGE) {
+          targetMode = 'photo';
+        } else if (requestedMode === common.CameraMode.VIDEO) {
+          targetMode = 'video';
+        }
+        // No Rpanion equivalent for IMAGE_SURVEY. Streaming isn't reachable
+        // via this command - see VIDEO_START_STREAMING/VIDEO_STOP_STREAMING.
+        if (targetMode === null) {
+          this.sendUnsupportedAck(common.MavCmd['SET_CAMERA_MODE'], packet.header.sysid, packet.header.compid)
+        } else {
+          this.switchCameraModeAndTakeAction(targetMode, common.MavCmd['SET_CAMERA_MODE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+            this.eventEmitter.emit('camera_command_ack', common.MavCmd['SET_CAMERA_MODE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          })
         }
       }
       // MAVProxy: responds to DO_DIGICAM_CONFIGURE by requesting our capabilities
@@ -1200,7 +1294,9 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['DO_DIGICAM_CONTROL']) {
         console.log('Received MAV_CMD_DO_DIGICAM_CONTROL command')
-        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['DO_DIGICAM_CONTROL'])
+        this.switchCameraModeAndTakeAction('photo', common.MavCmd['DO_DIGICAM_CONTROL'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['DO_DIGICAM_CONTROL'])
+        })
       }
       else {
         this.sendUnsupportedAck(data.command, packet.header.sysid, packet.header.compid)

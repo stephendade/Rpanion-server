@@ -4,6 +4,7 @@ const settings = require('settings-store')
 const logpaths = require('./paths')
 const VideoStream = require('./videostream')
 const { minimal, common } = require('node-mavlink')
+const { EventEmitter } = require('events')
 
 describe('Video Functions', function () {
   it('#videomanagerinit()', function () {
@@ -220,13 +221,18 @@ describe('Video Functions', function () {
     assert.equal(acks[0].result, 1, "Should NACK with MAV_RESULT_TEMPORARILY_REJECTED, not silently claim success")
   })
 
-  it('#onMavPacketRejectsVideoCaptureInWrongMode()', function () {
+  it('#onMavPacketAutoSwitchesModeForVideoCapture()', function () {
     settings.clear()
     const vManager = new VideoStream(settings)
     vManager.cameraMode = 'streaming' // not 'video'
+    vManager.videoSettings = { isRecording: false }
 
-    let toggled = false
-    vManager.toggleVideoRecording = () => { toggled = true }
+    // Stub out actual process management - this test is about the dispatch/
+    // switching logic, not really spawning photovideo.py
+    const calls = []
+    vManager.stopCamera = (cb) => { calls.push('stopCamera'); vManager.active = false; cb(null, false) }
+    vManager.startCamera = (cb) => { calls.push(`startCamera(${vManager.cameraMode})`); vManager.active = true; cb(null) }
+    vManager.toggleVideoRecording = () => { calls.push('toggleVideoRecording'); vManager.videoSettings.isRecording = true }
 
     const acks = []
     vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result) => {
@@ -238,10 +244,77 @@ describe('Video Functions', function () {
 
     vManager.onMavPacket(packet, data)
 
-    assert.equal(toggled, false, "Should NOT toggle video recording while in the wrong mode")
-    assert.equal(acks.length, 1)
+    // Should switch mode (stop, then start in the new mode) rather than reject...
+    assert.deepEqual(calls, ['stopCamera', 'startCamera(video)', 'toggleVideoRecording'])
+    assert.equal(vManager.cameraMode, 'video')
+    // ...acking MAV_RESULT_IN_PROGRESS immediately (switching takes a while),
+    // then a final ACCEPTED once actually switched and recording
+    assert.equal(acks.length, 2)
     assert.equal(acks[0].commandId, common.MavCmd.VIDEO_START_CAPTURE)
+    assert.equal(acks[0].result, 5, "Should ACK MAV_RESULT_IN_PROGRESS while switching modes")
+    assert.equal(acks[1].result, undefined, "Should ACK accepted (default) once switched and recording")
+  })
+
+  it('#onMavPacketRejectsWhenSwitchAlreadyInProgress()', function () {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+    vManager.cameraMode = 'photo'
+    vManager.modeSwitchInProgress = true // simulate an in-flight switch
+
+    let switched = false
+    vManager.stopCamera = () => { switched = true }
+
+    const acks = []
+    vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result) => {
+      acks.push({ commandId, result })
+    })
+
+    const packet = { header: { msgid: common.CommandLong.MSG_ID, sysid: 1, compid: 1 } }
+    const data = { targetComponent: minimal.MavComponent.CAMERA, command: common.MavCmd.VIDEO_START_STREAMING, _param1: 0 }
+
+    vManager.onMavPacket(packet, data)
+
+    assert.equal(switched, false, "Should NOT attempt another switch while one is already in progress")
+    assert.equal(acks.length, 1)
     assert.equal(acks[0].result, 1, "Should NACK with MAV_RESULT_TEMPORARILY_REJECTED")
+  })
+
+  it('#setupStreamEventsIgnoresStaleProcessAfterModeSwitch()', function () {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+
+    const makeFakeProc = () => {
+      const proc = new EventEmitter()
+      proc.stdout = new EventEmitter()
+      proc.stderr = new EventEmitter()
+      proc.kill = () => {}
+      return proc
+    }
+
+    // An old process ('Mode A') starts and becomes ready...
+    const procA = makeFakeProc()
+    vManager.deviceStream = procA
+    vManager.setupStreamEvents('Mode A', () => {})
+    procA.stdout.emit('data', Buffer.from('Camera is ready in Mode A\n'))
+    assert.equal(vManager.active, true, "Mode A should be marked active once ready")
+
+    // ...then a mode switch happens: a NEW process ('Mode B') is spawned and
+    // becomes ready, superseding procA - mirroring what
+    // switchCameraModeAndTakeAction's stopCamera()+startCamera() flow does
+    // (this.deviceStream reassigned to the new process).
+    const procB = makeFakeProc()
+    vManager.deviceStream = procB
+    vManager.setupStreamEvents('Mode B', () => {})
+    procB.stdout.emit('data', Buffer.from('Camera is ready in Mode B\n'))
+    assert.equal(vManager.active, true, "Mode B should be marked active once ready")
+
+    // The OLD process (procA) finally exits from its earlier SIGTERM, well
+    // after Mode B has taken over - its stale 'close' event must NOT clobber
+    // the current (Mode B) active state.
+    procA.emit('close', 0)
+
+    assert.equal(vManager.active, true, "A stale process's close event must not clobber the current mode's active state")
+    assert.equal(vManager.deviceStream, procB, "The current device stream must be unaffected")
   })
 
   it('#toggleVideoRecording()', function () {
