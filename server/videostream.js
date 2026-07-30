@@ -894,6 +894,10 @@ class videoStream {
         const parts = devicePath.split('/');
         const leaf = parts[parts.length - 1];
         extractedModel = leaf.split('@')[0];
+      } else if (devicePath.startsWith('CSI-')) {
+        // Still-photo device IDs are synthetic, from get_camera_caps.py:
+        // e.g. CSI-imx415 -> imx415
+        extractedModel = devicePath.slice('CSI-'.length);
       } else {
         extractedModel = devicePath;
       }
