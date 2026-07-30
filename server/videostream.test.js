@@ -3,6 +3,7 @@ const path = require('path')
 const settings = require('settings-store')
 const logpaths = require('./paths')
 const VideoStream = require('./videostream')
+const { minimal, common } = require('node-mavlink')
 
 describe('Video Functions', function () {
   it('#videomanagerinit()', function () {
@@ -161,8 +162,9 @@ describe('Video Functions', function () {
     settings.clear()
     const vManager = new VideoStream(settings)
 
-    // Simulate active camera
+    // Simulate active camera in photo mode
     vManager.active = true
+    vManager.cameraMode = 'photo'
     let signalSent = false
 
     vManager.deviceStream = {
@@ -188,6 +190,58 @@ describe('Video Functions', function () {
       assert.equal(vManager.photoSeq, 1, "Should increment photo sequence")
       done()
     }, 50)
+  })
+
+  it('#captureStillPhotoRejectsWrongMode()', function () {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+
+    // Active, but in video mode rather than photo mode
+    vManager.active = true
+    vManager.cameraMode = 'video'
+    let signalSent = false
+    vManager.deviceStream = {
+      kill: (signal) => {
+        if (signal === 'SIGUSR1') signalSent = true
+      }
+    }
+
+    const acks = []
+    vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result) => {
+      acks.push({ commandId, result })
+    })
+
+    // Simulate a MAVLink-triggered capture (commandId set) while in the wrong mode
+    vManager.captureStillPhoto(1, 1, 1, null, common.MavCmd.IMAGE_START_CAPTURE)
+
+    assert.equal(signalSent, false, "Should NOT send SIGUSR1 to whatever process is actually running")
+    assert.equal(acks.length, 1, "Should ACK the command instead of silently ignoring it")
+    assert.equal(acks[0].commandId, common.MavCmd.IMAGE_START_CAPTURE)
+    assert.equal(acks[0].result, 1, "Should NACK with MAV_RESULT_TEMPORARILY_REJECTED, not silently claim success")
+  })
+
+  it('#onMavPacketRejectsVideoCaptureInWrongMode()', function () {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+    vManager.cameraMode = 'streaming' // not 'video'
+
+    let toggled = false
+    vManager.toggleVideoRecording = () => { toggled = true }
+
+    const acks = []
+    vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result) => {
+      acks.push({ commandId, result })
+    })
+
+    const packet = { header: { msgid: common.CommandLong.MSG_ID, sysid: 1, compid: 1 } }
+    const data = { targetComponent: minimal.MavComponent.CAMERA, command: common.MavCmd.VIDEO_START_CAPTURE, _param1: 0 }
+
+    vManager.onMavPacket(packet, data)
+
+    assert.equal(toggled, false, "Should NOT toggle video recording while in the wrong mode")
+    assert.equal(acks.length, 1)
+    assert.equal(acks[0].commandId, common.MavCmd.VIDEO_START_CAPTURE)
+    assert.equal(acks[0].result, 1, "Should NACK with MAV_RESULT_TEMPORARILY_REJECTED")
   })
 
   it('#toggleVideoRecording()', function () {
