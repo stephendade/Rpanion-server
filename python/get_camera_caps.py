@@ -167,6 +167,12 @@ for dev_path in get_video_device_paths():
             'caps': caps
         })
 
+# Sort each device's resolutions largest-to-smallest, same as gstcaps.py -
+# the order caps are discovered in has no relation to resolution size, so
+# without this the Resolution dropdown shows options in an arbitrary order.
+for dev in devices:
+    dev['caps'].sort(key=lambda c: (c['width'], c['height']), reverse=True)
+
 output = {
     'devices': devices,
     'capabilities': get_capabilities()

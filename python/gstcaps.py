@@ -261,4 +261,11 @@ capsTest.append({'value': "640x480xx-raw", 'label': "640x480", 'height': 480, 'w
                  'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
 retDevices.append({'value': "testsrc", 'label': "Test Source", 'caps': capsTest})
 
+# Sort each device's resolutions largest-to-smallest. The caps lists above are
+# built in whichever order the camera's native sensor modes were enumerated,
+# which has no relation to resolution size - so without this, the Resolution
+# dropdown in the UI shows options in a fairly arbitrary order.
+for dev in retDevices:
+    dev['caps'].sort(key=lambda c: (c['width'], c['height']), reverse=True)
+
 print(json.dumps(retDevices))
