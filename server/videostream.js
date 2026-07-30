@@ -528,6 +528,7 @@ class videoStream {
 
     this.stopCamera(() => {
       this.cameraMode = targetMode
+      this.ensureDefaultSettingsForMode(targetMode)
       this.startCamera((err) => {
         this.modeSwitchInProgress = false
         if (err) {
@@ -539,6 +540,78 @@ class videoStream {
         action()
       })
     })
+  }
+
+  // gstcaps.py's fallback resolution tables inconsistently emit fpsmax as
+  // either a number or a numeric string, unlike the normal UI-driven save
+  // path (index.js's /api/camera/start), which always parseInt()s fps before
+  // it reaches here - so explicitly coerce to a real number.
+  defaultFpsFor(cap) {
+    return Number(cap.fpsmax) > 0 ? Number(cap.fpsmax) : Number(cap.fps?.[0]?.value || 30);
+  }
+
+  // If targetMode has never been configured via the web UI, populate it with
+  // reasonable defaults (first available device/capability) so an
+  // autopilot-triggered auto-switch can still start it, rather than failing
+  // just because nobody has visited that mode's tab yet. Persists the result
+  // so it behaves like a normal saved configuration from here on.
+  ensureDefaultSettingsForMode(targetMode) {
+    if (targetMode === 'photo' && !this.stillSettings) {
+      const device = (this.stillDevices || []).find(d => d.caps && d.caps.length > 0);
+      if (!device) return;
+      const cap = device.caps[0];
+      this.stillSettings = {
+        device: device.id,
+        width: cap.width,
+        height: cap.height,
+        format: cap.format,
+        mediaDestination: ''
+      };
+      console.log('No saved Photo settings found - using defaults:', this.stillSettings);
+      this.saveSettings();
+    } else if (targetMode === 'video' && !this.videoRecordSettings) {
+      const device = (this.devices || []).find(d => d.caps && d.caps.length > 0);
+      if (!device) return;
+      const cap = device.caps[0];
+      this.videoRecordSettings = {
+        device: device.value,
+        isRecording: false,
+        width: cap.width,
+        height: cap.height,
+        format: cap.format,
+        bitrate: 1100,
+        fps: this.defaultFpsFor(cap),
+        rotation: 0,
+        mediaDestination: ''
+      };
+      console.log('No saved Video Recording settings found - using defaults:', this.videoRecordSettings);
+      this.saveSettings();
+    } else if (targetMode === 'streaming' && !this.videoSettings) {
+      const device = (this.devices || []).find(d => d.caps && d.caps.length > 0);
+      if (!device) return;
+      const cap = device.caps[0];
+      // Use a fresh scan rather than this.ifaces, which is only populated once
+      // Streaming has actually started (too late to help here, the first time).
+      const nonLoopbackIface = this.scanInterfaces().find(ip => ip !== '127.0.0.1') || '127.0.0.1';
+      this.videoSettings = {
+        device: device.value,
+        width: cap.width,
+        height: cap.height,
+        format: cap.format,
+        bitrate: 1100,
+        fps: this.defaultFpsFor(cap),
+        rotation: 0,
+        useUDP: false,
+        useUDPIP: '127.0.0.1',
+        useUDPPort: 5600,
+        useTimestamp: false,
+        mavStreamSelected: nonLoopbackIface,
+        compression: 'H264',
+        mediaDestination: null
+      };
+      console.log('No saved Streaming settings found - using defaults:', this.videoSettings);
+      this.saveSettings();
+    }
   }
 
   async startVideoStreaming(callback) {
