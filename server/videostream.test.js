@@ -344,7 +344,7 @@ describe('Video Functions', function () {
       // Decode vendor name (plain byte array to string)
       const vendorText = String.fromCharCode(...msg.vendorName).replace(/\0/g, '')
       assert.equal(vendorText, 'Rpanion')
-      assert.equal(msg.flags, 256) // Default streaming flag
+      assert.equal(msg.flags, common.CameraCapFlags.CAPTURE_IMAGE | common.CameraCapFlags.CAPTURE_VIDEO | common.CameraCapFlags.HAS_VIDEO_STREAM) // Full capability set (mode auto-switching supports all)
       done()
     })
 

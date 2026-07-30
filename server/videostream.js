@@ -1010,22 +1010,24 @@ class videoStream {
     msg.gimbalDeviceId = 0; // No gimbal
     msg.cameraDeviceId = 0; // 0 = MAVLink Camera with its own component ID
 
+    // Rpanion can auto-switch modes to service any of these requests, so
+    // advertise the full combined capability set regardless of the mode
+    // it currently happens to be in. Autopilots (e.g. ArduPilot's
+    // AP_Camera_MAVLinkCamV2) gate whether they even send commands like
+    // MAV_CMD_IMAGE_START_CAPTURE on these flags, so reporting only the
+    // current mode's capability would prevent them from ever requesting
+    // a mode switch in the first place.
+    msg.flags = common.CameraCapFlags.CAPTURE_IMAGE | common.CameraCapFlags.CAPTURE_VIDEO | common.CameraCapFlags.HAS_VIDEO_STREAM;
+
     // Mode-specific Configuration
     if (this.cameraMode === 'photo') {
       msg.resolutionH = this.stillSettings?.width || 0;
       msg.resolutionV = this.stillSettings?.height || 0;
-      msg.flags = 2; // CAMERA_CAP_FLAGS_CAPTURE_IMAGE
-    }
-    else if (this.cameraMode === 'video') {
-      msg.resolutionH = this.videoSettings?.width || 0;
-      msg.resolutionV = this.videoSettings?.height || 0;
-      msg.flags = 1; // CAMERA_CAP_FLAGS_CAPTURE_VIDEO
     }
     else {
-      // Default: streaming
+      // video or streaming
       msg.resolutionH = this.videoSettings?.width || 0;
       msg.resolutionV = this.videoSettings?.height || 0;
-      msg.flags = 256; // CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM
     }
 
     this.eventEmitter.emit('camerainfo', msg, senderSysId, senderCompId, targetComponent);
