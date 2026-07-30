@@ -157,8 +157,15 @@ class VideoPage extends basePage {
                 initialVidCapSel = matchedCap ? matchedCap.value : '';
                 initialFpsOpts = matchedCap ? (matchedCap.fps || []) : [];
                 initialFpsMax = matchedCap ? (matchedCap.fpsmax || 0) : 0;
+                // Only reuse the saved FPS if it's actually valid for the matched
+                // capability - if the saved device/resolution wasn't found above and
+                // we fell back to a different one, its FPS range/options may differ.
                 const savedFps = videoData.selectedFps;
-                initialFps = savedFps != null ? savedFps : (initialFpsMax > 0 ? initialFpsMax : (initialFpsOpts.length > 0 ? initialFpsOpts[0].value : 30));
+                const savedFpsIsValid = savedFps != null && (
+                    (initialFpsMax > 0 && savedFps >= 1 && savedFps <= initialFpsMax) ||
+                    (initialFpsMax === 0 && initialFpsOpts.some(f => String(f.value) === String(savedFps)))
+                );
+                initialFps = savedFpsIsValid ? savedFps : (initialFpsMax > 0 ? initialFpsMax : (initialFpsOpts.length > 0 ? initialFpsOpts[0].value : 30));
             } else {
                 initialVidDevSel = '';
                 initialVidCaps = [];
