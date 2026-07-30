@@ -580,6 +580,12 @@ class videoStream {
       // Send one immediate heartbeat before starting the timer
       this.eventEmitter.emit('cameraheartbeat', minimal.MavType.CAMERA, minimal.MavAutopilot.INVALID, minimal.MavComponent.CAMERA);
       this.startHeartbeatInterval();
+      // Proactively announce capabilities/settings on start, same as Photo and
+      // Video Recording modes - otherwise a GCS/autopilot that doesn't
+      // explicitly re-request CAMERA_INFORMATION never sees it while
+      // Streaming (Rpanion's default mode) is active.
+      this.sendCameraInformation(null, minimal.MavComponent.CAMERA, null);
+      this.sendCameraSettings(null, minimal.MavComponent.CAMERA, null);
       this.sendVideoStreamInformation(null, minimal.MavComponent.CAMERA, null);
     }
   }
