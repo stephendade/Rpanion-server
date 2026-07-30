@@ -360,11 +360,22 @@ componentWillUnmount() {
       const newFpsOpts = cap.fps || [];
       const newFpsMax = cap.fpsmax || 0;
 
+      // Keep the currently-selected FPS if it's still valid for the new
+      // resolution's range/options, instead of always resetting it - e.g.
+      // switching between two resolutions that both support up to 30fps
+      // shouldn't discard a deliberately-chosen lower FPS.
+      const currentFps = this.state.fpsSelected;
+      const currentFpsIsValid = currentFps != null && (
+        (newFpsMax > 0 && currentFps >= 1 && currentFps <= newFpsMax) ||
+        (newFpsMax === 0 && newFpsOpts.some(f => String(f.value) === String(currentFps)))
+      );
+      const newFps = currentFpsIsValid ? currentFps : (newFpsMax > 0 ? newFpsMax : (newFpsOpts.length > 0 ? newFpsOpts[0].value : 30));
+
       this.setState({
         vidCapSelected: value,
         FPSMax: newFpsMax,
         fpsOptions: newFpsOpts,
-        fpsSelected: newFpsMax > 0 ? Math.min(newFpsMax, 10) : (newFpsOpts.length > 0 ? newFpsOpts[0].value : 30)
+        fpsSelected: newFps
       });
 
     if (cap.format === "video/x-h264") {
