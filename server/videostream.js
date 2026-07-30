@@ -27,7 +27,8 @@ class videoStream {
     // Mode-specific hardware lists/settings
     this.devices = null;      // Video devices
     this.stillDevices = null; // Still devices
-    this.videoSettings = null;
+    this.videoSettings = null;       // Streaming mode settings
+    this.videoRecordSettings = null; // Video Recording mode settings (independent of Streaming's)
     this.stillSettings = null;
     this.fcManager = null;    // Flight controller manager reference, set externally if available
 
@@ -36,8 +37,12 @@ class videoStream {
     this.cameraMode = this.settings.value('camera.mode', 'streaming');
     this.useCameraHeartbeat = this.settings.value('camera.useHeartbeat', false);
 
-    // Load specific settings based on mode
+    // Load specific settings based on mode. Streaming and Video Recording are
+    // separate pipelines (video-server.py/GStreamer vs photovideo.py/Picamera2)
+    // and are kept as independent settings objects so configuring one (e.g.
+    // resolution/fps) doesn't overwrite the other's saved values.
     this.videoSettings = this.settings.value('camera.videoSettings', null);
+    this.videoRecordSettings = this.settings.value('camera.videoRecordSettings', null);
     this.stillSettings = this.settings.value('camera.stillSettings', null);
 
     // if it's an active device, stop then start it up
@@ -203,6 +208,38 @@ class videoStream {
     ];
   }
 
+  // Build the {selectedDevice, selectedCap, selectedFps, selectedBitrate,
+  // selectedRotation, mediaDestination} shape describing a saved settings
+  // object (this.videoSettings for Streaming, this.videoRecordSettings for
+  // Video Recording) against a device list. Used so the frontend can
+  // pre-populate each mode's Resolution/FPS dropdowns independently, since
+  // the two modes no longer share a single settings object.
+  buildModeSelection(settingsObj, devices) {
+    const result = {
+      selectedDevice: null,
+      selectedCap: null,
+      selectedFps: null,
+      selectedBitrate: 1100,
+      selectedRotation: { label: '0°', value: 0 },
+      mediaDestination: ''
+    };
+    if (!settingsObj || !devices) return result;
+
+    result.selectedDevice = devices.find(d => d.value === settingsObj.device) || null;
+    if (result.selectedDevice) {
+      // Safeguard the format string against missing slashes for V4L2 raw modes
+      const formatStr = settingsObj.format || "";
+      const formatShort = formatStr.includes('/') ? formatStr.split('/')[1] : formatStr;
+      const capVal = `${settingsObj.width}x${settingsObj.height}x${formatShort}`;
+      result.selectedCap = result.selectedDevice.caps.find(cap => cap.value === capVal) || null;
+    }
+    result.selectedFps = settingsObj.fps ?? null;
+    result.selectedBitrate = settingsObj.bitrate || 1100;
+    result.selectedRotation = { label: (settingsObj.rotation || 0) + '°', value: (settingsObj.rotation || 0) };
+    result.mediaDestination = this.toRelativePath(settingsObj.mediaDestination || '');
+    return result;
+  }
+
   // video streaming
   getVideoDevices (callback) {
     // get all video device details
@@ -212,6 +249,10 @@ class videoStream {
     // Don't re-scan hardware if a stream is already running
     if (this.deviceStream !== null) {
       console.log("Camera active; returning cached hardware details.");
+
+      // Streaming and Video Recording have independent settings; use whichever
+      // one matches the mode that's actually running.
+      const activeSettings = this.cameraMode === 'video' ? this.videoRecordSettings : this.videoSettings;
 
       const responseData = {
         devices: this.devices || [],
@@ -227,13 +268,13 @@ class videoStream {
       };
 
       // 1. Find the device and capability currently being used
-      if (this.videoSettings && this.devices) {
-        responseData.selectedDevice = this.devices.find(d => d.value === this.videoSettings.device);
+      if (activeSettings && this.devices) {
+        responseData.selectedDevice = this.devices.find(d => d.value === activeSettings.device);
         if (responseData.selectedDevice) {
           // Safeguard the format string against missing slashes for V4L2 raw modes
-          const formatStr = this.videoSettings.format || "";
+          const formatStr = activeSettings.format || "";
           const formatShort = formatStr.includes('/') ? formatStr.split('/')[1] : formatStr;
-          const capVal = `${this.videoSettings.width}x${this.videoSettings.height}x${formatShort}`;
+          const capVal = `${activeSettings.width}x${activeSettings.height}x${formatShort}`;
 
           responseData.selectedCap = responseData.selectedDevice.caps.find(cap => cap.value === capVal);
           responseData.resolutionCaps = responseData.selectedDevice.caps;
@@ -243,27 +284,36 @@ class videoStream {
 
         // 2. Map raw numbers back to the UI's Object format
         responseData.selectedRotation = {
-          label: (this.videoSettings.rotation || 0) + '°',
-          value: (this.videoSettings.rotation || 0)
+          label: (activeSettings.rotation || 0) + '°',
+          value: (activeSettings.rotation || 0)
         };
+        // Transport (RTSP/RTP) fields only exist on Streaming's settings object -
+        // Video Recording has no analogous concept, so always read these from
+        // this.videoSettings regardless of which mode is currently active.
         responseData.selectedMavStreamURI = {
-          label: this.videoSettings.mavStreamSelected?.toString() || '127.0.0.1',
-          value: this.videoSettings.mavStreamSelected || '127.0.0.1'
+          label: this.videoSettings?.mavStreamSelected?.toString() || '127.0.0.1',
+          value: this.videoSettings?.mavStreamSelected || '127.0.0.1'
         };
 
         // 3. Map simple values
-        responseData.selectedisRecording = this.videoSettings.isRecording || false;
-        responseData.selectedBitrate = this.videoSettings.bitrate || 1100;
-        responseData.selectedFps = this.videoSettings.fps || 30;
-        responseData.selectedUseUDP = this.videoSettings.useUDP || false;
-        responseData.selectedUseUDPIP = this.videoSettings.useUDPIP || '127.0.0.1';
-        responseData.selectedUseUDPPort = this.videoSettings.useUDPPort || 5600;
-        responseData.selectedUseTimestamp = this.videoSettings.useTimestamp || false;
+        responseData.selectedisRecording = this.videoRecordSettings?.isRecording || false;
+        responseData.selectedBitrate = activeSettings.bitrate || 1100;
+        responseData.selectedFps = activeSettings.fps || 30;
+        responseData.selectedUseUDP = this.videoSettings?.useUDP || false;
+        responseData.selectedUseUDPIP = this.videoSettings?.useUDPIP || '127.0.0.1';
+        responseData.selectedUseUDPPort = this.videoSettings?.useUDPPort || 5600;
+        responseData.selectedUseTimestamp = this.videoSettings?.useTimestamp || false;
         responseData.selectedUseCameraHeartbeat = this.useCameraHeartbeat || false;
 
         // Return an empty string if no media destination is given.
-        responseData.videoMediaDestination = this.toRelativePath(this.videoSettings?.mediaDestination || '');
+        responseData.videoMediaDestination = this.toRelativePath(activeSettings?.mediaDestination || '');
       }
+
+      // Independent per-mode selections, so the frontend can correctly
+      // pre-populate BOTH the Streaming and Video Recording tabs even though
+      // only one of them is actually running right now.
+      responseData.streamingSelection = this.buildModeSelection(this.videoSettings, this.devices);
+      responseData.videoRecordSelection = this.buildModeSelection(this.videoRecordSettings, this.devices);
 
       return callback(null, responseData);
     }
@@ -320,6 +370,12 @@ class videoStream {
         responseData.fpsMax = selectedCap?.fpsmax || 0;
         responseData.selectedFps = responseData.fpsMax > 0 ? responseData.fpsMax : (responseData.fpsOptions[0]?.value ?? 30);
 
+        // Independent per-mode selections, so the frontend can pre-populate
+        // both the Streaming and Video Recording tabs from their own saved
+        // settings, even while the camera isn't currently running.
+        responseData.streamingSelection = this.buildModeSelection(this.videoSettings, devices);
+        responseData.videoRecordSelection = this.buildModeSelection(this.videoRecordSettings, devices);
+
         return callback(null, responseData);
       } catch (e) {
         return callback('Failed to process video devices', responseData);
@@ -371,6 +427,7 @@ class videoStream {
       this.settings.setValue('camera.mode', this.cameraMode);
       this.settings.setValue('camera.useHeartbeat', this.useCameraHeartbeat);
       this.settings.setValue('camera.videoSettings', this.videoSettings);
+      this.settings.setValue('camera.videoRecordSettings', this.videoRecordSettings);
       this.settings.setValue('camera.stillSettings', this.stillSettings);
     } catch (e) {
       console.error('Error saving camera settings:', e);
@@ -380,11 +437,13 @@ class videoStream {
   resetCamera() {
     this.active = false;
     this.videoSettings = null;
+    this.videoRecordSettings = null;
     this.stillSettings = null;
     try {
       this.settings.setValue('camera.active', false);
       this.settings.setValue('camera.mode', 'streaming');
       this.settings.setValue('camera.videoSettings', null);
+      this.settings.setValue('camera.videoRecordSettings', null);
       this.settings.setValue('camera.stillSettings', null);
       this.settings.setValue('camera.useHeartbeat', false);
     } catch (e) {
@@ -563,24 +622,24 @@ class videoStream {
   }
 
   startVideoMode(callback) {
-    if (!this.videoSettings) return callback(new Error('No video settings provided'));
+    if (!this.videoRecordSettings) return callback(new Error('No video settings provided'));
 
-    const dest = this.toAbsolutePath(this.videoSettings.mediaDestination);
+    const dest = this.toAbsolutePath(this.videoRecordSettings.mediaDestination);
 
     // Convert bitrate from kbps to bps Picamera2
-    const bitrateBps = this.videoSettings.bitrate * 1000;
+    const bitrateBps = this.videoRecordSettings.bitrate * 1000;
 
     const args = [
       '-u', // force the stdout and stderr streams to be unbuffered
       './python/photovideo.py',
       '--mode=video',
-      '--device=' + this.videoSettings.device,
-      '--width=' + this.videoSettings.width,
-      '--height=' + this.videoSettings.height,
-      '--fps=' + this.videoSettings.fps,
+      '--device=' + this.videoRecordSettings.device,
+      '--width=' + this.videoRecordSettings.width,
+      '--height=' + this.videoRecordSettings.height,
+      '--fps=' + this.videoRecordSettings.fps,
       '--bitrate=' + bitrateBps,
-      '--rotation=' + this.videoSettings.rotation,
-      '--format=' + this.videoSettings.format
+      '--rotation=' + this.videoRecordSettings.rotation,
+      '--format=' + this.videoRecordSettings.format
     ];
 
     if (dest) {
@@ -729,7 +788,7 @@ class videoStream {
       if (this.deviceStream === proc) {
         this.active = false;
         // Clear the video recording flag
-        if (this.videoSettings) {
+        if (this.cameraMode === 'video' && this.videoRecordSettings) {
           this.setRecordingFlag(false);
           this.saveSettings();
         }
@@ -755,7 +814,7 @@ class videoStream {
     this.active = false;
     this.settings.setValue('camera.active', false);
     // Clear the video recording flag and persist the current mode's settings.
-    if (this.videoSettings) {
+    if (this.cameraMode === 'video' && this.videoRecordSettings) {
       this.setRecordingFlag(false);
     }
     this.saveSettings();
@@ -783,9 +842,9 @@ class videoStream {
         return 'Camera is streaming video'
       } else if (this.cameraMode === 'photo') {
         return 'Camera is active in photo mode'
-      } else if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+      } else if (this.cameraMode === 'video' && this.videoRecordSettings?.isRecording) {
         return 'Camera is currently recording a video'
-      } else if (this.cameraMode === 'video' && !this.videoSettings.isRecording) {
+      } else if (this.cameraMode === 'video' && !this.videoRecordSettings?.isRecording) {
         return 'Camera is active in video mode'
       }
     } else {
@@ -927,8 +986,8 @@ class videoStream {
   // Helper to set the isRecording flag by replacing the object
   // instead of mutating the property
   setRecordingFlag(val) {
-    if (!this.videoSettings) return;
-    this.videoSettings = { ...this.videoSettings, isRecording: val };
+    if (!this.videoRecordSettings) return;
+    this.videoRecordSettings = { ...this.videoRecordSettings, isRecording: val };
     this.saveSettings();
   }
 
@@ -992,6 +1051,8 @@ class videoStream {
     let devicePath = null;
     if (this.cameraMode === 'photo' && this.stillSettings && this.stillSettings.device) {
       devicePath = this.stillSettings.device;
+    } else if (this.cameraMode === 'video' && this.videoRecordSettings && this.videoRecordSettings.device) {
+      devicePath = this.videoRecordSettings.device;
     } else if (this.videoSettings && this.videoSettings.device) {
       devicePath = this.videoSettings.device;
     }
@@ -1024,8 +1085,12 @@ class videoStream {
       msg.resolutionH = this.stillSettings?.width || 0;
       msg.resolutionV = this.stillSettings?.height || 0;
     }
+    else if (this.cameraMode === 'video') {
+      msg.resolutionH = this.videoRecordSettings?.width || 0;
+      msg.resolutionV = this.videoRecordSettings?.height || 0;
+    }
     else {
-      // video or streaming
+      // streaming
       msg.resolutionH = this.videoSettings?.width || 0;
       msg.resolutionV = this.videoSettings?.height || 0;
     }
@@ -1236,7 +1301,7 @@ class videoStream {
       else if (data.command === common.MavCmd['VIDEO_START_CAPTURE']) {
         console.log('Received MAVLink command to start video capture')
         this.switchCameraModeAndTakeAction('video', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
-          if (!this.videoSettings.isRecording) {
+          if (!this.videoRecordSettings?.isRecording) {
             this.toggleVideoRecording()
           }
           // Already recording, or just started - either way the requested state now holds
@@ -1245,7 +1310,7 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['VIDEO_STOP_CAPTURE']) {
         console.log('Received MAVLink command to stop video capture')
-        if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+        if (this.cameraMode === 'video' && this.videoRecordSettings?.isRecording) {
           this.toggleVideoRecording()
         }
         // Not recording (whether because we were never in video mode, or

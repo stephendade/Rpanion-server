@@ -98,17 +98,6 @@ class VideoPage extends basePage {
 
         // --- Process Video Data ---
         const vidDevs = videoData.devices || [];
-        const selVidDev = videoData.selectedDevice || (vidDevs.length > 0 ? vidDevs[0] : null);
-        const vidCaps = selVidDev ? selVidDev.caps : [];
-        const selVidCap = videoData.selectedCap || (vidCaps.length > 0 ? vidCaps[0] : null);
-
-        // FPS processing
-        const currentFpsOpts = selVidCap ? selVidCap.fps : [];
-        const currentFpsMax = selVidCap ? selVidCap.fpsmax : 0;
-        let selFps = videoData.selectedFps;
-        if (selFps == null) {
-          selFps = currentFpsMax > 0 ? currentFpsMax : (currentFpsOpts.length > 0 ? currentFpsOpts[0].value : 30);
-        }
 
         // --- Process Still Data ---
         const stillDevs = stillData.devices || [];
@@ -128,52 +117,16 @@ class VideoPage extends basePage {
           ? 'streaming' 
           : (videoData.cameraMode || 'streaming');
 
-        // Load the correct set of capabilities for the selected camera mode
-        let initialVidDevSel = selVidDev ? selVidDev.value : '';
-        let initialVidCaps = vidCaps;
-        let initialVidCapSel = selVidCap ? selVidCap.value : '';
-        let initialFpsOpts = currentFpsOpts;
-        let initialFpsMax = currentFpsMax;
-        let initialFps = selFps;
-        
-        if (cameraModeToUse === 'video') {
-            // Video recording mode now uses the same device/cap source as streaming mode
-            // so both modes offer the same resolution list.
-            const savedDeviceValue = videoData.selectedDevice ? videoData.selectedDevice.value : null;
-            let matchingVidDev = vidDevs.find(d => d.value === savedDeviceValue);
-            
-            if (!matchingVidDev && vidDevs.length > 0) {
-                matchingVidDev = vidDevs[0];
-            }
+        // Streaming and Video Recording have independent saved settings on the
+        // backend - resolve each against the device list, then remember both
+        // for the session so switching the mode radio button later restores
+        // the other mode's own selection instead of resetting to the first
+        // device/cap (see handleCameraModeChange).
+        const streamingResolved = this.resolveModeSelection(videoData.streamingSelection, vidDevs);
+        const videoRecordResolved = this.resolveModeSelection(videoData.videoRecordSelection, vidDevs);
+        this._modeSelectionCache = { streaming: streamingResolved, video: videoRecordResolved };
 
-            if (matchingVidDev) {
-                initialVidDevSel = matchingVidDev.value;
-                initialVidCaps = matchingVidDev.caps ||[];
-                const savedCapValue = videoData.selectedCap ? videoData.selectedCap.value : null;
-                let matchedCap = initialVidCaps.find(c => c.value === savedCapValue);
-                if (!matchedCap && initialVidCaps.length > 0) {
-                    matchedCap = initialVidCaps[0];
-                }
-                initialVidCapSel = matchedCap ? matchedCap.value : '';
-                initialFpsOpts = matchedCap ? (matchedCap.fps || []) : [];
-                initialFpsMax = matchedCap ? (matchedCap.fpsmax || 0) : 0;
-                // Only reuse the saved FPS if it's actually valid for the matched
-                // capability - if the saved device/resolution wasn't found above and
-                // we fell back to a different one, its FPS range/options may differ.
-                const savedFps = videoData.selectedFps;
-                const savedFpsIsValid = savedFps != null && (
-                    (initialFpsMax > 0 && savedFps >= 1 && savedFps <= initialFpsMax) ||
-                    (initialFpsMax === 0 && initialFpsOpts.some(f => String(f.value) === String(savedFps)))
-                );
-                initialFps = savedFpsIsValid ? savedFps : (initialFpsMax > 0 ? initialFpsMax : (initialFpsOpts.length > 0 ? initialFpsOpts[0].value : 30));
-            } else {
-                initialVidDevSel = '';
-                initialVidCaps = [];
-                initialVidCapSel = '';
-                initialFpsOpts =[];
-                initialFpsMax = 120;
-            }
-        }
+        const activeResolved = cameraModeToUse === 'video' ? videoRecordResolved : streamingResolved;
 
 
         this.setState({
@@ -182,9 +135,9 @@ class VideoPage extends basePage {
 
           // Video State
           videoDevices: vidDevs,
-          vidDeviceSelected: initialVidDevSel,
-          videoCaps: initialVidCaps,
-          vidCapSelected: initialVidCapSel,
+          vidDeviceSelected: activeResolved.device,
+          videoCaps: activeResolved.caps,
+          vidCapSelected: activeResolved.cap,
           videoIsRecording: false,
 
           // Still State
@@ -203,19 +156,19 @@ class VideoPage extends basePage {
           transportSelected: isRTP ? "RTP" : "RTSP",
           useUDPIP: videoData.selectedUseUDPIP || "127.0.0.1",
           useUDPPort: videoData.selectedUseUDPPort || 5600,
-          bitrate: videoData.selectedBitrate || 1100,
-          rotSelected: (videoData.selectedRotation && videoData.selectedRotation.value != null) ? videoData.selectedRotation.value : 0,
+          bitrate: activeResolved.bitrate,
+          rotSelected: activeResolved.rotation,
           timestamp: videoData.selectedUseTimestamp || false,
           enableCameraHeartbeat: videoData.selectedUseCameraHeartbeat || false,
           mavStreamSelected: (videoData.selectedMavStreamURI && videoData.selectedMavStreamURI.value) ? videoData.selectedMavStreamURI.value : defaultMavStreamIface,
 
-          FPSMax: initialFpsMax,
-          fpsOptions: initialFpsOpts,
-          fpsSelected: initialFps,
+          FPSMax: activeResolved.fpsMax,
+          fpsOptions: activeResolved.fpsOptions,
+          fpsSelected: activeResolved.fps,
 
           compression: (videoData.compression && videoData.compression.value) ? videoData.compression.value : 'H264',
 
-          videoMediaDestination: videoData.videoMediaDestination || '',
+          videoMediaDestination: activeResolved.mediaDestination,
           stillMediaDestination: stillData.stillMediaDestination || '',
         });
 
@@ -271,13 +224,90 @@ componentWillUnmount() {
     return `${cap.width}x${cap.height}x${cap.format}`;
   }
 
+  // Resolve a saved per-mode selection (backend's streamingSelection/
+  // videoRecordSelection) against the current device list, falling back to
+  // the first device/resolution/fps if nothing was saved yet or it no longer
+  // matches an available device/capability.
+  resolveModeSelection(selection, vidDevs) {
+    const savedDeviceValue = selection?.selectedDevice ? selection.selectedDevice.value : null;
+    let device = vidDevs.find(d => d.value === savedDeviceValue);
+    if (!device && vidDevs.length > 0) device = vidDevs[0];
+
+    if (!device) {
+      return { device: '', caps: [], cap: '', fpsOptions: [], fpsMax: 0, fps: 30, rotation: 0, bitrate: 1100, mediaDestination: '' };
+    }
+
+    const caps = device.caps || [];
+    const savedCapValue = selection?.selectedCap ? selection.selectedCap.value : null;
+    let cap = caps.find(c => c.value === savedCapValue);
+    if (!cap && caps.length > 0) cap = caps[0];
+
+    const fpsOptions = cap ? (cap.fps || []) : [];
+    const fpsMax = cap ? (cap.fpsmax || 0) : 0;
+    const savedFps = selection?.selectedFps;
+    // Only reuse the saved FPS if it's actually valid for the matched
+    // capability - if the saved device/resolution wasn't found above and we
+    // fell back to a different one, its FPS range/options may differ.
+    const savedFpsIsValid = savedFps != null && (
+      (fpsMax > 0 && savedFps >= 1 && savedFps <= fpsMax) ||
+      (fpsMax === 0 && fpsOptions.some(f => String(f.value) === String(savedFps)))
+    );
+    const fps = savedFpsIsValid ? savedFps : (fpsMax > 0 ? fpsMax : (fpsOptions.length > 0 ? fpsOptions[0].value : 30));
+
+    return {
+      device: device.value,
+      caps,
+      cap: cap ? cap.value : '',
+      fpsOptions,
+      fpsMax,
+      fps,
+      rotation: (selection?.selectedRotation && selection.selectedRotation.value != null) ? selection.selectedRotation.value : 0,
+      bitrate: selection?.selectedBitrate || 1100,
+      mediaDestination: selection?.mediaDestination || ''
+    };
+  }
+
   handleCameraModeChange = (event) => {
     const newMode = event.target.value;
-    const updates = { cameraMode: newMode };
+    const prevMode = this.state.cameraMode;
 
-    // Reset device/resolution selections when switching between streaming and video modes
-    if (newMode === 'video') {
-      // Video recording mode now uses the same device/cap source as streaming mode
+    // Streaming and Video Recording share the same device/cap/rotation/bitrate
+    // UI fields, but should not clobber each other's selection just because
+    // the user flipped the mode radio button. Remember the mode being left,
+    // then restore the target mode's last selection (seeded at load time from
+    // the backend's saved settings, and kept up to date as the user edits
+    // each mode) instead of resetting to the first device/cap.
+    this._modeSelectionCache = this._modeSelectionCache || {};
+    if (prevMode === 'streaming' || prevMode === 'video') {
+      this._modeSelectionCache[prevMode] = {
+        device: this.state.vidDeviceSelected,
+        caps: this.state.videoCaps,
+        cap: this.state.vidCapSelected,
+        fpsOptions: this.state.fpsOptions,
+        fpsMax: this.state.FPSMax,
+        fps: this.state.fpsSelected,
+        rotation: this.state.rotSelected,
+        bitrate: this.state.bitrate,
+        mediaDestination: this.state.videoMediaDestination
+      };
+    }
+
+    const updates = { cameraMode: newMode };
+    const cached = (newMode === 'streaming' || newMode === 'video') ? this._modeSelectionCache[newMode] : null;
+
+    if (cached) {
+      updates.vidDeviceSelected = cached.device;
+      updates.videoCaps = cached.caps;
+      updates.vidCapSelected = cached.cap;
+      updates.fpsOptions = cached.fpsOptions;
+      updates.FPSMax = cached.fpsMax;
+      updates.fpsSelected = cached.fps;
+      updates.rotSelected = cached.rotation;
+      updates.bitrate = cached.bitrate;
+      updates.videoMediaDestination = cached.mediaDestination;
+    } else if (newMode === 'video' || newMode === 'streaming') {
+      // No previous selection for this mode - default to the first available
+      // device/resolution/fps.
       const firstVidDevice = this.state.videoDevices.length > 0 ? this.state.videoDevices[0] : null;
       const firstCap = firstVidDevice && firstVidDevice.caps.length > 0 ? firstVidDevice.caps[0] : null;
 
@@ -287,20 +317,6 @@ componentWillUnmount() {
       updates.fpsOptions = firstCap ? (firstCap.fps || []) : [];
       updates.FPSMax = firstCap ? (firstCap.fpsmax || 0) : 0;
       updates.fpsSelected = updates.FPSMax > 0 ? updates.FPSMax : (updates.fpsOptions.length > 0 ? updates.fpsOptions[0].value : 30);
-    } else if (newMode === 'streaming') {
-      // Reset back to Streaming capabilities
-      const firstVidDevice = this.state.videoDevices.length > 0 ? this.state.videoDevices[0] : null;
-      const firstCap = firstVidDevice && firstVidDevice.caps.length > 0 ? firstVidDevice.caps[0] : null;
-
-      updates.vidDeviceSelected = firstVidDevice ? firstVidDevice.value : '';
-      updates.videoCaps = firstVidDevice ? firstVidDevice.caps :[];
-      updates.vidCapSelected = firstCap ? firstCap.value : '';
-      
-      const newFpsOpts = firstCap ? (firstCap.fps || []) :[];
-      const newFpsMax = firstCap ? (firstCap.fpsmax || 0) : 0;
-      updates.FPSMax = newFpsMax;
-      updates.fpsOptions = newFpsOpts;
-      updates.fpsSelected = newFpsMax > 0 ? newFpsMax : (newFpsOpts.length > 0 ? newFpsOpts[0].value : 30);
     }
 
     this.setState(updates);
