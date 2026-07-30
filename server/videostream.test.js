@@ -321,6 +321,56 @@ describe('Video Functions', function () {
     assert.equal(vManager.deviceStream, procB, "The current device stream must be unaffected")
   })
 
+  it('#ensureDefaultSettingsForModeUsesFirstDeviceCapWhenUnconfigured()', function () {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+
+    vManager.devices = [
+      {
+        value: 'imx415', label: 'CSI imx415', caps: [
+          { value: '1920x1080xYUV420', width: 1920, height: 1080, format: 'YUV420', fpsmax: '30', fps: [] }
+        ]
+      }
+    ]
+    vManager.stillDevices = [
+      {
+        id: 'CSI-imx415', label: 'CSI imx415', caps: [
+          { value: '3864x2192xYUV420', width: 3864, height: 2192, format: 'YUV420' }
+        ]
+      }
+    ]
+
+    assert.equal(vManager.videoRecordSettings, null)
+    vManager.ensureDefaultSettingsForMode('video')
+    assert.deepEqual(vManager.videoRecordSettings, {
+      device: 'imx415',
+      isRecording: false,
+      width: 1920,
+      height: 1080,
+      format: 'YUV420',
+      bitrate: 1100,
+      fps: 30, // coerced from the string '30' fpsmax
+      rotation: 0,
+      mediaDestination: ''
+    })
+    assert.deepEqual(settings.value('camera.videoRecordSettings'), vManager.videoRecordSettings, "Defaults should be persisted")
+
+    assert.equal(vManager.stillSettings, null)
+    vManager.ensureDefaultSettingsForMode('photo')
+    assert.deepEqual(vManager.stillSettings, {
+      device: 'CSI-imx415',
+      width: 3864,
+      height: 2192,
+      format: 'YUV420',
+      mediaDestination: ''
+    })
+
+    // Must not overwrite settings that already exist
+    vManager.videoRecordSettings.width = 999
+    vManager.ensureDefaultSettingsForMode('video')
+    assert.equal(vManager.videoRecordSettings.width, 999, "Should not overwrite already-configured settings")
+  })
+
   it('#toggleVideoRecording()', function () {
     settings.clear()
     const vManager = new VideoStream(settings)
