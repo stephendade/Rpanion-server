@@ -121,17 +121,21 @@ describe('Video Functions', function () {
     vManager.active = true
     vManager.cameraMode = 'video'
     vManager.videoSettings = { width: 1920, height: 1080 }
+    vManager.videoRecordSettings = { width: 3864, height: 2192 }
 
     // Test Save
     vManager.saveSettings()
     assert.equal(settings.value('camera.active'), true)
     assert.equal(settings.value('camera.mode'), 'video')
+    // Streaming and Video Recording are independent settings objects
     assert.deepEqual(settings.value('camera.videoSettings'), { width: 1920, height: 1080 })
+    assert.deepEqual(settings.value('camera.videoRecordSettings'), { width: 3864, height: 2192 })
 
     // Test Reset
     vManager.resetCamera()
     assert.equal(vManager.active, false)
     assert.equal(vManager.videoSettings, null)
+    assert.equal(vManager.videoRecordSettings, null)
     assert.equal(settings.value('camera.active'), false)
   })
 
@@ -225,14 +229,14 @@ describe('Video Functions', function () {
     settings.clear()
     const vManager = new VideoStream(settings)
     vManager.cameraMode = 'streaming' // not 'video'
-    vManager.videoSettings = { isRecording: false }
+    vManager.videoRecordSettings = { isRecording: false }
 
     // Stub out actual process management - this test is about the dispatch/
     // switching logic, not really spawning photovideo.py
     const calls = []
     vManager.stopCamera = (cb) => { calls.push('stopCamera'); vManager.active = false; cb(null, false) }
     vManager.startCamera = (cb) => { calls.push(`startCamera(${vManager.cameraMode})`); vManager.active = true; cb(null) }
-    vManager.toggleVideoRecording = () => { calls.push('toggleVideoRecording'); vManager.videoSettings.isRecording = true }
+    vManager.toggleVideoRecording = () => { calls.push('toggleVideoRecording'); vManager.videoRecordSettings.isRecording = true }
 
     const acks = []
     vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCompId, targetComponent, result) => {
