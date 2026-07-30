@@ -746,6 +746,20 @@ class videoStream {
     // Capture a single still photo
     console.log('Capturing still photo')
 
+    // deviceStream is whichever process is currently running for the active
+    // cameraMode - if that's not 'photo', sending SIGUSR1 to it either does
+    // nothing (streaming) or does something else entirely (SIGUSR1 toggles
+    // video recording when deviceStream is running photovideo.py --mode=video).
+    if (this.cameraMode !== 'photo') {
+      console.log(`Cannot capture photo - camera is in '${this.cameraMode}' mode, not 'photo'`)
+      if (commandId && senderSysId !== null) {
+        // 1 = MAV_RESULT_TEMPORARILY_REJECTED: valid command, but not right now -
+        // switch to photo mode (or retry once auto-switching exists) and it'll work.
+        this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 1)
+      }
+      return
+    }
+
     if (!this.active || !this.deviceStream) {
       console.log('Cannot capture photo - camera not active')
       console.log('Internal check failed: Cannot capture photo - camera not active or no deviceStream.');
@@ -1153,17 +1167,31 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['VIDEO_START_CAPTURE']) {
         console.log('Received MAVLink command to start video capture')
-        if (this.cameraMode === 'video' && !this.videoSettings.isRecording) {
-          this.toggleVideoRecording()
+        if (this.cameraMode !== 'video') {
+          console.log(`Cannot start video capture - camera is in '${this.cameraMode}' mode, not 'video'`)
+          // 1 = MAV_RESULT_TEMPORARILY_REJECTED
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, 1)
+        } else {
+          if (!this.videoSettings.isRecording) {
+            this.toggleVideoRecording()
+          }
+          // Already recording, or just started - either way the requested state now holds
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
         }
-        this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
       }
       else if (data.command === common.MavCmd['VIDEO_STOP_CAPTURE']) {
         console.log('Received MAVLink command to stop video capture')
-        if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
-          this.toggleVideoRecording()
+        if (this.cameraMode !== 'video') {
+          console.log(`Cannot stop video capture - camera is in '${this.cameraMode}' mode, not 'video'`)
+          // 1 = MAV_RESULT_TEMPORARILY_REJECTED
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, 1)
+        } else {
+          if (this.videoSettings.isRecording) {
+            this.toggleVideoRecording()
+          }
+          // Already stopped, or just stopped - either way the requested state now holds
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
         }
-        this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
       }
       // MAVProxy: responds to DO_DIGICAM_CONFIGURE by requesting our capabilities
       else if (data.command === common.MavCmd['DO_DIGICAM_CONFIGURE']) {
