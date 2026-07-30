@@ -90,6 +90,12 @@ class VideoPage extends basePage {
         const videoData = await videoRes.json();
         const stillData = await stillRes.json();
 
+        // --- Process Network Interfaces ---
+        // Prefer a non-loopback interface as the default MAVLink video source IP,
+        // since 127.0.0.1 is never reachable by a remote GCS.
+        const ifaceList = (videoData.networkInterfaces || []).map(ip => ip);
+        const defaultMavStreamIface = ifaceList.find(ip => ip !== '127.0.0.1') || ifaceList[0] || '127.0.0.1';
+
         // --- Process Video Data ---
         const vidDevs = videoData.devices || [];
         const selVidDev = videoData.selectedDevice || (vidDevs.length > 0 ? vidDevs[0] : null);
@@ -165,7 +171,7 @@ class VideoPage extends basePage {
 
         this.setState({
           // Network
-          ifaces: (videoData.networkInterfaces || []).map(ip => ip), // Keep as array of strings
+          ifaces: ifaceList,
 
           // Video State
           videoDevices: vidDevs,
@@ -194,7 +200,7 @@ class VideoPage extends basePage {
           rotSelected: (videoData.selectedRotation && videoData.selectedRotation.value != null) ? videoData.selectedRotation.value : 0,
           timestamp: videoData.selectedUseTimestamp || false,
           enableCameraHeartbeat: videoData.selectedUseCameraHeartbeat || false,
-          mavStreamSelected: (videoData.selectedMavStreamURI && videoData.selectedMavStreamURI.value) ? videoData.selectedMavStreamURI.value : (this.state.ifaces[0] || '127.0.0.1'),
+          mavStreamSelected: (videoData.selectedMavStreamURI && videoData.selectedMavStreamURI.value) ? videoData.selectedMavStreamURI.value : defaultMavStreamIface,
 
           FPSMax: initialFpsMax,
           fpsOptions: initialFpsOpts,

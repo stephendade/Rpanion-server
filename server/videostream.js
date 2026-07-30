@@ -1000,9 +1000,19 @@ class videoStream {
 
       // Find the address in the list that matches the selected MAVLink interface IP
       // This uses the array populated in populateAddresses() to ensure 1:1 consistency with Web UI
-      const matchedAddress = this.deviceAddresses.find(addr =>
+      let matchedAddress = this.deviceAddresses.find(addr =>
         addr.includes(this.videoSettings.mavStreamSelected)
       );
+
+      // Loopback is never reachable by a remote GCS. If that's what matched
+      // (or nothing matched at all), prefer the first non-loopback address
+      // instead of advertising something guaranteed to be useless.
+      if (!matchedAddress || /:\/\/127\./.test(matchedAddress)) {
+        const nonLoopback = this.deviceAddresses.find(addr => !/:\/\/127\./.test(addr));
+        if (nonLoopback) {
+          matchedAddress = nonLoopback;
+        }
+      }
 
       uriString = matchedAddress || "";
 
