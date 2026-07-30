@@ -254,6 +254,41 @@ describe('Video Functions', function () {
     vManager.sendVideoStreamInformation(1, 1, 1)
   })
 
+  it('#sendVideoStreamInformationMultipleAddresses()', function () {
+    settings.clear()
+    const vManager = new VideoStream(settings)
+
+    vManager.videoSettings = {
+      width: 1280,
+      height: 720,
+      fps: 30,
+      bitrate: 2000,
+      rotation: 0,
+      compression: 'H264',
+      useUDP: false,
+      mavStreamSelected: '127.0.0.1' // deliberately select the loopback address
+    }
+
+    // A loopback address plus a real, reachable one
+    vManager.deviceAddresses = ['rtsp://127.0.0.1:8554/test', 'rtsp://10.0.2.100:8554/test']
+
+    const received = []
+    vManager.eventEmitter.on('videostreaminfo', (msg) => received.push(msg))
+
+    vManager.sendVideoStreamInformation(1, 1, 1)
+
+    // One message per address, not just the (loopback) selected one
+    assert.equal(received.length, 2)
+    // count reflects the total number of streams being advertised
+    assert.ok(received.every(msg => msg.count === 2))
+    // the real, reachable address should be advertised first...
+    assert.equal(received[0].streamId, 1)
+    assert.ok(received[0].uri.includes('10.0.2.100'))
+    // ...and loopback last, as a fallback rather than the primary choice
+    assert.equal(received[1].streamId, 2)
+    assert.ok(received[1].uri.includes('127.0.0.1'))
+  })
+
   it('#sendCameraSettings()', function (done) {
     settings.clear()
     const vManager = new VideoStream(settings)
