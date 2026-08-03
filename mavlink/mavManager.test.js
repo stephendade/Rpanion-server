@@ -136,6 +136,35 @@ describe('MAVLink Functions', function () {
     })
   })
 
+  it('#systemTimeSend()', function (done) {
+    const m = new mavManager(2, '127.0.0.1', 15100)
+    const udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', () => {
+      m.sendSystemTime()
+    })
+
+    udpStream.on('message', (msg) => {
+      // Verify MAVLink message structure
+      assert.equal(msg[0], 0xfd) // MAVLink v2 header
+      assert.equal(msg[7], 0x02) // Message ID for SYSTEM_TIME (low byte)
+      assert.equal(msg[8], 0x00) // Message ID for SYSTEM_TIME (high byte)
+      
+      // Verify message has reasonable length
+      assert.ok(msg.length > 10)
+      
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15100, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
   it('#commandAckSend()', function (done) {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const udpStream = udp.createSocket('udp4')
