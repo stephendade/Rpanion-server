@@ -32,6 +32,7 @@ class FCPage extends basePage {
       enableUDPB: false,
       UDPBPort: 14550,
       enableDSRequest: false,
+      enableTimesync: false,
       doLogging: false
     }
 
@@ -87,6 +88,10 @@ class FCPage extends basePage {
     this.setState({ enableDSRequest: event.target.checked });
   }
 
+  handleTimesyncChange = (event) => {
+    this.setState({ enableTimesync: event.target.checked });
+  }
+
   handleUseUDPBChange = (event) => {
     this.setState({ enableUDPB: event.target.checked });
   }
@@ -115,6 +120,7 @@ class FCPage extends basePage {
         enableUDPB: this.state.enableUDPB,
         UDPBPort: this.state.UDPBPort,
         enableDSRequest: this.state.enableDSRequest,
+        enableTimesync: this.state.enableTimesync,
         doLogging: this.state.doLogging
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
@@ -322,6 +328,14 @@ class FCPage extends basePage {
               <label className="col-sm-5 col-form-label">Enable MAVLink heartbeats</label>
               <div className="col-sm-7">
               <input type="checkbox" checked={this.state.enableHeartbeat} disabled={this.state.telemetryStatus} onChange={this.handleUseHeartbeatChange} />
+              </div>
+            </div>
+            <br />
+            <p><i>Send SYSTEM_TIME messages to synchronize flight controller clock (every 10 seconds)</i></p>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-5 col-form-label">Enable SYSTEM_TIME messages</label>
+              <div className="col-sm-7">
+              <input type="checkbox" checked={this.state.enableTimesync} disabled={this.state.telemetryStatus} onChange={this.handleTimesyncChange} />
               </div>
             </div>
             <br />

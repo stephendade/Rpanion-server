@@ -64,6 +64,10 @@ class FCDetails {
     // Send datastream requests to flight controller?
     this.enableDSRequest = false
 
+    // Send TIMESYNC messages to flight controller?
+    this.enableTimesync = false
+    this.lastTimesyncSent = 0
+
     // Current binlog via mavlink-router
     this.binlog = null
 
@@ -96,6 +100,7 @@ class FCDetails {
     this.enableUDPB = this.settings.value('flightcontroller.enableUDPB', true)
     this.UDPBPort = this.settings.value('flightcontroller.UDPBPort', 14550)
     this.enableDSRequest = this.settings.value('flightcontroller.enableDSRequest', false)
+    this.enableTimesync = this.settings.value('flightcontroller.enableTimesync', false)
     this.doLogging = this.settings.value('flightcontroller.doLogging', false)
     this.active = this.settings.value('flightcontroller.active', false)
 
@@ -521,18 +526,18 @@ class FCDetails {
     if (this.active && this.activeDevice && this.activeDevice.inputType === 'UART') {
       return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial,
         this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion,
-        this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.doLogging, this.activeDevice.udpInputPort,
+        this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.doLogging, this.activeDevice.udpInputPort,
         this.inputTypes[0].value, this.inputTypes)
     } else if (this.active && this.activeDevice && this.activeDevice.inputType === 'UDP') {
       return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [], this.baudRates[3].value,
         this.mavlinkVersions, this.activeDevice.mavversion, this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.doLogging, this.activeDevice.udpInputPort,
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.doLogging, this.activeDevice.udpInputPort,
         this.inputTypes[1].value, this.inputTypes)
     } else {
       // no connection
       return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [],
         this.baudRates[3].value, this.mavlinkVersions, this.mavlinkVersions[1].value, this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.doLogging, 9000, this.inputTypes[0].value, this.inputTypes)
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.doLogging, 9000, this.inputTypes[0].value, this.inputTypes)
     }
   }
 
@@ -543,6 +548,15 @@ class FCDetails {
     // Send heartbeats, if they are enabled
     if(this.enableHeartbeat){
       this.m.sendHeartbeat()
+    }
+    
+    // Send timesync messages every 10 seconds, if enabled
+    if(this.enableTimesync){
+      const now = Date.now();
+      if (now - this.lastTimesyncSent >= 10000) {
+        this.m.sendSystemTime();
+        this.lastTimesyncSent = now;
+      }
     }
       // check for timeouts in serial link (ie disconnected cable or reboot)
       if (this.m && this.m.conStatusInt() === -1) {
@@ -562,7 +576,7 @@ class FCDetails {
   }
 
   startStopTelemetry (device, baud, mavversion, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest,
-                      doLogging, inputType, udpInputPort, callback) {
+                      enableTimesync, doLogging, inputType, udpInputPort, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
@@ -571,6 +585,7 @@ class FCDetails {
     this.enableUDPB = enableUDPB
     this.UDPBPort = UDPBPort
     this.enableDSRequest = enableDSRequest
+    this.enableTimesync = enableTimesync
     this.doLogging = doLogging
 
     if (this.m) {
@@ -653,6 +668,7 @@ class FCDetails {
       this.settings.setValue('flightcontroller.enableUDPB', this.enableUDPB)
       this.settings.setValue('flightcontroller.UDPBPort', this.UDPBPort)
       this.settings.setValue('flightcontroller.enableDSRequest', this.enableDSRequest)
+      this.settings.setValue('flightcontroller.enableTimesync', this.enableTimesync)
       this.settings.setValue('flightcontroller.doLogging', this.doLogging)
       this.settings.setValue('flightcontroller.active', this.active)
       console.log('Saved FC settings')

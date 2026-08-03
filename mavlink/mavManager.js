@@ -32,6 +32,9 @@ class mavManager {
     this.statusText = ''
     this.statusArmed = 0
     this.seq = 0
+    
+    // Track when this manager started for uptime calculation
+    this.startTime = Date.now()
 
     // the vehicle
     this.targetSystem = null
@@ -285,6 +288,21 @@ class mavManager {
     heartbeatMessage.systemStatus = 0
 
     this.sendData(heartbeatMessage, component)
+  }
+
+  sendSystemTime () {
+    // Send SYSTEM_TIME message for time synchronization with flight controller
+    // Following MAVProxy pattern: send Unix time and system uptime
+    const systemTimeMessage = new common.SystemTime()
+    
+    // timeUnixUsec: Unix time in microseconds since UNIX epoch
+    systemTimeMessage.timeUnixUsec = BigInt(Math.floor(Date.now() * 1000))
+    // timeBootMs: Time since system boot in milliseconds
+    systemTimeMessage.timeBootMs = Date.now() - this.startTime
+
+    console.log(`Sending SYSTEM_TIME message: timeUnixUsec=${systemTimeMessage.timeUnixUsec}, timeBootMs=${systemTimeMessage.timeBootMs}`)
+    
+    this.sendData(systemTimeMessage, minimal.MavComponent.ONBOARD_COMPUTER)
   }
 
   sendCommandAck (commandReceived, commandResult, senderSysId, senderCompId, targetComponent) {

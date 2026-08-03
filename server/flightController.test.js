@@ -1,6 +1,7 @@
 const assert = require('assert')
 const settings = require('settings-store')
 const FCManagerClass = require('./flightController')
+const { act } = require('react')
 
 describe('Flight Controller Functions', function () {
   it('#fcinit()', function () {
@@ -17,7 +18,7 @@ describe('Flight Controller Functions', function () {
     const FC = new FCManagerClass(settings)
 
     await FC.getDeviceSettings((err, devices, bauds, seldevice, selbaud, mavers, selmav,
-    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, tlogging,
+    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, enableTimesync, tlogging,
     udpInputPort, selInputType, inputTypes) => {
       assert.equal(err, null)
       assert.equal(devices.length, 0)
@@ -32,6 +33,7 @@ describe('Flight Controller Functions', function () {
       assert.equal(enableUDPB, true)
       assert.equal(UDPBPort, 14550)
       assert.equal(enableDSRequest, false)
+      assert.equal(enableTimesync, false)
       assert.equal(active, false)
       assert.equal(udpInputPort, 9000)
       assert.equal(selInputType, 'UART')
@@ -72,12 +74,12 @@ describe('Flight Controller Functions', function () {
     const FC = new FCManagerClass(settings)
     FC.serialDevices.push({ value: '/dev/ttyS0', label: '/dev/ttyS0', pnpId: '456' })
 
-    FC.startStopTelemetry('/dev/ttyS0', 115200, 2, false, true, false, 0, false, false,
+    FC.startStopTelemetry('/dev/ttyS0', 115200, 2, false, true, false, 0, false, false, false,
       'UART', 9000, (err, isSuccess) => {
       assert.equal(err, null)
       assert.equal(isSuccess, true)
 
-      FC.startStopTelemetry('/dev/ttyS0', 115200, 2 , false, true, false, 0, false, false,
+      FC.startStopTelemetry('/dev/ttyS0', 115200, 2 , false, true, false, 0, false, false, false,
         'UART', 9000, (err, isSuccess) => {
         assert.equal(err, null)
         assert.equal(isSuccess, false)
