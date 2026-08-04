@@ -625,6 +625,11 @@ class NetworkConfig extends basePage {
       
       if(selectedDevice && selectedDevice.type === "wifi") {
         this.setState({ showModal: true });
+      } else {
+        // for non-wifi, set attachedIface to the currently selected adapter
+        this.setState(prev => ({
+          curSettings: { ...prev.curSettings, attachedIface: this.state.netDeviceSelected }
+        }));
       }
     }
   }
@@ -779,19 +784,6 @@ class NetworkConfig extends basePage {
         <h2>Edit Connection</h2>
         <Form onSubmit={this.handleNetworkSubmit} style={{ display: selectedConnection ? "block" : "none" }}>
         <fieldset disabled={wifiDisabled}>
-          <div className="adapterattach" style={{ display: selectedConnection && selectedConnection.type === "tun" ? "none" : "block" }}>
-            <div className="form-group row" style={{ marginBottom: '5px' }}>
-              <label className="col-sm-4 col-form-label">Attach to Specific Adapter</label>
-              <div className="col-sm-8">
-                <Form.Select name="attachedIface" onChange={this.changeHandler} value={this.state.curSettings.attachedIface}>
-                  {this.state.netConnectionSimilarIfaces.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </Form.Select>
-              </div>
-            </div>
-          </div>
-
           <div className="ipconfig" style={{ display: (this.state.showIP && this.state.curSettings.mode !== "adhoc" && this.state.curSettings.mode !== "ap") ? "block" : "none" }}><h3>IP Address</h3>
 
             <div className="form-group row" style={{ marginBottom: '5px' }}>
