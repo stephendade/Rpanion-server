@@ -191,12 +191,28 @@ class PPPConnection {
             // Don't treat signal-based terminations as unexpected (code 5 is typical for SIGTERM/SIGINT)
             // These usually happen during application shutdown when Ctrl+C is pressed
             const isSignalTermination = signal !== null || code === 5 || code === 2;
-            if (!this.isQuitting && !this.isManualStop && !isSignalTermination) {
+            const wasManualStop = this.isManualStop;
+            this.pppProcess = null;
+            this.isManualStop = false;
+            if (!this.isQuitting && !wasManualStop && !isSignalTermination) {
+                // Unexpected exit - retry without persisting disabled state
+                console.log('PPP process exited unexpectedly. Retrying in 5 seconds...');
+                this.isConnected = false;
+                setTimeout(() => {
+                    if (!this.isQuitting) {
+                        this.startPPP(this.device, this.baudRate, this.localIP, this.remoteIP, (err) => {
+                            if (err) {
+                                console.error('Error restarting PPP connection:', err);
+                                this.isConnected = false;
+                                this.setSettings();
+                            }
+                        });
+                    }
+                }, 5000);
+            } else {
                 this.isConnected = false;
                 this.setSettings();
             }
-            this.pppProcess = null; // reset the process reference
-            this.isManualStop = false; // reset flag for next connection
         });
         this.isConnected = true;
         this.setSettings();
