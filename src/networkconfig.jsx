@@ -715,6 +715,7 @@ class NetworkConfig extends basePage {
   renderContent() {
     const selectedDevice = this.getSelectedDevice();
     const selectedConnection = this.getSelectedConnection();
+    const wifiDisabled = selectedDevice && selectedDevice.type === "wifi" && !this.state.wirelessEnabled;
     
     return (
       <div style={{ width: 500 }}>
@@ -756,9 +757,9 @@ class NetworkConfig extends basePage {
           <label className="col-sm-4 col-form-label"></label>
           <div className="col-sm-8">
             <Button size="sm" variant="primary" onClick={this.deleteConnection} disabled={!selectedConnection || selectedConnection.type === "tun"} className="deleteConnection">Delete</Button>{' '}
-            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={selectedConnection && selectedConnection.type === "tun"} className="addConnection">Add new</Button>{' '}
-            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={!selectedConnection || selectedConnection.state !== ""} className="activateConnection">Activate</Button>{' '}
-            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={!selectedConnection || selectedConnection.state === ""} className="deactivateConnection">Deactivate</Button>{' '}
+            <Button size="sm" variant="primary" onClick={this.addConnection} disabled={(selectedConnection && selectedConnection.type === "tun") || wifiDisabled} className="addConnection">Add new</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.activateConnection} disabled={!selectedConnection || selectedConnection.state !== "" || wifiDisabled} className="activateConnection">Activate</Button>{' '}
+            <Button size="sm" variant="secondary" onClick={this.deactivateConnection} disabled={!selectedConnection || selectedConnection.state === "" || wifiDisabled} className="deactivateConnection">Deactivate</Button>{' '}
           </div>
         </div>
         <div className="form-group row" style={{ marginBottom: '5px' }}>
@@ -777,6 +778,7 @@ class NetworkConfig extends basePage {
         <br />
         <h2>Edit Connection</h2>
         <Form onSubmit={this.handleNetworkSubmit} style={{ display: selectedConnection ? "block" : "none" }}>
+        <fieldset disabled={wifiDisabled}>
           <div className="adapterattach" style={{ display: selectedConnection && selectedConnection.type === "tun" ? "none" : "block" }}>
             <div className="form-group row" style={{ marginBottom: '5px' }}>
               <label className="col-sm-4 col-form-label">Attach to Specific Adapter</label>
@@ -955,6 +957,7 @@ class NetworkConfig extends basePage {
               <Button size="sm" variant="secondary" onClick={this.resetForm}>Discard Changes</Button>{' '}
             </div>
           </div>
+          </fieldset>
 
           <Modal show={this.state.showModal} onHide={this.handleNewNetworkTypeCancel}>
             <Modal.Header closeButton>
