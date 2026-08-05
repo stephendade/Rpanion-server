@@ -11,7 +11,8 @@ const { detectSerialDevices, getSerialPathFromValue } = require('./serialDetecti
 class PPPConnection {
     constructor(settings) {
         this.settings = settings
-        this.isConnected = this.settings.value('ppp.enabled', false);
+        this.wantEnabled = this.settings.value('ppp.enabled', false);
+        this.isConnected = false;
         this.pppProcess = null;
         this.device = this.settings.value('ppp.uart', null);
         this.baudRate = this.settings.value('ppp.baud', 921600)
@@ -31,7 +32,7 @@ class PPPConnection {
         this.isQuitting  = false;
         this.isManualStop = false; // flag to distinguish manual stop from process crash
 
-        if (this.isConnected) {
+        if (this.wantEnabled) {
             // populate serial devices list and start PPP connection
             this.getDevices((err, devices) => {
                 this.devices = devices;
@@ -40,12 +41,11 @@ class PPPConnection {
                         if (err) {
                             if (err.message.includes('already connected')) {
                                 console.log('PPP connection is already established. Retrying in 1 second...');
-                                this.isConnected = false;
-                                this.setSettings();
                                 setTimeout(attemptPPPStart, 1000); // Retry after 1 second
                             } else {
                                 console.error('Error starting PPP connection:', err);
                                 this.isConnected = false;
+                                this.wantEnabled = false;
                                 this.setSettings();
                             }
                         } else {
@@ -64,7 +64,7 @@ class PPPConnection {
         this.settings.setValue('ppp.baud', this.baudRate);
         this.settings.setValue('ppp.localIP', this.localIP);
         this.settings.setValue('ppp.remoteIP', this.remoteIP);
-        this.settings.setValue('ppp.enabled', this.isConnected);
+        this.settings.setValue('ppp.enabled', this.wantEnabled);
     }
 
     quitting() {
@@ -204,6 +204,7 @@ class PPPConnection {
                             if (err) {
                                 console.error('Error restarting PPP connection:', err);
                                 this.isConnected = false;
+                                this.wantEnabled = false;
                                 this.setSettings();
                             }
                         });
@@ -215,6 +216,7 @@ class PPPConnection {
             }
         });
         this.isConnected = true;
+        this.wantEnabled = true;
         this.setSettings();
         return callback(null, {
             selDevice: this.device,
@@ -247,6 +249,7 @@ class PPPConnection {
             this.pppProcess.kill();
             execSync('sudo pkill -SIGTERM pppd');
             this.isConnected = false;
+            this.wantEnabled = false;
             this.setSettings();
         }
         return callback(null, {
@@ -293,7 +296,7 @@ class PPPConnection {
                     selBaudRate: this.baudRate,
                     localIP: this.localIP,
                     remoteIP: this.remoteIP,
-                    enabled: this.isConnected,
+                    enabled: this.wantEnabled,
                     baudRates: this.baudRates,
                     serialDevices: [],
                 });
@@ -317,7 +320,7 @@ class PPPConnection {
                 selBaudRate: this.baudRate,
                 localIP: this.localIP,
                 remoteIP: this.remoteIP,
-                enabled: this.isConnected,
+                enabled: this.wantEnabled,
                 baudRates: this.baudRates,
                 serialDevices: this.serialDevices,
             });
