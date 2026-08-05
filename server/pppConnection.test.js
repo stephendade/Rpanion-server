@@ -65,7 +65,7 @@ describe('PPPConnection', function() {
       pppConnection.baudRate = 115200;
       pppConnection.localIP = '192.168.1.1';
       pppConnection.remoteIP = '192.168.1.2';
-      pppConnection.isConnected = true;
+      pppConnection.wantEnabled = true;
 
       pppConnection.setSettings();
     });
