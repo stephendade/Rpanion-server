@@ -138,7 +138,7 @@ class VideoPage extends basePage {
           vidDeviceSelected: activeResolved.device,
           videoCaps: activeResolved.caps,
           vidCapSelected: activeResolved.cap,
-          videoIsRecording: false,
+          videoIsRecording: videoData.selectedIsRecording || false,
 
           // Still State
           stillDevices: stillDevs,

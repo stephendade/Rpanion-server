@@ -52,6 +52,24 @@ describe('Video Functions', function () {
     })
   }).timeout(5000)
 
+  it('#videomanagerscanReportsActiveRecordingState()', function (done) {
+    // getVideoDevices() must report whether Video Recording is actually
+    // recording right now, so the "Stop Recording" button on page load/
+    // refresh reflects reality instead of always showing "Start Recording".
+    settings.clear()
+    const vManager = new VideoStream(settings)
+
+    vManager.cameraMode = 'video'
+    vManager.deviceStream = { kill: () => {} } // simulate an active process
+    vManager.devices = [{ value: 'imx415', label: 'CSI imx415', caps: [] }]
+    vManager.videoRecordSettings = { device: 'imx415', isRecording: true }
+
+    vManager.getVideoDevices(function (err, data) {
+      assert.equal(data.selectedIsRecording, true)
+      done()
+    })
+  })
+
   it('#getStillDevices()', function (done) {
     // Scanning for still photo devices (CSI and UVC cameras)
     settings.clear()
