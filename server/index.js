@@ -1320,11 +1320,13 @@ app.post('/api/camera/start', authenticateToken, [
       
     }
 
-  // Map incoming request to the internal settings objects used by videostream.js
-  if (mode === 'streaming' || mode === 'video') {
+  // Map incoming request to the internal settings objects used by videostream.js.
+  // Streaming and Video Recording are independent pipelines/settings objects
+  // (video-server.py/GStreamer vs photovideo.py/Picamera2), so a save in one
+  // mode must not overwrite the other's saved device/resolution/fps/etc.
+  if (mode === 'streaming') {
     vManager.videoSettings = {
       device: req.body.videoDevice,
-      isRecording: req.body.isRecording === false || req.body.isRecording === 'false',
       height: parseInt(req.body.height, 10),
       width: parseInt(req.body.width, 10),
       format: req.body.format,
@@ -1337,6 +1339,18 @@ app.post('/api/camera/start', authenticateToken, [
       useTimestamp: req.body.useTimestamp === true || req.body.useTimestamp === 'true',
       mavStreamSelected: req.body.mavStreamSelected,
       compression: req.body.compression,
+      mediaDestination: safeMediaDestination
+    };
+  } else if (mode === 'video') {
+    vManager.videoRecordSettings = {
+      device: req.body.videoDevice,
+      isRecording: req.body.isRecording === false || req.body.isRecording === 'false',
+      height: parseInt(req.body.height, 10),
+      width: parseInt(req.body.width, 10),
+      format: req.body.format,
+      bitrate: parseInt(req.body.bitrate, 10),
+      fps: parseInt(req.body.fps, 10),
+      rotation: parseInt(req.body.rotation, 10),
       mediaDestination: safeMediaDestination
     };
   } else if (mode === 'photo') {

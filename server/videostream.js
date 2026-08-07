@@ -6,6 +6,7 @@ const events = require('events')
 const { minimal, common } = require('node-mavlink')
 const logpaths = require('./paths.js')
 const fs = require('fs')
+const rpanionVersion = require('../package.json').version
 
 class videoStream {
   constructor (settings) {
@@ -17,6 +18,7 @@ class videoStream {
     this.deviceAddresses = []
     this.cameraMode = null; // 'streaming', 'photo', or 'video'
     this.photoSeq = 0;
+    this.modeSwitchInProgress = false; // true while switchCameraModeAndTakeAction() is mid-switch
 
     // Interval to send camera heartbeat events
     this.intervalObj = null;
@@ -25,7 +27,8 @@ class videoStream {
     // Mode-specific hardware lists/settings
     this.devices = null;      // Video devices
     this.stillDevices = null; // Still devices
-    this.videoSettings = null;
+    this.videoSettings = null;       // Streaming mode settings
+    this.videoRecordSettings = null; // Video Recording mode settings (independent of Streaming's)
     this.stillSettings = null;
     this.fcManager = null;    // Flight controller manager reference, set externally if available
 
@@ -34,8 +37,12 @@ class videoStream {
     this.cameraMode = this.settings.value('camera.mode', 'streaming');
     this.useCameraHeartbeat = this.settings.value('camera.useHeartbeat', false);
 
-    // Load specific settings based on mode
+    // Load specific settings based on mode. Streaming and Video Recording are
+    // separate pipelines (video-server.py/GStreamer vs photovideo.py/Picamera2)
+    // and are kept as independent settings objects so configuring one (e.g.
+    // resolution/fps) doesn't overwrite the other's saved values.
     this.videoSettings = this.settings.value('camera.videoSettings', null);
+    this.videoRecordSettings = this.settings.value('camera.videoRecordSettings', null);
     this.stillSettings = this.settings.value('camera.stillSettings', null);
 
     // if it's an active device, stop then start it up
@@ -201,6 +208,38 @@ class videoStream {
     ];
   }
 
+  // Build the {selectedDevice, selectedCap, selectedFps, selectedBitrate,
+  // selectedRotation, mediaDestination} shape describing a saved settings
+  // object (this.videoSettings for Streaming, this.videoRecordSettings for
+  // Video Recording) against a device list. Used so the frontend can
+  // pre-populate each mode's Resolution/FPS dropdowns independently, since
+  // the two modes no longer share a single settings object.
+  buildModeSelection(settingsObj, devices) {
+    const result = {
+      selectedDevice: null,
+      selectedCap: null,
+      selectedFps: null,
+      selectedBitrate: 1100,
+      selectedRotation: { label: '0°', value: 0 },
+      mediaDestination: ''
+    };
+    if (!settingsObj || !devices) return result;
+
+    result.selectedDevice = devices.find(d => d.value === settingsObj.device) || null;
+    if (result.selectedDevice) {
+      // Safeguard the format string against missing slashes for V4L2 raw modes
+      const formatStr = settingsObj.format || "";
+      const formatShort = formatStr.includes('/') ? formatStr.split('/')[1] : formatStr;
+      const capVal = `${settingsObj.width}x${settingsObj.height}x${formatShort}`;
+      result.selectedCap = result.selectedDevice.caps.find(cap => cap.value === capVal) || null;
+    }
+    result.selectedFps = settingsObj.fps ?? null;
+    result.selectedBitrate = settingsObj.bitrate || 1100;
+    result.selectedRotation = { label: (settingsObj.rotation || 0) + '°', value: (settingsObj.rotation || 0) };
+    result.mediaDestination = this.toRelativePath(settingsObj.mediaDestination || '');
+    return result;
+  }
+
   // video streaming
   getVideoDevices (callback) {
     // get all video device details
@@ -210,6 +249,10 @@ class videoStream {
     // Don't re-scan hardware if a stream is already running
     if (this.deviceStream !== null) {
       console.log("Camera active; returning cached hardware details.");
+
+      // Streaming and Video Recording have independent settings; use whichever
+      // one matches the mode that's actually running.
+      const activeSettings = this.cameraMode === 'video' ? this.videoRecordSettings : this.videoSettings;
 
       const responseData = {
         devices: this.devices || [],
@@ -225,13 +268,13 @@ class videoStream {
       };
 
       // 1. Find the device and capability currently being used
-      if (this.videoSettings && this.devices) {
-        responseData.selectedDevice = this.devices.find(d => d.value === this.videoSettings.device);
+      if (activeSettings && this.devices) {
+        responseData.selectedDevice = this.devices.find(d => d.value === activeSettings.device);
         if (responseData.selectedDevice) {
           // Safeguard the format string against missing slashes for V4L2 raw modes
-          const formatStr = this.videoSettings.format || "";
+          const formatStr = activeSettings.format || "";
           const formatShort = formatStr.includes('/') ? formatStr.split('/')[1] : formatStr;
-          const capVal = `${this.videoSettings.width}x${this.videoSettings.height}x${formatShort}`;
+          const capVal = `${activeSettings.width}x${activeSettings.height}x${formatShort}`;
 
           responseData.selectedCap = responseData.selectedDevice.caps.find(cap => cap.value === capVal);
           responseData.resolutionCaps = responseData.selectedDevice.caps;
@@ -241,27 +284,36 @@ class videoStream {
 
         // 2. Map raw numbers back to the UI's Object format
         responseData.selectedRotation = {
-          label: (this.videoSettings.rotation || 0) + '°',
-          value: (this.videoSettings.rotation || 0)
+          label: (activeSettings.rotation || 0) + '°',
+          value: (activeSettings.rotation || 0)
         };
+        // Transport (RTSP/RTP) fields only exist on Streaming's settings object -
+        // Video Recording has no analogous concept, so always read these from
+        // this.videoSettings regardless of which mode is currently active.
         responseData.selectedMavStreamURI = {
-          label: this.videoSettings.mavStreamSelected?.toString() || '127.0.0.1',
-          value: this.videoSettings.mavStreamSelected || '127.0.0.1'
+          label: this.videoSettings?.mavStreamSelected?.toString() || '127.0.0.1',
+          value: this.videoSettings?.mavStreamSelected || '127.0.0.1'
         };
 
         // 3. Map simple values
-        responseData.selectedisRecording = this.videoSettings.isRecording || false;
-        responseData.selectedBitrate = this.videoSettings.bitrate || 1100;
-        responseData.selectedFps = this.videoSettings.fps || 30;
-        responseData.selectedUseUDP = this.videoSettings.useUDP || false;
-        responseData.selectedUseUDPIP = this.videoSettings.useUDPIP || '127.0.0.1';
-        responseData.selectedUseUDPPort = this.videoSettings.useUDPPort || 5600;
-        responseData.selectedUseTimestamp = this.videoSettings.useTimestamp || false;
+        responseData.selectedIsRecording = this.videoRecordSettings?.isRecording || false;
+        responseData.selectedBitrate = activeSettings.bitrate || 1100;
+        responseData.selectedFps = activeSettings.fps || 30;
+        responseData.selectedUseUDP = this.videoSettings?.useUDP || false;
+        responseData.selectedUseUDPIP = this.videoSettings?.useUDPIP || '127.0.0.1';
+        responseData.selectedUseUDPPort = this.videoSettings?.useUDPPort || 5600;
+        responseData.selectedUseTimestamp = this.videoSettings?.useTimestamp || false;
         responseData.selectedUseCameraHeartbeat = this.useCameraHeartbeat || false;
 
         // Return an empty string if no media destination is given.
-        responseData.videoMediaDestination = this.toRelativePath(this.videoSettings?.mediaDestination || '');
+        responseData.videoMediaDestination = this.toRelativePath(activeSettings?.mediaDestination || '');
       }
+
+      // Independent per-mode selections, so the frontend can correctly
+      // pre-populate BOTH the Streaming and Video Recording tabs even though
+      // only one of them is actually running right now.
+      responseData.streamingSelection = this.buildModeSelection(this.videoSettings, this.devices);
+      responseData.videoRecordSelection = this.buildModeSelection(this.videoRecordSettings, this.devices);
 
       return callback(null, responseData);
     }
@@ -318,6 +370,12 @@ class videoStream {
         responseData.fpsMax = selectedCap?.fpsmax || 0;
         responseData.selectedFps = responseData.fpsMax > 0 ? responseData.fpsMax : (responseData.fpsOptions[0]?.value ?? 30);
 
+        // Independent per-mode selections, so the frontend can pre-populate
+        // both the Streaming and Video Recording tabs from their own saved
+        // settings, even while the camera isn't currently running.
+        responseData.streamingSelection = this.buildModeSelection(this.videoSettings, devices);
+        responseData.videoRecordSelection = this.buildModeSelection(this.videoRecordSettings, devices);
+
         return callback(null, responseData);
       } catch (e) {
         return callback('Failed to process video devices', responseData);
@@ -369,6 +427,7 @@ class videoStream {
       this.settings.setValue('camera.mode', this.cameraMode);
       this.settings.setValue('camera.useHeartbeat', this.useCameraHeartbeat);
       this.settings.setValue('camera.videoSettings', this.videoSettings);
+      this.settings.setValue('camera.videoRecordSettings', this.videoRecordSettings);
       this.settings.setValue('camera.stillSettings', this.stillSettings);
     } catch (e) {
       console.error('Error saving camera settings:', e);
@@ -378,11 +437,13 @@ class videoStream {
   resetCamera() {
     this.active = false;
     this.videoSettings = null;
+    this.videoRecordSettings = null;
     this.stillSettings = null;
     try {
       this.settings.setValue('camera.active', false);
       this.settings.setValue('camera.mode', 'streaming');
       this.settings.setValue('camera.videoSettings', null);
+      this.settings.setValue('camera.videoRecordSettings', null);
       this.settings.setValue('camera.stillSettings', null);
       this.settings.setValue('camera.useHeartbeat', false);
     } catch (e) {
@@ -436,6 +497,123 @@ class videoStream {
     }
   }
 
+  // Switch to targetMode (stopping whatever's currently running and starting
+  // targetMode's process) if not already there, then call action(). Used so a
+  // MAVLink command (e.g. take a photo) can be serviced regardless of which
+  // mode the camera happens to be in when it arrives, rather than rejecting it.
+  //
+  // Starting a new mode's process can take a while (spawning
+  // photovideo.py/video-server.py, camera library init, etc.), so a
+  // MAV_RESULT_IN_PROGRESS ack is sent immediately if a switch is actually
+  // needed, to avoid the GCS timing out while it waits - followed by a final
+  // MAV_RESULT_FAILED ack if the switch itself fails. On success, action() is
+  // called and is responsible for its own ack.
+  switchCameraModeAndTakeAction(targetMode, commandId, senderSysId, senderCompId, targetComponent, action) {
+    if (this.active && this.cameraMode === targetMode) {
+      action();
+      return;
+    }
+
+    if (this.modeSwitchInProgress) {
+      console.log(`Cannot switch to '${targetMode}' mode - another mode switch is already in progress`)
+      // 1 = MAV_RESULT_TEMPORARILY_REJECTED
+      this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 1)
+      return
+    }
+
+    console.log(`Switching camera mode from '${this.cameraMode}' to '${targetMode}' to service command ${commandId}`)
+    this.modeSwitchInProgress = true
+    // 5 = MAV_RESULT_IN_PROGRESS
+    this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 5)
+
+    this.stopCamera(() => {
+      this.cameraMode = targetMode
+      this.ensureDefaultSettingsForMode(targetMode)
+      this.startCamera((err) => {
+        this.modeSwitchInProgress = false
+        if (err) {
+          console.log(`Failed to switch to '${targetMode}' mode:`, err)
+          // 4 = MAV_RESULT_FAILED
+          this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 4)
+          return
+        }
+        action()
+      })
+    })
+  }
+
+  // gstcaps.py's fallback resolution tables inconsistently emit fpsmax as
+  // either a number or a numeric string, unlike the normal UI-driven save
+  // path (index.js's /api/camera/start), which always parseInt()s fps before
+  // it reaches here - so explicitly coerce to a real number.
+  defaultFpsFor(cap) {
+    return Number(cap.fpsmax) > 0 ? Number(cap.fpsmax) : Number(cap.fps?.[0]?.value || 30);
+  }
+
+  // If targetMode has never been configured via the web UI, populate it with
+  // reasonable defaults (first available device/capability) so an
+  // autopilot-triggered auto-switch can still start it, rather than failing
+  // just because nobody has visited that mode's tab yet. Persists the result
+  // so it behaves like a normal saved configuration from here on.
+  ensureDefaultSettingsForMode(targetMode) {
+    if (targetMode === 'photo' && !this.stillSettings) {
+      const device = (this.stillDevices || []).find(d => d.caps && d.caps.length > 0);
+      if (!device) return;
+      const cap = device.caps[0];
+      this.stillSettings = {
+        device: device.id,
+        width: cap.width,
+        height: cap.height,
+        format: cap.format,
+        mediaDestination: ''
+      };
+      console.log('No saved Photo settings found - using defaults:', this.stillSettings);
+      this.saveSettings();
+    } else if (targetMode === 'video' && !this.videoRecordSettings) {
+      const device = (this.devices || []).find(d => d.caps && d.caps.length > 0);
+      if (!device) return;
+      const cap = device.caps[0];
+      this.videoRecordSettings = {
+        device: device.value,
+        isRecording: false,
+        width: cap.width,
+        height: cap.height,
+        format: cap.format,
+        bitrate: 1100,
+        fps: this.defaultFpsFor(cap),
+        rotation: 0,
+        mediaDestination: ''
+      };
+      console.log('No saved Video Recording settings found - using defaults:', this.videoRecordSettings);
+      this.saveSettings();
+    } else if (targetMode === 'streaming' && !this.videoSettings) {
+      const device = (this.devices || []).find(d => d.caps && d.caps.length > 0);
+      if (!device) return;
+      const cap = device.caps[0];
+      // Use a fresh scan rather than this.ifaces, which is only populated once
+      // Streaming has actually started (too late to help here, the first time).
+      const nonLoopbackIface = this.scanInterfaces().find(ip => ip !== '127.0.0.1') || '127.0.0.1';
+      this.videoSettings = {
+        device: device.value,
+        width: cap.width,
+        height: cap.height,
+        format: cap.format,
+        bitrate: 1100,
+        fps: this.defaultFpsFor(cap),
+        rotation: 0,
+        useUDP: false,
+        useUDPIP: '127.0.0.1',
+        useUDPPort: 5600,
+        useTimestamp: false,
+        mavStreamSelected: nonLoopbackIface,
+        compression: 'H264',
+        mediaDestination: null
+      };
+      console.log('No saved Streaming settings found - using defaults:', this.videoSettings);
+      this.saveSettings();
+    }
+  }
+
   async startVideoStreaming(callback) {
     if (!this.videoSettings) return callback(new Error('No video settings provided'));
 
@@ -475,6 +653,12 @@ class videoStream {
       // Send one immediate heartbeat before starting the timer
       this.eventEmitter.emit('cameraheartbeat', minimal.MavType.CAMERA, minimal.MavAutopilot.INVALID, minimal.MavComponent.CAMERA);
       this.startHeartbeatInterval();
+      // Proactively announce capabilities/settings on start, same as Photo and
+      // Video Recording modes - otherwise a GCS/autopilot that doesn't
+      // explicitly re-request CAMERA_INFORMATION never sees it while
+      // Streaming (Rpanion's default mode) is active.
+      this.sendCameraInformation(null, minimal.MavComponent.CAMERA, null);
+      this.sendCameraSettings(null, minimal.MavComponent.CAMERA, null);
       this.sendVideoStreamInformation(null, minimal.MavComponent.CAMERA, null);
     }
   }
@@ -517,24 +701,24 @@ class videoStream {
   }
 
   startVideoMode(callback) {
-    if (!this.videoSettings) return callback(new Error('No video settings provided'));
+    if (!this.videoRecordSettings) return callback(new Error('No video settings provided'));
 
-    const dest = this.toAbsolutePath(this.videoSettings.mediaDestination);
+    const dest = this.toAbsolutePath(this.videoRecordSettings.mediaDestination);
 
     // Convert bitrate from kbps to bps Picamera2
-    const bitrateBps = this.videoSettings.bitrate * 1000;
+    const bitrateBps = this.videoRecordSettings.bitrate * 1000;
 
     const args = [
       '-u', // force the stdout and stderr streams to be unbuffered
       './python/photovideo.py',
       '--mode=video',
-      '--device=' + this.videoSettings.device,
-      '--width=' + this.videoSettings.width,
-      '--height=' + this.videoSettings.height,
-      '--fps=' + this.videoSettings.fps,
+      '--device=' + this.videoRecordSettings.device,
+      '--width=' + this.videoRecordSettings.width,
+      '--height=' + this.videoRecordSettings.height,
+      '--fps=' + this.videoRecordSettings.fps,
       '--bitrate=' + bitrateBps,
-      '--rotation=' + this.videoSettings.rotation,
-      '--format=' + this.videoSettings.format
+      '--rotation=' + this.videoRecordSettings.rotation,
+      '--format=' + this.videoRecordSettings.format
     ];
 
     if (dest) {
@@ -562,6 +746,13 @@ class videoStream {
   }
 
   setupStreamEvents(modeName, callback) {
+    // Capture the specific process this setup call is for. A process killed
+    // during a mode switch (stopCamera() followed immediately by
+    // startCamera()) doesn't exit instantly - its listeners can still fire
+    // well after a newer process has already started and been marked active.
+    // Guard every shared-state mutation below with `this.deviceStream === proc`
+    // so a stale, superseded process can't clobber the current mode's state.
+    const proc = this.deviceStream;
     let callbackCalled = false;
     let stdoutBuffer = ''; // Buffer for accumulating data chunks
 
@@ -572,13 +763,15 @@ class videoStream {
       if (!callbackCalled) {
         callbackCalled = true;
         console.log(`${modeName}: No response from script after 90s, assuming start.`);
-        this.active = true;
-        this.saveSettings();
+        if (this.deviceStream === proc) {
+          this.active = true;
+          this.saveSettings();
+        }
         callback(null, { active: true, addresses: this.deviceAddresses });
       }
     }, 90000);
 
-    this.deviceStream.on('error', (err) => {
+    proc.on('error', (err) => {
       clearTimeout(timeout);
       console.error(`Failed to spawn ${modeName}:`, err);
       if (!callbackCalled) {
@@ -589,30 +782,33 @@ class videoStream {
 
     // Listen continuously until we hear "Camera is ready"
     // or in streaming mode
-    this.deviceStream.stdout.on('data', (data) => {
+    proc.stdout.on('data', (data) => {
 
       const chunk = data.toString();
       stdoutBuffer += chunk;
 
-      // Detect the video recording start/stop messages from photovideo.py and update the recording flag
-      const lower = chunk.toLowerCase();
-      // start patterns printed by photovideo.py:
-      // "Picamera2 recording started to <path>"
-      // "V4L2 recording started to <path>"
-      // also generic "recording started"
-      if (lower.includes('recording started') || lower.includes('recording started to')) {
-        this.setRecordingFlag(true);
-        this.saveSettings();
-        console.log('Detected recorder START; isRecording=true');
-      }
-      // stop patterns printed by photovideo.py:
-      // "Picamera2 recording stopped."
-      // "V4L2 recording stopped."
-      // also generic "recording stopped"
-      if (lower.includes('recording stopped')) {
-        this.setRecordingFlag(false);
-        this.saveSettings();
-        console.log('Detected recorder STOP; isRecording=false');
+      // Detect the video recording start/stop messages from photovideo.py and
+      // update the recording flag - only if this is still the current process.
+      if (this.deviceStream === proc) {
+        const lower = chunk.toLowerCase();
+        // start patterns printed by photovideo.py:
+        // "Picamera2 recording started to <path>"
+        // "V4L2 recording started to <path>"
+        // also generic "recording started"
+        if (lower.includes('recording started') || lower.includes('recording started to')) {
+          this.setRecordingFlag(true);
+          this.saveSettings();
+          console.log('Detected recorder START; isRecording=true');
+        }
+        // stop patterns printed by photovideo.py:
+        // "Picamera2 recording stopped."
+        // "V4L2 recording stopped."
+        // also generic "recording stopped"
+        if (lower.includes('recording stopped')) {
+          this.setRecordingFlag(false);
+          this.saveSettings();
+          console.log('Detected recorder STOP; isRecording=false');
+        }
       }
 
       // find file paths printed by photovideo.py
@@ -647,27 +843,34 @@ class videoStream {
         if (isReady) {
           clearTimeout(timeout);
           console.log(`${modeName} process is fully initialized.`);
-          this.active = true;
-          this.saveSettings();
+          if (this.deviceStream === proc) {
+            this.active = true;
+            this.saveSettings();
+          }
           callbackCalled = true;
           callback(null, { active: true, addresses: this.deviceAddresses });
         }
       }
     });
 
-    this.deviceStream.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
       const msg = data.toString().trim();
       if (msg) console.error(`${modeName} error: ${msg}`);
     });
 
-    this.deviceStream.on('close', (code) => {
+    proc.on('close', (code) => {
       clearTimeout(timeout);
       console.log(`${modeName} exited with code ${code}`);
-      this.active = false;
-      // Clear the video recording flag
-      if (this.videoSettings) {
-        this.setRecordingFlag(false);
-        this.saveSettings();
+      // Only update shared state if this is still the current process - a
+      // stale, already-superseded process exiting late must not clobber the
+      // new mode's state (see comment at the top of this method).
+      if (this.deviceStream === proc) {
+        this.active = false;
+        // Clear the video recording flag
+        if (this.cameraMode === 'video' && this.videoRecordSettings) {
+          this.setRecordingFlag(false);
+          this.saveSettings();
+        }
       }
       if (!callbackCalled) {
         callbackCalled = true;
@@ -690,7 +893,7 @@ class videoStream {
     this.active = false;
     this.settings.setValue('camera.active', false);
     // Clear the video recording flag and persist the current mode's settings.
-    if (this.videoSettings) {
+    if (this.cameraMode === 'video' && this.videoRecordSettings) {
       this.setRecordingFlag(false);
     }
     this.saveSettings();
@@ -718,9 +921,9 @@ class videoStream {
         return 'Camera is streaming video'
       } else if (this.cameraMode === 'photo') {
         return 'Camera is active in photo mode'
-      } else if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+      } else if (this.cameraMode === 'video' && this.videoRecordSettings?.isRecording) {
         return 'Camera is currently recording a video'
-      } else if (this.cameraMode === 'video' && !this.videoSettings.isRecording) {
+      } else if (this.cameraMode === 'video' && !this.videoRecordSettings?.isRecording) {
         return 'Camera is active in video mode'
       }
     } else {
@@ -744,6 +947,20 @@ class videoStream {
 
     // Capture a single still photo
     console.log('Capturing still photo')
+
+    // deviceStream is whichever process is currently running for the active
+    // cameraMode - if that's not 'photo', sending SIGUSR1 to it either does
+    // nothing (streaming) or does something else entirely (SIGUSR1 toggles
+    // video recording when deviceStream is running photovideo.py --mode=video).
+    if (this.cameraMode !== 'photo') {
+      console.log(`Cannot capture photo - camera is in '${this.cameraMode}' mode, not 'photo'`)
+      if (commandId && senderSysId !== null) {
+        // 1 = MAV_RESULT_TEMPORARILY_REJECTED: valid command, but not right now -
+        // switch to photo mode (or retry once auto-switching exists) and it'll work.
+        this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 1)
+      }
+      return
+    }
 
     if (!this.active || !this.deviceStream) {
       console.log('Cannot capture photo - camera not active')
@@ -848,8 +1065,8 @@ class videoStream {
   // Helper to set the isRecording flag by replacing the object
   // instead of mutating the property
   setRecordingFlag(val) {
-    if (!this.videoSettings) return;
-    this.videoSettings = { ...this.videoSettings, isRecording: val };
+    if (!this.videoRecordSettings) return;
+    this.videoRecordSettings = { ...this.videoRecordSettings, isRecording: val };
     this.saveSettings();
   }
 
@@ -872,37 +1089,58 @@ class videoStream {
     return str.toString().slice(0, length - 1);
   }
 
+  // Encode Rpanion's own package.json version (e.g. "0.12.0") for
+  // CAMERA_INFORMATION.firmware_version, which per the MAVLink spec is packed
+  // as (Dev << 24) | (Patch << 16) | (Minor << 8) | Major - i.e. Major is the
+  // *least* significant byte. This is the opposite byte order to
+  // AUTOPILOT_VERSION.flight_sw_version (major is the most significant byte
+  // there), so don't reuse decodeFlightSwVersion()'s logic for this field.
+  encodeFirmwareVersion(versionStr) {
+    const parts = (versionStr || "").split('.').map(n => parseInt(n, 10) || 0);
+    const major = parts[0] || 0;
+    const minor = parts[1] || 0;
+    const patch = parts[2] || 0;
+    const dev = 0; // Not used/unspecified
+    return ((dev & 0xff) << 24) | ((patch & 0xff) << 16) | ((minor & 0xff) << 8) | (major & 0xff);
+  }
+
+  // Extract a clean, short model name from a device/still-image ID string, e.g.
+  // /base/soc/i2c0mux/i2c@1/imx415@1a -> imx415, CSI-imx415 -> imx415 (the
+  // latter is a synthetic still-device ID from get_camera_caps.py).
+  extractModelName(devicePath) {
+    if (!devicePath) return "Unknown";
+    if (devicePath.includes('rtspsource')) {
+      return "RTSP Source";
+    } else if (devicePath.includes('/')) {
+      const parts = devicePath.split('/');
+      const leaf = parts[parts.length - 1];
+      return leaf.split('@')[0];
+    } else if (devicePath.startsWith('CSI-')) {
+      return devicePath.slice('CSI-'.length);
+    }
+    return devicePath;
+  }
+
   sendCameraInformation(senderSysId, senderCompId, targetComponent) {
     console.log('Sending MAVLink CameraInformation packet')
 
     const msg = new common.CameraInformation();
 
     // Get the camera model name, and handle cases where settings might be null
-    let devicePath = "Unknown";
+    let devicePath = null;
     if (this.cameraMode === 'photo' && this.stillSettings && this.stillSettings.device) {
       devicePath = this.stillSettings.device;
+    } else if (this.cameraMode === 'video' && this.videoRecordSettings && this.videoRecordSettings.device) {
+      devicePath = this.videoRecordSettings.device;
     } else if (this.videoSettings && this.videoSettings.device) {
       devicePath = this.videoSettings.device;
     }
-
-    let extractedModel = "Unknown";
-    if (devicePath !== "Unknown") {
-      if (devicePath.includes('rtspsource')) {
-        extractedModel = "RTSP Source";
-      } else if (devicePath.includes('/')) {
-        // e.g. /base/soc/i2c0mux/i2c@1/imx219@10 -> imx219
-        const parts = devicePath.split('/');
-        const leaf = parts[parts.length - 1];
-        extractedModel = leaf.split('@')[0];
-      } else {
-        extractedModel = devicePath;
-      }
-    }
+    const extractedModel = this.extractModelName(devicePath);
 
     msg.timeBootMs = process.uptime()*1000;
     msg.vendorName = this.toMavUint8Array("Rpanion", 32);
     msg.modelName = this.toMavUint8Array(extractedModel, 32);
-    msg.firmwareVersion = 0;
+    msg.firmwareVersion = this.encodeFirmwareVersion(rpanionVersion);
     msg.focalLength = 0;
     msg.sensorSizeH = 0;
     msg.sensorSizeV = 0;
@@ -912,22 +1150,28 @@ class videoStream {
     msg.gimbalDeviceId = 0; // No gimbal
     msg.cameraDeviceId = 0; // 0 = MAVLink Camera with its own component ID
 
+    // Rpanion can auto-switch modes to service any of these requests, so
+    // advertise the full combined capability set regardless of the mode
+    // it currently happens to be in. Autopilots (e.g. ArduPilot's
+    // AP_Camera_MAVLinkCamV2) gate whether they even send commands like
+    // MAV_CMD_IMAGE_START_CAPTURE on these flags, so reporting only the
+    // current mode's capability would prevent them from ever requesting
+    // a mode switch in the first place.
+    msg.flags = common.CameraCapFlags.CAPTURE_IMAGE | common.CameraCapFlags.CAPTURE_VIDEO | common.CameraCapFlags.HAS_VIDEO_STREAM;
+
     // Mode-specific Configuration
     if (this.cameraMode === 'photo') {
       msg.resolutionH = this.stillSettings?.width || 0;
       msg.resolutionV = this.stillSettings?.height || 0;
-      msg.flags = 2; // CAMERA_CAP_FLAGS_CAPTURE_IMAGE
     }
     else if (this.cameraMode === 'video') {
-      msg.resolutionH = this.videoSettings?.width || 0;
-      msg.resolutionV = this.videoSettings?.height || 0;
-      msg.flags = 1; // CAMERA_CAP_FLAGS_CAPTURE_VIDEO
+      msg.resolutionH = this.videoRecordSettings?.width || 0;
+      msg.resolutionV = this.videoRecordSettings?.height || 0;
     }
     else {
-      // Default: streaming
+      // streaming
       msg.resolutionH = this.videoSettings?.width || 0;
       msg.resolutionV = this.videoSettings?.height || 0;
-      msg.flags = 256; // CAMERA_CAP_FLAGS_HAS_VIDEO_STREAM
     }
 
     this.eventEmitter.emit('camerainfo', msg, senderSysId, senderCompId, targetComponent);
@@ -954,43 +1198,11 @@ class videoStream {
     this.eventEmitter.emit('camerasettings', msg, senderSysId, senderCompId, targetComponent)
   }
 
-  sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
-    // Log the SysID and CompID of the requester
-    console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
-
-    // build a VIDEO_STREAM_INFORMATION packet
-    const msg = new common.VideoStreamInformation()
-
-    // rpanion only supports a single stream, so streamId and count will always be 1
-    msg.streamId = 1
-    msg.count = 1
-
-    let uriString = "";
-
-    // msg.type and msg.uri need to be different depending on whether RTP or RTSP is selected
-    if (this.videoSettings && this.videoSettings.useUDP) {
-      // msg.type = 0 = VIDEO_STREAM_TYPE_RTSP
-      // msg.type = 1 = VIDEO_STREAM_TYPE_RTPUDP
-      msg.type = 1
-      // For RTP, just send the destination UDP port instead of a full URI
-      uriString = this.videoSettings.useUDPPort.toString();
-    } else {
-      msg.type = 0
-      msg.encoding = this.videoSettings.compression === 'H264' ? 1 : (this.videoSettings.compression === 'H265' ? 2 : 0);
-
-      // Find the address in the list that matches the selected MAVLink interface IP
-      // This uses the array populated in populateAddresses() to ensure 1:1 consistency with Web UI
-      const matchedAddress = this.deviceAddresses.find(addr =>
-        addr.includes(this.videoSettings.mavStreamSelected)
-      );
-
-      uriString = matchedAddress || "";
-
-    }
-
-    // Convert URI string to the field's declared max length (160 bytes)
-    msg.uri = this.toMavString(uriString, 160);
-
+  // Fields shared by every VIDEO_STREAM_INFORMATION message for the current stream,
+  // regardless of which address/stream_id it's advertised under. Does NOT include
+  // `name` - when advertising multiple addresses, each needs its own distinguishing
+  // name so a GCS's stream picker doesn't show several identical-looking entries.
+  populateVideoStreamCommonFields(msg) {
     // 1 = VIDEO_STREAM_STATUS_FLAGS_RUNNING
     msg.flags = 1;
     msg.framerate = this.videoSettings.fps;
@@ -1001,10 +1213,72 @@ class videoStream {
     msg.rotation = this.videoSettings.rotation;
     // Rpanion doesn't collect field of view values, so set to zero
     msg.hfov = 0;
-    // Convert the device name string to the field's declared max length (32 bytes)
-    msg.name = this.toMavString(this.videoSettings.device || "", 32);
+  }
 
-    this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
+  sendVideoStreamInformation(senderSysId, senderCompId, targetComponent) {
+    // Log the SysID and CompID of the requester
+    console.log(`Responding to MAVLink request for VideoStreamInformation from SysID: ${senderSysId}, CompID: ${targetComponent}`)
+
+    const modelName = this.extractModelName(this.videoSettings && this.videoSettings.device);
+
+    // RTP push mode has exactly one meaningful destination (useUDPIP), so there's
+    // only ever a single stream to advertise - unlike RTSP, a GCS can't just try
+    // a different address, since Rpanion is the one pushing to a fixed destination.
+    if (this.videoSettings && this.videoSettings.useUDP) {
+      const msg = new common.VideoStreamInformation()
+      msg.streamId = 1
+      msg.count = 1
+      msg.type = 1
+      // For RTP, just send the destination UDP port instead of a full URI
+      msg.uri = this.toMavString(this.videoSettings.useUDPPort.toString(), 160);
+      this.populateVideoStreamCommonFields(msg);
+      msg.name = this.toMavString(modelName, 32);
+      this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
+      return
+    }
+
+    // RTSP: the same stream is reachable via every address this device has, so
+    // advertise all of them as separate stream_ids instead of just the one
+    // configured as the "MAVLink video source IP" - a GCS on a different
+    // interface can still find a working URI this way.
+    const isLoopback = (addr) => /:\/\/127\./.test(addr);
+    const matchedAddress = this.deviceAddresses.find(addr =>
+      addr.includes(this.videoSettings.mavStreamSelected)
+    );
+
+    // Order: the explicitly-selected address first (if non-loopback), then any
+    // other non-loopback addresses, then loopback last as a final fallback.
+    const addresses = [];
+    if (matchedAddress && !isLoopback(matchedAddress)) {
+      addresses.push(matchedAddress);
+    }
+    for (const addr of this.deviceAddresses) {
+      if (!isLoopback(addr) && !addresses.includes(addr)) addresses.push(addr);
+    }
+    for (const addr of this.deviceAddresses) {
+      if (!addresses.includes(addr)) addresses.push(addr);
+    }
+    if (addresses.length === 0) {
+      addresses.push(matchedAddress || "");
+    }
+
+    const encoding = this.videoSettings.compression === 'H264' ? 1 : (this.videoSettings.compression === 'H265' ? 2 : 0);
+
+    addresses.forEach((addr, idx) => {
+      const msg = new common.VideoStreamInformation()
+      msg.streamId = idx + 1
+      msg.count = addresses.length
+      msg.type = 0
+      msg.encoding = encoding
+      // Convert URI string to the field's declared max length (160 bytes)
+      msg.uri = this.toMavString(addr, 160);
+      this.populateVideoStreamCommonFields(msg);
+      // Distinguish each stream by its address, e.g. "imx415 (10.0.2.100)" -
+      // otherwise every entry would show the same name in a GCS's stream picker.
+      const ip = (addr.match(/^rtsp:\/\/([^:]+):/) || [])[1];
+      msg.name = this.toMavString(ip ? `${modelName} (${ip})` : modelName, 32);
+      this.eventEmitter.emit('videostreaminfo', msg, senderSysId, senderCompId, targetComponent)
+    });
   }
 
   // Find how much media space there is in total, and how much is available
@@ -1095,7 +1369,9 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['IMAGE_START_CAPTURE']) {
         console.log('Received MAVLink command to start image capture')
-        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['IMAGE_START_CAPTURE'])
+        this.switchCameraModeAndTakeAction('photo', common.MavCmd['IMAGE_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['IMAGE_START_CAPTURE'])
+        })
       }
       else if (data.command === common.MavCmd['IMAGE_STOP_CAPTURE']) {
         console.log('Received IMAGE_STOP_CAPTURE command')
@@ -1103,17 +1379,59 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['VIDEO_START_CAPTURE']) {
         console.log('Received MAVLink command to start video capture')
-        if (this.cameraMode === 'video' && !this.videoSettings.isRecording) {
-          this.toggleVideoRecording()
-        }
-        this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        this.switchCameraModeAndTakeAction('video', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          if (!this.videoRecordSettings?.isRecording) {
+            this.toggleVideoRecording()
+          }
+          // Already recording, or just started - either way the requested state now holds
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        })
       }
       else if (data.command === common.MavCmd['VIDEO_STOP_CAPTURE']) {
         console.log('Received MAVLink command to stop video capture')
-        if (this.cameraMode === 'video' && this.videoSettings.isRecording) {
+        if (this.cameraMode === 'video' && this.videoRecordSettings?.isRecording) {
           this.toggleVideoRecording()
         }
+        // Not recording (whether because we were never in video mode, or
+        // already stopped) - the requested state already holds either way.
+        // Unlike START, there's nothing sensible to auto-switch mode for here.
         this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+      }
+      else if (data.command === common.MavCmd['VIDEO_START_STREAMING']) {
+        console.log('Received MAVLink command to start video streaming')
+        this.switchCameraModeAndTakeAction('streaming', common.MavCmd['VIDEO_START_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_START_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        })
+      }
+      else if (data.command === common.MavCmd['VIDEO_STOP_STREAMING']) {
+        console.log('Received MAVLink command to stop video streaming')
+        if (this.cameraMode === 'streaming' && this.active) {
+          this.stopCamera(() => {
+            this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          })
+        } else {
+          // Not streaming - the requested state already holds
+          this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        }
+      }
+      else if (data.command === common.MavCmd['SET_CAMERA_MODE']) {
+        console.log('Received MAVLink command to set camera mode')
+        const requestedMode = data._param2;
+        let targetMode = null;
+        if (requestedMode === common.CameraMode.IMAGE) {
+          targetMode = 'photo';
+        } else if (requestedMode === common.CameraMode.VIDEO) {
+          targetMode = 'video';
+        }
+        // No Rpanion equivalent for IMAGE_SURVEY. Streaming isn't reachable
+        // via this command - see VIDEO_START_STREAMING/VIDEO_STOP_STREAMING.
+        if (targetMode === null) {
+          this.sendUnsupportedAck(common.MavCmd['SET_CAMERA_MODE'], packet.header.sysid, packet.header.compid)
+        } else {
+          this.switchCameraModeAndTakeAction(targetMode, common.MavCmd['SET_CAMERA_MODE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+            this.eventEmitter.emit('camera_command_ack', common.MavCmd['SET_CAMERA_MODE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+          })
+        }
       }
       // MAVProxy: responds to DO_DIGICAM_CONFIGURE by requesting our capabilities
       else if (data.command === common.MavCmd['DO_DIGICAM_CONFIGURE']) {
@@ -1122,7 +1440,9 @@ class videoStream {
       }
       else if (data.command === common.MavCmd['DO_DIGICAM_CONTROL']) {
         console.log('Received MAV_CMD_DO_DIGICAM_CONTROL command')
-        this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['DO_DIGICAM_CONTROL'])
+        this.switchCameraModeAndTakeAction('photo', common.MavCmd['DO_DIGICAM_CONTROL'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, () => {
+          this.captureStillPhoto(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid, currentPosition, common.MavCmd['DO_DIGICAM_CONTROL'])
+        })
       }
       else {
         this.sendUnsupportedAck(data.command, packet.header.sysid, packet.header.compid)
