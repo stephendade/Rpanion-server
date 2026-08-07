@@ -296,7 +296,7 @@ class videoStream {
         };
 
         // 3. Map simple values
-        responseData.selectedisRecording = this.videoRecordSettings?.isRecording || false;
+        responseData.selectedIsRecording = this.videoRecordSettings?.isRecording || false;
         responseData.selectedBitrate = activeSettings.bitrate || 1100;
         responseData.selectedFps = activeSettings.fps || 30;
         responseData.selectedUseUDP = this.videoSettings?.useUDP || false;
