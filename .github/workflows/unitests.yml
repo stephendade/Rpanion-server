@@ -30,7 +30,11 @@ jobs:
                 runner: 'ubuntu-24.04-arm'
 
     runs-on: ${{ matrix.runner }}
-    container: ${{ matrix.container }}
+    container:
+      image: ${{ matrix.container }}
+      options: --security-opt apparmor=unconfined
+      volumes:
+        - /var/run/dbus:/var/run/dbus
 
     steps:
       - name: Install System Dependencies
