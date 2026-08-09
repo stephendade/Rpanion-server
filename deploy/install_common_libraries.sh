@@ -38,14 +38,8 @@ fi
 # Get OS info for version check
 source /etc/os-release
 if [ "$SKIP_NODE_INSTALL" != "true" ]; then
-    # Older Ubuntu versions need older NodeJS
-    if [ "$ID" == "ubuntu" ] && [ "$VERSION_CODENAME" == "bionic" ]; then
-        curl -fsSL https://deb.nodesource.com/setup_16.x | sudo bash -
-        sudo apt-get install -y nodejs
-    else
-        curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
-        sudo apt-get install -y nodejs
-    fi
+    curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
+    sudo apt-get install -y nodejs
 fi
 
 ## Zerotier and wireguard

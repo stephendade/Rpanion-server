@@ -11,23 +11,25 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-24.04
-
     strategy:
           matrix:
             # Define exact OS and Node.js pairs
             # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
             include:
               - container: 'ubuntu:22.04'
-                node-version: '20'
-              - container: 'ubuntu:24.04'
                 node-version: '22'
+                runner: 'ubuntu-latest'
+              - container: 'ubuntu:24.04'
+                node-version: '24'
+                runner: 'ubuntu-latest'
               - container: 'debian:bookworm'
                 node-version: '22'
+                runner: 'ubuntu-24.04-arm'
               - container: 'debian:trixie'
                 node-version: '24'
+                runner: 'ubuntu-24.04-arm'
 
+    runs-on: ${{ matrix.runner }}
     container: ${{ matrix.container }}
 
     steps:
