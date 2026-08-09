@@ -33,10 +33,10 @@ jobs:
     container: ${{ matrix.container }}
 
     steps:
-      - name: Install System Dependencies & Python
+      - name: Install System Dependencies
         run: |
           apt-get update
-          apt-get install -y git curl python3 python3-pip python3-venv
+          apt-get install -y sudo git curl python3 wget file
 
       - name: Checkout code
         uses: actions/checkout@v4
