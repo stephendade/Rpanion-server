@@ -15,58 +15,78 @@ jobs:
     runs-on: ubuntu-24.04
 
     strategy:
-      matrix:
-        node-version: [20.x, 22.x, 24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+          matrix:
+            # Define exact OS and Node.js pairs
+            # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+            include:
+              - container: 'ubuntu:22.04'
+                node-version: '20'
+              - container: 'ubuntu:24.04'
+                node-version: '22'
+              - container: 'debian:bookworm'
+                node-version: '22'
+              - container: 'debian:trixie'
+                node-version: '24'
+
+    container: ${{ matrix.container }}
 
     steps:
-    - uses: actions/checkout@v7
-    - name: Install packages
-      run: |
-        cd ./deploy && ./install_common_libraries.sh
+      - name: Install System Dependencies & Python
+        run: |
+          apt-get update
+          apt-get install -y git curl python3 python3-pip python3-venv
 
-    - name: Download pre-built mavlink-router
-      run: |
-        
-        # Set the mavlink-router version to download
-        MAVLINK_ROUTER_VERSION="4"
-        
-        echo "Downloading mavlink-router for AMD64"
-        wget -O ./mavlink-routerd \
-          "https://github.com/mavlink-router/mavlink-router/releases/download/v${MAVLINK_ROUTER_VERSION}/mavlink-routerd-glibc-x86_64"
-        
-        
-        # Make the binary executable
-        chmod +x ./mavlink-routerd
-        
-        # Verify the downloaded binary
-        file ./mavlink-routerd
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Copy Zerotier token
-      run: |
-          sudo cp /var/lib/zerotier-one/authtoken.secret /home/$USER/.zeroTierOneAuthToken
-          sudo chown $USER:$USER /home/$USER/.zeroTierOneAuthToken
-          chmod 0600 /home/$USER/.zeroTierOneAuthToken
+      # Setup Node and cache node_modules
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v7
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm run testback
-    - run: rm -f ./config/settings.json
-    - run: npm run testfront
-    - run: npm run test-cov
-    - run: rm -f ./config/settings.json
-    
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        flag-name: $node-${{ matrix.node-version }}
-        parallel: true
+      - name: Install packages
+        run: |
+          cd ./deploy && ./install_common_libraries.sh
+
+      - name: Download pre-built mavlink-router
+        run: |
+          
+          # Set the mavlink-router version to download
+          MAVLINK_ROUTER_VERSION="4"
+          
+          echo "Downloading mavlink-router for AMD64"
+          wget -O ./mavlink-routerd \
+            "https://github.com/mavlink-router/mavlink-router/releases/download/v${MAVLINK_ROUTER_VERSION}/mavlink-routerd-glibc-x86_64"
+          
+          
+          # Make the binary executable
+          chmod +x ./mavlink-routerd
+          
+          # Verify the downloaded binary
+          file ./mavlink-routerd
+
+      - name: Copy Zerotier token
+        run: |
+            sudo cp /var/lib/zerotier-one/authtoken.secret /home/$USER/.zeroTierOneAuthToken
+            sudo chown $USER:$USER /home/$USER/.zeroTierOneAuthToken
+            chmod 0600 /home/$USER/.zeroTierOneAuthToken
+
+      - run: npm ci
+      - run: npm run build --if-present
+      - run: npm run testback
+      - run: rm -f ./config/settings.json
+      - run: npm run testfront
+      - run: npm run test-cov
+      - run: rm -f ./config/settings.json
+      
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          flag-name: $node-${{ matrix.node-version }}
+          parallel: true
         
   finish:
     needs: build
