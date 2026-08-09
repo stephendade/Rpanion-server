@@ -69,11 +69,11 @@ jobs:
           # Verify the downloaded binary
           file ./mavlink-routerd
 
-      - name: Copy Zerotier token
-        run: |
-            sudo cp /var/lib/zerotier-one/authtoken.secret /home/$USER/.zeroTierOneAuthToken
-            sudo chown $USER:$USER /home/$USER/.zeroTierOneAuthToken
-            chmod 0600 /home/$USER/.zeroTierOneAuthToken
+      #- name: Copy Zerotier token
+      #  run: |
+      #      sudo cp /var/lib/zerotier-one/authtoken.secret /home/$USER/.zeroTierOneAuthToken
+      #      sudo chown $USER:$USER /home/$USER/.zeroTierOneAuthToken
+      #     chmod 0600 /home/$USER/.zeroTierOneAuthToken
 
       - run: npm ci
       - run: npm run build --if-present
