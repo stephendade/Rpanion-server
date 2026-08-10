@@ -66,26 +66,27 @@ class adhocManager {
                 }
               }
               // get adapter status
-              const outputcfg = execSync('iwconfig ' + device[0])
+              const outputcfg = execSync('iw dev ' + device[0] + ' info')
               const ipcfg = execSync('ip -4 -j addr show ' + device[0])
               const gateway = execSync('ip route show | grep ' + device[0] + ' | grep default | awk \'{ print $3 }\'')
               const pwdLine = execSync('iwlist ' + device[0] + ' key')
-              if (outputcfg.toString().includes('Mode:Ad-Hoc')) {
-                // adapter is acive in adhoc mopde, grab settings
+              if (outputcfg.toString().includes('type IBSS')) {
+                // adapter is active in adhoc mode, grab settings
                 activeDevice = device[0]
-                const outputlines = outputcfg.toString().split(/[ :\n]+/)
-                // console.log(outputlines)
+                const outputlines = outputcfg.toString().split('\n')
                 for (let j = 0, lenn = outputlines.length; j < lenn; j++) {
-                  if (outputlines[j] === 'ESSID') {
-                    curSettings.ssid = outputlines[j + 1].replace(/"/g, '')
+                  const line = outputlines[j].trim()
+                  if (line.startsWith('ssid ')) {
+                    curSettings.ssid = line.substring(5)
                   }
-                  if (outputlines[j] === 'Frequency' && parseFloat(outputlines[j + 1]) > 3) {
-                    curSettings.band = 'a'
-                    curSettings.channel = freqList.find(x => x.freq === outputlines[j + 1]).value
-                  }
-                  if (outputlines[j] === 'Frequency' && parseFloat(outputlines[j + 1]) < 3) {
-                    curSettings.band = 'bg'
-                    curSettings.channel = freqList.find(x => x.freq === outputlines[j + 1]).value
+                  const chanMatch = line.match(/^channel (\d+) \((\d+) MHz\)/)
+                  if (chanMatch) {
+                    const freqGHz = (parseInt(chanMatch[2]) / 1000).toFixed(3)
+                    const chanEntry = freqList.find(x => x.freq === freqGHz)
+                    if (chanEntry) {
+                      curSettings.channel = chanEntry.value
+                      curSettings.band = chanEntry.band
+                    }
                   }
                 }
                 // get ip address
@@ -141,15 +142,13 @@ class adhocManager {
       // activate
       console.log('Activate Adhoc')
       exec('nmcli dev set ' + device + ' managed no && sleep 1 && ip link set ' +
-      device + ' down && iwconfig ' +
-      device + ' mode ad-hoc ' + ' && iwconfig ' +
-      device + ' channel ' + settings.channel + ' && iwconfig ' +
-      device + ' essid \'' + settings.ssid + '\'  ' +
-      (settings.wpaType === 'none' ? '' : '&& iwconfig ' + device + ' key s:' + settings.password) +
+      device + ' down && iw dev ' + device + ' set type ibss' +
       ' && ip addr flush ' + device +
       ' && ip addr add ' + settings.ipaddress + '/16 dev ' + device +
       ' && ip link set ' + device + ' up' +
-      (settings.gateway === '' ? '' : '&& route add default gw ' + settings.gateway + ' ' + device), (error, stdout, stderr) => {
+      ' && iw dev ' + device + ' ibss join \'' + settings.ssid + '\' ' + (settings.channel === 14 ? 2484 : 2412 + (settings.channel - 1) * 5) +
+      (settings.wpaType === 'none' ? '' : ' key d:0:' + Buffer.from(settings.password).toString('hex')) +
+      (settings.gateway === '' ? '' : ' && route add default gw ' + settings.gateway + ' ' + device), (error, stdout, stderr) => {
         if (stderr) {
           console.log(`exec error: ${error}`)
           return callback(stderr)
