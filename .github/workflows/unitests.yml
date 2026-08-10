@@ -12,12 +12,15 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        node-version: [20.x, 22.x, 24.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        include:
+          - os: ubuntu-24.04
+            node-version: 22.x
+          - os: ubuntu-26.04
+            node-version: 24.x
 
     steps:
     - uses: actions/checkout@v7
@@ -65,7 +68,7 @@ jobs:
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        flag-name: $node-${{ matrix.node-version }}
+        flag-name: ${{ matrix.os }}-node-${{ matrix.node-version }}
         parallel: true
         
   finish:
