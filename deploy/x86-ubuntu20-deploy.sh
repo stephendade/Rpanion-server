@@ -14,7 +14,6 @@ sudo systemctl stop unattended-upgrades.service
 # sudo apt -y remove needrestart
 
 ./install_common_libraries.sh
-sudo apt install -y wireless-tools
 
 sudo systemctl disable dnsmasq
 

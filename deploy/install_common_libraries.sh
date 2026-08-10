@@ -7,7 +7,7 @@ set -x
 sudo apt update
 sudo apt upgrade -y
 sudo apt install -y gstreamer1.0-plugins-good libgstrtspserver-1.0-0 gir1.2-gst-rtsp-server-1.0 gstreamer1.0-plugins-base-apps gstreamer1.0-plugins-ugly gstreamer1.0-plugins-bad
-sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq wireless-tools iw python3-dev gstreamer1.0-x ppp python3-venv python3-setuptools
+sudo apt install -y network-manager python3 python3-gst-1.0 python3-pip dnsmasq git jq iw python3-dev gstreamer1.0-x ppp python3-venv python3-setuptools
 
 ## Install OpenCV for camera management
 sudo apt install -y python3-opencv v4l-utils
