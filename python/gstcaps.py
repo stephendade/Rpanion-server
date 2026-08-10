@@ -36,6 +36,52 @@ def is_raspberry_pi():
     except FileNotFoundError:
         return False
 
+def decode_caps(capsGST) -> list:
+    """Decode GStreamer caps into a dictionary format."""
+    width = capsGST.get_int('width').value
+    height = capsGST.get_int('height').value
+
+    # if using v4l2h264enc hw encoder, don't return anything greater than 1080p on raw or jpg, as
+    # Rpi's x264 hardware encoder doesn't support >1080p
+    if (Gst.ElementFactory.find("v4l2h264enc") and
+        (height > 1080 or width > 1920) and
+        capsGST.get_name() in ['video/x-raw', 'image/jpeg']):
+        return []
+    #print(structure.get_list('framerate')[1].get_nth(0).fps_numerator)
+    #(_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
+    #single fpsmax, or list of available fps'
+    FPSMax = 0
+    fps = []
+    if capsGST.get_fraction('framerate')[0] == True:
+        (_, fps_numerator, fps_denominator) = capsGST.get_fraction('framerate')
+        #fpsmaxstruct = structure.get_fraction('framerate') #math.floor(int(fps_numerator)/int(fps_denominator))
+        FPSMax = math.floor(int(fps_numerator)/int(fps_denominator))
+    else:
+        framerates = capsGST.get_list('framerate').array
+        fps = []
+        if framerates:
+            for i in range(framerates.n_values):
+                try:
+                    frac = framerates.get_nth(i)
+                    numerator = int(frac.numerator)
+                    denominator = int(frac.denominator)
+                    if denominator == 1:
+                        fps.append({'value': str(int(numerator/denominator)), 'label': (str(int(numerator/denominator)) + " fps")})
+                    else:
+                        fps_val = numerator / denominator
+                        fps.append({'value': str(fps_val), 'label': (str(fps_val) + " fps")})
+                except (AttributeError, TypeError, ValueError, ZeroDivisionError):
+                    # Skip framerates that can't be parsed
+                    pass
+        else:
+            fps.append({'value': "-1", 'label': "N/A"})
+
+    #Only append if it's a unique value
+    form = capsGST.get_name().split('/')[1]
+    if "{0}x{1}x{2}".format(width, height, form) not in getcapval(caps):
+        caps.append({'value': "{0}x{1}x{2}".format(width, height, form), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': capsGST.get_name(), 'fpsmax': FPSMax, 'fps': fps})
+
+    return caps
 
 REF_RES = [
     {'value': "2048x1080xx-raw", 'label': "2048x1080", 'height': 1080, 'width': 2048,
@@ -186,54 +232,25 @@ for device in devices:
         capsGST = device.get_caps()
 
         # enumerate available resolutions and framerates
+        # gstreamer 1.25.0 to 1.26.2 (inclusive) broke the accessing
+        # `caps.get_structure(0).get_name()`, but allow wrapping the
+        # object in a context manager. with gstreamer 1.24.x one can
+        # not use the structure as a context manager at all. version
+        # 1.26.3 will supposedly revert it to the previous behaviour.
         for i in range(capsGST.get_size()):
             structure = capsGST.get_structure(i)
-            #print(structure.to_string())
-            if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg']:
-                width = structure.get_int('width').value
-                height = structure.get_int('height').value
-
-                # if using v4l2h264enc hw encoder, don't return anything greater than 1080p on raw or jpg, as
-                # Rpi's x264 hardware encoder doesn't support >1080p
-                if (Gst.ElementFactory.find("v4l2h264enc") and
-                   (height > 1080 or width > 1920) and
-                   structure.get_name() in ['video/x-raw', 'image/jpeg']):
-                    continue
-                #print(structure.get_list('framerate')[1].get_nth(0).fps_numerator)
-                #(_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
-                #single fpsmax, or list of available fps'
-                FPSMax = 0
-                fps = []
-                if structure.get_fraction('framerate')[0] == True:
-                    (_, fps_numerator, fps_denominator) = structure.get_fraction('framerate')
-                    #fpsmaxstruct = structure.get_fraction('framerate') #math.floor(int(fps_numerator)/int(fps_denominator))
-                    FPSMax = math.floor(int(fps_numerator)/int(fps_denominator))
-                else:
-                    framerates = structure.get_list('framerate').array
-                    fps = []
-                    if framerates:
-                        for i in range(framerates.n_values):
-                            try:
-                                frac = framerates.get_nth(i)
-                                numerator = int(frac.numerator)
-                                denominator = int(frac.denominator)
-                                if denominator == 1:
-                                    fps.append({'value': str(int(numerator/denominator)), 'label': (str(int(numerator/denominator)) + " fps")})
-                                else:
-                                    fps_val = numerator / denominator
-                                    fps.append({'value': str(fps_val), 'label': (str(fps_val) + " fps")})
-                            except (AttributeError, TypeError, ValueError, ZeroDivisionError):
-                                # Skip framerates that can't be parsed
-                                pass
-                    else:
-                        fps.append({'value': "-1", 'label': "N/A"})
-
-                #Only append if it's a unique value
-                form = structure.get_name().split('/')[1]
-                if "{0}x{1}x{2}".format(width, height, form) not in getcapval(caps):
-                    caps.append({'value': "{0}x{1}x{2}".format(width, height, form), 'label': "{0}x{1} ({2})".format(width, height, form), 'height': int(height), 'width': int(width), 'format': structure.get_name(), 'fpsmax': FPSMax, 'fps': fps})
-
-    retDevices.append({'value': path, 'label': name, 'caps': caps})
+            try:
+                structure.get_name()
+                if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg']:
+                    caps = decode_caps(structure)
+                    if caps:
+                        retDevices.append({'value': path, 'label': name, 'caps': caps})
+            except AttributeError:
+                with structure as _structure:
+                    if _structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg']:
+                        caps = decode_caps(_structure)
+                        if caps:
+                            retDevices.append({'value': path, 'label': name, 'caps': caps})
 
 # If we're on a Jetson and /dev/video0 or /dev/video0 exist but not listed, add as CSI ports
 if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release:
