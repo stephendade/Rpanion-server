@@ -384,6 +384,11 @@ componentWillUnmount() {
     }
   }
 
+  isH264CapsSelected() {
+    const selectedCap = this.state.videoCaps.find(c => c.value === this.state.vidCapSelected);
+    return selectedCap && selectedCap.format === "video/x-h264";
+  }
+
   handleStillDeviceChange = (event) => {
     const id = event.target.value;
     const device = this.state.stillDevices.find(d => d.id === id);
@@ -882,7 +887,7 @@ renderContent() {
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                       <label className="col-sm-4 col-form-label">Rotation</label>
                       <div className="col-sm-8">
-                        <Form.Select disabled={active} onChange={this.handleRotChange} value={this.state.rotSelected}>
+                        <Form.Select disabled={active || this.isH264CapsSelected()} onChange={this.handleRotChange} value={this.state.rotSelected}>
                           {this.state.rotations.map((r, i) => <option key={i} value={r.value}>{r.label}</option>)}
                         </Form.Select>
                       </div>
@@ -891,7 +896,7 @@ renderContent() {
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                       <label className="col-sm-4 col-form-label">Max Bitrate</label>
                       <div className="col-sm-8">
-                        <Form.Control disabled={active} type="number" min="50" max="50000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} style={{ width: '100px', display: 'inline-block' }} /> kbps
+                        <Form.Control disabled={active || this.isH264CapsSelected()} type="number" min="50" max="50000" step="100" onChange={this.handleBitrateChange} value={this.state.bitrate} style={{ width: '100px', display: 'inline-block' }} /> kbps
                       </div>
                     </div>
 
@@ -902,7 +907,7 @@ renderContent() {
                         <div className="col-sm-8">
                           <Form.Check
                             type="checkbox"
-                            disabled={active}
+                            disabled={active || this.isH264CapsSelected()}
                             onChange={this.handleTimestampChange}
                             checked={this.state.timestamp} /></div>
                       </div>
@@ -913,7 +918,7 @@ renderContent() {
                       <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-4 col-form-label">Compression</label>
                         <div className="col-sm-8">
-                          <Form.Select disabled={active} value={this.state.compression} onChange={(e) => this.setState({ compression: e.target.value })}>
+                          <Form.Select disabled={active || this.isH264CapsSelected()} value={this.state.compression} onChange={(e) => this.setState({ compression: e.target.value })}>
                             {this.state.compressionOptions.map((o, i) => <option key={i} value={o.value}>{o.label}</option>)}
                           </Form.Select>
                         </div>
