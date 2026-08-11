@@ -10,6 +10,7 @@ import os
 import sys
 import json
 import gi
+import re
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
 
@@ -30,6 +31,24 @@ def is_raspberry_pi():
     except FileNotFoundError:
         return False
 
+
+def is_jetson() -> int:
+    """returns major jetpack version if running on a Jetson, else returns 0"""
+    if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release:
+        try:
+            with open('/etc/nv_tegra_release', 'r', encoding='utf-8') as f:
+                # R39 (release), REVISION: 2.0, GCID: 45755727, BOARD: generic, EABI: aarch64, DATE: Mon Jun  1 09:28:48 PM UTC 2026
+                line = f.readline()
+                release_match = re.search(r'# R(\d+)', line)
+            if release_match:
+                r_num = release_match.group(1)
+                return int(r_num)
+            else:
+                return 0
+        except (FileNotFoundError, IndexError, ValueError):
+            return 0
+    else:
+        return 0
 
 def gstObjToList(gstobj, field: str) -> list:
     """Convert a GStreamer object to a list."""
@@ -272,23 +291,26 @@ if __name__ == "__main__":
             # not use the structure as a context manager at all. version
             # 1.26.3 will supposedly revert it to the previous behaviour.
             outCaps = []
+            allowable_formats = ['video/x-raw', 'video/x-h264', 'image/jpeg']
+            if is_jetson() in [38, 39]:
+                allowable_formats.append('video/x-bayer')
             for i in range(capsGST.get_size()):
                 structure = capsGST.get_structure(i)
                 try:
                     structure.get_name()
-                    if structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg']:
+                    if structure.get_name() in allowable_formats:
                         outCaps.extend(decode_caps(structure))
                 except AttributeError:
                     with structure as _structure:
-                        if _structure.get_name() in ['video/x-raw', 'video/x-h264', 'image/jpeg']:
+                        if _structure.get_name() in allowable_formats:
                             outCaps.extend(decode_caps(_structure))
             # De-duplicate outCaps by the 'value' field
             outCaps = list({cap['value']: cap for cap in outCaps}.values())
 
             retDevices.append({'value': path, 'label': name, 'caps': outCaps})
 
-    # If we're on a Jetson and /dev/video0 or /dev/video0 exist but not listed, add as CSI ports
-    if 'aarch64' in platform.uname().machine and 'tegra' in platform.uname().release:
+    # If we're on a Jetson (Jetpack 6.x) and /dev/video0 or /dev/video0 exist but not listed, add as CSI ports
+    if is_jetson() == 36:
         caps = []
         caps.append({'value': "1920x1080xx-raw", 'label': "1920x1080", 'height': 1080, 'width': 1920,
                     'format': 'video/x-raw', 'fpsmax': '30', 'fps': []})
@@ -302,6 +324,17 @@ if __name__ == "__main__":
             retDevices.append({'value': 'argus0', 'label': 'CSI0', 'caps': caps})
         if os.path.exists('/dev/video1') and '/dev/video1' not in [i['value'] for i in retDevices]:
             retDevices.append({'value': 'argus1', 'label': 'CSI1', 'caps': caps})
+    # Jetpack 7.x
+    if is_jetson() in [38, 39]:
+        # rename any '/dev/video1' values with "vi-output" labels to argus0 and argus1,
+        # as these are the CSI cameras on Jetson 7.x
+        for dev in retDevices:
+            if dev['value'] == '/dev/video0' and 'vi-output' in dev['label']:
+                dev['value'] = 'argus0'
+                dev['label'] = 'CSI0' + dev['label'].split('vi-output')[1]
+            if dev['value'] == '/dev/video1' and 'vi-output' in dev['label']:
+                dev['value'] = 'argus1'
+                dev['label'] = 'CSI1' + dev['label'].split('vi-output')[1]
 
     # Include testsrc
     capsTest = []
