@@ -1258,9 +1258,11 @@ app.post('/api/camera/start', authenticateToken, [
   check('stillDevice').if(check('cameraMode').equals('photo')).isString().notEmpty(),
   check('stillWidth').if(check('cameraMode').equals('photo')).isInt({ min: 1 }),
   check('stillHeight').if(check('cameraMode').equals('photo')).isInt({ min: 1 }),
-  // Media destination for photo and video modes (optional, but validate if provided)
+  // Local recording toggle for streaming mode (optional, defaults to off)
+  check('recordLocally').if(check('cameraMode').equals('streaming')).optional().isBoolean(),
+  // Media destination for photo, video, and streaming (local recording) modes (optional, but validate if provided)
   check('mediaDestination')
-    .if(check('cameraMode').isIn(['photo', 'video']))
+    .if(check('cameraMode').isIn(['photo', 'video', 'streaming']))
     .optional({ checkFalsy: true }) // Allow blank inputs (to save to MEDIA_ROOT without a subdir)
     .isString()
     .trim()
@@ -1347,7 +1349,8 @@ app.post('/api/camera/start', authenticateToken, [
       mavStreamSelected: req.body.mavStreamSelected,
       compression: req.body.compression,
       mediaDestination: safeMediaDestination,
-      customRTSPSource: req.body.customRTSPSource
+      customRTSPSource: req.body.customRTSPSource,
+      recordLocally: req.body.recordLocally === true || req.body.recordLocally === 'true'
     };
   } else if (mode === 'video') {
     vManager.videoRecordSettings = {
