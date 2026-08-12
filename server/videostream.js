@@ -221,7 +221,8 @@ class videoStream {
       selectedFps: null,
       selectedBitrate: 1100,
       selectedRotation: { label: '0°', value: 0 },
-      mediaDestination: ''
+      mediaDestination: '',
+      recordLocally: false
     };
     if (!settingsObj || !devices) return result;
 
@@ -237,6 +238,7 @@ class videoStream {
     result.selectedBitrate = settingsObj.bitrate || 1100;
     result.selectedRotation = { label: (settingsObj.rotation || 0) + '°', value: (settingsObj.rotation || 0) };
     result.mediaDestination = this.toRelativePath(settingsObj.mediaDestination || '');
+    result.recordLocally = !!settingsObj.recordLocally;
     return result;
   }
 
@@ -608,7 +610,8 @@ class videoStream {
         useTimestamp: false,
         mavStreamSelected: nonLoopbackIface,
         compression: 'H264',
-        mediaDestination: null
+        mediaDestination: null,
+        recordLocally: false
       };
       console.log('No saved Streaming settings found - using defaults:', this.videoSettings);
       this.saveSettings();
@@ -651,6 +654,17 @@ class videoStream {
     ];
 
     if (this.videoSettings.useTimestamp) args.push('--timestamp');
+
+    if (this.videoSettings.recordLocally) {
+      const dest = this.toAbsolutePath(this.videoSettings.mediaDestination);
+      try {
+        fs.mkdirSync(dest, { recursive: true });
+        console.log('Ensured media directory exists:', dest);
+      } catch (e) {
+        console.error('Failed to create media directory:', dest, e);
+      }
+      args.push('--record=' + dest);
+    }
 
     const pythonPath = logpaths.getPythonPath()
     this.deviceStream = spawn(pythonPath, args)
@@ -795,9 +809,10 @@ class videoStream {
       const chunk = data.toString();
       stdoutBuffer += chunk;
 
-      // Detect the video recording start/stop messages from photovideo.py and
-      // update the recording flag - only if this is still the current process.
-      if (this.deviceStream === proc) {
+      // Detect recording start/stop from photovideo.py's output - only if this
+      // is still the current process, and only in Video Recording mode (Streaming's
+      // own "Recording started to <path>" line has no isRecording flag to set).
+      if (this.deviceStream === proc && this.cameraMode === 'video') {
         const lower = chunk.toLowerCase();
         // start patterns printed by photovideo.py:
         // "Picamera2 recording started to <path>"
@@ -927,7 +942,9 @@ class videoStream {
   getStreamingStatus () {
     // return the current streaming status
     if (this.active) {
-      if (this.cameraMode === 'streaming') {
+      if (this.cameraMode === 'streaming' && this.videoSettings?.recordLocally) {
+        return 'Camera is streaming and recording video locally'
+      } else if (this.cameraMode === 'streaming') {
         return 'Camera is streaming video'
       } else if (this.cameraMode === 'photo') {
         return 'Camera is active in photo mode'
