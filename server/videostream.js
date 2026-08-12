@@ -644,6 +644,7 @@ class videoStream {
       '--bitrate=' + this.videoSettings.bitrate,
       '--rotation=' + this.videoSettings.rotation,
       '--fps=' + this.videoSettings.fps,
+      '--transport=' + (this.videoSettings.useUDP ? 'RTP' : 'RTSP'),
       '--udp=' + (this.videoSettings.useUDP ? `${this.videoSettings.useUDPIP}:${this.videoSettings.useUDPPort}` : '0'),
       '--compression=' + this.videoSettings.compression,
       '--transport=' + (this.videoSettings.useUDP ? 'RTP' : 'RTSP')
