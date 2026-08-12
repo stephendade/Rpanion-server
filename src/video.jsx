@@ -35,6 +35,7 @@ class VideoPage extends basePage {
       stillCapSelected: this.props.selectedStillCap || '',
       videoMediaDestination: this.props.videoMediaDestination || '',
       stillMediaDestination: this.props.stillMediaDestination || '',
+      recordLocally: false,
 
       // Global state
       active: this.props.streamingStatus || false,
@@ -170,7 +171,8 @@ class VideoPage extends basePage {
 
           videoMediaDestination: activeResolved.mediaDestination,
           stillMediaDestination: stillData.stillMediaDestination || '',
-          customRTSPSource: videoData.customRTSPSource || ''
+          customRTSPSource: videoData.customRTSPSource || '',
+          recordLocally: activeResolved.recordLocally
         });
 
         if (videoData.selectedUseUDPIP) this.isMulticastUpdateIP(videoData.selectedUseUDPIP);
@@ -191,6 +193,8 @@ class VideoPage extends basePage {
                 notification = isRecording
                 ? `Recording video to ${fname}`
                 : `Recorded video to ${fname}`
+              } else if (cameraMode === 'streaming') {
+                notification = `Recording stream locally to ${fname}`
               } else {
                 notification = `Saved photo to ${fname}`
               }
@@ -235,7 +239,7 @@ componentWillUnmount() {
     if (!device && vidDevs.length > 0) device = vidDevs[0];
 
     if (!device) {
-      return { device: '', caps: [], cap: '', fpsOptions: [], fpsMax: 0, fps: 30, rotation: 0, bitrate: 1100, mediaDestination: '' };
+      return { device: '', caps: [], cap: '', fpsOptions: [], fpsMax: 0, fps: 30, rotation: 0, bitrate: 1100, mediaDestination: '', recordLocally: false };
     }
 
     const caps = device.caps || [];
@@ -264,7 +268,8 @@ componentWillUnmount() {
       fps,
       rotation: (selection?.selectedRotation && selection.selectedRotation.value != null) ? selection.selectedRotation.value : 0,
       bitrate: selection?.selectedBitrate || 1100,
-      mediaDestination: selection?.mediaDestination || ''
+      mediaDestination: selection?.mediaDestination || '',
+      recordLocally: !!selection?.recordLocally
     };
   }
 
@@ -289,7 +294,8 @@ componentWillUnmount() {
         fps: this.state.fpsSelected,
         rotation: this.state.rotSelected,
         bitrate: this.state.bitrate,
-        mediaDestination: this.state.videoMediaDestination
+        mediaDestination: this.state.videoMediaDestination,
+        recordLocally: this.state.recordLocally
       };
     }
 
@@ -306,6 +312,7 @@ componentWillUnmount() {
       updates.rotSelected = cached.rotation;
       updates.bitrate = cached.bitrate;
       updates.videoMediaDestination = cached.mediaDestination;
+      updates.recordLocally = !!cached.recordLocally;
     } else if (newMode === 'video' || newMode === 'streaming') {
       // No previous selection for this mode - default to the first available
       // device/resolution/fps.
@@ -317,6 +324,7 @@ componentWillUnmount() {
       updates.vidCapSelected = firstCap ? firstCap.value : '';
       updates.fpsOptions = firstCap ? (firstCap.fps || []) : [];
       updates.FPSMax = firstCap ? (firstCap.fpsmax || 0) : 0;
+      updates.recordLocally = false;
       updates.fpsSelected = updates.FPSMax > 0 ? updates.FPSMax : (updates.fpsOptions.length > 0 ? updates.fpsOptions[0].value : 30);
     }
 
@@ -473,12 +481,18 @@ componentWillUnmount() {
   }
 
   handleMediaDestinationChange = (event, mode) => {
-    // Update media destination paths for photos and videos
-    if (mode === 'video') {
+    // Update media destination paths for photos and videos. Streaming's
+    // local-recording destination shares the same field/cache slot as Video
+    // Recording's (see the mode-selection cache in handleCameraModeChange).
+    if (mode === 'video' || mode === 'streaming') {
       this.setState({ videoMediaDestination: event.target.value });
     } else {
       this.setState({ stillMediaDestination: event.target.value });
     }
+  }
+
+  handleRecordLocallyChange = () => {
+    this.setState({ recordLocally: !this.state.recordLocally });
   }
 
   handleCaptureStill = () => {
@@ -580,7 +594,9 @@ componentWillUnmount() {
           useTimestamp: this.state.timestamp,
           mavStreamSelected: this.state.mavStreamSelected,
           compression: this.state.compression,
-          customRTSPSource: this.state.customRTSPSource
+          customRTSPSource: this.state.customRTSPSource,
+          recordLocally: this.state.recordLocally,
+          mediaDestination: this.state.videoMediaDestination
         };
 
       } else if (cameraMode === 'video') {
@@ -776,7 +792,7 @@ renderContent() {
       <Form style={{ width: 600 }}>
         <p><i>Configure camera operation: live video streaming, still photo capture, or local video recording. Only one mode can be active at a time. Multicast IP addresses are supported in RTP mode.</i></p>
         <p>Locally saved photos and videos can be viewed or deleted from the <Link to="/flightlogs">Flight Logs and Media</Link> page.</p>
-        {!isStreaming && (
+        {(!isStreaming || this.state.recordLocally) && (
           <p>Media destination folder (an optional relative sub-folder inside: <i>{this.state.appRoot}/media/</i>)</p>
         )}
 
@@ -967,15 +983,30 @@ renderContent() {
                   </>
                 )}
 
+                {/* Record Locally (Only for Streaming Mode) */}
+                {isStreaming && (
+                  <div className="form-group row" style={{ marginBottom: '5px' }}>
+                    <label className="col-sm-4 col-form-label">Record Locally</label>
+                    <div className="col-sm-8">
+                      <Form.Check
+                        type="checkbox"
+                        disabled={active}
+                        onChange={this.handleRecordLocallyChange}
+                        checked={this.state.recordLocally}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Media Destinations */}
-                {isVideo && (
+                {(isVideo || (isStreaming && this.state.recordLocally)) && (
                   <div className="form-group row" style={{ marginBottom: '5px' }}>
                     <label className="col-sm-4 col-form-label">Media Destination</label>
                     <div className="col-sm-8">
-                      <Form.Control 
-                        disabled={active} 
-                        type="text" 
-                        onChange={(e) => this.handleMediaDestinationChange(e, 'video')}
+                      <Form.Control
+                        disabled={active}
+                        type="text"
+                        onChange={(e) => this.handleMediaDestinationChange(e, isVideo ? 'video' : 'streaming')}
                         value={this.state.videoMediaDestination}
                         placeholder="e.g., flight_01"
                       />
