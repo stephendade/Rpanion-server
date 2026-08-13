@@ -39,6 +39,7 @@ class cloudUpload {
     this.options.uploadMedia = this.settings.value('cloud.uploadMedia', true)
     this.options.binUploadLink = this.settings.value('cloud.binUploadLink', '')
     this.options.syncDeletions = this.settings.value('cloud.syncDeletions', false)
+    this.options.windowsDestination = this.settings.value('cloud.windowsDestination', false)
 
     this.ensureSshKey()
 
@@ -74,9 +75,19 @@ class cloudUpload {
     console.log('Syncing', source, 'to', destination)
     const rsync = new Rsync()
       .shell(SSH_SHELL)
-      .flags('avzP')
       .source(source + '/')
       .destination(destination)
+
+    if (this.options.windowsDestination) {
+      // rtvP not -a(rchive): -a also preserves Unix perms/owner (-p -o -g),
+      // which Windows destinations reject. No -z either - known to corrupt
+      // the protocol stream on some Windows rsync builds.
+      rsync.flags('rtvP')
+      // Explicitly set broad perms instead of preserving source perms.
+      rsync.set('chmod', 'ugo=rwX')
+    } else {
+      rsync.flags('avzP')
+    }
 
     includes.forEach(pattern => rsync.include(pattern))
 
@@ -150,16 +161,17 @@ class cloudUpload {
       console.error('Failed to read SSH public keys:', e.message)
     }
     return callback(this.options.uploadEnabled, this.options.uploadLogs, this.options.uploadMedia,
-      this.options.binUploadLink, this.options.syncDeletions, pubkey)
+      this.options.binUploadLink, this.options.syncDeletions, this.options.windowsDestination, pubkey)
   }
 
-  setSettingsBin (uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions) {
+  setSettingsBin (uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination) {
     // save new settings
     this.options.uploadEnabled = uploadEnabled
     this.options.uploadLogs = uploadLogs
     this.options.uploadMedia = uploadMedia
     this.options.binUploadLink = binUploadLink
     this.options.syncDeletions = syncDeletions
+    this.options.windowsDestination = windowsDestination
 
     // and save to file
     try {
@@ -168,6 +180,7 @@ class cloudUpload {
       this.settings.setValue('cloud.uploadMedia', this.options.uploadMedia)
       this.settings.setValue('cloud.binUploadLink', this.options.binUploadLink)
       this.settings.setValue('cloud.syncDeletions', this.options.syncDeletions)
+      this.settings.setValue('cloud.windowsDestination', this.options.windowsDestination)
       console.log('Saved Cloud Upload settings')
     } catch (e) {
       console.log(e)
