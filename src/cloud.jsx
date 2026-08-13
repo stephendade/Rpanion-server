@@ -29,7 +29,14 @@ class CloudConfig extends basePage {
   }
 
   componentDidMount () {
-    fetch('/api/cloudinfo', {headers: {Authorization: `Bearer ${this.state.token}`}}).then(response => response.json()).then(state => { this.setState(state); this.loadDone() })
+    fetch('/api/cloudinfo', {headers: {Authorization: `Bearer ${this.state.token}`}})
+      .then(response => response.json())
+      .then(state => { this.setState(state); this.loadDone() })
+      .catch(err => {
+        console.error('Failed to load cloud info:', err);
+        this.setState({ error: err.message });
+        this.loadDone();
+      })
   }
 
   changeHandler = event => {
@@ -60,7 +67,13 @@ class CloudConfig extends basePage {
             doBinUpload: !this.state.doBinUpload,
             syncDeletions: this.state.syncDeletions,
         })
-      }).then(response => response.json()).then(state => { this.setState(state) });
+      })
+      .then(response => response.json())
+      .then(state => { this.setState(state) })
+      .catch(err => {
+        console.error('Failed to update cloud upload settings:', err);
+        this.setState({ error: err.message });
+      });
   }
 
   renderTitle () {
