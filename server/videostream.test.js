@@ -41,7 +41,7 @@ describe('Video Functions', function () {
 
       // Defaults defined in the class when scan fails or mock runs
       assert.equal(data.selectedUseUDPIP, '127.0.0.1')
-      assert.equal(data.selectedUseUDPPort, 5400)
+      assert.equal(data.selectedUseUDPPort, 5600)
       assert.equal(data.selectedUseTimestamp, false)
       assert.deepEqual(data.selectedMavStreamURI, { label: '127.0.0.1', value: '127.0.0.1' })
 
