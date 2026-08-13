@@ -748,9 +748,9 @@ app.get('/api/ntripconfig', authenticateToken, (req, res) => {
 
 // Serve the cloud info
 app.get('/api/cloudinfo', authenticateToken, (req, res) => {
-  cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, pubkey) => {
+  cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, pubkey) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, pubkey }))
+    res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, pubkey }))
   })
 })
 
@@ -759,18 +759,19 @@ app.post('/api/binlogupload', authenticateToken, [check('uploadEnabled').isBoole
   check('uploadLogs').isBoolean(),
   check('uploadMedia').isBoolean(),
   check('binUploadLink').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim(),
-  check('syncDeletions').isBoolean()], function (req, res) {
+  check('syncDeletions').isBoolean(),
+  check('windowsDestination').isBoolean()], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
     console.log('Bad POST vars in /api/binlogupload', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   } else {
-    cloud.setSettingsBin(req.body.uploadEnabled, req.body.uploadLogs, req.body.uploadMedia, req.body.binUploadLink, req.body.syncDeletions)
+    cloud.setSettingsBin(req.body.uploadEnabled, req.body.uploadLogs, req.body.uploadMedia, req.body.binUploadLink, req.body.syncDeletions, req.body.windowsDestination)
     // send back refreshed settings
-    cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions) => {
+    cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination) => {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions }))
+      res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination }))
     })
   }
 })

@@ -17,6 +17,7 @@ class CloudConfig extends basePage {
       binUploadLink: '',
       uploadStatus: 'N/A',
       syncDeletions: false,
+      windowsDestination: false,
       pubkey: []
     }
 
@@ -55,6 +56,10 @@ class CloudConfig extends basePage {
     this.setState({ syncDeletions: event.target.checked });
   }
 
+  toggleWindowsDestination = event => {
+    this.setState({ windowsDestination: event.target.checked });
+  }
+
   toggleUploadLogs = event => {
     this.setState({ uploadLogs: event.target.checked });
   }
@@ -78,6 +83,7 @@ class CloudConfig extends basePage {
             uploadLogs: this.state.uploadLogs,
             uploadMedia: this.state.uploadMedia,
             syncDeletions: this.state.syncDeletions,
+            windowsDestination: this.state.windowsDestination,
         })
       })
       .then(response => response.json())
@@ -110,6 +116,12 @@ class CloudConfig extends basePage {
                         <label className="col-sm-3 col-form-label">Sync file deletions</label>
                         <div className="col-sm-7">
                         <input name="syncDeletions" type="checkbox" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.syncDeletions} onChange={this.toggleSyncDelete}/>
+                        </div>
+                    </div>
+                    <div className="form-group row" style={{ marginBottom: '5px' }}>
+                        <label className="col-sm-3 col-form-label">Destination is Windows</label>
+                        <div className="col-sm-7">
+                        <input name="windowsDestination" type="checkbox" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.windowsDestination} onChange={this.toggleWindowsDestination}/>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>

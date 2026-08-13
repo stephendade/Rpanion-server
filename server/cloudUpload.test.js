@@ -23,7 +23,7 @@ describe('Cloud Upload Functions', function () {
     assert.equal(cloudVar.options.uploadEnabled, false)
     assert.equal(cloudVar.conStatusStr(), 'Disabled')
 
-    cloudVar.setSettingsBin(true, true, true, 'tmpfolder', false)
+    cloudVar.setSettingsBin(true, true, true, 'tmpfolder', false, false)
 
     assert.equal(cloudVar.conStatusStr(), 'Waiting for first run')
     assert.equal(cloudVar.options.uploadEnabled, true)
