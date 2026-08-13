@@ -8,7 +8,7 @@ describe('Cloud Upload Functions', function () {
     const cloudVar = new CloudTest(settings)
 
     // check initial status
-    assert.equal(cloudVar.options.doBinUpload, false)
+    assert.equal(cloudVar.options.uploadEnabled, false)
     assert.equal(cloudVar.options.syncDeletions, false)
 
     clearInterval(cloudVar.intervalObj)
@@ -20,13 +20,15 @@ describe('Cloud Upload Functions', function () {
     const cloudVar = new CloudTest(settings)
 
     // check initial status
-    assert.equal(cloudVar.options.doBinUpload, false)
-    assert.equal(cloudVar.conStatusBinStr(), 'Disabled')
+    assert.equal(cloudVar.options.uploadEnabled, false)
+    assert.equal(cloudVar.conStatusStr(), 'Disabled')
 
-    cloudVar.setSettingsBin(true, 'tmpfolder', false)
+    cloudVar.setSettingsBin(true, true, true, 'tmpfolder', false)
 
-    assert.equal(cloudVar.conStatusBinStr(), 'Waiting for first run')
-    assert.equal(cloudVar.options.doBinUpload, true)
+    assert.equal(cloudVar.conStatusStr(), 'Waiting for first run')
+    assert.equal(cloudVar.options.uploadEnabled, true)
+    assert.equal(cloudVar.options.uploadLogs, true)
+    assert.equal(cloudVar.options.uploadMedia, true)
 
     clearInterval(cloudVar.intervalObj)
   })

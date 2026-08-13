@@ -11,16 +11,18 @@ class CloudConfig extends basePage {
     super(props, useSocketIO)
     this.state = {
       ...this.state,
-      doBinUpload: false,
+      uploadEnabled: false,
+      uploadLogs: true,
+      uploadMedia: true,
       binUploadLink: '',
-      binLogStatus: 'N/A',
+      uploadStatus: 'N/A',
       syncDeletions: false,
       pubkey: []
     }
 
     //Socket.io client for reading in analog update values
-    this.socket.on('CloudBinStatus', function (msg) {
-      this.setState({ binLogStatus: msg })
+    this.socket.on('CloudUploadStatus', function (msg) {
+      this.setState({ uploadStatus: msg })
     }.bind(this))
     this.socket.on('reconnect', function () {
       //refresh state
@@ -53,8 +55,16 @@ class CloudConfig extends basePage {
     this.setState({ syncDeletions: event.target.checked });
   }
 
-  handleDoBinUploadSubmit = () => {
-    //user clicked enable/disable bin file upload
+  toggleUploadLogs = event => {
+    this.setState({ uploadLogs: event.target.checked });
+  }
+
+  toggleUploadMedia = event => {
+    this.setState({ uploadMedia: event.target.checked });
+  }
+
+  handleToggleUploadSubmit = () => {
+    //user clicked enable/disable cloud upload
     fetch('/api/binlogupload', {
         method: 'POST',
         headers: {
@@ -64,7 +74,9 @@ class CloudConfig extends basePage {
         },
         body: JSON.stringify({
             binUploadLink: this.state.binUploadLink,
-            doBinUpload: !this.state.doBinUpload,
+            uploadEnabled: !this.state.uploadEnabled,
+            uploadLogs: this.state.uploadLogs,
+            uploadMedia: this.state.uploadMedia,
             syncDeletions: this.state.syncDeletions,
         })
       })
@@ -83,31 +95,37 @@ class CloudConfig extends basePage {
   renderContent () {
     return (
             <div>
-              <p><i>Automatically upload binlogs from the &quot;Flight Logs&quot; page to a remote (network) destination over an ssh connection</i></p>
-                <h3>Bin Logs Upload</h3>
-                <p>All bin logs (in Flight Logs -&gt; Bin Logs) will be synchonised to the following remote destination using rsync.</p>
-                <p>The synchonisation runs every 20 seconds.</p>
+              <p><i>Automatically upload flight logs and/or media to a remote (network) destination over an ssh connection</i></p>
+                <h3>Cloud Upload</h3>
+                <p>Selected items are synchronised to the remote destination below using rsync, every 20 seconds. Logs (Flight Logs -&gt; Bin Logs) are synced to the destination itself; Media (photos/videos) is synced to a <code>media</code> subfolder there.</p>
                 <p>Destination format is <code>username@server:/path/to/remote/dir</code>, where <code>username</code> has an ssh publickey on the remote server.</p>
                 <Form style={{ width: 700 }}>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-3 col-form-label">Rsync Destination</label>
                         <div className="col-sm-7">
-                            <input type="text" className="form-control" name="binUploadLink" disabled={this.state.doBinUpload === true ? true : false} onChange={this.changeHandler} value={this.state.binUploadLink}/>
+                            <input type="text" className="form-control" name="binUploadLink" disabled={this.state.uploadEnabled === true ? true : false} onChange={this.changeHandler} value={this.state.binUploadLink}/>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-3 col-form-label">Sync file deletions</label>
                         <div className="col-sm-7">
-                        <input name="syncDeletions" type="checkbox" disabled={this.state.doBinUpload === true ? true : false} checked={this.state.syncDeletions} onChange={this.toggleSyncDelete}/>
+                        <input name="syncDeletions" type="checkbox" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.syncDeletions} onChange={this.toggleSyncDelete}/>
                         </div>
                     </div>
-                    
+                    <div className="form-group row" style={{ marginBottom: '5px' }}>
+                        <label className="col-sm-3 col-form-label">Upload</label>
+                        <div className="col-sm-7" style={{ display: 'flex', gap: '24px' }}>
+                          <Form.Check inline type="checkbox" label="Logs" name="uploadLogs" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.uploadLogs} onChange={this.toggleUploadLogs}/>
+                          <Form.Check inline type="checkbox" label="Media" name="uploadMedia" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.uploadMedia} onChange={this.toggleUploadMedia}/>
+                        </div>
+                    </div>
+
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <div className="col-sm-10">
-                        <Button onClick={this.handleDoBinUploadSubmit} className="btn btn-primary">{this.state.doBinUpload === true ? 'Disable' : 'Enable'}</Button>
+                        <Button onClick={this.handleToggleUploadSubmit} className="btn btn-primary">{this.state.uploadEnabled === true ? 'Disable' : 'Enable'}</Button>
                         </div>
                     </div>
-                    <p>Status: {this.state.binLogStatus}</p>
+                    <p>Status: {this.state.uploadStatus}</p>
                 </Form>
                 <h3>Publickeys</h3>
                 <p><i>All publickeys on this device</i></p>
