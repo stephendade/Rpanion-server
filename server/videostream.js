@@ -356,7 +356,7 @@ class videoStream {
         selectedFps: null,
         selectedUseUDP: false,
         selectedUseUDPIP: '127.0.0.1',
-        selectedUseUDPPort: 5400,
+        selectedUseUDPPort: 5600,
         selectedIsRecording: false,
         selectedUseTimestamp: false,
         fpsOptions: [],
