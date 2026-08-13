@@ -79,6 +79,25 @@ class videoStream {
     this.fcManager = fcManager;
   }
 
+  // Create dest (an absolute path, e.g. from toAbsolutePath()) if it doesn't
+  // already exist, and confirm it's actually writable (mkdir succeeding
+  // isn't enough - dest may already exist with the wrong permissions).
+  // Shared by every mode that writes media to disk (Streaming's local
+  // recording, Photo, Video Recording). Returns true if dest is usable, so
+  // callers can reject the request with a clear error instead of pushing a
+  // doomed path through to the recording pipeline.
+  ensureMediaDirectoryWritable(dest) {
+    try {
+      fs.mkdirSync(dest, { recursive: true });
+      fs.accessSync(dest, fs.constants.W_OK);
+      console.log('Ensured media directory exists and is writable:', dest);
+      return true;
+    } catch (e) {
+      console.error('Media directory is not writable:', dest, e.message);
+      return false;
+    }
+  }
+
   async initialize() {
     try {
       // Discover Video Hardware and wait for data
@@ -657,11 +676,8 @@ class videoStream {
 
     if (this.videoSettings.recordLocally) {
       const dest = this.toAbsolutePath(this.videoSettings.mediaDestination);
-      try {
-        fs.mkdirSync(dest, { recursive: true });
-        console.log('Ensured media directory exists:', dest);
-      } catch (e) {
-        console.error('Failed to create media directory:', dest, e);
+      if (!this.ensureMediaDirectoryWritable(dest)) {
+        return callback(new Error(`Media Destination is not writable: ${dest}`));
       }
       args.push('--record=' + dest);
     }
@@ -699,11 +715,8 @@ class videoStream {
     if (this.stillSettings.width) args.push('--width=' + this.stillSettings.width);
     if (this.stillSettings.height) args.push('--height=' + this.stillSettings.height);
     if (dest) {
-      try {
-        fs.mkdirSync(dest, { recursive: true });
-        console.log('Ensured media directory exists:', dest);
-      } catch (e) {
-        console.error('Failed to create media directory:', dest, e);
+      if (!this.ensureMediaDirectoryWritable(dest)) {
+        return callback(new Error(`Media Destination is not writable: ${dest}`));
       }
       args.push('--destination=' + dest);
     }
@@ -744,11 +757,8 @@ class videoStream {
     ];
 
     if (dest) {
-      try {
-        fs.mkdirSync(dest, { recursive: true });
-        console.log('Ensured media directory exists:', dest);
-      } catch (e) {
-        console.error('Failed to create media directory:', dest, e);
+      if (!this.ensureMediaDirectoryWritable(dest)) {
+        return callback(new Error(`Media Destination is not writable: ${dest}`));
       }
       args.push('--destination=' + dest);
     }
