@@ -7,6 +7,11 @@
 import argparse
 import platform
 import ipaddress
+import os
+import shutil
+import signal
+import sys
+import time
 from typing import List
 import subprocess
 import gi
@@ -15,6 +20,19 @@ gi.require_version("Gst", "1.0")
 gi.require_version("GstRtsp", "1.0")
 gi.require_version("GstRtspServer", "1.0")
 from gi.repository import Gst, GstRtspServer, GLib
+
+# Local port used to bridge a persistent capture pipeline (camera -> encoder ->
+# tee -> [record to file] / [RTP over loopback]) into the RTSP server's
+# per-client relay pipelines when local recording is enabled - see
+# addRecordingStream()/RelayFactory below.
+RECORDING_RELAY_PORT = 5700
+
+# Named elements making up the local-recording branch off the tee (see
+# getPipeline()'s record_path handling). Named explicitly so a bus ERROR
+# message can be attributed to this branch specifically (e.g. disk full) and
+# isolated - see isolateRecordingBranch() - without tearing down the whole
+# pipeline (and with it, the live stream).
+RECORDING_ELEMENT_NAMES = ('rec_queue', 'rec_mux', 'rec_sink')
 
 
 # Returns true if this is a Raspi5 or later
@@ -50,7 +68,18 @@ def is_multicast(ip: str) -> bool:
         return False
 
 
-def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp, compression) -> str:
+def resolvePayloadCodec(device, format, compression) -> str:
+    # Determine whether the encoded output is H264 or H265, matching the
+    # choice getPipeline() itself makes: precompressed sources (RTSP source or
+    # native v4l2 h264) are governed by `format`; everything else is encoded
+    # in this script and governed by the user's `compression` choice.
+    if format in ["video/x-h264", "video/x-h265"] or device.startswith("rtsp://"):
+        return "H265" if format == "video/x-h265" else "H264"
+    return "H265" if compression == "H265" else "H264"
+
+
+def getPipeline(device, height, width, bitrate, format, rotation, framerate, timestamp, compression,
+                 record_path="", stream_sink="") -> str:
     pipeline: List[str] = []
 
     # -1 is no framerate specified
@@ -166,10 +195,8 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
                 pipeline.append("nvvidconv")
             if compression == "H265":
                 pipeline.append("nvv4l2h265enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
-                pipeline.append("h265parse")
             elif compression == "H264":
                 pipeline.append("nvv4l2h264enc bitrate={0} iframeinterval=5 preset-level=1 insert-sps-pps=true".format(bitrate*1000))
-                pipeline.append("h264parse")
         elif Gst.ElementFactory.find("v4l2h264enc") and compression == "H264" and not (device == "testsrc" or device.startswith("/dev/video")):
             # Pi or similar arm platforms running on RasPiOS. Note that Pi5 onwards don't support hardware encoding
             # Only use a higher h264 level if the bitrate requires it. I find that level 4.1 can be a little
@@ -182,7 +209,6 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             pipeline.append("videoconvert")
             pipeline.append("v4l2h264enc extra-controls=\"controls,repeat_sequence_header=1,h264_profile=4,video_bitrate={0},h264_i_frame_period=5\"".format(bitrate*1000))
             pipeline.append("video/x-h264,profile=high,level=(string){0}".format(level))
-            pipeline.append("h264parse")
         else:
             # s/w encoder - x86, Pi5, etc
             pipeline.append("videoconvert")
@@ -201,23 +227,35 @@ def getPipeline(device, height, width, bitrate, format, rotation, framerate, tim
             elif compression == "H265":
                 pipeline.append("x265enc tune=zerolatency bitrate={0} speed-preset=superfast key-int-max=25".format(bitrate))
 
-        # final rtp formatting
-        pipeline.append("queue")
-        if compression == "H264":
-            pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
-        elif compression == "H265":
-            pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
+    # Ensure exactly one parse element sits right before the tee/pay/mux
+    # point, regardless of which branch above produced the stream - mp4mux
+    # (used for local recording) needs avc-aligned access units, and the RTP
+    # payloader benefits from parsed input too.
+    if resolvePayloadCodec(device, format, compression) == "H265":
+        pipeline.append("h265parse")
+        pay_element = "rtph265pay config-interval=1 name=pay0 pt=96"
     else:
-        # just need to do rtp payloader for pre-compressed streams
-        pipeline.append("queue")
-        if format == "video/x-h264":
-            pipeline.append("rtph264pay config-interval=1 name=pay0 pt=96")
-        elif format == "video/x-h265":
-            pipeline.append("rtph265pay config-interval=1 name=pay0 pt=96")
+        pipeline.append("h264parse")
+        pay_element = "rtph264pay config-interval=1 name=pay0 pt=96"
+
+    main_str = " ! ".join(pipeline)
+
+    if record_path:
+        # Separate leaky queue per branch so a slow/failing recording side
+        # can't backpressure the live stream. Elements are named so a bus
+        # ERROR from this branch (e.g. disk full) can be attributed to it -
+        # see isolateRecordingBranch().
+        filename = os.path.join(record_path, time.strftime("RPN%Y%m%d_%H%M%S.mp4"))
+        full = ("{0} ! tee name=t ! queue ! {1}{2}   "
+                "t. ! queue name=rec_queue leaky=downstream ! mp4mux name=rec_mux ! filesink name=rec_sink location=\"{3}\"").format(
+            main_str, pay_element, stream_sink, filename)
+        print("Recording started to {0}".format(filename))
+    else:
+        full = "{0} ! queue ! {1}{2}".format(main_str, pay_element, stream_sink)
 
     # return as full string
-    print(" ! ".join(pipeline))
-    return " ! ".join(pipeline)
+    print(full)
+    return full
 
 
 class MyFactory(GstRtspServer.RTSPMediaFactory):
@@ -249,9 +287,175 @@ class MyFactory(GstRtspServer.RTSPMediaFactory):
         self.set_eos_shutdown(True)  # Clean shutdown on EOS
 
 
+class RelayFactory(GstRtspServer.RTSPMediaFactory):
+    """Lightweight per-client RTSP relay used only when local recording is
+    enabled (see GstServer.addStream). Rather than opening the camera itself
+    like MyFactory does per-client, it re-payloads the RTP stream already
+    being produced by a persistent capture pipeline (startRecordingCapture())
+    - so recording keeps running independent of RTSP client connections.
+    """
+
+    def __init__(self, codec):
+        GstRtspServer.RTSPMediaFactory.__init__(self)
+        self.codec = codec
+        self.set_latency(0)
+        self.set_transport_mode(GstRtspServer.RTSPTransportMode.PLAY)
+
+    def do_create_element(self, url):
+        depay = "rtph265depay" if self.codec == "H265" else "rtph264depay"
+        pay = "rtph265pay" if self.codec == "H265" else "rtph264pay"
+        # address=127.0.0.1 is required - without it udpsrc binds 0.0.0.0 (all
+        # interfaces), letting anyone on the network inject RTP packets into
+        # this relay even though startRecordingCapture()'s udpsink only ever
+        # sends here over loopback.
+        pipeline_str = (
+            "udpsrc port={0} address=127.0.0.1 caps=\"application/x-rtp,media=video,clock-rate=(int)90000,encoding-name=(string){1}\" "
+            "! rtpjitterbuffer latency=0 ! {2} ! {3} config-interval=1 name=pay0 pt=96"
+        ).format(RECORDING_RELAY_PORT, self.codec, depay, pay)
+        return Gst.parse_launch(pipeline_str)
+
+
+# Minimum free space (MB) required at the recording destination - a margin
+# over the ~5s installDiskSpaceMonitor() check interval, sized against the
+# max bitrate the UI allows (50 Mbps -> ~31MB/5s), not just the default
+# (1100kbps -> <1MB/5s). Local recording is proactively stopped once free
+# space drops below this, well before the disk actually fills - see
+# installDiskSpaceMonitor()/isolateRecordingBranch() for why waiting for an
+# actual write failure is not a safe way to do this.
+MIN_RECORDING_DISK_SPACE_MB = 200
+
+
+# Detach the recording branch (rec_queue/rec_mux/rec_sink) from the tee -
+# blocks the tee's request pad, pushes EOS down just that branch so mp4mux
+# writes a valid trailer, then removes the now-idle elements - leaving the
+# live stream running untouched.
+#
+# Must be called PROACTIVELY (see installDiskSpaceMonitor), not reactively
+# from a filesink error: testing against a full disk showed a fatal write
+# error cascades back through rec_queue and tee to the shared upstream
+# source, killing the live stream too - faster than a bus ERROR message can
+# reach the GLib main loop to react to it.
+def isolateRecordingBranch(pipeline, reason=""):
+    tee = pipeline.get_by_name('t')
+    rec_queue = pipeline.get_by_name('rec_queue')
+    rec_sink = pipeline.get_by_name('rec_sink')
+    if not tee or not rec_queue or not rec_sink:
+        return
+    queue_sinkpad = rec_queue.get_static_pad('sink')
+    teepad = queue_sinkpad.get_peer() if queue_sinkpad else None
+    if not teepad:
+        return
+
+    def finish_removal():
+        if queue_sinkpad.is_linked():
+            teepad.unlink(queue_sinkpad)
+        tee.release_request_pad(teepad)
+        for name in RECORDING_ELEMENT_NAMES:
+            el = pipeline.get_by_name(name)
+            if el:
+                el.set_state(Gst.State.NULL)
+                pipeline.remove(el)
+        suffix = " ({0})".format(reason) if reason else ""
+        print("Recording stopped{0} - live stream continues.".format(suffix), flush=True)
+        return GLib.SOURCE_REMOVE
+
+    def on_sink_eos(pad, info):
+        pad.remove_probe(info.id)
+        GLib.idle_add(finish_removal)
+        return Gst.PadProbeReturn.OK
+
+    def on_sink_event(pad, info):
+        event = info.get_event()
+        if event and event.type == Gst.EventType.EOS:
+            return on_sink_eos(pad, info)
+        return Gst.PadProbeReturn.OK
+
+    def on_tee_blocked(_pad, _info):
+        # No more buffers reach the branch now - safe to push EOS down it so
+        # mp4mux can write a valid trailer before we remove it. Wait for that
+        # EOS to actually arrive at rec_sink before tearing down, with a
+        # timeout fallback in case the branch is already wedged.
+        rec_sink.get_static_pad('sink').add_probe(Gst.PadProbeType.EVENT_DOWNSTREAM, on_sink_event)
+        queue_sinkpad.send_event(Gst.Event.new_eos())
+        GLib.timeout_add_seconds(3, lambda: finish_removal() if pipeline.get_by_name('rec_sink') else GLib.SOURCE_REMOVE)
+        return Gst.PadProbeReturn.OK
+
+    teepad.add_probe(Gst.PadProbeType.BLOCK_DOWNSTREAM, on_tee_blocked)
+
+
+# Periodically check free space at record_path while recording is active, and
+# proactively stop just the recording branch before the disk actually fills -
+# see isolateRecordingBranch() for why this has to be proactive rather than
+# reactive to an actual write failure.
+def hasEnoughDiskSpace(record_path):
+    try:
+        free_mb = shutil.disk_usage(record_path).free / (1024 * 1024)
+    except OSError:
+        return True  # can't tell - don't block recording on a stat failure
+    return free_mb >= MIN_RECORDING_DISK_SPACE_MB
+
+
+def installDiskSpaceMonitor(pipeline, record_path, interval_seconds=5):
+    def check():
+        if not pipeline.get_by_name('rec_sink'):
+            return GLib.SOURCE_REMOVE  # already stopped/removed
+        if not hasEnoughDiskSpace(record_path):
+            print("Free disk space at {0} is below the {1} MB minimum - stopping local recording.".format(
+                record_path, MIN_RECORDING_DISK_SPACE_MB), flush=True)
+            isolateRecordingBranch(pipeline, reason="disk space low")
+            return GLib.SOURCE_REMOVE
+        return True
+
+    GLib.timeout_add_seconds(interval_seconds, check)
+
+
+# Send an EOS through the pipeline on SIGTERM/SIGINT so mp4mux gets a chance
+# to write a valid moov atom before the process exits - a bare kill would
+# otherwise leave any local recording file truncated/unplayable.
+#
+# The bus ERROR handling below is only a best-effort backstop for non-disk
+# failures - see isolateRecordingBranch()'s comment for why it can't reliably
+# save the live stream from a disk-space error; installDiskSpaceMonitor()
+# catching it early is the real protection.
+def installCleanShutdown(pipeline, loop):
+    bus = pipeline.get_bus()
+    bus.add_signal_watch()
+
+    def on_bus_message(_bus, message):
+        if message.type == Gst.MessageType.EOS:
+            print("EOS received, finalizing recording and stopping pipeline.", flush=True)
+            pipeline.set_state(Gst.State.NULL)
+            loop.quit()
+        elif message.type == Gst.MessageType.ERROR:
+            err, dbg = message.parse_error()
+            src_name = message.src.get_name() if message.src else ""
+            if src_name in RECORDING_ELEMENT_NAMES:
+                print("Recording error ({0}): {1} ({2})".format(src_name, err, dbg), file=sys.stderr)
+                isolateRecordingBranch(pipeline, reason="write error")
+            else:
+                print("GStreamer error: {0} ({1})".format(err, dbg), file=sys.stderr)
+                pipeline.set_state(Gst.State.NULL)
+                loop.quit()
+        return True
+
+    bus.connect("message", on_bus_message)
+
+    def on_shutdown_signal():
+        print("Received shutdown signal, sending EOS to finalize recording...", flush=True)
+        pipeline.send_event(Gst.Event.new_eos())
+        # Safety net: force quit if EOS doesn't propagate (e.g. source stalled)
+        GLib.timeout_add_seconds(3, lambda: (pipeline.set_state(Gst.State.NULL), loop.quit(), GLib.SOURCE_REMOVE)[-1])
+        return GLib.SOURCE_REMOVE
+
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGTERM, on_shutdown_signal)
+    GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, on_shutdown_signal)
+
+
 class GstServer():
-    def __init__(self):
+    def __init__(self, loop):
         self.server = GstRtspServer.RTSPServer()
+        self.loop = loop
+        self.capturePipeline = None  # keeps the recording capture pipeline (if any) alive
 
         # Configure server for low-latency streaming
         self.server.set_backlog(5)  # Limit queued connections
@@ -259,14 +463,47 @@ class GstServer():
         self.sourceID = self.server.attach(None)
         print("Server available on rtsp://<IP>:8554")
 
-    def addStream(self, device, h, w, bitrate, format, rotation, framerate, timestamp, compression):
-        f = MyFactory(device, h, w, bitrate, format,
-                      rotation, framerate, timestamp,
-                      compression)
+    # Build and start the persistent capture pipeline used when local
+    # recording is enabled: camera -> encode -> tee -> [record to mp4] /
+    # [RTP over loopback for RelayFactory to relay to RTSP clients].
+    def startRecordingCapture(self, device, h, w, bitrate, format, rotation, framerate, timestamp, compression, record_path):
+        stream_sink = " ! udpsink host=127.0.0.1 port={0}".format(RECORDING_RELAY_PORT)
+        pipeline_str = getPipeline(device, h, w, bitrate, format, rotation, framerate, timestamp, compression,
+                                   record_path=record_path, stream_sink=stream_sink)
+        pipeline = Gst.parse_launch(pipeline_str)
+        installCleanShutdown(pipeline, self.loop)
+        installDiskSpaceMonitor(pipeline, record_path)
+        pipeline.set_state(Gst.State.PLAYING)
+        self.capturePipeline = pipeline
 
-        # Don't share the media pipeline - each client gets their own
-        # This prevents one slow client from affecting others
-        f.set_shared(False)
+    def addStream(self, device, h, w, bitrate, format, rotation, framerate, timestamp, compression, record_path=""):
+        # Gate BEFORE the recording branch is ever built, not just via the periodic
+        # installDiskSpaceMonitor() check - that check only starts firing 5s after
+        # the pipeline goes PLAYING, so an already-full disk would otherwise let
+        # filesink fail (and cascade-kill the live stream, see isolateRecordingBranch)
+        # before the monitor ever got a chance to catch it.
+        if record_path and not hasEnoughDiskSpace(record_path):
+            print("Free disk space at {0} is below the {1} MB minimum - not starting local recording.".format(
+                record_path, MIN_RECORDING_DISK_SPACE_MB), flush=True)
+            record_path = ""
+
+        if record_path:
+            # Recording enabled: run one persistent capture pipeline for the
+            # process lifetime (independent of RTSP client connections), and
+            # serve clients from a cheap relay factory in front of it.
+            self.startRecordingCapture(device, h, w, bitrate, format, rotation, framerate, timestamp, compression, record_path)
+            f = RelayFactory(resolvePayloadCodec(device, format, compression))
+            # Shared: all clients are served from the one relay pipeline,
+            # rather than each opening their own connection to the camera.
+            f.set_shared(True)
+        else:
+            f = MyFactory(device, h, w, bitrate, format,
+                          rotation, framerate, timestamp,
+                          compression)
+
+            # Don't share the media pipeline - each client gets their own
+            # This prevents one slow client from affecting others
+            f.set_shared(False)
 
         # Enable clock synchronization for smoother playback
         f.set_clock(None)  # Use default system clock
@@ -311,6 +548,9 @@ if __name__ == '__main__':
         "--multirtsp", help="CSV of multi-camera RTSP setup. Format is videosource,height,width,bitrate,formatstr,rotation, fps;source2,etc", default="", type=str)
     parser.add_argument("--timestamp", help="add timestamp",
                         default=False, action='store_true')
+    parser.add_argument(
+        "--record", help="Absolute directory path to also record the stream locally to (mp4). Empty disables local recording.",
+        default="", type=str)
     args = parser.parse_args()
 
     loop = GLib.MainLoop()
@@ -325,9 +565,9 @@ if __name__ == '__main__':
         # ./video-server.py --multirtsp="/dev/video0,480,640,2000,video/x-raw,0,10;/dev/video2,480,640,2000,video/x-raw,0,10"
 
         cams = args.multirtsp.split(';')
-        s = GstServer()
+        s = GstServer(loop)
 
-        # Add each camera
+        # Add each camera (local recording is not supported in multi-camera mode)
         for cam in cams:
             try:
                 (videosource, height, width, bitrate, formatstr,
@@ -348,9 +588,10 @@ if __name__ == '__main__':
             loop.quit()
     elif args.transport == "RTSP":
         # RTSP
-        s = GstServer()
+        s = GstServer(loop)
         s.addStream(args.videosource, args.height, args.width, args.bitrate,
-                    args.format, args.rotation, args.fps, args.timestamp, args.compression)
+                    args.format, args.rotation, args.fps, args.timestamp, args.compression,
+                    record_path=args.record)
 
         try:
             loop.run()
@@ -359,14 +600,26 @@ if __name__ == '__main__':
             loop.quit()
     elif args.transport == "RTP":
         # RTP
-        pipeline_str = getPipeline(args.videosource, args.height, args.width,
-                                   args.bitrate, args.format, args.rotation, args.fps, args.timestamp,
-                                   args.compression)
-        pipeline_str += " ! udpsink host={0} port={1}".format(
+        record_path = args.record
+        # See the matching check in GstServer.addStream() - must happen before
+        # the recording branch is built, not just via the periodic
+        # installDiskSpaceMonitor() check, which only starts 5s after PLAYING.
+        if record_path and not hasEnoughDiskSpace(record_path):
+            print("Free disk space at {0} is below the {1} MB minimum - not starting local recording.".format(
+                record_path, MIN_RECORDING_DISK_SPACE_MB), flush=True)
+            record_path = ""
+
+        stream_sink = " ! udpsink host={0} port={1}".format(
             args.udp.split(':')[0], args.udp.split(':')[1])
         if is_multicast(args.udp.split(':')[0]):
-            pipeline_str += " auto-multicast=true"
+            stream_sink += " auto-multicast=true"
+        pipeline_str = getPipeline(args.videosource, args.height, args.width,
+                                   args.bitrate, args.format, args.rotation, args.fps, args.timestamp,
+                                   args.compression, record_path=record_path, stream_sink=stream_sink)
         pipeline = Gst.parse_launch(pipeline_str)
+        if record_path:
+            installCleanShutdown(pipeline, loop)
+            installDiskSpaceMonitor(pipeline, record_path)
         pipeline.set_state(Gst.State.PLAYING)
 
         print("Server sending UDP stream to " + args.udp)
