@@ -1,6 +1,14 @@
 #!/bin/sh
-systemctl stop rpanion-server || true
-systemctl disable rpanion-server || true
+set -e
 
-# Remove python virtual environment
-rm -rf /usr/share/rpanion-server/app/python/.venv
+case "$1" in
+    remove|upgrade|deconfigure)
+        systemctl stop rpanion-server || true
+        systemctl disable rpanion-server || true
+
+        # Remove python virtual environment
+        rm -rf /usr/share/rpanion-server/app/python/.venv
+        ;;
+esac
+
+exit 0

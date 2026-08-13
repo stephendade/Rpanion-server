@@ -1,5 +1,11 @@
 #!/bin/sh
+set -e
 
-rm -f /etc/sudoers.d/allow-vpn-control
+case "$1" in
+    purge|remove|upgrade)
+        rm -f /etc/sudoers.d/allow-vpn-control
+        deluser --system --remove-home rpanion || true
+        ;;
+esac
 
-deluser --system --remove-home rpanion || true
+exit 0

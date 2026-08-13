@@ -1,33 +1,35 @@
 #!/bin/sh
-# Setup system user
-if ! getent passwd "rpanion" >/dev/null
-then
-    adduser --system --group --quiet rpanion
-fi
+set -e
 
-sudo usermod -a -G plugdev rpanion
-sudo usermod -a -G dialout rpanion
-sudo usermod -a -G netdev rpanion
-sudo usermod -a -G gpio rpanion
-sudo usermod -a -G video rpanion
-sudo usermod -a -G adm rpanion    # for systemd journal access
-sudo usermod -a -G render rpanion   # for access to hardware video encoding on Jetson Orin
-sudo usermod -a -G networkmanager rpanion   # for access to nmcli and dnsmasq leases
+case "$1" in
+    configure)
+        if ! getent passwd "rpanion" >/dev/null; then
+            adduser --system --group --quiet rpanion
+        fi
 
-# Set up Python virtual environment
-/usr/share/rpanion-server/app/python/setup-venv.sh
+        usermod -a -G plugdev rpanion
+        usermod -a -G dialout rpanion
+        usermod -a -G netdev rpanion
+        usermod -a -G gpio rpanion || true
+        usermod -a -G video rpanion
+        usermod -a -G adm rpanion    # for systemd journal access
+        usermod -a -G render rpanion || true   # for access to hardware video encoding on Jetson Orin
+        usermod -a -G networkmanager rpanion || true   # for access to nmcli and dnsmasq leases
 
-# Set permissions
-chown -R rpanion /usr/share/rpanion-server
-chown -R rpanion /etc/rpanion-server
-chown -R rpanion /etc/wireguard
-chmod +x /usr/share/rpanion-server/app/server/index.js
-systemctl daemon-reload
-systemctl enable rpanion-server
-systemctl start rpanion-server
+        # Set up Python virtual environment
+        /usr/share/rpanion-server/app/python/setup-venv.sh
 
-# Allow relevant services to be disabled or enabled without password
-cat <<'EOF' > /etc/sudoers.d/allow-vpn-control
+        # Set permissions
+        chown -R rpanion /usr/share/rpanion-server
+        chown -R rpanion /etc/rpanion-server
+        chown -R rpanion /etc/wireguard
+        chmod +x /usr/share/rpanion-server/app/server/index.js
+        systemctl daemon-reload
+        systemctl enable rpanion-server
+        systemctl start rpanion-server
+
+        # Allow relevant services to be disabled or enabled without password
+        cat <<'EOF' > /etc/sudoers.d/allow-vpn-control
 rpanion ALL=(ALL) NOPASSWD: \
   /usr/bin/systemctl disable wg-quick@*, \
   /usr/bin/systemctl enable wg-quick@*, \
@@ -46,6 +48,10 @@ rpanion ALL=(ALL) NOPASSWD: \
   /usr/bin/cat /var/lib/NetworkManager/dnsmasq-*
 EOF
 
-chmod 440 /etc/sudoers.d/allow-vpn-control
+        chmod 440 /etc/sudoers.d/allow-vpn-control
+        ;;
+esac
+
+exit 0
 
 
