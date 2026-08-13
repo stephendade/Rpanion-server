@@ -748,14 +748,16 @@ app.get('/api/ntripconfig', authenticateToken, (req, res) => {
 
 // Serve the cloud info
 app.get('/api/cloudinfo', authenticateToken, (req, res) => {
-  cloud.getSettings((doBinUpload, binUploadLink, syncDeletions, pubkey) => {
+  cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, pubkey) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ doBinUpload, binUploadLink, syncDeletions, pubkey }))
+    res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, pubkey }))
   })
 })
 
-// activate or deactivate bin log upload
-app.post('/api/binlogupload', authenticateToken, [check('doBinUpload').isBoolean(),
+// activate or deactivate cloud upload
+app.post('/api/binlogupload', authenticateToken, [check('uploadEnabled').isBoolean(),
+  check('uploadLogs').isBoolean(),
+  check('uploadMedia').isBoolean(),
   check('binUploadLink').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim(),
   check('syncDeletions').isBoolean()], function (req, res) {
   const errors = validationResult(req)
@@ -764,11 +766,11 @@ app.post('/api/binlogupload', authenticateToken, [check('doBinUpload').isBoolean
     console.log('Bad POST vars in /api/binlogupload', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   } else {
-    cloud.setSettingsBin(req.body.doBinUpload, req.body.binUploadLink, req.body.syncDeletions)
+    cloud.setSettingsBin(req.body.uploadEnabled, req.body.uploadLogs, req.body.uploadMedia, req.body.binUploadLink, req.body.syncDeletions)
     // send back refreshed settings
-    cloud.getSettings((doBinUpload, binUploadLink, syncDeletions) => {
+    cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions) => {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ doBinUpload, binUploadLink, syncDeletions }))
+      res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions }))
     })
   }
 })
@@ -1148,7 +1150,7 @@ io.on('connection', function () {
   FCStatusLoop = setInterval(function () {
     io.sockets.emit('FCStatus', fcManager.getSystemStatus())
     io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr())
-    io.sockets.emit('CloudBinStatus', cloud.conStatusBinStr())
+    io.sockets.emit('CloudUploadStatus', cloud.conStatusStr())
     io.sockets.emit('LogConversionStatus', logConversion.conStatusLogStr())
     io.sockets.emit('PPPStatus', pppConnectionManager.conStatusStr())
     io.sockets.emit('VideoStreamStatus', vManager.getStreamingStatus())
