@@ -354,16 +354,19 @@ class videoStream {
         selectedRotation: { label: '0°', value: 0 },
         selectedBitrate: 1100,
         selectedFps: null,
-        selectedUseUDP: false,
-        selectedUseUDPIP: '127.0.0.1',
-        selectedUseUDPPort: 5600,
+        selectedUseUDP: this.videoSettings?.useUDP || false,
+        selectedUseUDPIP: this.videoSettings?.useUDPIP || '127.0.0.1',
+        selectedUseUDPPort: this.videoSettings?.useUDPPort || 5600,
         selectedIsRecording: false,
-        selectedUseTimestamp: false,
+        selectedUseTimestamp: this.videoSettings?.useTimestamp || false,
         fpsOptions: [],
         fpsMax: 0,
         resolutionCaps: [],
         selectedUseCameraHeartbeat: this.useCameraHeartbeat,
-        selectedMavStreamURI: { label: '127.0.0.1', value: '127.0.0.1' },
+        selectedMavStreamURI: {
+          label: this.videoSettings?.mavStreamSelected?.toString() || '127.0.0.1',
+          value: this.videoSettings?.mavStreamSelected || '127.0.0.1'
+        },
         videoMediaDestination: this.toRelativePath(this.videoSettings?.mediaDestination || '')
       };
 
