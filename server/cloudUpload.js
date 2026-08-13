@@ -11,7 +11,11 @@ const logpaths = require('./paths.js')
 // logpaths.sshDir instead of the conventional ~/.ssh/.
 const SSH_KEY_PATH = path.join(logpaths.sshDir, 'id_rsa')
 const KNOWN_HOSTS_PATH = path.join(logpaths.sshDir, 'known_hosts')
-const SSH_SHELL = `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=${KNOWN_HOSTS_PATH} -i ${SSH_KEY_PATH}`
+// ServerAlive* detects a dead connection (e.g. dropped VPN/wifi) within ~45s
+// instead of leaving rsync hung indefinitely on a socket that'll never reply.
+const SSH_SHELL = `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=${KNOWN_HOSTS_PATH} -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -i ${SSH_KEY_PATH}`
+// Backstop for hangs ServerAlive can't see (e.g. remote stuck on disk I/O).
+const RSYNC_TIMEOUT_MINUTES = 10
 
 class cloudUpload {
   constructor (settings) {
@@ -44,22 +48,22 @@ class cloudUpload {
         return
       }
       console.log('Upload interval')
-      if (this.options.uploadLogs) {
-        if (this.rsyncPidLogs) {
-          this.rsyncPidLogs.kill()
-        }
+      // Skip a category that's still mid-sync - large media can take longer than one interval.
+      if (this.options.uploadLogs && !this.isRunning(this.rsyncPidLogs)) {
         this.rsyncPidLogs = this.runRsync(this.logsFolder, this.options.binUploadLink, ['*.bin'],
           (error) => { this.lastErrorLogs = error })
       }
-      if (this.options.uploadMedia) {
+      if (this.options.uploadMedia && !this.isRunning(this.rsyncPidMedia)) {
         // Own subfolder on the remote end so media doesn't mix in with logs
-        if (this.rsyncPidMedia) {
-          this.rsyncPidMedia.kill()
-        }
         this.rsyncPidMedia = this.runRsync(this.mediaFolder, this.options.binUploadLink + '/media', [],
           (error) => { this.lastErrorMedia = error })
       }
     }, this.options.interval * 1000)
+  }
+
+  // True if pid is a still-running child process (rsync.execute() return value).
+  isRunning (pid) {
+    return !!pid && pid.exitCode === null
   }
 
   // Syncs source/ to destination over ssh. onDone(error) fires once rsync
@@ -85,8 +89,10 @@ class cloudUpload {
       outputBuffer += data.toString()
       console.log('rsync:', data.toString().trim())
     }
+    let timeoutHandle
     // 3rd arg is never called (same library bug) but must be a function.
-    return rsync.execute((error, code, cmd) => {
+    const pid = rsync.execute((error, code, cmd) => {
+      clearTimeout(timeoutHandle)
       if (error) {
         console.log(error)
         console.log(code)
@@ -94,6 +100,13 @@ class cloudUpload {
       }
       onDone(code === 0 ? '' : (outputBuffer.trim() || `rsync exited with code ${code}`))
     }, captureOutput, captureOutput)
+
+    timeoutHandle = setTimeout(() => {
+      console.log(`rsync timed out after ${RSYNC_TIMEOUT_MINUTES} minutes, killing:`, source)
+      pid.kill()
+    }, RSYNC_TIMEOUT_MINUTES * 60 * 1000)
+
+    return pid
   }
 
   quitting () {
@@ -174,7 +187,7 @@ class cloudUpload {
     if (active.length === 0) {
       return 'Nothing selected to upload'
     }
-    if (active.some(a => a.pid && a.pid.exitCode === null)) {
+    if (active.some(a => this.isRunning(a.pid))) {
       return 'Running'
     }
     const failed = active.filter(a => a.error)
