@@ -1,10 +1,14 @@
 const Rsync = require('rsync')
 const path = require('path')
 const fs = require('fs')
-const os = require('os')
 const { execSync } = require('child_process')
 
 const logpaths = require('./paths.js')
+
+// The rpanion service account is a system user with no usable home directory
+// (HOME=/nonexistent), so the upload SSH keypair is kept under logpaths.sshDir
+// instead of the conventional ~/.ssh/.
+const SSH_KEY_PATH = path.join(logpaths.sshDir, 'id_rsa')
 
 class cloudUpload {
   constructor (settings) {
@@ -23,13 +27,7 @@ class cloudUpload {
     this.options.binUploadLink = this.settings.value('cloud.binUploadLink', '')
     this.options.syncDeletions = this.settings.value('cloud.syncDeletions', false)
 
-    // create ssh key if none already
-    if (fs.existsSync(os.homedir() + '/.ssh/')) {
-      const files = fs.readdirSync(os.homedir() + '/.ssh/')
-      if (files.length === 0) {
-        execSync('< /dev/zero ssh-keygen -q -N ""')
-      }
-    }
+    this.ensureSshKey()
 
     // interval for upload checks
     this.intervalObj = setInterval(() => {
@@ -37,7 +35,7 @@ class cloudUpload {
       if (this.options.doBinUpload) {
         console.log('Doing binfile')
         const rsync = new Rsync()
-          .shell('ssh -o StrictHostKeyChecking=no')
+          .shell(`ssh -o StrictHostKeyChecking=no -i ${SSH_KEY_PATH}`)
           .flags('avzP')
           .source(this.topfolder + '/')
           .destination(this.options.binUploadLink)
@@ -72,22 +70,35 @@ class cloudUpload {
     clearInterval(this.intervalObj)
   }
 
+  // Create the upload SSH keypair under logpaths.sshDir if it doesn't
+  // already exist. Errors are caught and logged rather than thrown, so a
+  // failure here can't take down the caller (e.g. the /api/cloudinfo route).
+  ensureSshKey () {
+    try {
+      fs.mkdirSync(logpaths.sshDir, { recursive: true })
+      fs.chmodSync(logpaths.sshDir, 0o700)
+      if (!fs.existsSync(SSH_KEY_PATH)) {
+        execSync(`ssh-keygen -q -N "" -f ${SSH_KEY_PATH}`)
+        console.log('Created new SSH keypair for cloud upload:', SSH_KEY_PATH)
+      }
+    } catch (e) {
+      console.error('Failed to create SSH key for cloud upload:', e.message)
+    }
+  }
+
   getSettings (callback) {
     // get current settings and pubkey(s)
     const pubkey = []
-    if (fs.existsSync(os.homedir() + '/.ssh/')) {
-      const files = fs.readdirSync(os.homedir() + '/.ssh/')
+    this.ensureSshKey()
+    try {
+      const files = fs.readdirSync(logpaths.sshDir)
       files.forEach(file => {
         if (path.extname(file) === '.pub') {
-          pubkey.push(fs.readFileSync(os.homedir() + '/.ssh/' + file, { encoding: 'utf8', flag: 'r' }))
+          pubkey.push(fs.readFileSync(path.join(logpaths.sshDir, file), { encoding: 'utf8', flag: 'r' }))
         }
       })
-    }
-    // if pubKey is empty, create a new default ssh key
-    if (pubkey.length === 0) {
-      console.log('No SSH keys found, creating new one')
-      execSync('< /dev/zero ssh-keygen -q -N ""')
-      pubkey.push(fs.readFileSync(os.homedir() + '/.ssh/id_rsa.pub', { encoding: 'utf8', flag: 'r' }))
+    } catch (e) {
+      console.error('Failed to read SSH public keys:', e.message)
     }
     return callback(this.options.doBinUpload,
       this.options.binUploadLink, this.options.syncDeletions, pubkey)

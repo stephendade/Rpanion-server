@@ -30,5 +30,6 @@ module.exports = {
     flightsLogsDir: path.join(baseDir, 'flightlogs'),
     kmzDir: path.join(baseDir, 'flightlogs', 'kmzlogs'),
     mediaDir: path.join(baseDir, 'media'),
+    sshDir: path.join(baseDir, 'config', 'ssh'),
     getPythonPath: getPythonPath,
 };
