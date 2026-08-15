@@ -117,8 +117,9 @@ class FCDetails {
                   console.log("Can't open found FC " + this.activeDevice.serial + ', resetting link')
                   this.activeDevice = null
                   this.active = false
+                } else {
+                  this.startInterval()
                 }
-                this.startInterval()
               })
               break
             }
@@ -134,8 +135,9 @@ class FCDetails {
               console.log("Can't open UDP port " + this.activeDevice.udpInputPort + ', resetting link')
               this.activeDevice = null
               this.active = false
+            } else {
+              this.startInterval()
             }
-            this.startInterval()
           })
         }
       })
@@ -546,12 +548,12 @@ class FCDetails {
     this.intervalObj = setInterval(() => {
     
     // Send heartbeats, if they are enabled
-    if(this.enableHeartbeat){
+    if(this.enableHeartbeat && this.m){
       this.m.sendHeartbeat()
     }
-    
+
     // Send timesync messages every 10 seconds, if enabled
-    if(this.enableTimesync){
+    if(this.enableTimesync && this.m){
       const now = Date.now();
       if (now - this.lastTimesyncSent >= 10000) {
         this.m.sendSystemTime();
