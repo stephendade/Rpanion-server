@@ -18,7 +18,7 @@ const SSH_SHELL = `ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=${KNOWN
 const RSYNC_TIMEOUT_MINUTES = 10
 
 class cloudUpload {
-  constructor (settings) {
+  constructor (settings, fcManager) {
     this.options = {
       // the interval of sync, every 20 sec
       interval: 20
@@ -34,18 +34,23 @@ class cloudUpload {
 
     // load settings
     this.settings = settings
+    this.fcManager = fcManager
     this.options.uploadEnabled = this.settings.value('cloud.uploadEnabled', false)
     this.options.uploadLogs = this.settings.value('cloud.uploadLogs', true)
     this.options.uploadMedia = this.settings.value('cloud.uploadMedia', true)
     this.options.binUploadLink = this.settings.value('cloud.binUploadLink', '')
     this.options.syncDeletions = this.settings.value('cloud.syncDeletions', false)
     this.options.windowsDestination = this.settings.value('cloud.windowsDestination', false)
+    this.options.onlyWhenDisarmed = this.settings.value('cloud.onlyWhenDisarmed', false)
 
     this.ensureSshKey()
 
     // interval for upload checks
     this.intervalObj = setInterval(() => {
       if (!this.options.uploadEnabled) {
+        return
+      }
+      if (this.options.onlyWhenDisarmed && this.getVehicleArmedState() !== 'disarmed') {
         return
       }
       console.log('Upload interval')
@@ -65,6 +70,16 @@ class cloudUpload {
   // True if pid is a still-running child process (rsync.execute() return value).
   isRunning (pid) {
     return !!pid && pid.exitCode === null
+  }
+
+  // 'armed', 'disarmed', or 'unknown' if there's no live telemetry to trust
+  // (no link, or none within the last 5s - see mavManager.conStatusInt()).
+  // Unknown is treated as unsafe by callers, not assumed disarmed.
+  getVehicleArmedState () {
+    if (!this.fcManager || !this.fcManager.m || this.fcManager.m.conStatusInt() !== 1) {
+      return 'unknown'
+    }
+    return this.fcManager.m.statusArmed ? 'armed' : 'disarmed'
   }
 
   // Syncs source/ to destination over ssh. onDone(error) fires once rsync
@@ -161,10 +176,11 @@ class cloudUpload {
       console.error('Failed to read SSH public keys:', e.message)
     }
     return callback(this.options.uploadEnabled, this.options.uploadLogs, this.options.uploadMedia,
-      this.options.binUploadLink, this.options.syncDeletions, this.options.windowsDestination, pubkey)
+      this.options.binUploadLink, this.options.syncDeletions, this.options.windowsDestination,
+      this.options.onlyWhenDisarmed, this.getVehicleArmedState(), pubkey)
   }
 
-  setSettingsBin (uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination) {
+  setSettingsBin (uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, onlyWhenDisarmed) {
     // save new settings
     this.options.uploadEnabled = uploadEnabled
     this.options.uploadLogs = uploadLogs
@@ -172,6 +188,7 @@ class cloudUpload {
     this.options.binUploadLink = binUploadLink
     this.options.syncDeletions = syncDeletions
     this.options.windowsDestination = windowsDestination
+    this.options.onlyWhenDisarmed = onlyWhenDisarmed
 
     // and save to file
     try {
@@ -181,6 +198,7 @@ class cloudUpload {
       this.settings.setValue('cloud.binUploadLink', this.options.binUploadLink)
       this.settings.setValue('cloud.syncDeletions', this.options.syncDeletions)
       this.settings.setValue('cloud.windowsDestination', this.options.windowsDestination)
+      this.settings.setValue('cloud.onlyWhenDisarmed', this.options.onlyWhenDisarmed)
       console.log('Saved Cloud Upload settings')
     } catch (e) {
       console.log(e)
@@ -192,6 +210,15 @@ class cloudUpload {
   conStatusStr () {
     if (!this.options.uploadEnabled) {
       return 'Disabled'
+    }
+    if (this.options.onlyWhenDisarmed) {
+      const armedState = this.getVehicleArmedState()
+      if (armedState === 'armed') {
+        return 'Paused - vehicle armed'
+      }
+      if (armedState === 'unknown') {
+        return 'Paused - vehicle state unknown'
+      }
     }
     const active = []
     if (this.options.uploadLogs) active.push({ pid: this.rsyncPidLogs, error: this.lastErrorLogs })

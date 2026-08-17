@@ -18,12 +18,17 @@ class CloudConfig extends basePage {
       uploadStatus: 'N/A',
       syncDeletions: false,
       windowsDestination: false,
+      onlyWhenDisarmed: false,
+      vehicleArmedState: 'unknown',
       pubkey: []
     }
 
     //Socket.io client for reading in analog update values
     this.socket.on('CloudUploadStatus', function (msg) {
       this.setState({ uploadStatus: msg })
+    }.bind(this))
+    this.socket.on('CloudVehicleArmedState', function (msg) {
+      this.setState({ vehicleArmedState: msg })
     }.bind(this))
     this.socket.on('reconnect', function () {
       //refresh state
@@ -60,6 +65,10 @@ class CloudConfig extends basePage {
     this.setState({ windowsDestination: event.target.checked });
   }
 
+  toggleOnlyWhenDisarmed = event => {
+    this.setState({ onlyWhenDisarmed: event.target.checked });
+  }
+
   toggleUploadLogs = event => {
     this.setState({ uploadLogs: event.target.checked });
   }
@@ -84,6 +93,7 @@ class CloudConfig extends basePage {
             uploadMedia: this.state.uploadMedia,
             syncDeletions: this.state.syncDeletions,
             windowsDestination: this.state.windowsDestination,
+            onlyWhenDisarmed: this.state.onlyWhenDisarmed,
         })
       })
       .then(response => response.json())
@@ -122,6 +132,13 @@ class CloudConfig extends basePage {
                         <label className="col-sm-3 col-form-label">Destination is Windows</label>
                         <div className="col-sm-7">
                         <input name="windowsDestination" type="checkbox" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.windowsDestination} onChange={this.toggleWindowsDestination}/>
+                        </div>
+                    </div>
+                    <div className="form-group row" style={{ marginBottom: '5px' }}>
+                        <label className="col-sm-3 col-form-label">Only upload while disarmed</label>
+                        <div className="col-sm-7" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <input name="onlyWhenDisarmed" type="checkbox" disabled={this.state.uploadEnabled === true ? true : false} checked={this.state.onlyWhenDisarmed} onChange={this.toggleOnlyWhenDisarmed}/>
+                        <span>Vehicle state: {this.state.vehicleArmedState.charAt(0).toUpperCase() + this.state.vehicleArmedState.slice(1)}</span>
                         </div>
                     </div>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
