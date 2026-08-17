@@ -54,17 +54,27 @@ class cloudUpload {
         return
       }
       console.log('Upload interval')
-      // Skip a category that's still mid-sync - large media can take longer than one interval.
-      if (this.options.uploadLogs && !this.isRunning(this.rsyncPidLogs)) {
-        this.rsyncPidLogs = this.runRsync(this.logsFolder, this.options.binUploadLink, ['*.bin'],
-          (error) => { this.lastErrorLogs = error })
-      }
-      if (this.options.uploadMedia && !this.isRunning(this.rsyncPidMedia)) {
-        // Own subfolder on the remote end so media doesn't mix in with logs
-        this.rsyncPidMedia = this.runRsync(this.mediaFolder, this.options.binUploadLink + '/media', [],
-          (error) => { this.lastErrorMedia = error })
-      }
+      this.syncNow()
     }, this.options.interval * 1000)
+  }
+
+  // Starts a sync for each selected category, ignoring uploadEnabled and
+  // onlyWhenDisarmed - used by both the interval above and the "Upload Now"
+  // button, which needs to work regardless of those settings.
+  syncNow () {
+    if (!this.options.binUploadLink) {
+      return
+    }
+    // Skip a category that's still mid-sync - large media can take longer than one interval.
+    if (this.options.uploadLogs && !this.isRunning(this.rsyncPidLogs)) {
+      this.rsyncPidLogs = this.runRsync(this.logsFolder, this.options.binUploadLink, ['*.bin'],
+        (error) => { this.lastErrorLogs = error })
+    }
+    if (this.options.uploadMedia && !this.isRunning(this.rsyncPidMedia)) {
+      // Own subfolder on the remote end so media doesn't mix in with logs
+      this.rsyncPidMedia = this.runRsync(this.mediaFolder, this.options.binUploadLink + '/media', [],
+        (error) => { this.lastErrorMedia = error })
+    }
   }
 
   // True if pid is a still-running child process (rsync.execute() return value).
@@ -117,14 +127,21 @@ class cloudUpload {
     }
     let timeoutHandle
     // 3rd arg is never called (same library bug) but must be a function.
+    // This callback runs outside any request's call stack, so an uncaught
+    // throw here would hit the process-wide handler and take the whole
+    // server down - catch defensively rather than let that happen.
     const pid = rsync.execute((error, code, cmd) => {
-      clearTimeout(timeoutHandle)
-      if (error) {
-        console.log(error)
-        console.log(code)
-        console.log(cmd)
+      try {
+        clearTimeout(timeoutHandle)
+        if (error) {
+          console.log(error)
+          console.log(code)
+          console.log(cmd)
+        }
+        onDone(code === 0 ? '' : (outputBuffer.trim() || `rsync exited with code ${code}`))
+      } catch (e) {
+        console.error('Error handling rsync completion:', e)
       }
-      onDone(code === 0 ? '' : (outputBuffer.trim() || `rsync exited with code ${code}`))
     }, captureOutput, captureOutput)
 
     timeoutHandle = setTimeout(() => {
@@ -207,7 +224,23 @@ class cloudUpload {
 
   // Single combined status covering whichever of Logs/Media are selected -
   // "worst wins": an error beats running, running beats success/waiting.
+  // A running/finished sync is reported regardless of uploadEnabled, since
+  // "Upload Now" can trigger one even while automatic uploads are off.
   conStatusStr () {
+    const active = []
+    if (this.options.uploadLogs) active.push({ pid: this.rsyncPidLogs, error: this.lastErrorLogs })
+    if (this.options.uploadMedia) active.push({ pid: this.rsyncPidMedia, error: this.lastErrorMedia })
+
+    if (active.some(a => this.isRunning(a.pid))) {
+      return 'Running'
+    }
+    const failed = active.filter(a => a.error)
+    if (failed.length > 0) {
+      return 'Error: ' + failed.map(a => a.error).join(' / ')
+    }
+    if (active.length > 0 && active.every(a => a.pid && a.pid.exitCode === 0)) {
+      return 'Success'
+    }
     if (!this.options.uploadEnabled) {
       return 'Disabled'
     }
@@ -220,22 +253,8 @@ class cloudUpload {
         return 'Paused - vehicle state unknown'
       }
     }
-    const active = []
-    if (this.options.uploadLogs) active.push({ pid: this.rsyncPidLogs, error: this.lastErrorLogs })
-    if (this.options.uploadMedia) active.push({ pid: this.rsyncPidMedia, error: this.lastErrorMedia })
-
     if (active.length === 0) {
       return 'Nothing selected to upload'
-    }
-    if (active.some(a => this.isRunning(a.pid))) {
-      return 'Running'
-    }
-    const failed = active.filter(a => a.error)
-    if (failed.length > 0) {
-      return 'Error: ' + failed.map(a => a.error).join(' / ')
-    }
-    if (active.every(a => a.pid && a.pid.exitCode === 0)) {
-      return 'Success'
     }
     return 'Waiting for first run'
   }

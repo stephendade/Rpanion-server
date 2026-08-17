@@ -59,4 +59,29 @@ describe('Cloud Upload Functions', function () {
 
     clearInterval(cloudVar.intervalObj)
   })
+
+  it('#cloudsyncnownodest()', function () {
+    // syncNow() should be a no-op with no destination configured
+    settings.clear()
+    const cloudVar = new CloudTest(settings)
+
+    cloudVar.syncNow()
+    assert.equal(cloudVar.rsyncPidLogs, null)
+    assert.equal(cloudVar.rsyncPidMedia, null)
+
+    clearInterval(cloudVar.intervalObj)
+  })
+
+  it('#cloudstatusregardlessofenabled()', function () {
+    // "Upload Now" can trigger a sync even while uploadEnabled is off, so
+    // its status should be reported regardless of that setting
+    settings.clear()
+    const cloudVar = new CloudTest(settings)
+
+    cloudVar.options.uploadLogs = true
+    cloudVar.rsyncPidLogs = { exitCode: null }
+    assert.equal(cloudVar.conStatusStr(), 'Running')
+
+    clearInterval(cloudVar.intervalObj)
+  })
 })
