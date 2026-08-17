@@ -18,12 +18,13 @@ jobs:
         - name: Install packages
           run: |
             cd ./deploy && ./install_common_libraries.sh
+            sudo apt install -y lintian
             
-        - name: Use Node.js 24.x
-          uses: actions/setup-node@v7
-          with:
-            node-version: 24.x
-            cache: 'npm'
+        # Inject NodeSource Node.js 24 via apt, to ensure "sudo apt install rpanion-server" works
+        - name: Inject NodeSource Node.js 24 into apt
+          run: |
+            curl -fsSL https://deb.nodesource.com/setup_24.x | sudo bash -
+            sudo apt install -y nodejs
 
         - name: Install dependencies
           run: npm ci
@@ -82,6 +83,19 @@ jobs:
               rm -rf temp_dir
               rm -rf "$file"
               mv "${file%.deb}.xz" "$file"
+            done
+
+        - name: Check package with lintian
+          run: |
+            for file in rpanion-server_*.deb; do
+              lintian -i --fail-on error --suppress-tags arch-dependent-file-in-usr-share,binary-from-other-architecture,library-not-linked-against-libc,missing-dependency-on-libc,package-contains-eslint-config-file,package-contains-npm-ignore-file,wrong-file-owner-uid-or-gid,unusual-interpreter,script-not-executable,executable-not-elf-or-script,embedded-javascript-library,privacy-breach-generic,recursive-privilege-change,package-contains-vcs-control-file,shell-script-fails-syntax-check,no-changelog,malformed-contact,maintainer-script-lacks-home-in-adduser,extended-description-is-empty,unknown-section,synopsis-too-long,no-manual-page,maintainer-script-calls-systemctl,unstripped-binary-or-object,absolute-symlink-in-top-level-folder,no-copyright-file "$file"
+            done
+
+
+        - name: Install deb
+          run: |
+            for file in rpanion-server_*.deb; do
+              sudo apt install -y ./"$file"
             done
 
         - name: Archive build
