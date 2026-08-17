@@ -777,6 +777,18 @@ app.post('/api/binlogupload', authenticateToken, [check('uploadEnabled').isBoole
   }
 })
 
+// manually trigger a sync now, regardless of the uploadEnabled/onlyWhenDisarmed settings
+app.post('/api/cloudsyncnow', authenticateToken, (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  try {
+    cloud.syncNow()
+    res.send(JSON.stringify({ ok: true }))
+  } catch (e) {
+    console.error('Failed to trigger cloud sync:', e)
+    res.status(500).send(JSON.stringify({ error: e.message }))
+  }
+})
+
 // Serve the logconversion info
 app.get('/api/logconversioninfo', authenticateToken, (req, res) => {
   logConversion.getSettings((doLogConversion) => {

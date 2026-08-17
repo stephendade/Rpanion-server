@@ -104,6 +104,49 @@ class CloudConfig extends basePage {
       });
   }
 
+  handleUploadNowSubmit = () => {
+    // Save the current form settings first (without toggling Enable/Disable) so
+    // Upload Now reflects what's on screen, not just what was last saved -
+    // then trigger a sync immediately, regardless of the Enable/disarmed settings.
+    fetch('/api/binlogupload', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.state.token}`
+        },
+        body: JSON.stringify({
+            binUploadLink: this.state.binUploadLink,
+            uploadEnabled: this.state.uploadEnabled,
+            uploadLogs: this.state.uploadLogs,
+            uploadMedia: this.state.uploadMedia,
+            syncDeletions: this.state.syncDeletions,
+            windowsDestination: this.state.windowsDestination,
+            onlyWhenDisarmed: this.state.onlyWhenDisarmed,
+        })
+      })
+      .then(response => response.json())
+      .then(state => {
+        this.setState(state)
+        return fetch('/api/cloudsyncnow', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${this.state.token}`
+          }
+        })
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(body => { throw new Error(body.error || `Server returned ${response.status}`) });
+        }
+      })
+      .catch(err => {
+        console.error('Failed to trigger upload now:', err);
+        this.setState({ error: `Could not start the upload: ${err.message}. Check the server log (journalctl -u rpanion-server) if this keeps happening.` });
+      });
+  }
+
   renderTitle () {
     return 'Cloud Upload'
   }
@@ -150,8 +193,9 @@ class CloudConfig extends basePage {
                     </div>
 
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
-                        <div className="col-sm-10">
+                        <div className="col-sm-10" style={{ display: 'flex', gap: '10px' }}>
                         <Button onClick={this.handleToggleUploadSubmit} className="btn btn-primary">{this.state.uploadEnabled === true ? 'Disable' : 'Enable'}</Button>
+                        <Button onClick={this.handleUploadNowSubmit} disabled={!this.state.binUploadLink} className="btn btn-secondary">Upload Now</Button>
                         </div>
                     </div>
                     <p>Status: {this.state.uploadStatus}</p>
