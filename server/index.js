@@ -69,7 +69,7 @@ const vManager = new videoStream(settings)
 const fcManager = new fcManagerClass(settings)
 const logManager = new flightLogger()
 const ntripClient = new ntrip(settings)
-const cloud = new cloudManager(settings)
+const cloud = new cloudManager(settings, fcManager)
 
 // Pass the fcManager instance to the videoStream,
 // so it can access position data for geotagging photos
@@ -748,9 +748,9 @@ app.get('/api/ntripconfig', authenticateToken, (req, res) => {
 
 // Serve the cloud info
 app.get('/api/cloudinfo', authenticateToken, (req, res) => {
-  cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, pubkey) => {
+  cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, onlyWhenDisarmed, vehicleArmedState, pubkey) => {
     res.setHeader('Content-Type', 'application/json')
-    res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, pubkey }))
+    res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, onlyWhenDisarmed, vehicleArmedState, pubkey }))
   })
 })
 
@@ -760,18 +760,19 @@ app.post('/api/binlogupload', authenticateToken, [check('uploadEnabled').isBoole
   check('uploadMedia').isBoolean(),
   check('binUploadLink').not().isEmpty().not().contains(';').not().contains('\'').not().contains('"').trim(),
   check('syncDeletions').isBoolean(),
-  check('windowsDestination').isBoolean()], function (req, res) {
+  check('windowsDestination').isBoolean(),
+  check('onlyWhenDisarmed').isBoolean()], function (req, res) {
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
     console.log(req.body)
     console.log('Bad POST vars in /api/binlogupload', { message: JSON.stringify(errors.array()) })
     return res.status(422).json({ error: JSON.stringify(errors.array()) })
   } else {
-    cloud.setSettingsBin(req.body.uploadEnabled, req.body.uploadLogs, req.body.uploadMedia, req.body.binUploadLink, req.body.syncDeletions, req.body.windowsDestination)
+    cloud.setSettingsBin(req.body.uploadEnabled, req.body.uploadLogs, req.body.uploadMedia, req.body.binUploadLink, req.body.syncDeletions, req.body.windowsDestination, req.body.onlyWhenDisarmed)
     // send back refreshed settings
-    cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination) => {
+    cloud.getSettings((uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, onlyWhenDisarmed, vehicleArmedState) => {
       res.setHeader('Content-Type', 'application/json')
-      res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination }))
+      res.send(JSON.stringify({ uploadEnabled, uploadLogs, uploadMedia, binUploadLink, syncDeletions, windowsDestination, onlyWhenDisarmed, vehicleArmedState }))
     })
   }
 })
@@ -1152,6 +1153,7 @@ io.on('connection', function () {
     io.sockets.emit('FCStatus', fcManager.getSystemStatus())
     io.sockets.emit('NTRIPStatus', ntripClient.conStatusStr())
     io.sockets.emit('CloudUploadStatus', cloud.conStatusStr())
+    io.sockets.emit('CloudVehicleArmedState', cloud.getVehicleArmedState())
     io.sockets.emit('LogConversionStatus', logConversion.conStatusLogStr())
     io.sockets.emit('PPPStatus', pppConnectionManager.conStatusStr())
     io.sockets.emit('VideoStreamStatus', vManager.getStreamingStatus())
