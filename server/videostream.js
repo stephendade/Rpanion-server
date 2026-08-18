@@ -304,6 +304,7 @@ class videoStream {
         responseData.selectedUseUDPPort = this.videoSettings?.useUDPPort || 5600;
         responseData.selectedUseTimestamp = this.videoSettings?.useTimestamp || false;
         responseData.selectedUseCameraHeartbeat = this.useCameraHeartbeat || false;
+        responseData.customRTSPSource = this.videoSettings?.customRTSPSource || '';
 
         // Return an empty string if no media destination is given.
         responseData.videoMediaDestination = this.toRelativePath(activeSettings?.mediaDestination || '');
@@ -352,7 +353,7 @@ class videoStream {
 
       try {
         const devices = JSON.parse(stdout);
-        // Add RTSP mocks
+        // Add RTSP source
         devices.push({ label: 'RTSP Source (H.264)', value: 'rtspsourceh264', caps: [{ label: 'Custom RTSP Source', value: '1x1xx-h264', width: 1, height: 1, format: 'video/x-h264', fps: [{ label: 'N/A', value: 1 }], fpsmax: 0 }] });
         devices.push({ label: 'RTSP Source (H.265)', value: 'rtspsourceh265', caps: [{ label: 'Custom RTSP Source', value: '1x1xx-h265', width: 1, height: 1, format: 'video/x-h265', fps: [{ label: 'N/A', value: 1 }], fpsmax: 0 }] });
 
@@ -626,7 +627,12 @@ class videoStream {
       format = 'video/x-raw';
     }
 
-    this.populateAddresses(this.videoSettings.device);
+    //format rtsp source differently
+    if (device === 'rtspsourceh264' || device === 'rtspsourceh265') {
+      device = this.videoSettings.customRTSPSource;
+    }
+
+    this.populateAddresses(device);
 
     const args = [
       '-u', // force the stdout and stderr streams to be unbuffered
