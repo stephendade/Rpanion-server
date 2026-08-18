@@ -1247,6 +1247,13 @@ app.post('/api/camera/start', authenticateToken, [
   check('bitrate').if(check('cameraMode').isIn(['streaming', 'video'])).isInt({ min: 50, max: 50000 }),
   check('fps').if(check('cameraMode').isIn(['streaming', 'video'])).isInt({ min: 0, max: 120 }),
   check('rotation').if(check('cameraMode').isIn(['streaming', 'video'])).isInt().isIn([0, 90, 180, 270]),
+  check('format').if(check('cameraMode').isIn(['streaming', 'video'])).isIn(['video/x-raw', 'video/x-h264', 'video/x-h265', 'image/jpeg']),
+  check('customRTSPSource').if(check('cameraMode').isIn(['streaming', 'video'])).custom((value) => {
+    if (value === '' || value === null || value === undefined) {
+      return true;
+    }
+    return check('customRTSPSource').isURL().run({ body: { customRTSPSource: value } });
+  }),
   // Validation ONLY for 'photo' mode
   check('stillDevice').if(check('cameraMode').equals('photo')).isString().notEmpty(),
   check('stillWidth').if(check('cameraMode').equals('photo')).isInt({ min: 1 }),
@@ -1339,7 +1346,8 @@ app.post('/api/camera/start', authenticateToken, [
       useTimestamp: req.body.useTimestamp === true || req.body.useTimestamp === 'true',
       mavStreamSelected: req.body.mavStreamSelected,
       compression: req.body.compression,
-      mediaDestination: safeMediaDestination
+      mediaDestination: safeMediaDestination,
+      customRTSPSource: req.body.customRTSPSource
     };
   } else if (mode === 'video') {
     vManager.videoRecordSettings = {
@@ -1351,7 +1359,8 @@ app.post('/api/camera/start', authenticateToken, [
       bitrate: parseInt(req.body.bitrate, 10),
       fps: parseInt(req.body.fps, 10),
       rotation: parseInt(req.body.rotation, 10),
-      mediaDestination: safeMediaDestination
+      mediaDestination: safeMediaDestination,
+      customRTSPSource: req.body.customRTSPSource
     };
   } else if (mode === 'photo') {
     vManager.stillSettings = {

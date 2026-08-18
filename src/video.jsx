@@ -170,6 +170,7 @@ class VideoPage extends basePage {
 
           videoMediaDestination: activeResolved.mediaDestination,
           stillMediaDestination: stillData.stillMediaDestination || '',
+          customRTSPSource: videoData.customRTSPSource || ''
         });
 
         if (videoData.selectedUseUDPIP) this.isMulticastUpdateIP(videoData.selectedUseUDPIP);
@@ -578,7 +579,8 @@ componentWillUnmount() {
           useUDPPort: this.state.useUDPPort,
           useTimestamp: this.state.timestamp,
           mavStreamSelected: this.state.mavStreamSelected,
-          compression: this.state.compression
+          compression: this.state.compression,
+          customRTSPSource: this.state.customRTSPSource
         };
 
       } else if (cameraMode === 'video') {
@@ -849,9 +851,12 @@ renderContent() {
                   <div className="col-sm-8">
                     {/* Both streaming and video recording modes now use
                         videoDevices/handleVideoDeviceChange,
-                        so they share the same resolution list. */}
+                        so they share the same resolution list. Note "Video Recording" does not support RTSP sources*/}
                     <Form.Select disabled={active} onChange={this.handleVideoDeviceChange} value={this.state.vidDeviceSelected}>
-                      {this.state.videoDevices.map((d, idx) => <option key={idx} value={d.value}>{d.label}</option>)}
+                       {/* Populate the video device dropdown with available devices, but omit RTSP sources in video recording mode */}
+                      {this.state.videoDevices
+                        .filter(d => !(this.state.cameraMode === 'video' && d.value.startsWith('rtspsource')))
+                        .map((d, idx) => <option key={idx} value={d.value}>{d.label}</option>)}
                     </Form.Select>
                   </div>
                 </div>
