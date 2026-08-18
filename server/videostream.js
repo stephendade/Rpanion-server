@@ -885,7 +885,7 @@ class videoStream {
     });
   }
 
-  stopCamera(callback) {
+  stopCamera(save=true, callback) {
     if (this.intervalObj) {
       clearInterval(this.intervalObj);
       this.intervalObj = null;
@@ -896,13 +896,15 @@ class videoStream {
       this.deviceStream = null;
     }
 
-    this.active = false;
-    this.settings.setValue('camera.active', false);
-    // Clear the video recording flag and persist the current mode's settings.
-    if (this.cameraMode === 'video' && this.videoRecordSettings) {
-      this.setRecordingFlag(false);
+    if (save) {
+      this.active = false;
+      this.settings.setValue('camera.active', false);
+      // Clear the video recording flag and persist the current mode's settings.
+      if (this.cameraMode === 'video' && this.videoRecordSettings) {
+        this.setRecordingFlag(false);
+      }
+      this.saveSettings();
     }
-    this.saveSettings();
 
     if (callback) callback(null, false);
   }

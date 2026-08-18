@@ -135,7 +135,7 @@ async function gracefulShutdown(signal, exitCode = 0) {
 
     // Stop camera processes cleanly
     if (vManager) {
-      vManager.stopCamera();
+      vManager.stopCamera(save=false);
       console.log('Camera processes stopped');
     }
 
