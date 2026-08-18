@@ -527,7 +527,7 @@ class videoStream {
     // 5 = MAV_RESULT_IN_PROGRESS
     this.eventEmitter.emit('camera_command_ack', commandId, senderSysId, senderCompId, targetComponent, 5)
 
-    this.stopCamera(() => {
+    this.stopCamera(true, () => {
       this.cameraMode = targetMode
       this.ensureDefaultSettingsForMode(targetMode)
       this.startCamera((err) => {
@@ -645,7 +645,8 @@ class videoStream {
       '--rotation=' + this.videoSettings.rotation,
       '--fps=' + this.videoSettings.fps,
       '--udp=' + (this.videoSettings.useUDP ? `${this.videoSettings.useUDPIP}:${this.videoSettings.useUDPPort}` : '0'),
-      '--compression=' + this.videoSettings.compression
+      '--compression=' + this.videoSettings.compression,
+      '--transport=' + (this.videoSettings.useUDP ? 'RTP' : 'RTSP')
     ];
 
     if (this.videoSettings.useTimestamp) args.push('--timestamp');
@@ -1414,7 +1415,7 @@ class videoStream {
       else if (data.command === common.MavCmd['VIDEO_STOP_STREAMING']) {
         console.log('Received MAVLink command to stop video streaming')
         if (this.cameraMode === 'streaming' && this.active) {
-          this.stopCamera(() => {
+          this.stopCamera(true, () => {
             this.eventEmitter.emit('camera_command_ack', common.MavCmd['VIDEO_STOP_STREAMING'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
           })
         } else {

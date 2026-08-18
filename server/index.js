@@ -1388,7 +1388,7 @@ app.post('/api/camera/start', authenticateToken, [
 
 // POST to STOP the currently active camera mode
 app.post('/api/camera/stop', authenticateToken, (req, res) => {
-  vManager.stopCamera((err, active) => {
+  vManager.stopCamera(true, (err, active) => {
     res.setHeader('Content-Type', 'application/json');
     if (err) {
       console.error('Error stopping camera:', err);
