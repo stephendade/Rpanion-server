@@ -170,7 +170,7 @@ describe('Video Functions', function () {
       }
     }
 
-    vManager.stopCamera((err, status) => {
+    vManager.stopCamera(true, (err, status) => {
       assert.equal(err, null)
       assert.equal(status, false)
       assert.equal(vManager.active, false)
@@ -252,7 +252,7 @@ describe('Video Functions', function () {
     // Stub out actual process management - this test is about the dispatch/
     // switching logic, not really spawning photovideo.py
     const calls = []
-    vManager.stopCamera = (cb) => { calls.push('stopCamera'); vManager.active = false; cb(null, false) }
+    vManager.stopCamera = (save, cb) => { calls.push('stopCamera'); vManager.active = false; cb(null, false) }
     vManager.startCamera = (cb) => { calls.push(`startCamera(${vManager.cameraMode})`); vManager.active = true; cb(null) }
     vManager.toggleVideoRecording = () => { calls.push('toggleVideoRecording'); vManager.videoRecordSettings.isRecording = true }
 
