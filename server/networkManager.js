@@ -417,9 +417,7 @@ function editConnectionAPClient (conName, conSettings, callback) {
             conSettings.ipaddress && Object.keys(conSettings.ipaddress).length !== 0) {
       const cmds = ['nmcli', 'connection', 'mod', conName, '802-11-wireless.ssid', conSettings.ssid,
         '802-11-wireless.band', conSettings.band, 'ipv4.addresses', conSettings.ipaddress + '/24']
-      if (conSettings.channel !== '0') {
-        cmds.push('802-11-wireless.channel', conSettings.channel)
-      }
+      cmds.push('802-11-wireless.channel', conSettings.channel !== '0' ? conSettings.channel : "")
       if (conSettings.wpaType !== 'none') {
         cmds.push('802-11-wireless-security.group', 'ccmp', '802-11-wireless-security.wps-method', '1')
       }
