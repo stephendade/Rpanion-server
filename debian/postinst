@@ -22,7 +22,7 @@ case "$1" in
         # Set permissions
         chown -R rpanion /usr/share/rpanion-server
         chown -R rpanion /etc/rpanion-server
-        chown -R rpanion /etc/wireguard
+        chown -R rpanion /etc/wireguard || true    # wireguard may not be installed yet
         chmod +x /usr/share/rpanion-server/app/server/index.js
         systemctl daemon-reload
         systemctl enable rpanion-server
