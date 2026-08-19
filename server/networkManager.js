@@ -17,13 +17,14 @@ function getAdapters (callback) {
           freqList.push({ value: 0, freq: 0, label: 'auto', band: 0 })
           if (device[1] === 'wifi') {
             try {
-              const output = execSync('iwlist ' + device[0] + ' channel')
+              const output = execSync('iw list | grep -E "MHz \\["')
               const allFreqs = output.toString().split('\n')
+              // output format is "			* 5745.0 MHz [149] (20.0 dBm)"
               for (let i = 0, len = allFreqs.length; i < len; i++) {
-                if (allFreqs[i].includes('Channel ') && !allFreqs[i].includes('Current')) {
+                if (allFreqs[i].includes('MHz')) {
                   const ln = allFreqs[i].split(' ').filter(i => i)
                   if (ln.length > 4) {
-                    freqList.push({ value: parseInt(ln[1]), freq: ln[3], label: '' + ln[1] + ' (' + ln[3] + ' GHz)', band: ((parseFloat(ln[3]) < 3) ? 'bg' : 'a') })
+                    freqList.push({ value: parseInt(ln[3].replace('[', '').replace(']', '')), freq: ln[1], label: '' + ln[3].replace('[', '').replace(']', '') + ' (' + ln[1] + ' MHz)', band: ((parseFloat(ln[1]) < 3000) ? 'bg' : 'a') })
                   }
                 }
               }
