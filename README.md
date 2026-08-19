@@ -118,6 +118,11 @@ Note the CSI camera does not currently work on Ubuntu 22.04 and 24.04, due to in
 
 Note the GPIO UARTs are not currently working with Ubuntu 24.04.
 
+Ubuntu 24 requires a workaround to install ``python3-dev`` due to package versioning issues:
+```
+sudo apt install zlib1g=1:1.3.dfsg-3.1ubuntu2 zlib1g-dev=1:1.3.dfsg-3.1ubuntu2
+```
+
 If an older version of the Raspberry Pi OS is used (Buster, V10 or below), the ``gst-rpicamsrc`` Gstreamer element
 must be installed. See https://github.com/thaytan/gst-rpicamsrc for install instructions.
 
