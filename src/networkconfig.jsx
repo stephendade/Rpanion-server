@@ -853,7 +853,14 @@ class NetworkConfig extends basePage {
                     disabled={this.state.curSettings.wpaType === "none"} 
                     value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} 
                     onChange={this.changeHandler} 
-                  /><br />
+                    isInvalid={
+                      this.state.curSettings.wpaType !== "none" && 
+                      ((this.state.curSettings.password || "").length < 8 || (this.state.curSettings.password || "").length > 63)
+                    }
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    Password must be between 8 and 63 characters long.
+                  </Form.Control.Feedback><br />
                   <Form.Check 
                     type="checkbox" 
                     name="showpassword" 
@@ -917,7 +924,14 @@ class NetworkConfig extends basePage {
                   disabled={this.state.curSettings.wpaType === "none"} 
                   value={this.state.curSettings.wpaType === "none" ? '' : this.state.curSettings.password} 
                   onChange={this.changeHandler} 
-                /><br />
+                  isInvalid={
+                    this.state.curSettings.wpaType !== "none" && 
+                    ((this.state.curSettings.password || "").length < 8 || (this.state.curSettings.password || "").length > 63)
+                  }
+                />
+                <Form.Control.Feedback type="invalid">
+                  Password must be between 8 and 63 characters long.
+                </Form.Control.Feedback><br />
                 <Form.Check 
                   type="checkbox" 
                   name="showpassword" 
