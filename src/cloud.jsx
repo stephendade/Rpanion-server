@@ -153,12 +153,12 @@ class CloudConfig extends basePage {
 
   renderContent () {
     return (
-            <div>
+            <div style={{ width: 650 }}>
               <p><i>Automatically upload flight logs and/or media to a remote (network) destination over an ssh connection</i></p>
                 <h3>Cloud Upload</h3>
-                <p>Selected items are synchronised to the remote destination below using rsync, every 20 seconds. Logs (Flight Logs -&gt; Bin Logs) are synced to the destination itself; Media (photos/videos) is synced to a <code>media</code> subfolder there.</p>
+                <p>Selected items are synchronised to the remote destination below using rsync, every 20 seconds. Logs (tlogs, bin logs and kmz logs) are synced to the destination itself; Media (photos/videos) is synced to a <code>media</code> subfolder there.</p>
                 <p>Destination format is <code>username@server:/path/to/remote/dir</code>, where <code>username</code> has an ssh publickey on the remote server.</p>
-                <Form style={{ width: 700 }}>
+                <Form>
                     <div className="form-group row" style={{ marginBottom: '5px' }}>
                         <label className="col-sm-3 col-form-label">Rsync Destination</label>
                         <div className="col-sm-7">
@@ -201,8 +201,8 @@ class CloudConfig extends basePage {
                     <p>Status: {this.state.uploadStatus}</p>
                 </Form>
                 <h3>Publickeys</h3>
-                <p><i>All publickeys on this device</i></p>
-                <p>One of the below keys must be added to <code>~/.ssh/authorized_keys</code> on the remote server</p>
+                <p><i>All rpanion-server publickeys on this device</i></p>
+                <p>One of the below keys must be added to <code>~/.ssh/authorized_keys</code> on the remote server, in order to allow rpanion-server to authenticate using SSH.</p>
                   <div style={{ fontFamily: "monospace", width: 700, wordWrap: 'break-word' }}>
                   <hr/>
                     {this.state.pubkey.map(item => {
