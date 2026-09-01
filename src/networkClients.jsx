@@ -40,7 +40,7 @@ class NetworkClientsPage extends basePage {
 
   renderContent () {
     return (
-      <div>
+      <div style={{ width: 500 }}>
         <div style={{ display: (this.state.apname !== '') ? 'block' : 'none' }}>
           <p>The following table show all DHCP clients connected to the access point: {this.state.apname}</p>
           <Table id='apclients' striped bordered hover size="sm">
