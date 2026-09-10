@@ -335,6 +335,15 @@ if __name__ == "__main__":
             if dev['value'] == '/dev/video1' and 'vi-output' in dev['label']:
                 dev['value'] = 'argus1'
                 dev['label'] = 'CSI1' + dev['label'].split('vi-output')[1]
+            # convert all "video/x-bayer" formats to "video/x-raw" for consistency
+            if dev['caps']:
+                for cap in dev['caps']:
+                    if cap['format'] == 'video/x-bayer':
+                        cap['format'] = 'video/x-raw'
+                    if 'x-bayer' in cap['label']:
+                        cap['label'] = cap['label'].replace('x-bayer', 'x-raw')
+                    if 'x-bayer' in cap['value']:
+                        cap['value'] = cap['value'].replace('x-bayer', 'x-raw')
 
     # Include testsrc
     capsTest = []
