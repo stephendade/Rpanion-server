@@ -33,6 +33,7 @@ class FCPage extends basePage {
       UDPBPort: 14550,
       enableDSRequest: false,
       enableTimesync: false,
+      enableComputerStatus: false,
       doLogging: false
     }
 
@@ -92,6 +93,10 @@ class FCPage extends basePage {
     this.setState({ enableTimesync: event.target.checked });
   }
 
+  handleComputerStatusChange = (event) => {
+    this.setState({ enableComputerStatus: event.target.checked });
+  }
+
   handleUseUDPBChange = (event) => {
     this.setState({ enableUDPB: event.target.checked });
   }
@@ -121,6 +126,7 @@ class FCPage extends basePage {
         UDPBPort: this.state.UDPBPort,
         enableDSRequest: this.state.enableDSRequest,
         enableTimesync: this.state.enableTimesync,
+        enableComputerStatus: this.state.enableComputerStatus,
         doLogging: this.state.doLogging
       })
     }).then(response => response.json()).then(state => { this.setState(state) });
@@ -336,6 +342,14 @@ class FCPage extends basePage {
               <label className="col-sm-5 col-form-label">Enable SYSTEM_TIME messages</label>
               <div className="col-sm-7">
               <input type="checkbox" checked={this.state.enableTimesync} disabled={this.state.telemetryStatus} onChange={this.handleTimesyncChange} />
+              </div>
+            </div>
+            <br />
+            <p><i>Send CPU, RAM, temperature and disk use to the flight controller as ONBOARD_COMPUTER_STATUS messages (every second)</i></p>
+            <div className="form-group row" style={{ marginBottom: '5px' }}>
+              <label className="col-sm-5 col-form-label">Enable companion health messages</label>
+              <div className="col-sm-7">
+              <input type="checkbox" checked={this.state.enableComputerStatus} disabled={this.state.telemetryStatus} onChange={this.handleComputerStatusChange} />
               </div>
             </div>
             <br />

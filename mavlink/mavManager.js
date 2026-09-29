@@ -306,6 +306,38 @@ class mavManager {
     this.sendData(systemTimeMessage, minimal.MavComponent.ONBOARD_COMPUTER)
   }
 
+  sendOnboardComputerStatus (status) {
+    // Send ONBOARD_COMPUTER_STATUS with the companion's CPU, RAM, temperature and disk use.
+    // Array slots we have no value for must hold the MAVLink "unused" value, not 0
+    const fill = (values, length, unused) => Array.from({ length }, (_, i) => values[i] ?? unused)
+    const statusMessage = new common.OnboardComputerStatus()
+
+    statusMessage.timeUsec = BigInt(Math.floor(Date.now() * 1000))
+    // uptime is a 32 bit ms counter, so let it wrap after 49.7 days
+    statusMessage.uptime = status.uptimeMs % 0x100000000
+    statusMessage.type = 0
+    statusMessage.cpuCores = fill(status.cpuCores, 8, 255)
+    statusMessage.cpuCombined = fill([], 10, 255)
+    statusMessage.gpuCores = fill([], 4, 255)
+    statusMessage.gpuCombined = fill([], 10, 255)
+    statusMessage.temperatureBoard = 127
+    statusMessage.temperatureCore = fill(status.cpuTemps, 8, 127)
+    statusMessage.fanSpeed = fill([], 4, 32767)
+    statusMessage.ramUsage = status.ramUsedMiB
+    statusMessage.ramTotal = status.ramTotalMiB
+    statusMessage.storageType = fill([], 4, 0xFFFFFFFF)
+    statusMessage.storageUsage = fill([status.diskUsedMiB], 4, 0xFFFFFFFF)
+    statusMessage.storageTotal = fill([status.diskTotalMiB], 4, 0xFFFFFFFF)
+    statusMessage.linkType = fill([], 6, 0xFFFFFFFF)
+    statusMessage.linkTxRate = fill([], 6, 0xFFFFFFFF)
+    statusMessage.linkRxRate = fill([], 6, 0xFFFFFFFF)
+    statusMessage.linkTxMax = fill([], 6, 0xFFFFFFFF)
+    statusMessage.linkRxMax = fill([], 6, 0xFFFFFFFF)
+    statusMessage.statusFlags = 0
+
+    this.sendData(statusMessage, minimal.MavComponent.ONBOARD_COMPUTER)
+  }
+
   sendCommandAck (commandReceived, commandResult, senderSysId, senderCompId, targetComponent) {
     // Set defaults if parameters are not provided
     if (commandResult === null || commandResult === undefined) {
