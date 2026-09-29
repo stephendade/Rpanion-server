@@ -1,7 +1,9 @@
 const fs = require('fs')
+const os = require('os')
 const events = require('events')
 const path = require('path')
 const { spawn, spawnSync } = require('child_process')
+const si = require('systeminformation')
 
 const { common, standard } = require('node-mavlink')
 const mavManager = require('../mavlink/mavManager.js')
@@ -68,6 +70,10 @@ class FCDetails {
     this.enableTimesync = false
     this.lastTimesyncSent = 0
 
+    // Send ONBOARD_COMPUTER_STATUS messages to flight controller?
+    this.enableComputerStatus = false
+    this.readingComputerStatus = false
+
     // Current binlog via mavlink-router
     this.binlog = null
 
@@ -101,6 +107,7 @@ class FCDetails {
     this.UDPBPort = this.settings.value('flightcontroller.UDPBPort', 14550)
     this.enableDSRequest = this.settings.value('flightcontroller.enableDSRequest', false)
     this.enableTimesync = this.settings.value('flightcontroller.enableTimesync', false)
+    this.enableComputerStatus = this.settings.value('flightcontroller.enableComputerStatus', false)
     this.doLogging = this.settings.value('flightcontroller.doLogging', false)
     this.active = this.settings.value('flightcontroller.active', false)
 
@@ -528,19 +535,52 @@ class FCDetails {
     if (this.active && this.activeDevice && this.activeDevice.inputType === 'UART') {
       return callback(retError, this.serialDevices, this.baudRates, this.activeDevice.serial,
         this.activeDevice.baud, this.mavlinkVersions, this.activeDevice.mavversion,
-        this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.doLogging, this.activeDevice.udpInputPort,
+        this.active, this.enableHeartbeat, this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.enableComputerStatus, this.doLogging, this.activeDevice.udpInputPort,
         this.inputTypes[0].value, this.inputTypes)
     } else if (this.active && this.activeDevice && this.activeDevice.inputType === 'UDP') {
       return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [], this.baudRates[3].value,
         this.mavlinkVersions, this.activeDevice.mavversion, this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.doLogging, this.activeDevice.udpInputPort,
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.enableComputerStatus, this.doLogging, this.activeDevice.udpInputPort,
         this.inputTypes[1].value, this.inputTypes)
     } else {
       // no connection
       return callback(retError, this.serialDevices, this.baudRates, this.serialDevices.length > 0 ? this.serialDevices[0].value : [],
         this.baudRates[3].value, this.mavlinkVersions, this.mavlinkVersions[1].value, this.active, this.enableHeartbeat,
-        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.doLogging, 9000, this.inputTypes[0].value, this.inputTypes)
+        this.enableTCP, this.enableUDPB, this.UDPBPort, this.enableDSRequest, this.enableTimesync, this.enableComputerStatus, this.doLogging, 9000, this.inputTypes[0].value, this.inputTypes)
     }
+  }
+
+  async sendComputerStatus () {
+    // Read CPU, RAM, temperature and disk use and send them to the flight controller.
+    // Skip this second if the previous read hasn't finished yet
+    if (this.readingComputerStatus) {
+      return
+    }
+    this.readingComputerStatus = true
+    try {
+      const [load, mem, temp] = await Promise.all([si.currentLoad(), si.mem(), si.cpuTemperature()])
+      // Read only the root disk. df checks every mount and can hang on a dead network
+      // mount, statfs can't. It needs Node 18.15 or newer, otherwise the disk is left out
+      const disk = fs.promises.statfs ? await fs.promises.statfs('/').catch(() => null) : null
+      // Use per-core temperatures if the board has them, otherwise the single CPU reading
+      const temps = temp.cores && temp.cores.length > 0 ? temp.cores : [temp.main]
+      const MiB = 1024 * 1024
+
+      if (this.m) {
+        this.m.sendOnboardComputerStatus({
+          uptimeMs: Math.round(os.uptime() * 1000),
+          cpuCores: load.cpus.map(cpu => Math.round(cpu.load)),
+          cpuTemps: temps.filter(Number.isFinite).map(t => Math.min(Math.round(t), 126)),
+          ramUsedMiB: Math.round(mem.active / MiB),
+          ramTotalMiB: Math.round(mem.total / MiB),
+          diskUsedMiB: disk ? Math.round((disk.blocks - disk.bfree) * disk.bsize / MiB) : undefined,
+          diskTotalMiB: disk ? Math.round(disk.blocks * disk.bsize / MiB) : undefined
+        })
+      }
+    } catch (err) {
+      console.log('Could not read computer status: ' + err)
+    }
+    this.readingComputerStatus = false
   }
 
   startInterval () {
@@ -550,6 +590,11 @@ class FCDetails {
     // Send heartbeats, if they are enabled
     if(this.enableHeartbeat && this.m){
       this.m.sendHeartbeat()
+    }
+
+    // Send companion computer status every second, if enabled
+    if(this.enableComputerStatus && this.m){
+      this.sendComputerStatus()
     }
 
     // Send timesync messages every 10 seconds, if enabled
@@ -578,7 +623,7 @@ class FCDetails {
   }
 
   startStopTelemetry (device, baud, mavversion, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest,
-                      enableTimesync, doLogging, inputType, udpInputPort, callback) {
+                      enableTimesync, enableComputerStatus, doLogging, inputType, udpInputPort, callback) {
     // user wants to start or stop telemetry
     // callback is (err, isSuccessful)
 
@@ -588,6 +633,7 @@ class FCDetails {
     this.UDPBPort = UDPBPort
     this.enableDSRequest = enableDSRequest
     this.enableTimesync = enableTimesync
+    this.enableComputerStatus = enableComputerStatus
     this.doLogging = doLogging
 
     if (this.m) {
@@ -671,6 +717,7 @@ class FCDetails {
       this.settings.setValue('flightcontroller.UDPBPort', this.UDPBPort)
       this.settings.setValue('flightcontroller.enableDSRequest', this.enableDSRequest)
       this.settings.setValue('flightcontroller.enableTimesync', this.enableTimesync)
+      this.settings.setValue('flightcontroller.enableComputerStatus', this.enableComputerStatus)
       this.settings.setValue('flightcontroller.doLogging', this.doLogging)
       this.settings.setValue('flightcontroller.active', this.active)
       console.log('Saved FC settings')

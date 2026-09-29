@@ -1012,7 +1012,7 @@ app.get('/api/FCOutputs', authenticateToken, (req, res) => {
 app.get('/api/FCDetails', authenticateToken, (req, res) => {
   res.setHeader('Content-Type', 'application/json')
   fcManager.getDeviceSettings((err, devices, bauds, seldevice, selbaud, mavers, selmav,
-    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, enableTimesync, doLogging,
+    active, enableHeartbeat, enableTCP, enableUDPB, UDPBPort, enableDSRequest, enableTimesync, enableComputerStatus, doLogging,
     udpInputPort, selInputType, inputTypes) => {
     // hacky way to pass through the
     if (!err) {
@@ -1032,6 +1032,7 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         UDPBPort,
         enableDSRequest,
         enableTimesync,
+        enableComputerStatus,
         doLogging,
         udpInputPort,
         selInputType,
@@ -1054,6 +1055,7 @@ app.get('/api/FCDetails', authenticateToken, (req, res) => {
         UDPBPort,
         enableDSRequest,
         enableTimesync,
+        enableComputerStatus,
         doLogging,
         udpInputPort,
         selInputType,
@@ -1093,7 +1095,7 @@ app.post('/api/resetsettings', authenticateToken, function (req, res) {
   }
 })
 
-app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('enableTimesync').isBoolean(), check('doLogging').isBoolean()], function (req, res) {
+app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isInt(), check('mavversion').isInt(), check('enableHeartbeat').isBoolean(), check('enableTCP').isBoolean(), check('enableUDPB').isBoolean(), check('UDPBPort').isPort(), check('enableDSRequest').isBoolean(), check('enableTimesync').isBoolean(), check('enableComputerStatus').isBoolean(), check('doLogging').isBoolean()], function (req, res) {
   // User wants to start/stop FC telemetry
   const errors = validationResult(req)
   if (!errors.isEmpty()) {
@@ -1103,7 +1105,7 @@ app.post('/api/FCModify', authenticateToken, [check('device'), check('baud').isI
 
   fcManager.startStopTelemetry(req.body.device, req.body.baud, req.body.mavversion, req.body.enableHeartbeat,
                                req.body.enableTCP, req.body.enableUDPB, req.body.UDPBPort, req.body.enableDSRequest,
-                               req.body.enableTimesync, req.body.doLogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
+                               req.body.enableTimesync, req.body.enableComputerStatus, req.body.doLogging, req.body.inputType, req.body.udpInputPort, (err, isSuccess) => {
     if (!err) {
       res.setHeader('Content-Type', 'application/json')
       // console.log(isSuccess);

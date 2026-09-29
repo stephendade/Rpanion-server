@@ -165,6 +165,39 @@ describe('MAVLink Functions', function () {
     })
   })
 
+  it('#onboardComputerStatusSend()', function (done) {
+    const m = new mavManager(2, '127.0.0.1', 15200)
+    const udpStream = udp.createSocket('udp4')
+
+    m.eventEmitter.on('linkready', () => {
+      m.sendOnboardComputerStatus({ uptimeMs: 4320000000, cpuCores: [37], cpuTemps: [58],
+        ramUsedMiB: 512, ramTotalMiB: 4096, diskUsedMiB: 2000, diskTotalMiB: 30000 })
+    })
+
+    udpStream.on('message', (msg) => {
+      // Verify MAVLink message structure
+      assert.equal(msg[0], 0xfd) // MAVLink v2 header
+      assert.equal(msg[7], 0x86) // Message ID for ONBOARD_COMPUTER_STATUS (low byte)
+      assert.equal(msg[8], 0x01) // Message ID for ONBOARD_COMPUTER_STATUS (high byte)
+
+      // Payload starts at byte 10
+      assert.equal(msg.readUInt32LE(18), 4320000000 % 0x100000000) // uptime wraps after 49.7 days
+      assert.equal(msg.readUInt32LE(22), 512) // ram_usage
+      assert.equal(msg[207], 37) // first CPU core
+      assert.equal(msg[208], 255) // unused CPU core
+
+      m.close()
+      udpStream.close()
+      done()
+    })
+
+    udpStream.send(Buffer.from([0xfd, 0x06]), 15200, '127.0.0.1', (error) => {
+      if (error) {
+        console.error(error)
+      }
+    })
+  })
+
   it('#commandAckSend()', function (done) {
     const m = new mavManager(2, '127.0.0.1', 15000)
     const udpStream = udp.createSocket('udp4')
