@@ -1,12 +1,13 @@
 // Mavlink Manager
 const events = require('events')
 const udp = require('dgram')
-const { MavLinkPacketSplitter, MavLinkPacketParser, MavLinkProtocolV2, minimal, common, ardupilotmega, MavLinkProtocolV1 } = require('node-mavlink')
+const { MavLinkPacketSplitter, MavLinkPacketParser, MavLinkProtocolV2, minimal, standard, common, ardupilotmega, MavLinkProtocolV1 } = require('node-mavlink')
 const { PassThrough } = require('stream')
 
 // create a registry of mappings between a message id and a data class
 const REGISTRY = {
   ...minimal.REGISTRY,
+  ...standard.REGISTRY,
   ...common.REGISTRY,
   ...ardupilotmega.REGISTRY
 }
