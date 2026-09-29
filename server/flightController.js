@@ -3,7 +3,7 @@ const events = require('events')
 const path = require('path')
 const { spawn, spawnSync } = require('child_process')
 
-const { common } = require('node-mavlink')
+const { common, standard } = require('node-mavlink')
 const mavManager = require('../mavlink/mavManager.js')
 const logpaths = require('./paths.js')
 const { detectSerialDevices, isModemManagerInstalled, isPi, getSerialPathFromValue } = require('./serialDetection.js')
@@ -444,7 +444,7 @@ class FCDetails {
       this.m.eventEmitter.on('gotMessage', (packet, data) => {
         // got valid message - send on to attached classes
         this.previousConnection = true
-        if (packet.header.msgid === common.GlobalPositionInt.MSG_ID) {
+        if (packet.header.msgid === standard.GlobalPositionInt.MSG_ID) {
             // MAVLink sends lat/lon as int * 1E7, alt as mm, heading as cdeg
             if (this.vehiclePosition) {
                 this.vehiclePosition.lat = data.lat / 10000000

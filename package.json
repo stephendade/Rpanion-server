@@ -137,6 +137,7 @@
   },
   "overrides": {
     "autoprefixer": "10.4.5",
+    "mavlink-mappings": "1.0.22-20260311",
     "vite": {
       "rollup": "npm:@rollup/wasm-node"
     }
