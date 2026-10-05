@@ -119,7 +119,7 @@
     "sinon": "^22.1.0",
     "vite": "8.2.1",
     "vite-plugin-eslint": "^1.8.1",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "nyc": {
     "all": true,
