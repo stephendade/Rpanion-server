@@ -33,7 +33,7 @@
     "app-root-path": "3.1.0",
     "bcryptjs": "3.0.3",
     "bootstrap": "5.3.8",
-    "compression": "1.8.1",
+    "compression": "1.8.2",
     "express": "5.2.1",
     "express-fileupload": "1.5.2",
     "express-rate-limit": "8.6.2",
