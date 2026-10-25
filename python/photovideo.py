@@ -6,6 +6,48 @@ import inspect
 import time, signal, os, sys, shutil, traceback
 import json
 
+def is_jetson():
+    """Returns True if running on an NVIDIA Jetson device."""
+    return os.path.exists("/etc/nv_tegra_release")
+
+def is_usb_camera(camera_path="/dev/video0"):
+    """
+    Automated hardware probe. Returns True if the video device 
+    is a USB / UVC device, and False if it is a Jetson CSI/MIPI sensor.
+    """
+    video_device = camera_path
+    if not os.path.exists(video_device):
+        return False
+        
+    try:
+        # Query sysfs to find the subsystem driver path for this video node
+        real_path = os.path.realpath(f"/sys/class/video4linux/{os.path.basename(camera_path)}/device")
+        
+        # Check if the kernel device path maps back to a USB bus
+        if "usb" in real_path.lower():
+            return True
+            
+        # Fallback check: Read V4L2 device information directly
+        # Similar to parsing 'v4l2-ctl --list-devices' metadata
+        with open(f"/sys/class/video4linux/{os.path.basename(camera_path)}/name", "r") as f:
+            device_name = f.read().lower()
+            if "usb" in device_name or "uvc" in device_name:
+                return True
+    except Exception:
+        pass
+        
+    return False
+
+# Get Jetson pipeline string for GStreamer
+def get_jetson_pipeline(camera_path="/dev/video0", width=1920, height=1080, framerate=10):
+    camera_index = os.path.basename(camera_path)[-1]
+    return (
+        f"nvarguscamerasrc sensor-id={camera_index} ! "
+        f"video/x-raw(memory:NVMM), width={width}, height={height}, framerate={framerate}/1 ! "
+        f"nvvidconv ! video/x-raw, format=BGRx ! videoconvert ! "
+        f"video/x-raw, format=BGR ! appsink drop=true"
+    )
+
 # Parse command line arguments
 home_dir = os.path.expanduser("~")
 
@@ -227,6 +269,12 @@ if captureMode == "photo":
         picam2_still.start()
         time.sleep(2)
         print(f"Camera is ready in Picamera2 photo mode. Capturing {args.vidWidth}x{args.vidHeight}, {args.imageRotation}° rotation")
+    elif is_jetson() and not is_usb_camera(args.captureDevicePath):
+        v4l2_cam = cv2.VideoCapture(get_jetson_pipeline(args.captureDevicePath, args.vidWidth, args.vidHeight), cv2.CAP_GSTREAMER)
+        if not v4l2_cam.isOpened():
+            sys.exit(f"V4L2 camera at {args.captureDevicePath} failed to open.")
+        time.sleep(2)
+        print(f"Camera is ready in Jetson V4L2 Argus photo mode. Capturing {args.vidWidth}x{args.vidHeight}")
     else:
         v4l2_cam = cv2.VideoCapture(args.captureDevicePath, cv2.CAP_V4L2)
         v4l2_cam.set(cv2.CAP_PROP_FRAME_WIDTH, args.vidWidth)
@@ -284,6 +332,12 @@ elif captureMode == "video":
         encoder = H264Encoder(**encoder_kwargs)
         picam2_vid.start()
         print(f"Camera is ready in Picamera2 video mode. Capturing {args.vidWidth}x{args.vidHeight} {args.vidFormat} @ {args.vidFps} fps, {args.imageRotation}° rotation")
+    elif is_jetson() and not is_usb_camera(args.captureDevicePath):
+        v4l2_cam = cv2.VideoCapture(get_jetson_pipeline(args.captureDevicePath, args.vidWidth, args.vidHeight), cv2.CAP_GSTREAMER)
+        if not v4l2_cam.isOpened():
+            sys.exit(f"V4L2 camera at {args.captureDevicePath} failed to open.")
+        time.sleep(2)
+        print(f"Camera is ready in Jetson V4L2 Argus video mode. Capturing {args.vidWidth}x{args.vidHeight}")
     else:
         v4l2_cam = cv2.VideoCapture(args.captureDevicePath, cv2.CAP_V4L2)
         if not v4l2_cam.isOpened():

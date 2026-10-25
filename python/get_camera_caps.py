@@ -92,6 +92,15 @@ def get_subdev_name(dev_path):
     except (FileNotFoundError, IndexError):
         return None
 
+# Return true if running on RPi
+def is_raspberry_pi():
+    try:
+        with open('/proc/cpuinfo', 'r') as f:
+            cpuinfo = f.read()
+        return 'Raspberry Pi' in cpuinfo
+    except FileNotFoundError:
+        return False
+
 # picamera2 is checked via find_spec() rather than actually imported, since
 # importing it triggers a slow libcamera init (~10s on a Pi Zero 2W). cv2 has
 # no such cost, so it's actually imported to correctly detect broken installs
@@ -118,42 +127,43 @@ devices = []
 # never initialized by this script (see get_capabilities()), so there's no
 # separate libcamera pass to reconcile these against.
 csi_devices = []
-for dev_path in get_subdev_paths():
-    mbus_codes = get_mbus_codes(dev_path)
-    if not mbus_codes:
-        continue
+if is_raspberry_pi():
+    for dev_path in get_subdev_paths():
+        mbus_codes = get_mbus_codes(dev_path)
+        if not mbus_codes:
+            continue
 
-    # Get card name here via v4l2 — avoids needing libcamera later
-    card_name = get_subdev_name(dev_path) or "Unnamed CSI Camera"
+        # Get card name here via v4l2 — avoids needing libcamera later
+        card_name = get_subdev_name(dev_path) or "Unnamed CSI Camera"
 
-    device_caps = {
-        'id': f"CSI-{re.sub(r'[^a-zA-Z0-9]', '_', card_name)}",
-        'device': None,
-        'type': 'CSI',
-        'card_name': card_name,
-        'caps': []
-    }
+        device_caps = {
+            'id': f"CSI-{re.sub(r'[^a-zA-Z0-9]', '_', card_name)}",
+            'device': None,
+            'type': 'CSI',
+            'card_name': card_name,
+            'caps': []
+        }
 
-    seen = set()
-    for mbus_code, pixel_format in mbus_codes:
-        resolutions = get_resolutions(dev_path, mbus_code)
-        for res in resolutions:
-            key = (res['width'], res['height'])
-            if key in seen:
-                continue
-            seen.add(key)
-            device_caps['caps'].append({
-                'format': 'YUV420',
-                'width': res['width'],
-                'height': res['height'],
-                'label': f"{res['width']}x{res['height']}",
-                'value': f"{res['width']}x{res['height']}_YUV420"
-            })
+        seen = set()
+        for mbus_code, pixel_format in mbus_codes:
+            resolutions = get_resolutions(dev_path, mbus_code)
+            for res in resolutions:
+                key = (res['width'], res['height'])
+                if key in seen:
+                    continue
+                seen.add(key)
+                device_caps['caps'].append({
+                    'format': 'YUV420',
+                    'width': res['width'],
+                    'height': res['height'],
+                    'label': f"{res['width']}x{res['height']}",
+                    'value': f"{res['width']}x{res['height']}_YUV420"
+                })
 
-    if device_caps['caps']:
-        csi_devices.append(device_caps)
+        if device_caps['caps']:
+            csi_devices.append(device_caps)
 
-devices.extend(csi_devices)
+    devices.extend(csi_devices)
 
 # Process UVC cameras
 for dev_path in get_video_device_paths():
