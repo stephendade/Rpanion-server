@@ -88,7 +88,7 @@ jobs:
         - name: Check package with lintian
           run: |
             for file in rpanion-server_*.deb; do
-              lintian -i --fail-on error --suppress-tags arch-dependent-file-in-usr-share,binary-from-other-architecture,library-not-linked-against-libc,missing-dependency-on-libc,package-contains-eslint-config-file,package-contains-npm-ignore-file,wrong-file-owner-uid-or-gid,unusual-interpreter,script-not-executable,executable-not-elf-or-script,embedded-javascript-library,privacy-breach-generic,recursive-privilege-change,package-contains-vcs-control-file,shell-script-fails-syntax-check,no-changelog,malformed-contact,maintainer-script-lacks-home-in-adduser,extended-description-is-empty,unknown-section,synopsis-too-long,no-manual-page,maintainer-script-calls-systemctl,unstripped-binary-or-object,absolute-symlink-in-top-level-folder,no-copyright-file "$file"
+              lintian -i --fail-on error --suppress-tags arch-dependent-file-in-usr-share,binary-from-other-architecture,missing-dependency-on-libc,package-contains-eslint-config-file,package-contains-npm-ignore-file,wrong-file-owner-uid-or-gid,unusual-interpreter,script-not-executable,executable-not-elf-or-script,embedded-javascript-library,privacy-breach-generic,recursive-privilege-change,package-contains-vcs-control-file,shell-script-fails-syntax-check,no-changelog,malformed-contact,maintainer-script-lacks-home-in-adduser,extended-description-is-empty,unknown-section,synopsis-too-long,no-manual-page,maintainer-script-calls-systemctl,unstripped-binary-or-object,absolute-symlink-in-top-level-folder,no-copyright-file "$file"
             done
 
 
