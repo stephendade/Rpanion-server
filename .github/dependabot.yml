@@ -18,6 +18,11 @@ updates:
         patterns:
           - "*"  # Group all npm updates into a single larger pull request
     ignore:
-      - dependency-type: "development"
+      - dependency-name: "vite*"
+      - dependency-name: "eslint*"
+      - dependency-name: "mocha*"
+      - dependency-name: "@eslint/js"
+      - dependency-name: "@vitejs/plugin-react"
+
     schedule:
       interval: "weekly"
