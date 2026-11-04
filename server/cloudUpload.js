@@ -1,7 +1,6 @@
-const Rsync = require('rsync')
 const path = require('path')
 const fs = require('fs')
-const { execSync } = require('child_process')
+const { execSync, spawn } = require('child_process')
 
 const logpaths = require('./paths.js')
 
@@ -93,63 +92,58 @@ class cloudUpload {
   }
 
   // Syncs source/ to destination over ssh. onDone(error) fires once rsync
-  // finishes, '' on success. One output handler covers both stdout/stderr -
-  // the installed rsync package silently never calls a separate stderr
-  // callback (bug in rsync.js:474).
+  // finishes, '' on success.
   runRsync (source, destination, includes, onDone) {
     console.log('Syncing', source, 'to', destination)
-    const rsync = new Rsync()
-      .shell(SSH_SHELL)
-      .source(source + '/')
-      .destination(destination)
+    const args = []
 
     if (this.options.windowsDestination) {
       // rtvP not -a(rchive): -a also preserves Unix perms/owner (-p -o -g),
       // which Windows destinations reject. No -z either - known to corrupt
       // the protocol stream on some Windows rsync builds.
-      rsync.flags('rtvP')
-      // Explicitly set broad perms instead of preserving source perms.
-      rsync.set('chmod', 'ugo=rwX')
+      args.push('-rtvP', '--chmod=ugo=rwX')
     } else {
-      rsync.flags('avzP')
+      args.push('-avzP')
     }
 
-    includes.forEach(pattern => rsync.include(pattern))
+    args.push('-e', SSH_SHELL)
+    includes.forEach(pattern => args.push(`--include=${pattern}`))
 
     if (this.options.syncDeletions) {
-      rsync.set('delete')
+      args.push('--delete')
     }
+
+    args.push(source + '/', destination)
 
     let outputBuffer = ''
     const captureOutput = (data) => {
       outputBuffer += data.toString()
       console.log('rsync:', data.toString().trim())
     }
+
+    const child = spawn('rsync', args)
+    child.stdout.on('data', captureOutput)
+    child.stderr.on('data', captureOutput)
+
     let timeoutHandle
-    // 3rd arg is never called (same library bug) but must be a function.
     // This callback runs outside any request's call stack, so an uncaught
     // throw here would hit the process-wide handler and take the whole
     // server down - catch defensively rather than let that happen.
-    const pid = rsync.execute((error, code, cmd) => {
+    child.on('close', (code) => {
       try {
         clearTimeout(timeoutHandle)
-        if (error) {
-          console.log(error)
-          console.log(code)
-          console.log(cmd)
-        }
         onDone(code === 0 ? '' : (outputBuffer.trim() || `rsync exited with code ${code}`))
       } catch (e) {
         console.error('Error handling rsync completion:', e)
       }
-    }, captureOutput, captureOutput)
+    })
 
     timeoutHandle = setTimeout(() => {
       console.log(`rsync timed out after ${RSYNC_TIMEOUT_MINUTES} minutes, killing:`, source)
-      pid.kill()
+      child.kill()
     }, RSYNC_TIMEOUT_MINUTES * 60 * 1000)
 
-    return pid
+    return child
   }
 
   quitting () {
