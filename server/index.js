@@ -1,7 +1,6 @@
 const express = require('express')
 const fileUpload = require('express-fileupload')
 const compression = require('compression')
-const pino = require('pino-http')()
 const process = require('process')
 const jwt = require('jsonwebtoken');
 const { common } = require('node-mavlink')
@@ -384,7 +383,6 @@ fcManager.eventEmitter.on('disarmed', () => {
 let FCStatusLoop = null
 
 app.use(express.urlencoded({ extended: true }))
-app.use(pino)
 
 // Simply pass `compression` as an Express middleware!
 app.use(compression())
