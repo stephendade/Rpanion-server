@@ -244,6 +244,20 @@ vManager.eventEmitter.on('camera_command_ack', (commandId, senderSysId, senderCo
   }
 })
 
+// send back camera capture status to flight controller
+vManager.eventEmitter.on('camera_capture_status', (msg, senderSysId, senderCompId, targetComponent) => {
+  try {
+    if (fcManager.m) {
+      // Acknowledge the CAMERA_CAPTURE_STATUS request
+      // Ack the MAV_CMD_REQUEST_MESSAGE (512), NOT the requested message ID.
+      fcManager.m.sendCommandAck(common.MavCmd['REQUEST_MESSAGE'], 0, senderSysId, senderCompId, targetComponent)
+      fcManager.m.sendData(msg, senderCompId)
+    }
+  } catch (err) {
+    console.log('Error sending CameraCaptureStatus:', err);
+  }
+})
+
 // This function responds to a MAVLink command to capture a photo.
 vManager.eventEmitter.on('digicamcontrol', (senderSysId, senderCompId, targetComponent) => {
   try {

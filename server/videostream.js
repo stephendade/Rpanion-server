@@ -1369,6 +1369,18 @@ class videoStream {
     this.eventEmitter.emit('camera_command_ack', emittedCommand, sysid, minimal.MavComponent.CAMERA, compid, 3);
   }
 
+  // send a response to a REQUEST_CAMERA_CAPTURE_STATUS command
+  sendCaptureStatus(senderSysId, senderCompId, targetComponent) {
+    console.log('Sending MAVLink CameraCaptureStatus packet')
+
+    const msg = new common.CameraCaptureStatus()
+    msg.timeBootMs = process.uptime()*1000;
+    msg.imageStatus = 0; // Image capture is instantaneous
+    msg.videoStatus = (this.cameraMode === 'video' && this.videoRecordSettings?.isRecording) ? 1 : 0;
+
+    this.eventEmitter.emit('camera_capture_status', msg, senderSysId, senderCompId, targetComponent)
+  }
+
   onMavPacket(packet, data) {
     if (packet.header.msgid === common.CommandLong.MSG_ID &&
       data.targetComponent === minimal.MavComponent.CAMERA) {
@@ -1393,6 +1405,10 @@ class videoStream {
           console.log(`Responding to MAVLink request for CameraSettings from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
           this.sendCameraSettings(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
         }
+        else if (requestedMsgId === common.CameraCaptureStatus.MSG_ID) {
+          console.log(`Responding to MAVLink request for CameraCaptureStatus from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
+          this.sendCaptureStatus(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+        }
         else if (requestedMsgId === common.StorageInformation.MSG_ID) {
           console.log(`Responding to MAVLink request for StorageInformation from SysID: ${packet.header.sysid}, CompID: ${packet.header.compid}`)
           this.sendStorageInfo(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
@@ -1416,6 +1432,10 @@ class videoStream {
       else if (data.command === common.MavCmd['IMAGE_STOP_CAPTURE']) {
         console.log('Received IMAGE_STOP_CAPTURE command')
         this.eventEmitter.emit('camera_command_ack', common.MavCmd['IMAGE_STOP_CAPTURE'], packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid)
+      }
+      else if (data.command === common.MavCmd['REQUEST_CAMERA_CAPTURE_STATUS']) {
+        console.log('Received REQUEST_CAMERA_CAPTURE_STATUS command')
+        this.sendCaptureStatus(packet.header.sysid, minimal.MavComponent.CAMERA, packet.header.compid);
       }
       else if (data.command === common.MavCmd['VIDEO_START_CAPTURE']) {
         console.log('Received MAVLink command to start video capture')
