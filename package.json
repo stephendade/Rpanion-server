@@ -32,26 +32,26 @@
   "dependencies": {
     "app-root-path": "3.1.0",
     "bcryptjs": "3.0.3",
-    "bootstrap": "5.3.8",
+    "bootstrap": "5.3.9",
     "compression": "1.8.2",
     "express": "5.3.0",
     "express-fileupload": "1.6.0",
-    "express-rate-limit": "8.7.3",
+    "express-rate-limit": "8.7.5",
     "express-validator": "7.3.2",
     "jsonwebtoken": "9.0.3",
     "node-mavlink": "2.3.0",
-    "npm": "12.2.2",
+    "npm": "12.2.3",
     "ntrip-client": "github:codeceptsDE/ntrip-client#v1.1.1-fork.2",
     "react": "19.3.1",
     "react-bootstrap": "2.10.10",
     "react-dom": "19.3.1",
-    "react-router-dom": "7.18.5",
+    "react-router-dom": "7.18.6",
     "serialport": "13.0.0",
     "settings-store": "1.4.1",
     "socket.io": "4.8.4",
     "socket.io-client": "4.8.4",
     "startbootstrap-simple-sidebar": "6.0.6",
-    "systeminformation": "5.33.19"
+    "systeminformation": "5.33.23"
   },
   "bin": {
     "coveralls": "./bin/coveralls.js"
